@@ -82,6 +82,7 @@ export const clearLegacyAuthState = () => {
     removeAuthHeader(apiClient.defaults.headers.common);
     removeAuthHeader(axios.defaults.headers.common);
     csrfToken = null;
+    csrfPromise = null;
 
     if (typeof window === 'undefined') return;
 
@@ -122,6 +123,8 @@ const fetchCsrfToken = async () => {
     }
     return csrfPromise;
 };
+
+export const initializeCsrfToken = () => fetchCsrfToken();
 
 const refreshSession = async () => {
     if (!refreshPromise) {
