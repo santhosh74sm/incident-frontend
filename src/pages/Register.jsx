@@ -33,6 +33,7 @@ const Register = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [protectedRegisterError, setProtectedRegisterError] = useState('');
     const redirectTimerRef = useRef(null);
     const navigate = useNavigate();
     const { user, login } = useAuth();
@@ -51,20 +52,23 @@ const Register = () => {
             return [{
                 value: 'Super Admin',
                 title: 'Super Admin',
+                group: 'Administration',
                 description: 'Initial owner account for administrator setup and recovery.',
             }];
         }
 
         return [
             {
-                value: 'Teacher',
-                title: 'Teacher',
-                description: 'Incident reporting and everyday follow-up.',
-            },
-            {
                 value: 'Admin',
                 title: 'Administrator',
+                group: 'Administration',
                 description: 'School-wide tools, uploads, and staff management.',
+            },
+            {
+                value: 'Teacher',
+                title: 'Teacher',
+                group: 'Teacher Group',
+                description: 'Incident reporting and everyday follow-up.',
             },
         ];
     }, [superAdminExists]);
@@ -96,6 +100,7 @@ const Register = () => {
 
     const onSubmit = async (data) => {
         const { confirmPassword: _, ...payload } = data;
+        setProtectedRegisterError('');
         try {
             if (superAdminExists) {
                 await apiClient.post('/api/auth/users', payload);
@@ -105,12 +110,12 @@ const Register = () => {
             }
             setSuccess(true);
             redirectTimerRef.current = setTimeout(() => navigate('/login'), 2000);
-        } catch {
-            // error shown via registerMutation.error below
+        } catch (requestError) {
+            setProtectedRegisterError(requestError.response?.data?.message || 'Unable to create account.');
         }
     };
 
-    const serverError = registerMutation.error?.response?.data?.message || registerMutation.error?.message;
+    const serverError = protectedRegisterError || registerMutation.error?.response?.data?.message || registerMutation.error?.message;
 
     return (
         <div className="relative min-h-screen overflow-hidden bg-slate-950 dark:bg-slate-950">
@@ -305,6 +310,7 @@ const Register = () => {
                                                             <div className="flex items-center justify-between gap-3">
                                                                 <div>
                                                                     <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{role.title}</p>
+                                                                    <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-500 dark:text-indigo-300">{role.group}</p>
                                                                     <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">{role.description}</p>
                                                                 </div>
                                                                 <div

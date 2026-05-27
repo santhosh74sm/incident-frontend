@@ -48,7 +48,7 @@ const quickActionItems = [
         sub: 'Open the school overview.',
         link: '/dashboard',
         type: 'command',
-        roles: ['Admin', 'Teacher'],
+        roles: ['Super Admin', 'Admin', 'Teacher'],
     },
     {
         title: 'Report New Incident',
@@ -62,28 +62,28 @@ const quickActionItems = [
         sub: 'Review active and past incidents.',
         link: '/incidents',
         type: 'command',
-        roles: ['Admin', 'Teacher'],
+        roles: ['Super Admin', 'Admin', 'Teacher'],
     },
     {
         title: 'School reports & summary',
         sub: 'Open charts and summaries for the whole school.',
         link: '/analytics',
         type: 'command',
-        roles: ['Admin', 'Teacher'],
+        roles: ['Super Admin', 'Admin', 'Teacher'],
     },
     {
         title: 'Student summaries',
         sub: 'Look up one student\'s involvement and history.',
         link: '/student-analytics',
         type: 'command',
-        roles: ['Admin', 'Teacher'],
+        roles: ['Super Admin', 'Admin', 'Teacher'],
     },
     {
         title: 'View Issued Letters',
         sub: 'See letters produced from incidents.',
         link: '/issued-letters',
         type: 'command',
-        roles: ['Admin'],
+        roles: ['Super Admin', 'Admin'],
     },
 ];
 

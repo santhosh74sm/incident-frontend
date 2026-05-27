@@ -281,8 +281,8 @@ const CreateIncident = () => {
     const [uploadProgress, setUploadProgress] = useState(0);
 
     const config = useMemo(() => ({ headers: {} }), []);
-    const isPrivilegedUser = ['Admin', 'Teacher', 'admin', 'teacher'].includes(user?.role);
-    const isTeacherUser = String(user?.role || '').toLowerCase() === 'teacher';
+    const isAdministrationUser = ['Super Admin', 'Admin', 'super_admin', 'admin'].includes(user?.role);
+    const isPrivilegedUser = isAdministrationUser || ['Teacher', 'teacher'].includes(user?.role);
     const handleHighPriorityToggle = useCallback((checked) => {
         setFormData((current) => {
             if (current.isHighPriority === checked) {
@@ -938,7 +938,7 @@ const CreateIncident = () => {
         const data = new FormData();
         Object.keys(formData).forEach((key) => {
             // Teachers cannot assign handlers — strip the field before sending.
-            if (key === 'assignedHandler' && isTeacherUser) return;
+            if (key === 'assignedHandler' && !isAdministrationUser) return;
             data.append(key, formData[key] ?? '');
         });
 
@@ -2078,38 +2078,36 @@ const CreateIncident = () => {
                                         </div>
                                     </SectionCard>
 
-                                    {isPrivilegedUser && (
+                                    {isAdministrationUser && (
                                     <SectionCard
                                         icon={ShieldCheck}
                                         title="Administrative actions"
                                         description="Assign a staff member or set incident dates manually when needed."
                                     >
                                         <div className="space-y-5">
-                                            {!isTeacherUser && (
-                                                <div>
-                                                    <label className="mb-2 block text-sm font-semibold text-slate-800">Assigned Handler</label>
-                                                    <select
-                                                        value={formData.assignedHandler}
-                                                        onChange={(event) =>
-                                                            setFormData((current) => ({
-                                                                ...current,
-                                                                assignedHandler: event.target.value,
-                                                            }))
-                                                        }
-                                                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                                                    >
-                                                        <option value="">No assignment yet</option>
-                                                        {staffList.map((staff) => (
-                                                            <option key={staff._id} value={staff._id}>
-                                                                {staff.name}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                    <p className="mt-1.5 text-xs text-slate-500">
-                                                        Assign this incident to a teacher. Leave blank to keep it in the Administration pool.
-                                                    </p>
-                                                </div>
-                                            )}
+                                            <div>
+                                                <label className="mb-2 block text-sm font-semibold text-slate-800">Assigned Handler</label>
+                                                <select
+                                                    value={formData.assignedHandler}
+                                                    onChange={(event) =>
+                                                        setFormData((current) => ({
+                                                            ...current,
+                                                            assignedHandler: event.target.value,
+                                                        }))
+                                                    }
+                                                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                                                >
+                                                    <option value="">No assignment yet</option>
+                                                    {staffList.map((staff) => (
+                                                        <option key={staff._id} value={staff._id}>
+                                                            {staff.name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                <p className="mt-1.5 text-xs text-slate-500">
+                                                    Assign this incident to a teacher. Leave blank to keep it in the Administration pool.
+                                                </p>
+                                            </div>
 
                                             <div
                                                 className={`max-h-[55vh] overflow-y-auto overflow-x-hidden rounded-xl border-2 p-4 md:max-h-none ${

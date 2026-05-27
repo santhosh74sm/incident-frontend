@@ -34,13 +34,13 @@ const Sidebar = ({ onDesktopCollapsedChange }) => {
 
     const menuItems = useMemo(
         () => [
-            { title: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', roles: ['Admin', 'Teacher'] },
-            { title: 'All Incidents', icon: AlertCircle, path: '/incidents', roles: ['Admin', 'Teacher'] },
+            { title: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', roles: ['Super Admin', 'Admin', 'Teacher'] },
+            { title: 'All Incidents', icon: AlertCircle, path: '/incidents', roles: ['Super Admin', 'Admin', 'Teacher'] },
             { title: 'Report Incident', icon: PlusCircle, path: '/create-incident', roles: ['Admin', 'Teacher'] },
-            { title: 'Student Upload', icon: Upload, path: '/upload-students', roles: ['Admin'] },
-            { title: 'Incident Upload', icon: Upload, path: '/upload-incidents', roles: ['Admin'] },
-            { title: 'Official letters', icon: FileText, path: '/letter-templates', roles: ['Admin'] },
-            { title: 'Issued Letters', icon: Mail, path: '/issued-letters', roles: ['Admin'] },
+            { title: 'Student Upload', icon: Upload, path: '/upload-students', roles: ['Super Admin', 'Admin'] },
+            { title: 'Incident Upload', icon: Upload, path: '/upload-incidents', roles: ['Super Admin', 'Admin'] },
+            { title: 'Official letters', icon: FileText, path: '/letter-templates', roles: ['Super Admin', 'Admin'] },
+            { title: 'Issued Letters', icon: Mail, path: '/issued-letters', roles: ['Super Admin', 'Admin'] },
         ],
         []
     );

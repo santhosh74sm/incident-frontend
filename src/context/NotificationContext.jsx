@@ -60,7 +60,7 @@ const NotificationProvider = memo(({ children }) => {
     const mountedRef       = useRef(true);
 
     const enabled = useMemo(
-        () => Boolean(user?._id && ['Admin', 'Teacher', 'admin', 'teacher'].includes(user?.role)),
+        () => Boolean(user?._id && ['Super Admin', 'Admin', 'Teacher', 'super_admin', 'admin', 'teacher'].includes(user?.role)),
         [user?._id, user?.role]
     );
 

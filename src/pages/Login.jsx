@@ -166,13 +166,8 @@ const Login = () => {
                                     {errors.password && (
                                         <p className="mt-1.5 text-xs font-medium text-red-600 dark:text-red-300">{errors.password.message}</p>
                                     )}
-                                    <div className="mt-3 flex justify-end">
-                                        <Link
-                                            to="/forgot-password"
-                                            className="text-sm font-semibold text-blue-700 transition-all duration-300 hover:text-indigo-700 dark:text-blue-300 dark:hover:text-blue-200"
-                                        >
-                                            Forgot Password?
-                                        </Link>
+                                    <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300">
+                                        Password resets are handled by the Super Admin. Ask them for a temporary password.
                                     </div>
                                 </div>
 

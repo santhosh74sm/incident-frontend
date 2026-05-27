@@ -35,9 +35,6 @@ const lazyWithChunkRetry = (importPage) =>
 
 const Login = lazyWithChunkRetry(() => import('./pages/Login'));
 const Register = lazyWithChunkRetry(() => import('./pages/Register'));
-const ForgotPassword = lazyWithChunkRetry(() => import('./pages/ForgotPassword'));
-const VerifyOTP = lazyWithChunkRetry(() => import('./pages/VerifyOTP'));
-const ResetPassword = lazyWithChunkRetry(() => import('./pages/ResetPassword'));
 const ForceChangePassword = lazyWithChunkRetry(() => import('./pages/ForceChangePassword'));
 const Dashboard = lazyWithChunkRetry(() => import('./pages/Dashboard'));
 const CreateIncident = lazyWithChunkRetry(() => import('./pages/CreateIncident'));
@@ -115,9 +112,6 @@ function App() {
               <Routes>
                 <Route path="/login" element={loadPage(<Login />)} />
                 <Route path="/register" element={loadPage(<Register />)} />
-                <Route path="/forgot-password" element={loadPage(<ForgotPassword />)} />
-                <Route path="/verify-otp" element={loadPage(<VerifyOTP />)} />
-                <Route path="/reset-password" element={loadPage(<ResetPassword />)} />
 
                 <Route
                   element={

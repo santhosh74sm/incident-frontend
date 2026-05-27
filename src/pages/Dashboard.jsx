@@ -75,16 +75,18 @@ class DashboardErrorBoundary extends React.Component {
     }
 }
 
-const QuickActionsPanel = memo(() => (
+const QuickActionsPanel = memo(({ canReportIncident }) => (
     <DashboardPanel title="Quick shortcuts" description="Jump to everyday tasks staff use most." icon={TrendingUp}>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
-            <QuickActionLink
-                to="/create-incident"
-                tone="blue"
-                icon={FileText}
-                title="Report an incident"
-                description="Start a new incident record."
-            />
+            {canReportIncident ? (
+                <QuickActionLink
+                    to="/create-incident"
+                    tone="blue"
+                    icon={FileText}
+                    title="Report an incident"
+                    description="Start a new incident record."
+                />
+            ) : null}
             <QuickActionLink
                 to="/incidents"
                 tone="slate"
@@ -222,7 +224,7 @@ const DashboardContent = memo(() => {
 
                 const requests = [
                     apiClient.get('/api/incidents', { params: { page: 1, limit: 20 } }),
-                    user.role === 'Admin'
+                    ['Super Admin', 'Admin'].includes(user.role)
                         ? apiClient.get('/api/logs', { params: { page: 1, limit: 6 } })
                         : Promise.resolve({ data: [] }),
                 ];
@@ -265,11 +267,12 @@ const DashboardContent = memo(() => {
         const inProgress = incidents.filter((i) => i.status === 'In Progress').length;
         const closed = incidents.filter((i) => i.status === 'Closed').length;
         const unassigned = incidents.filter(
-            (i) => !i?.assignedHandler || i?.assignedHandler?.role === 'Admin' || i?.assignedHandler?.role === 'admin'
+            (i) => !i?.assignedHandler || ['Super Admin', 'Admin', 'super_admin', 'admin'].includes(i?.assignedHandler?.role)
         ).length;
 
         return { total, open, inProgress, closed, unassigned, active: open + inProgress };
     }, [incidents]);
+    const canReportIncident = ['Admin', 'Teacher'].includes(user?.role);
 
     const recentIncidentRows = useMemo(
         () =>
@@ -343,13 +346,15 @@ const DashboardContent = memo(() => {
                     icon={ShieldCheck}
                     actions={(
                         <>
-                            <Link
-                                to="/create-incident"
-                                className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/15"
-                            >
-                                <FileText size={16} />
-                                New incident
-                            </Link>
+                            {canReportIncident ? (
+                                <Link
+                                    to="/create-incident"
+                                    className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/15"
+                                >
+                                    <FileText size={16} />
+                                    New incident
+                                </Link>
+                            ) : null}
                             <Link
                                 to="/analytics"
                                 className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-blue-50"
@@ -406,7 +411,7 @@ const DashboardContent = memo(() => {
                     </DashboardPanel>
 
                     <div className="space-y-6 xl:col-span-5">
-                        <QuickActionsPanel />
+                        <QuickActionsPanel canReportIncident={canReportIncident} />
                         <LifecycleOverviewPanel rows={lifecycleRows} />
                     </div>
                 </div>

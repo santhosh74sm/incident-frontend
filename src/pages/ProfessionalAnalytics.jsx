@@ -165,7 +165,7 @@ const ProfessionalAnalytics = () => {
 
     const allStaffOptions = useMemo(
         // Single unified "Administration" entry for all admin accounts; teachers listed individually.
-        () => ['Administration', ...staffList.filter((staff) => staff.role !== 'Admin' && staff.role !== 'admin').map((staff) => staff.name)],
+        () => ['Administration', ...staffList.filter((staff) => !['Super Admin', 'Admin', 'super_admin', 'admin'].includes(staff.role)).map((staff) => staff.name)],
         [staffList]
     );
 
@@ -179,7 +179,7 @@ const ProfessionalAnalytics = () => {
             const staffIds =
                 !options?.reset && selectedStaff.length > 0 && !allSelected
                     ? staffList
-                        .filter((staff) => staff.role !== 'Admin' && staff.role !== 'admin')
+                        .filter((staff) => !['Super Admin', 'Admin', 'super_admin', 'admin'].includes(staff.role))
                         .filter((staff) => selectedStaff.includes(staff.name))
                         .map((staff) => staff._id)
                     : [];
@@ -253,7 +253,7 @@ const ProfessionalAnalytics = () => {
     }, [config, user?._id]);
 
     const fetchRecentLogs = useCallback(async () => {
-        if (!user?._id || user?.role !== 'Admin') return;
+        if (!user?._id || !['Super Admin', 'Admin'].includes(user?.role)) return;
 
         try {
             const { data } = await apiClient.get('/api/logs', {
@@ -332,7 +332,7 @@ const ProfessionalAnalytics = () => {
             closed,
             lettersIssued,
             active: open + inProgress,
-            unassigned: filteredIncidents.filter((incident) => !incident?.assignedHandler || incident?.assignedHandler?.role === 'Admin' || incident?.assignedHandler?.role === 'admin').length,
+            unassigned: filteredIncidents.filter((incident) => !incident?.assignedHandler || ['Super Admin', 'Admin', 'super_admin', 'admin'].includes(incident?.assignedHandler?.role)).length,
             resolutionRate: total > 0 ? `${Math.round((closed / total) * 100)}%` : '0%',
             statusData,
             pressureTrendData: buildDailySeries({

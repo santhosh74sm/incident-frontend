@@ -11,7 +11,15 @@ const MobileBottomNav = () => {
 
     if (!user) return null;
 
-    const canReport = user.role === 'Admin' || user.role === 'Teacher';
+    const canReport = ['Admin', 'Teacher'].includes(user.role);
+    const canManageStaff = ['Super Admin', 'Admin'].includes(user.role);
+    const navItems = [
+        { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, end: true },
+        { to: '/incidents', label: 'Incidents', icon: ListFilter },
+        canReport ? { to: '/create-incident', label: 'Report', icon: PlusCircle } : null,
+        { to: '/analytics', label: 'Reports', icon: BarChart3 },
+        canManageStaff ? { to: '/user-management', label: 'Staff', icon: Users } : null,
+    ].filter(Boolean);
 
     const linkClass = ({ isActive }) =>
         `${itemBase} ${
@@ -26,51 +34,16 @@ const MobileBottomNav = () => {
             style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0px))' }}
             aria-label="Mobile workspace navigation"
         >
-            <div className="mx-auto flex max-w-lg items-stretch justify-between gap-0.5">
-                <NavLink to="/dashboard" className={linkClass} end>
-                    <LayoutDashboard className="h-5 w-5 shrink-0" strokeWidth={2.1} aria-hidden />
-                    <span>Dashboard</span>
-                </NavLink>
-                <NavLink to="/incidents" className={linkClass}>
-                    <ListFilter className="h-5 w-5 shrink-0" strokeWidth={2.1} aria-hidden />
-                    <span>Incidents</span>
-                </NavLink>
-                {canReport ? (
-                    <NavLink to="/create-incident" className={linkClass}>
-                        <PlusCircle className="h-5 w-5 shrink-0" strokeWidth={2.1} aria-hidden />
-                        <span>Report</span>
+            <div
+                className="mx-auto grid max-w-lg items-stretch gap-1"
+                style={{ gridTemplateColumns: `repeat(${navItems.length}, minmax(0, 1fr))` }}
+            >
+                {navItems.map(({ to, label, icon: Icon, end }) => (
+                    <NavLink key={to} to={to} className={linkClass} end={end}>
+                        <Icon className="h-5 w-5 shrink-0" strokeWidth={2.1} aria-hidden />
+                        <span className="max-w-full truncate">{label}</span>
                     </NavLink>
-                ) : (
-                    <button
-                        type="button"
-                        disabled
-                        className={`${itemBase} cursor-not-allowed opacity-50`}
-                        aria-label="Report incident unavailable"
-                    >
-                        <PlusCircle className="h-5 w-5 shrink-0" strokeWidth={2.1} aria-hidden />
-                        <span>Report</span>
-                    </button>
-                )}
-                <NavLink to="/analytics" className={linkClass}>
-                    <BarChart3 className="h-5 w-5 shrink-0" strokeWidth={2.1} aria-hidden />
-                    <span>Reports</span>
-                </NavLink>
-                {user.role === 'Admin' ? (
-                    <NavLink to="/user-management" className={linkClass}>
-                        <Users className="h-5 w-5 shrink-0" strokeWidth={2.1} aria-hidden />
-                        <span>Staff</span>
-                    </NavLink>
-                ) : (
-                    <button
-                        type="button"
-                        disabled
-                        className={`${itemBase} cursor-not-allowed opacity-50`}
-                        aria-label="Staff management unavailable"
-                    >
-                        <Users className="h-5 w-5 shrink-0" strokeWidth={2.1} aria-hidden />
-                        <span>Staff</span>
-                    </button>
-                )}
+                ))}
             </div>
         </nav>
     );

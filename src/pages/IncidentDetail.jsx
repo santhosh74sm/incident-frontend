@@ -264,7 +264,7 @@ const IncidentDetail = () => {
     }, [id, user?._id]);
 
     const fetchStaff = useCallback(async () => {
-        if (user?.role !== 'Admin' || !user?._id) return;
+        if (!['Super Admin', 'Admin'].includes(user?.role) || !user?._id) return;
         try {
             const { data } = await apiClient.get('/api/auth/users');
             setStaffList(Array.isArray(data) ? data : []);
@@ -521,7 +521,7 @@ const IncidentDetail = () => {
 
     const isHandler = useMemo(() => {
         if (!incident || !user) return false;
-        if (user.role === 'Admin') return true;
+        if (['Super Admin', 'Admin'].includes(user.role)) return true;
         return Boolean(incident.assignedHandler && incident.assignedHandler._id === user._id);
     }, [incident, user]);
 
@@ -582,8 +582,8 @@ const IncidentDetail = () => {
 
     const showRejectionAlert = Boolean(incident?.rejectionReason && !incident?.closureRequested && incident?.status !== 'Closed');
     const showClosureRequestedAlert = Boolean(incident?.closureRequested && incident?.status !== 'Closed');
-    const showCaseAllocation = Boolean(user?.role === 'Admin' && incident?.approvalStatus === 'Pending');
-    const showAdminCommand = Boolean(user?.role === 'Admin' && incident?.status !== 'Closed' && incident?.approvalStatus === 'Approved');
+    const showCaseAllocation = Boolean(['Super Admin', 'Admin'].includes(user?.role) && incident?.approvalStatus === 'Pending');
+    const showAdminCommand = Boolean(['Super Admin', 'Admin'].includes(user?.role) && incident?.status !== 'Closed' && incident?.approvalStatus === 'Approved');
     const showFieldUpdates = Boolean(isHandler && incident?.status !== 'Closed' && incident?.approvalStatus === 'Approved');
 
     if (loading && !incident) {
@@ -643,7 +643,7 @@ const IncidentDetail = () => {
                                         {actionLoading ? <Loader2 size={16} className="mr-2 inline animate-spin" /> : <Download size={16} className="mr-2 inline" />}
                                         Export Report
                                     </button>
-                                    {user?.role === 'Admin' ? (
+                                    {['Super Admin', 'Admin'].includes(user?.role) ? (
                                         <button type="button" onClick={handleDelete} disabled={actionLoading}
                                             className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60">
                                             {actionLoading ? <Loader2 size={16} className="mr-2 inline animate-spin" /> : <Trash2 size={16} className="mr-2 inline" />}
@@ -711,7 +711,7 @@ const IncidentDetail = () => {
                                 title="Assigned To"
                                 value={resolveHandlerLabel(incident)}
                                 icon={UserCheck} tone={incident.assignedHandler ? 'blue' : 'amber'}
-                                helper={incident.assignedHandler?.role === 'Admin' || incident.assignedHandler?.role === 'admin' ? 'Administration' : (incident.assignedHandler?.role || 'Awaiting ownership')}
+                                helper={['Super Admin', 'Admin', 'super_admin', 'admin'].includes(incident.assignedHandler?.role) ? 'Administration' : (incident.assignedHandler?.role || 'Awaiting ownership')}
                             />
                             <DashboardStatCard title="Evidence Files" value={evidenceAssets.length} icon={FileImage} tone="slate" helper="Supporting files currently attached" />
                             <DashboardStatCard title="Progress Entries" value={progressLogs.length} icon={Activity} tone="blue" helper="Operational notes on the case" />
@@ -758,7 +758,7 @@ const IncidentDetail = () => {
                                     <DetailField icon={ShieldCheck} label="Reported By" value={incident.reportedBy?.name || 'N/A'} helper={incident.reportedBy?.role || 'Reporter'} />
                                     <DetailField icon={UserCheck} label="Assigned Handler"
                                         value={resolveHandlerLabel(incident)}
-                                        helper={incident.assignedHandler?.role === 'Admin' || incident.assignedHandler?.role === 'admin' ? 'Administration' : (incident.assignedHandler?.role || 'Waiting for assignment')}
+                                        helper={['Super Admin', 'Admin', 'super_admin', 'admin'].includes(incident.assignedHandler?.role) ? 'Administration' : (incident.assignedHandler?.role || 'Waiting for assignment')}
                                     />
                                     <DetailField icon={Calendar} label="Opened" value={formatShortDateTime(getIncidentTimestamp(incident))} />
                                     <DetailField icon={Activity} label="Last Updated" value={formatShortDateTime(incident.updatedAt || incident.closedAt || getIncidentTimestamp(incident))} />
@@ -784,7 +784,7 @@ const IncidentDetail = () => {
                                     title="Evidence Management"
                                     description="Uploaded evidence assets and supporting documents for this case."
                                     icon={FileImage}
-                                    actions={incident.status !== 'Closed' && (user?.role === 'Admin' || user?.role === 'Teacher') ? (
+                                    actions={incident.status !== 'Closed' && ['Super Admin', 'Admin', 'Teacher'].includes(user?.role) ? (
                                         <button type="button" onClick={handleOpenEvidenceForm}
                                             className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700">
                                             <Plus size={16} className="mr-2 inline" />Add Evidence
@@ -970,7 +970,7 @@ const IncidentDetail = () => {
                             </div>
 
                             <div className="space-y-6 xl:col-span-4">
-                                {(incident.letterGenerated || generatedLetter) && user?.role === 'Admin' ? (
+                                {(incident.letterGenerated || generatedLetter) && ['Super Admin', 'Admin'].includes(user?.role) ? (
                                     <DashboardPanel title="Generated Letter" description="Official letter output connected to this incident." icon={FileText}>
                                         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
                                             <p className="text-sm font-semibold text-emerald-800">
@@ -1058,7 +1058,7 @@ const IncidentDetail = () => {
                                                     className={`rounded-xl px-4 py-3 text-sm font-semibold transition ${activeFieldTab === 'handler' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:bg-white/70 hover:text-slate-800'}`}>
                                                     Handler Updates
                                                 </button>
-                                                {user?.role === 'Admin' ? (
+                                                {['Super Admin', 'Admin'].includes(user?.role) ? (
                                                     <button type="button" onClick={() => { setActiveFieldTab('assigner'); setEditMode(false); }}
                                                         className={`rounded-xl px-4 py-3 text-sm font-semibold transition ${activeFieldTab === 'assigner' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:bg-white/70 hover:text-slate-800'}`}>
                                                         Assigner Actions
@@ -1104,7 +1104,7 @@ const IncidentDetail = () => {
                                                     placeholder="Add additional notes or details..."
                                                     value={note}
                                                     onChange={(e) => setNote(e.target.value)}
-                                                    disabled={incident.closureRequested && user?.role !== 'Admin'}
+                                                    disabled={incident.closureRequested && !['Super Admin', 'Admin'].includes(user?.role)}
                                                 />
                                             </div>
                                             {!incident.closureRequested ? (
@@ -1114,7 +1114,7 @@ const IncidentDetail = () => {
                                                         {progressLoading ? <Loader2 size={16} className="mr-2 inline animate-spin" /> : <Activity size={16} className="mr-2 inline" />}
                                                         {progressLoading ? 'Saving...' : 'Save Progress'}
                                                     </button>
-                                                    {user?.role !== 'Admin' ? (
+                                                    {!['Super Admin', 'Admin'].includes(user?.role) ? (
                                                         <button type="button" onClick={() => handleAction('request-closure', { actionTaken: note })}
                                                             disabled={actionLoading}
                                                             className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60">

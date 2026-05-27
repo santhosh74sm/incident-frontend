@@ -19,21 +19,3 @@ export const useRegister = () =>
         mutationFn: (data) =>
             apiClient.post('/api/auth/register', data).then((r) => r.data),
     });
-
-export const useForgotPassword = () =>
-    useMutation({
-        mutationFn: (data) =>
-            apiClient.post('/api/auth/forgot-password', data).then((r) => r.data),
-    });
-
-export const useVerifyOtp = () =>
-    useMutation({
-        mutationFn: (data) =>
-            apiClient.post('/api/auth/verify-reset-otp', data).then((r) => r.data),
-    });
-
-export const useResetPassword = () =>
-    useMutation({
-        mutationFn: (data) =>
-            apiClient.post('/api/auth/reset-password', data).then((r) => r.data),
-    });

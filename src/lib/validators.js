@@ -50,36 +50,3 @@ export const registerSchema = z
         message: 'Passwords do not match',
         path: ['confirmPassword'],
     });
-
-export const forgotPasswordSchema = z.object({
-    email: z
-        .string()
-        .trim()
-        .email('Enter a valid email address')
-        .max(254, 'Email is too long'),
-});
-
-export const verifyOtpSchema = z.object({
-    email: z
-        .string()
-        .trim()
-        .email('Enter a valid email address')
-        .max(254),
-    otp: z
-        .string()
-        .trim()
-        .regex(/^\d{6}$/, 'Reset code must be exactly 6 digits'),
-});
-
-export const resetPasswordSchema = z
-    .object({
-        newPassword: z
-            .string()
-            .min(6, 'Password must be at least 6 characters')
-            .max(200, 'Password is too long'),
-        confirmPassword: z.string().min(1, 'Please confirm your password'),
-    })
-    .refine((data) => data.newPassword === data.confirmPassword, {
-        message: 'Passwords do not match',
-        path: ['confirmPassword'],
-    });

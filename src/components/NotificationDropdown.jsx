@@ -152,7 +152,7 @@ const resolveNotificationPath = (notification, role) => {
         const incidentId = metadata?.incidentId || metadata?.incident || null;
         return isValidMongoObjectId(incidentId)
             ? `/incidents/${incidentId}`
-            : role === 'Admin' ? '/issued-letters' : '/dashboard';
+            : ['Super Admin', 'Admin'].includes(role) ? '/issued-letters' : '/dashboard';
     }
     if (notification?.entityType === 'Template') return '/letter-templates';
     if (notification?.entityType === 'Student') {
@@ -164,7 +164,7 @@ const resolveNotificationPath = (notification, role) => {
         return admissionNumber ? `/student-analytics/${admissionNumber}` : '/user-management';
     }
     if (notification?.entityType === 'Bulk Upload') return '/upload-incidents';
-    return role === 'Admin' ? '/logs' : '/dashboard';
+    return ['Super Admin', 'Admin'].includes(role) ? '/logs' : '/dashboard';
 };
 
 // ─── Hook: detect mobile breakpoint (< 768 px) ───────────────────────────────

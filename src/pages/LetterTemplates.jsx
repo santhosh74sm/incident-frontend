@@ -33,9 +33,31 @@ const DOCX_PREVIEW_STYLES = `
     line-height: 1.6;
 }
 
+.dark .doc-preview-container {
+    color: #e5e7eb;
+}
+
 .doc-preview-container * {
     font-family: inherit !important;
     line-height: inherit !important;
+}
+
+.dark .doc-preview-container * {
+    color: inherit !important;
+}
+
+.doc-preview-container .doc-placeholder-token {
+    display: inline-block;
+    border-radius: 6px;
+    background: #eef2ff;
+    color: #3730a3 !important;
+    padding: 0 4px;
+    font-weight: 700;
+}
+
+.dark .doc-preview-container .doc-placeholder-token {
+    background: rgba(99, 102, 241, 0.24);
+    color: #c7d2fe !important;
 }
 
 .doc-preview-container p {
@@ -86,6 +108,48 @@ const DOCX_PREVIEW_STYLES = `
     text-align: right !important;
 }
 `;
+
+const highlightPreviewPlaceholders = (html = '') => {
+    if (typeof document === 'undefined' || !html) return html;
+
+    const template = document.createElement('template');
+    template.innerHTML = html;
+    const walker = document.createTreeWalker(template.content, window.NodeFilter.SHOW_TEXT);
+    const nodes = [];
+
+    while (walker.nextNode()) {
+        nodes.push(walker.currentNode);
+    }
+
+    nodes.forEach((node) => {
+        const text = node.nodeValue || '';
+        const matches = [...text.matchAll(/{{\s*[\w.]+\s*}}/g)];
+        if (matches.length === 0) return;
+
+        const fragment = document.createDocumentFragment();
+        let lastIndex = 0;
+
+        matches.forEach((match) => {
+            if (match.index > lastIndex) {
+                fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+            }
+
+            const token = document.createElement('span');
+            token.className = 'doc-placeholder-token';
+            token.textContent = match[0];
+            fragment.appendChild(token);
+            lastIndex = match.index + match[0].length;
+        });
+
+        if (lastIndex < text.length) {
+            fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+        }
+
+        node.parentNode?.replaceChild(fragment, node);
+    });
+
+    return template.innerHTML;
+};
 
 const LANGUAGE_META = {
     en: { label: 'English', short: 'EN' },
@@ -383,7 +447,7 @@ const PreviewPanel = ({
             </div>
 
             <div className="bg-slate-100/80 p-4 dark:bg-slate-950 lg:p-8">
-                <div className="mx-auto min-h-[520px] max-w-[840px] rounded-[24px] border border-slate-200 bg-white px-6 py-8 shadow-sm dark:border-slate-700 lg:px-12">
+                <div className="mx-auto min-h-[520px] max-w-[840px] rounded-[24px] border border-slate-200 bg-white px-6 py-8 shadow-sm dark:border-slate-700 dark:bg-slate-900 lg:px-12">
                     <div
                         className="doc-preview-container"
                         dangerouslySetInnerHTML={{ __html: previewState.html }}
@@ -885,7 +949,7 @@ const LetterTemplates = () => {
 
             setPreviewState({
                 loading: false,
-                html: result.value,
+                html: highlightPreviewPlaceholders(result.value),
                 error: '',
                 imageWarning,
             });
@@ -1078,7 +1142,7 @@ const LetterTemplates = () => {
 
     const currentVariant = getVariantMeta(selectedTemplate, activeLanguage);
 
-    if (user?.role !== 'Admin') {
+    if (!['Super Admin', 'Admin'].includes(user?.role)) {
         return (
             <div className="flex min-h-screen items-center justify-center bg-slate-100 p-6 text-slate-700 dark:bg-slate-950 dark:text-slate-200">
                 Admin access is required to manage official letters.

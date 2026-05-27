@@ -20,7 +20,7 @@ const DashboardLayout = () => {
 
             <main
                 ref={mainRef}
-                className={`h-screen overflow-y-auto overflow-x-hidden bg-slate-100 pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))] pt-20 transition-all duration-300 dark:bg-slate-950 sm:pt-24 lg:pb-0 lg:pt-24 ${
+                className={`h-screen w-full min-w-0 overflow-y-auto overflow-x-hidden bg-slate-100 pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))] pt-20 transition-all duration-300 dark:bg-slate-950 sm:pt-24 lg:pb-0 lg:pt-24 ${
                     isSidebarCollapsed ? 'lg:pl-[136px]' : 'lg:pl-[324px]'
                 }`}
             >

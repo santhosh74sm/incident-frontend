@@ -32,9 +32,6 @@ const PUBLIC_AUTH_PATHS = [
     '/api/auth/bootstrap-status',
     '/api/auth/register',
     '/api/auth/login',
-    '/api/auth/forgot-password',
-    '/api/auth/verify-reset-otp',
-    '/api/auth/reset-password',
 ];
 
 const LEGACY_AUTH_STORAGE_KEYS = [

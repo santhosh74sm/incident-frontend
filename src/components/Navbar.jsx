@@ -95,7 +95,7 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
     }, []);
 
     const profileMenuItems = useMemo(() => {
-        if (user?.role !== 'Admin') {
+        if (!['Super Admin', 'Admin'].includes(user?.role)) {
             return [];
         }
 
@@ -153,7 +153,7 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                         </button>
 
                         <div className="flex shrink-0 items-center justify-end gap-1.5 sm:gap-2">
-                            {user?.role === 'Admin' ? (
+                            {['Super Admin', 'Admin'].includes(user?.role) ? (
                                 <button
                                     type="button"
                                     title="Settings"

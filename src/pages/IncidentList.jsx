@@ -95,7 +95,7 @@ const IncidentList = () => {
     const allStaffOptions = useMemo(
         // Show a single unified "Administration" entry for all admin accounts;
         // teachers are listed individually by name.
-        () => ['Administration', ...staffList.filter((staff) => staff.role !== 'Admin' && staff.role !== 'admin').map((staff) => staff.name)],
+        () => ['Administration', ...staffList.filter((staff) => !['Super Admin', 'Admin', 'super_admin', 'admin'].includes(staff.role)).map((staff) => staff.name)],
         [staffList]
     );
 
@@ -113,7 +113,7 @@ const IncidentList = () => {
                 const selectedTeacherIds =
                     selectedStaff.length > 0 && !allSelected
                         ? staffList
-                            .filter((staff) => staff.role !== 'Admin' && staff.role !== 'admin')
+                            .filter((staff) => !['Super Admin', 'Admin', 'super_admin', 'admin'].includes(staff.role))
                             .filter((staff) => selectedStaff.includes(staff.name))
                             .map((staff) => staff._id)
                         : [];
@@ -561,8 +561,8 @@ const IncidentList = () => {
                             >
                                 <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
                                     {filteredIncidents.map((incident) => {
-                                        const isPendingApproval = user?.role === 'Admin' && incident.approvalStatus === 'Pending';
-                                        const isClosureRequest = user?.role === 'Admin' && incident.closureRequested && incident.status !== 'Closed';
+                                        const isPendingApproval = ['Super Admin', 'Admin'].includes(user?.role) && incident.approvalStatus === 'Pending';
+                                        const isClosureRequest = ['Super Admin', 'Admin'].includes(user?.role) && incident.closureRequested && incident.status !== 'Closed';
                                         const isHighPriority = incident.isHighPriority === true;
                                         const priority = isPriority(incident) || isHighPriority;
                                         const unread = isUnread(incident);

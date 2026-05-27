@@ -188,7 +188,7 @@ export const resolveHandlerLabel = (incident) => {
     const handler = incident?.assignedHandler;
     if (!handler) return 'Administration';
     const role = handler.role || '';
-    if (role === 'Admin' || role === 'admin') return 'Administration';
+    if (['Super Admin', 'Admin', 'super_admin', 'admin'].includes(role)) return 'Administration';
     return handler.name || 'Administration';
 };
 

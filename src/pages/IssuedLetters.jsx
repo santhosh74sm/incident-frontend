@@ -485,7 +485,7 @@ const IssuedLetters = () => {
         }
     };
 
-    if (user?.role !== 'Admin') {
+    if (!['Super Admin', 'Admin'].includes(user?.role)) {
         return (
             <div className="flex min-h-screen items-center justify-center bg-slate-100 p-6 text-slate-700">
                 Admin access is required to manage issued letters.

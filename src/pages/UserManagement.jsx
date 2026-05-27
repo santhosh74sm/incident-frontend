@@ -2,9 +2,11 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import apiClient from '../config/apiClient';
 import {
     AlertCircle,
+    Check,
     ChevronDown,
     ChevronLeft,
     ChevronRight,
+    Copy,
     Edit3,
     Loader2,
     Plus,
@@ -28,7 +30,7 @@ import {
 } from '../components/analytics/DashboardPrimitives';
 import { UnifiedFilterBar, UnifiedMultiSelect, UnifiedSearchInput } from '../components/UnifiedFilters';
 
-const CREATE_ROLE_OPTIONS = ['Admin', 'Teacher'];
+const getCreateRoleOptions = (role) => (role === 'Super Admin' ? ['Admin', 'Teacher'] : ['Teacher']);
 const CLASS_OPTIONS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
 const PAGE_SIZE = 8;
 
@@ -36,6 +38,8 @@ const INPUT_CLASS_NAME =
     'w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 shadow-sm transition-all duration-300 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:shadow-none dark:focus:border-blue-400 dark:focus:ring-blue-400/20';
 const READONLY_CLASS_NAME =
     'w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:shadow-none';
+
+const getRoleGroup = (role) => (['Super Admin', 'Admin'].includes(role) ? 'Administration' : 'Teacher');
 
 const formatDate = (value) => {
     if (!value) return 'Not available';
@@ -55,12 +59,17 @@ const getRoleBadgeTone = (role) => {
 };
 
 const RoleBadge = ({ role }) => (
-    <span
-        className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${getRoleBadgeTone(
-            role
-        )}`}
-    >
-        {role || 'Staff'}
+    <span className="inline-flex flex-col items-start gap-1">
+        <span
+            className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${getRoleBadgeTone(
+                role
+            )}`}
+        >
+            {role || 'Staff'}
+        </span>
+        <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400">
+            {getRoleGroup(role)}
+        </span>
     </span>
 );
 
@@ -140,8 +149,8 @@ const UserManagement = () => {
 
     const [usersList, setUsersList] = useState([]);
     const [studentRegistry, setStudentRegistry] = useState([]);
-    const [resetRequests, setResetRequests] = useState([]);
     const [temporaryPasswordResult, setTemporaryPasswordResult] = useState(null);
+    const [temporaryPasswordCopied, setTemporaryPasswordCopied] = useState(false);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState(null);
@@ -166,8 +175,36 @@ const UserManagement = () => {
     const [submittingUser, setSubmittingUser] = useState(false);
     const [submittingStudent, setSubmittingStudent] = useState(false);
     const [submittingEditStudent, setSubmittingEditStudent] = useState(false);
+    const [resettingPasswordId, setResettingPasswordId] = useState(null);
 
     const config = useMemo(() => ({ headers: {} }), []);
+    const createRoleOptions = useMemo(() => getCreateRoleOptions(user?.role), [user?.role]);
+    const canManageStaffUser = useCallback(
+        (record) => {
+            if (!record) return false;
+            if (user?.role === 'Super Admin') return true;
+            return user?.role === 'Admin' && record.role === 'Teacher';
+        },
+        [user?.role]
+    );
+
+    const copyTemporaryPassword = useCallback(async () => {
+        if (!temporaryPasswordResult?.temporaryPassword) return;
+
+        try {
+            await navigator.clipboard.writeText(temporaryPasswordResult.temporaryPassword);
+            setTemporaryPasswordCopied(true);
+            addToast('Copied successfully', 'success');
+        } catch {
+            setTemporaryPasswordCopied(false);
+            addToast('Copy failed. Select the password manually.', 'error');
+        }
+    }, [addToast, temporaryPasswordResult?.temporaryPassword]);
+
+    const closeTemporaryPasswordModal = useCallback(() => {
+        setTemporaryPasswordResult(null);
+        setTemporaryPasswordCopied(false);
+    }, []);
 
     const loadUsers = useCallback(async () => {
         const { data } = await apiClient.get('/api/auth/users', config);
@@ -178,12 +215,6 @@ const UserManagement = () => {
         const { data } = await apiClient.get('/api/students/all', config);
         return Array.isArray(data) ? [...data].sort((a, b) => a.name.localeCompare(b.name)) : [];
     }, [config]);
-
-    const loadResetRequests = useCallback(async () => {
-        if (user?.role !== 'Super Admin') return [];
-        const { data } = await apiClient.get('/api/auth/password-reset-requests', config);
-        return Array.isArray(data) ? data : [];
-    }, [config, user?.role]);
 
     const fetchData = useCallback(
         async (showLoader = true, options = {}) => {
@@ -199,11 +230,10 @@ const UserManagement = () => {
             setError(null);
 
             try {
-                const [userData, studentData, resetData] = await Promise.all([loadUsers(), loadStudents(), loadResetRequests()]);
+                const [userData, studentData] = await Promise.all([loadUsers(), loadStudents()]);
                 if (!isMounted()) return;
                 setUsersList(userData);
                 setStudentRegistry(studentData);
-                setResetRequests(resetData);
             } catch (requestError) {
                 if (!isMounted()) return;
                 setUsersList([]);
@@ -218,7 +248,7 @@ const UserManagement = () => {
                 }
             }
         },
-        [loadResetRequests, loadStudents, loadUsers, user?._id]
+        [loadStudents, loadUsers, user?._id]
     );
 
     useEffect(() => {
@@ -230,44 +260,23 @@ const UserManagement = () => {
     }, [fetchData]);
 
     const summary = useMemo(() => {
-        const superAdminCount = usersList.filter((entry) => entry.role === 'Super Admin').length;
-        const adminCount = usersList.filter((entry) => entry.role === 'Admin').length;
+        const administrationCount = usersList.filter((entry) => getRoleGroup(entry.role) === 'Administration').length;
         const teacherCount = usersList.filter((entry) => entry.role === 'Teacher').length;
-        const staffCount = usersList.filter((entry) => entry.role !== 'Admin').length;
+        const staffCount = usersList.filter((entry) => getRoleGroup(entry.role) !== 'Administration').length;
 
         return {
             totalUsers: usersList.length,
-            superAdminCount,
-            adminCount,
+            administrationCount,
             teacherCount,
             staffCount,
             totalStudents: studentRegistry.length,
         };
     }, [studentRegistry.length, usersList]);
 
-    const roleFilterOptions = useMemo(() => {
-        // Map DB role values to display labels: 'Admin' → 'Administration'
-        const values = new Set(['Super Admin', 'Admin', 'Teacher']);
-        usersList.forEach((entry) => {
-            if (entry.role) values.add(entry.role);
-        });
-        return Array.from(values);
-    }, [usersList]);
-
-    // Display label for the role filter (maps internal role value to UI label)
-    const roleOptionLabels = useMemo(
-        () => ({
-            Admin: 'Administration',
-            'Super Admin': 'Super Admin',
-            Teacher: 'Teacher',
-        }),
-        []
-    );
-
     // Convert role filter options to {id, label} shape for the dropdown
     const roleFilterOptionObjects = useMemo(
-        () => roleFilterOptions.map((role) => ({ id: role, label: roleOptionLabels[role] || role })),
-        [roleFilterOptions, roleOptionLabels]
+        () => ['Administration', 'Teacher'].map((roleGroup) => ({ id: roleGroup, label: roleGroup })),
+        []
     );
 
     const classFilterOptions = useMemo(
@@ -294,7 +303,7 @@ const UserManagement = () => {
         }
 
         if (roleFilter.length > 0) {
-            nextUsers = nextUsers.filter((entry) => roleFilter.includes(entry.role));
+            nextUsers = nextUsers.filter((entry) => roleFilter.includes(getRoleGroup(entry.role)));
         }
 
         return nextUsers;
@@ -332,6 +341,12 @@ const UserManagement = () => {
     useEffect(() => {
         setStudentPage(1);
     }, [filteredStudents.length]);
+
+    useEffect(() => {
+        if (!createRoleOptions.includes(newUser.role)) {
+            setNewUser((current) => ({ ...current, role: createRoleOptions[0] || 'Teacher' }));
+        }
+    }, [createRoleOptions, newUser.role]);
 
     const totalStaffPages = Math.ceil(filteredUsers.length / PAGE_SIZE) || 0;
     const totalStudentPages = Math.ceil(filteredStudents.length / PAGE_SIZE) || 0;
@@ -378,26 +393,32 @@ const UserManagement = () => {
         }
     };
 
-    const completeResetRequest = async (requestId) => {
+    const resetStaffPassword = useCallback(async (record) => {
+        const staffId = record?._id || record?.id;
+        if (!staffId) {
+            addToast('Unable to reset password because this staff record has no ID.', 'error');
+            return;
+        }
+
+        setResettingPasswordId(staffId);
         try {
-            const { data } = await apiClient.post(`/api/auth/password-reset-requests/${requestId}/complete`, {}, config);
-            setTemporaryPasswordResult(data);
+            const { data } = await apiClient.post(`/api/auth/users/${staffId}/reset-password`, {}, config);
+            if (!data?.temporaryPassword) {
+                throw new Error('Temporary password missing from response.');
+            }
+            setTemporaryPasswordCopied(false);
+            setTemporaryPasswordResult({
+                ...data,
+                user: data.user || record,
+            });
             addToast('Temporary password generated.', 'success');
             fetchData(false);
         } catch (requestError) {
             addToast(requestError.response?.data?.message || 'Unable to reset password.', 'error');
+        } finally {
+            setResettingPasswordId(null);
         }
-    };
-
-    const rejectResetRequest = async (requestId) => {
-        try {
-            await apiClient.post(`/api/auth/password-reset-requests/${requestId}/reject`, {}, config);
-            addToast('Password reset request rejected.', 'success');
-            fetchData(false);
-        } catch (requestError) {
-            addToast(requestError.response?.data?.message || 'Unable to reject request.', 'error');
-        }
-    };
+    }, [addToast, config, fetchData]);
 
     const handleAddStudent = async (event) => {
         event.preventDefault();
@@ -444,6 +465,9 @@ const UserManagement = () => {
 
     const openDetailModal = useCallback((record, type) => {
         setDetailModal({ open: true, type, record });
+        if (type === 'staff' && temporaryPasswordResult?.user?._id !== record?._id) {
+            setTemporaryPasswordResult(null);
+        }
         if (type === 'student') {
             setEditStudent({
                 _id: record._id,
@@ -453,7 +477,7 @@ const UserManagement = () => {
                 section: record.section
             });
         }
-    }, []);
+    }, [temporaryPasswordResult?.user?._id]);
 
     const handleEditStudent = async (event) => {
         event.preventDefault();
@@ -500,16 +524,24 @@ const UserManagement = () => {
                 render: (row) => (
                     <div className="flex items-center gap-1">
                         <ActionButton
-                            icon={Trash2}
-                            label="Delete user"
-                            tone="red"
-                            onClick={() => openDeleteDialog(row, 'staff')}
+                            icon={Edit3}
+                            label="Edit user"
+                            tone="blue"
+                            onClick={() => openDetailModal(row, 'staff')}
                         />
+                        {canManageStaffUser(row) ? (
+                            <ActionButton
+                                icon={Trash2}
+                                label="Delete user"
+                                tone="red"
+                                onClick={() => openDeleteDialog(row, 'staff')}
+                            />
+                        ) : null}
                     </div>
                 ),
             },
         ],
-        [openDeleteDialog]
+        [canManageStaffUser, openDeleteDialog, openDetailModal]
     );
 
     const studentColumns = useMemo(
@@ -634,47 +666,10 @@ const UserManagement = () => {
 
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                             <DashboardStatCard title="Total Users" value={summary.totalUsers} icon={Users} tone="blue" />
-                            <DashboardStatCard title="Administrators" value={summary.adminCount} icon={Shield} tone="slate" />
+                            <DashboardStatCard title="Administration" value={summary.administrationCount} icon={Shield} tone="slate" />
                             <DashboardStatCard title="Teachers" value={summary.teacherCount} icon={UserPlus} tone="emerald" />
                             <DashboardStatCard title="Students" value={summary.totalStudents} icon={UserCheck} tone="amber" />
                         </div>
-
-                        {user?.role === 'Super Admin' ? (
-                            <DashboardPanel
-                                title="Password Reset Requests"
-                                description="Generate temporary passwords for staff who requested account recovery."
-                                icon={KeyRound}
-                            >
-                                {temporaryPasswordResult?.temporaryPassword ? (
-                                    <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-                                        Temporary password for <span className="font-semibold">{temporaryPasswordResult.user?.email}</span>:
-                                        <span className="ml-2 rounded-lg bg-white px-2 py-1 font-mono font-semibold">{temporaryPasswordResult.temporaryPassword}</span>
-                                    </div>
-                                ) : null}
-                                {resetRequests.length === 0 ? (
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">No pending reset requests.</p>
-                                ) : (
-                                    <div className="space-y-3">
-                                        {resetRequests.map((request) => (
-                                            <div key={request._id} className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-950 sm:flex-row sm:items-center sm:justify-between">
-                                                <div>
-                                                    <p className="font-semibold text-slate-900 dark:text-slate-100">{request.user?.name || request.email}</p>
-                                                    <p className="text-sm text-slate-500 dark:text-slate-400">{request.email}</p>
-                                                </div>
-                                                <div className="flex flex-wrap gap-2">
-                                                    <button type="button" onClick={() => completeResetRequest(request._id)} className="rounded-xl bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">
-                                                        Generate Temporary Password
-                                                    </button>
-                                                    <button type="button" onClick={() => rejectResetRequest(request._id)} className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-white dark:border-slate-700 dark:text-slate-200">
-                                                        Reject
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </DashboardPanel>
-                        ) : null}
 
                         {error ? (
                             <div className="rounded-[28px] border border-rose-200 bg-rose-50/90 px-5 py-4 shadow-sm">
@@ -911,7 +906,7 @@ const UserManagement = () => {
                             <div>
                                 <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Add New User</h3>
                                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                                    Add login access for office or teaching staff. You can assign either an administrator or teacher role.
+                                    Add login access for staff. Super Admins can create Admins and Teachers; Admins can create Teachers only.
                                 </p>
                             </div>
                             <button
@@ -958,7 +953,7 @@ const UserManagement = () => {
                                             onChange={(event) => setNewUser((current) => ({ ...current, role: event.target.value }))}
                                             className={`${INPUT_CLASS_NAME} appearance-none pr-10`}
                                         >
-                                            {CREATE_ROLE_OPTIONS.map((role) => (
+                                            {createRoleOptions.map((role) => (
                                                 <option key={role} value={role}>
                                                     {role}
                                                 </option>
@@ -982,8 +977,16 @@ const UserManagement = () => {
                             </div>
 
                             <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
-                                Only <span className="font-semibold">Admin</span> and{' '}
-                                <span className="font-semibold">Teacher</span> roles are available when creating accounts here.
+                                {user?.role === 'Super Admin' ? (
+                                    <>
+                                        Super Admin can create <span className="font-semibold">Admin</span> and{' '}
+                                        <span className="font-semibold">Teacher</span> accounts. Super Admin accounts are limited to the first setup owner.
+                                    </>
+                                ) : (
+                                    <>
+                                        Admin accounts can create <span className="font-semibold">Teacher</span> accounts only.
+                                    </>
+                                )}
                             </div>
 
                             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
@@ -1151,9 +1154,8 @@ const UserManagement = () => {
                                     <PreviewField label="Joined" value={formatDate(detailModal.record.createdAt)} />
                                 </div>
                                 <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-                                    Editing staff accounts beyond create and delete happens outside this screen. Staff records can be removed here when someone leaves or no longer needs access.
+                                    Super Admins can reset staff passwords here. Admins can manage Teacher accounts only.
                                 </div>
-
                                 <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                                     <button
                                         type="button"
@@ -1162,14 +1164,33 @@ const UserManagement = () => {
                                     >
                                         Close
                                     </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => openDeleteDialog(detailModal.record, detailModal.type)}
-                                        className="inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-5 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-rose-700"
-                                    >
-                                        <Trash2 size={16} />
-                                        Delete User
-                                    </button>
+                                    {user?.role === 'Super Admin' ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => resetStaffPassword(detailModal.record)}
+                                            disabled={resettingPasswordId === (detailModal.record._id || detailModal.record.id)}
+                                            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
+                                        >
+                                            {resettingPasswordId === (detailModal.record._id || detailModal.record.id) ? (
+                                                <Loader2 size={16} className="animate-spin" />
+                                            ) : (
+                                                <KeyRound size={16} />
+                                            )}
+                                            {resettingPasswordId === (detailModal.record._id || detailModal.record.id)
+                                                ? 'Generating...'
+                                                : 'Generate Temporary Password'}
+                                        </button>
+                                    ) : null}
+                                    {canManageStaffUser(detailModal.record) ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => openDeleteDialog(detailModal.record, detailModal.type)}
+                                            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-5 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-rose-700"
+                                        >
+                                            <Trash2 size={16} />
+                                            Delete User
+                                        </button>
+                                    ) : null}
                                 </div>
                             </div>
                         ) : (
@@ -1259,6 +1280,81 @@ const UserManagement = () => {
                                 </div>
                             </form>
                         )}
+                    </div>
+                </div>
+            ) : null}
+
+            {temporaryPasswordResult?.temporaryPassword ? (
+                <div className="fixed inset-0 z-[110] flex min-h-[100dvh] items-center justify-center overflow-y-auto bg-slate-950/60 p-3 backdrop-blur-sm sm:p-4">
+                    <div className="my-auto w-full max-w-lg overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-2xl transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900 sm:rounded-[30px]">
+                        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-5 dark:border-slate-800 sm:px-7">
+                            <div className="flex min-w-0 items-start gap-3">
+                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-200">
+                                    <KeyRound size={20} />
+                                </div>
+                                <div className="min-w-0">
+                                    <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                                        Temporary Password Generated
+                                    </h3>
+                                    <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                                        Share it through a trusted channel. This staff member must change it at next login.
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={closeTemporaryPasswordModal}
+                                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-slate-400 transition-all duration-300 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                                aria-label="Close temporary password popup"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-5 px-5 py-6 sm:px-7">
+                            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-950">
+                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                    Staff Account
+                                </p>
+                                <p className="mt-2 break-words text-sm font-semibold text-slate-800 dark:text-slate-100">
+                                    {temporaryPasswordResult.user?.name || 'Staff member'}
+                                    {temporaryPasswordResult.user?.email ? (
+                                        <span className="block text-sm font-medium text-slate-500 dark:text-slate-400">
+                                            {temporaryPasswordResult.user.email}
+                                        </span>
+                                    ) : null}
+                                </p>
+                            </div>
+
+                            <div>
+                                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                    Generated Password
+                                </label>
+                                <div className="flex flex-col gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-400/30 dark:bg-emerald-500/10 sm:flex-row sm:items-center">
+                                    <div className="min-w-0 flex-1 rounded-xl bg-white px-4 py-3 text-center font-mono text-xl font-black tracking-wide text-slate-950 shadow-sm dark:bg-slate-950 dark:text-emerald-100">
+                                        {temporaryPasswordResult.temporaryPassword}
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={copyTemporaryPassword}
+                                        className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-500/20"
+                                    >
+                                        {temporaryPasswordCopied ? <Check size={16} /> : <Copy size={16} />}
+                                        {temporaryPasswordCopied ? 'Copied successfully' : 'Copy'}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                                <button
+                                    type="button"
+                                    onClick={closeTemporaryPasswordModal}
+                                    className="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition-all duration-300 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                                >
+                                    Done
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             ) : null}
