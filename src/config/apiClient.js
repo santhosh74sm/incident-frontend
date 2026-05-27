@@ -65,6 +65,7 @@ const getRequestPath = (config = {}) => {
 const isPublicAuthRequest = (config = {}) => PUBLIC_AUTH_PATHS.includes(getRequestPath(config));
 const isAuthRestoreRequest = (config = {}) => getRequestPath(config) === AUTH_RESTORE_PATH;
 const isRefreshRequest = (config = {}) => getRequestPath(config) === REFRESH_PATH;
+const isAccessTokenExpired = (error) => error.response?.data?.code === 'ACCESS_TOKEN_EXPIRED';
 
 const removeAuthHeader = (headers) => {
     if (!headers) return;
@@ -127,6 +128,7 @@ apiClient.interceptors.response.use(
         const status = error.response?.status;
         if (
             status === 401 &&
+            isAccessTokenExpired(error) &&
             !config.__refreshRetried &&
             !isPublicAuthRequest(config) &&
             !isRefreshRequest(config)
