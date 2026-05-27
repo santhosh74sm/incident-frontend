@@ -352,7 +352,7 @@ const UserManagement = () => {
         setSubmittingUser(true);
 
         try {
-            await apiClient.post('/api/auth/register', newUser, config);
+            await apiClient.post('/api/auth/users', newUser, config);
             addToast('User created successfully.', 'success');
             setShowAddUserModal(false);
             setNewUser({ name: '', email: '', role: 'Teacher', password: '' });

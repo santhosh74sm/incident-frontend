@@ -1,5 +1,5 @@
 import React, { createContext, memo, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import apiClient from '../config/apiClient';
+import apiClient, { clearLegacyAuthState } from '../config/apiClient';
 
 const AuthContext = createContext({
     user: null,
@@ -20,7 +20,10 @@ export const AuthProvider = memo(({ children }) => {
             .then(({ data }) => {
                 if (mounted) setUser(data);
             })
-            .catch(() => {
+            .catch((error) => {
+                if (error.response?.status === 401) {
+                    clearLegacyAuthState();
+                }
                 if (mounted) setUser(null);
             })
             .finally(() => {
@@ -28,6 +31,7 @@ export const AuthProvider = memo(({ children }) => {
             });
 
         const handleLogout = () => {
+            clearLegacyAuthState();
             setUser(null);
         };
 
@@ -49,6 +53,7 @@ export const AuthProvider = memo(({ children }) => {
         } catch {
             // Session may already be expired; local state still needs clearing.
         }
+        clearLegacyAuthState();
         setUser(null);
     }, []);
 
