@@ -33,13 +33,22 @@ import { UnifiedFilterBar, UnifiedMultiSelect, UnifiedSearchInput } from '../com
 const getCreateRoleOptions = (role) => (role === 'Super Admin' ? ['Admin', 'Teacher'] : ['Teacher']);
 const CLASS_OPTIONS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
 const PAGE_SIZE = 8;
+const normalizeRole = (role) => {
+    const roleMap = {
+        admin: 'Admin',
+        teacher: 'Teacher',
+        super_admin: 'Super Admin',
+        'super admin': 'Super Admin',
+    };
+    return roleMap[String(role || '').trim().toLowerCase()] || role;
+};
 
 const INPUT_CLASS_NAME =
     'w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 shadow-sm transition-all duration-300 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:shadow-none dark:focus:border-blue-400 dark:focus:ring-blue-400/20';
 const READONLY_CLASS_NAME =
     'w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:shadow-none';
 
-const getRoleGroup = (role) => (['Super Admin', 'Admin'].includes(role) ? 'Administration' : 'Teacher');
+const getRoleGroup = (role) => (['Super Admin', 'Admin'].includes(normalizeRole(role)) ? 'Administration' : 'Teacher');
 
 const formatDate = (value) => {
     if (!value) return 'Not available';
@@ -52,26 +61,30 @@ const formatDate = (value) => {
 };
 
 const getRoleBadgeTone = (role) => {
-    if (role === 'Super Admin') return 'border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-400/30 dark:bg-purple-500/10 dark:text-purple-200';
-    if (role === 'Admin') return 'border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-400/30 dark:bg-indigo-500/10 dark:text-indigo-200';
-    if (role === 'Teacher') return 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-400/30 dark:bg-blue-500/10 dark:text-blue-200';
+    const normalizedRole = normalizeRole(role);
+    if (normalizedRole === 'Super Admin') return 'border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-400/30 dark:bg-purple-500/10 dark:text-purple-200';
+    if (normalizedRole === 'Admin') return 'border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-400/30 dark:bg-indigo-500/10 dark:text-indigo-200';
+    if (normalizedRole === 'Teacher') return 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-400/30 dark:bg-blue-500/10 dark:text-blue-200';
     return 'border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200';
 };
 
-const RoleBadge = ({ role }) => (
+const RoleBadge = ({ role }) => {
+    const normalizedRole = normalizeRole(role);
+    return (
     <span className="inline-flex flex-col items-start gap-1">
         <span
             className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${getRoleBadgeTone(
                 role
             )}`}
         >
-            {role || 'Staff'}
+            {normalizedRole || 'Staff'}
         </span>
         <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400">
             {getRoleGroup(role)}
         </span>
     </span>
-);
+    );
+};
 
 const ActionButton = ({ icon: Icon, label, tone = 'slate', onClick }) => {
     const toneClassName = {
@@ -178,14 +191,16 @@ const UserManagement = () => {
     const [resettingPasswordId, setResettingPasswordId] = useState(null);
 
     const config = useMemo(() => ({ headers: {} }), []);
-    const createRoleOptions = useMemo(() => getCreateRoleOptions(user?.role), [user?.role]);
+    const currentRole = useMemo(() => normalizeRole(user?.role), [user?.role]);
+    const createRoleOptions = useMemo(() => getCreateRoleOptions(currentRole), [currentRole]);
     const canManageStaffUser = useCallback(
         (record) => {
             if (!record) return false;
-            if (user?.role === 'Super Admin') return true;
-            return user?.role === 'Admin' && record.role === 'Teacher';
+            const recordRole = normalizeRole(record.role);
+            if (currentRole === 'Super Admin') return true;
+            return currentRole === 'Admin' && recordRole === 'Teacher';
         },
-        [user?.role]
+        [currentRole]
     );
 
     const copyTemporaryPassword = useCallback(async () => {
@@ -230,14 +245,31 @@ const UserManagement = () => {
             setError(null);
 
             try {
-                const [userData, studentData] = await Promise.all([loadUsers(), loadStudents()]);
+                const [userResult, studentResult] = await Promise.allSettled([loadUsers(), loadStudents()]);
                 if (!isMounted()) return;
-                setUsersList(userData);
-                setStudentRegistry(studentData);
+
+                if (userResult.status === 'fulfilled') {
+                    setUsersList(userResult.value);
+                } else {
+                    setUsersList([]);
+                }
+
+                if (studentResult.status === 'fulfilled') {
+                    setStudentRegistry(studentResult.value);
+                } else {
+                    setStudentRegistry([]);
+                }
+
+                if (userResult.status === 'rejected') {
+                    throw userResult.reason;
+                }
+
+                if (studentResult.status === 'rejected') {
+                    setError(studentResult.reason?.response?.data?.message || 'Student registry could not be loaded.');
+                }
             } catch (requestError) {
                 if (!isMounted()) return;
                 setUsersList([]);
-                setStudentRegistry([]);
                 setError(requestError.response?.data?.message || 'Failed to load management data.');
             } finally {
                 if (!isMounted()) return;
@@ -261,7 +293,7 @@ const UserManagement = () => {
 
     const summary = useMemo(() => {
         const administrationCount = usersList.filter((entry) => getRoleGroup(entry.role) === 'Administration').length;
-        const teacherCount = usersList.filter((entry) => entry.role === 'Teacher').length;
+        const teacherCount = usersList.filter((entry) => normalizeRole(entry.role) === 'Teacher').length;
         const staffCount = usersList.filter((entry) => getRoleGroup(entry.role) !== 'Administration').length;
 
         return {
@@ -977,7 +1009,7 @@ const UserManagement = () => {
                             </div>
 
                             <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
-                                {user?.role === 'Super Admin' ? (
+                                {currentRole === 'Super Admin' ? (
                                     <>
                                         Super Admin can create <span className="font-semibold">Admin</span> and{' '}
                                         <span className="font-semibold">Teacher</span> accounts. Super Admin accounts are limited to the first setup owner.
@@ -1164,7 +1196,7 @@ const UserManagement = () => {
                                     >
                                         Close
                                     </button>
-                                    {user?.role === 'Super Admin' ? (
+                                    {currentRole === 'Super Admin' ? (
                                         <button
                                             type="button"
                                             onClick={() => resetStaffPassword(detailModal.record)}

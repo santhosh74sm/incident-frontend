@@ -94,9 +94,19 @@ const PrivateRoute = ({ children }) => {
   return user ? children : <Navigate to="/login" />;
 };
 
+const normalizeRole = (role) => {
+  const roleMap = {
+    admin: 'Admin',
+    teacher: 'Teacher',
+    super_admin: 'Super Admin',
+    'super admin': 'Super Admin',
+  };
+  return roleMap[String(role || '').trim().toLowerCase()] || role;
+};
+
 const AdminRoute = ({ children }) => {
   const { user } = useAuth();
-  return user && ['Super Admin', 'Admin'].includes(user.role) ? children : <Navigate to="/dashboard" />;
+  return user && ['Super Admin', 'Admin'].includes(normalizeRole(user.role)) ? children : <Navigate to="/dashboard" />;
 };
 
 function App() {
