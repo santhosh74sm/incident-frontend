@@ -1,5 +1,5 @@
 import React, { createContext, memo, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import apiClient, { clearLegacyAuthState, initializeCsrfToken, resetAuthEventGuard } from '../config/apiClient';
+import apiClient, { clearLegacyAuthState, resetAuthEventGuard } from '../config/apiClient';
 
 const AuthContext = createContext({
     user: null,
@@ -19,7 +19,6 @@ export const AuthProvider = memo(({ children }) => {
         if (!silent) setLoading(true);
 
         try {
-            await initializeCsrfToken();
             const { data } = await apiClient.get('/api/auth/me', {
                 __skipAuthLogout: true,
                 headers: {

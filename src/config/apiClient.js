@@ -23,16 +23,13 @@ const apiClient = axios.create({
 
 const RETRYABLE_STATUSES = new Set([408, 429, 500, 502, 503, 504]);
 const RETRYABLE_METHODS = new Set(['get', 'head', 'options']);
-const UNSAFE_METHODS = new Set(['post', 'put', 'patch', 'delete']);
 const MAX_RETRIES = 2;
 const AUTH_RESTORE_PATH = '/api/auth/me';
-const CSRF_PATH = '/api/auth/csrf-token';
 const REFRESH_PATH = '/api/auth/refresh';
 
 const PUBLIC_AUTH_PATHS = [
     '/api/auth/admin-exists',
     '/api/auth/bootstrap-status',
-    CSRF_PATH,
     '/api/auth/register',
     '/api/auth/login',
     '/api/auth/forgot-password',
@@ -51,8 +48,6 @@ const LEGACY_AUTH_STORAGE_KEYS = [
 ];
 
 let logoutDispatched = false;
-let csrfToken = null;
-let csrfPromise = null;
 let refreshPromise = null;
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -81,8 +76,6 @@ const removeAuthHeader = (headers) => {
 export const clearLegacyAuthState = () => {
     removeAuthHeader(apiClient.defaults.headers.common);
     removeAuthHeader(axios.defaults.headers.common);
-    csrfToken = null;
-    csrfPromise = null;
 
     if (typeof window === 'undefined') return;
 
@@ -103,29 +96,6 @@ const dispatchAuthLogout = (reason = 'session-invalid') => {
     window.dispatchEvent(new CustomEvent('auth:logout', { detail: { reason } }));
 };
 
-const setHeader = (config, name, value) => {
-    if (!config.headers) config.headers = {};
-    config.headers[name] = value;
-};
-
-const fetchCsrfToken = async () => {
-    if (csrfToken) return csrfToken;
-    if (!csrfPromise) {
-        csrfPromise = apiClient
-            .get(CSRF_PATH, { __skipAuthLogout: true, __skipCsrf: true })
-            .then(({ data }) => {
-                csrfToken = data?.csrfToken || null;
-                return csrfToken;
-            })
-            .finally(() => {
-                csrfPromise = null;
-            });
-    }
-    return csrfPromise;
-};
-
-export const initializeCsrfToken = () => fetchCsrfToken();
-
 const refreshSession = async () => {
     if (!refreshPromise) {
         refreshPromise = apiClient
@@ -142,14 +112,6 @@ apiClient.interceptors.request.use(async (config) => {
         removeAuthHeader(config.headers);
     }
 
-    const method = String(config.method || 'get').toLowerCase();
-    if (!config.__skipCsrf && UNSAFE_METHODS.has(method)) {
-        const token = await fetchCsrfToken();
-        if (token) {
-            setHeader(config, 'X-CSRF-Token', token);
-        }
-    }
-
     return config;
 });
 
@@ -163,16 +125,6 @@ apiClient.interceptors.response.use(
     async (error) => {
         const config = error.config || {};
         const status = error.response?.status;
-        if (status === 419 && !config.__csrfRetried) {
-            csrfToken = null;
-            config.__csrfRetried = true;
-            const token = await fetchCsrfToken();
-            if (token) {
-                setHeader(config, 'X-CSRF-Token', token);
-            }
-            return apiClient(config);
-        }
-
         if (
             status === 401 &&
             !config.__refreshRetried &&
@@ -204,7 +156,6 @@ apiClient.interceptors.response.use(
         const retryCount = config.__retryCount || 0;
         const canRetry =
             status !== 401 &&
-            status !== 419 &&
             RETRYABLE_METHODS.has(method) &&
             (!status || RETRYABLE_STATUSES.has(status)) &&
             retryCount < MAX_RETRIES;
