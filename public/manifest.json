@@ -1,0 +1,8 @@
+{
+  "short_name": "Incident System",
+  "name": "Incident Tracking System",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#0f172a",
+  "background_color": "#f1f5f9"
+}

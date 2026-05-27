@@ -1,0 +1,1182 @@
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import * as XLSX from 'xlsx';
+import {
+    Bar,
+    BarChart,
+    CartesianGrid,
+    Cell,
+    LabelList,
+    Line,
+    LineChart,
+    Pie,
+    PieChart,
+    ResponsiveContainer,
+    XAxis,
+    YAxis,
+} from 'recharts';
+import {
+    Activity,
+    AlertTriangle,
+    BarChart3,
+    CheckCircle,
+    Clock,
+    Download,
+    FileText,
+    List,
+    ShieldCheck,
+    TrendingUp,
+    Users,
+} from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { UnifiedDateInput, UnifiedFilterBar, UnifiedMultiSelect } from '../components/UnifiedFilters';
+import {
+    ActivityFeed,
+    AnalyticsDataTable,
+    CategoryHeatmap,
+    CHART_THEME,
+    ChartTooltip,
+    ChartSurface,
+    DashboardHero,
+    DashboardPageSkeleton,
+    DashboardPanel,
+    DashboardStatCard,
+    DashboardWidgetPanel,
+    EmptyStatePanel,
+    LegendList,
+} from '../components/analytics/DashboardPrimitives';
+import { DailyCreationTrendChart, IncidentStatusTrendChart } from '../components/analytics/TrendCharts';
+import apiClient from '../config/apiClient';
+import {
+    buildAnalyticsActivityFeed,
+    buildDistribution,
+    buildEvidenceDistribution,
+    buildIncidentFilterParams,
+    CHART_COLORS,
+    formatShare,
+    REQUEST_CONFIG,
+    resolveHandlerLabel,
+    STATUS_COLORS,
+    STATUS_OPTIONS,
+    buildDailySeries,
+    buildCreationTrendSeries,
+    buildStatusTrendSeries,
+    formatActivityRecordLabel,
+    formatShortDate,
+    formatShortDateTime,
+    getIncidentTimestamp,
+    normalizeOptionList,
+    toneForStatus,
+} from '../utils/analytics';
+
+
+const buildClassResolution = (items) => {
+    const grouped = {};
+
+    items.forEach((incident) => {
+        const className = incident.class || incident.studentDetails?.className || 'Unknown';
+        if (!grouped[className]) {
+            grouped[className] = { className, total: 0, open: 0, closed: 0 };
+        }
+
+        grouped[className].total += 1;
+        if (incident.status === 'Open') grouped[className].open += 1;
+        if (incident.status === 'Closed') grouped[className].closed += 1;
+    });
+
+    return Object.values(grouped).sort((a, b) => Number(a.className) - Number(b.className) || a.className.localeCompare(b.className));
+};
+
+const buildStaffWorkload = (items) => {
+    const grouped = {};
+
+    items.forEach((incident) => {
+        const staffName = resolveHandlerLabel(incident);
+        if (!grouped[staffName]) {
+            grouped[staffName] = {
+                name: staffName,
+                open: 0,
+                inProgress: 0,
+                closed: 0,
+                total: 0,
+            };
+        }
+
+        grouped[staffName].total += 1;
+        if (incident.status === 'Open') grouped[staffName].open += 1;
+        if (incident.status === 'In Progress') grouped[staffName].inProgress += 1;
+        if (incident.status === 'Closed') grouped[staffName].closed += 1;
+    });
+
+    return Object.values(grouped).sort((a, b) => b.total - a.total).slice(0, 8);
+};
+
+const buildCategoryHeatmap = (items) => {
+    const grouped = {};
+
+    items.forEach((incident) => {
+        const category = incident.category || 'Uncategorized';
+        if (!grouped[category]) {
+            grouped[category] = {
+                label: category,
+                open: 0,
+                inProgress: 0,
+                closed: 0,
+            };
+        }
+
+        if (incident.status === 'Open') grouped[category].open += 1;
+        if (incident.status === 'In Progress') grouped[category].inProgress += 1;
+        if (incident.status === 'Closed') grouped[category].closed += 1;
+    });
+
+    return Object.values(grouped).sort((a, b) => (b.open + b.inProgress + b.closed) - (a.open + a.inProgress + a.closed));
+};
+
+const ProfessionalAnalytics = () => {
+    const { user } = useAuth();
+    const navigate = useNavigate();
+    const [incidents, setIncidents] = useState([]);
+    const [staffList, setStaffList] = useState([]);
+    const [selectedStaff, setSelectedStaff] = useState([]);
+    const [recentLogs, setRecentLogs] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [isExporting, setIsExporting] = useState(false);
+    const [activeTab, setActiveTab] = useState('overview');
+    const [filters, setFilters] = useState({
+        classes: [],
+        sections: [],
+        incidentTypes: [],
+        locations: [],
+        evidence: [],
+        statuses: [],
+    });
+    const [filterOptions, setFilterOptions] = useState({
+        classes: [],
+        sections: [],
+        incidentTypes: [],
+        locations: [],
+        evidence: [],
+    });
+    const [dateRange, setDateRange] = useState({ start: '', end: '' });
+    const [letterStatusMap, setLetterStatusMap] = useState({});
+
+    const config = REQUEST_CONFIG;
+
+    const allStaffOptions = useMemo(
+        // Single unified "Administration" entry for all admin accounts; teachers listed individually.
+        () => ['Administration', ...staffList.filter((staff) => staff.role !== 'Admin' && staff.role !== 'admin').map((staff) => staff.name)],
+        [staffList]
+    );
+
+    const fetchIncidents = useCallback(async (options = { reset: false }) => {
+        if (!user?._id) return;
+
+        try {
+            setLoading(true);
+            const allSelected = allStaffOptions.length > 0 && selectedStaff.length === allStaffOptions.length;
+            const administrationSelected = selectedStaff.includes('Administration');
+            const staffIds =
+                !options?.reset && selectedStaff.length > 0 && !allSelected
+                    ? staffList
+                        .filter((staff) => staff.role !== 'Admin' && staff.role !== 'admin')
+                        .filter((staff) => selectedStaff.includes(staff.name))
+                        .map((staff) => staff._id)
+                    : [];
+            const params = options?.reset
+                ? new URLSearchParams()
+                : buildIncidentFilterParams({
+                    dateRange: { start: dateRange.start, end: dateRange.end },
+                    statuses: filters.statuses,
+                    classes: filters.classes,
+                    sections: filters.sections,
+                    types: filters.incidentTypes,
+                    locations: filters.locations,
+                    evidenceTypes: filters.evidence,
+                    staffIds,
+                    // includeAdminRole: true = fetch incidents for ALL admin-role users
+                    includeAdminRole: selectedStaff.length > 0 && !allSelected && administrationSelected,
+                    includeUnassigned: false,
+                });
+
+            const requestConfig = params.toString() ? { ...config, params } : config;
+
+            const { data } = await apiClient.get('/api/incidents', requestConfig);
+            setIncidents(Array.isArray(data) ? data : []);
+        } catch {
+            setIncidents([]);
+        } finally {
+            setLoading(false);
+        }
+    }, [allStaffOptions, config, dateRange, filters.classes, filters.evidence, filters.incidentTypes, filters.locations, filters.sections, filters.statuses, selectedStaff, staffList, user?._id]);
+
+    const fetchFilterOptions = useCallback(async () => {
+        if (!user?._id) return;
+
+        try {
+            const [studentsRes, categoriesRes, locationsRes, evidenceRes] = await Promise.all([
+                apiClient.get('/api/students/filters', config),
+                apiClient.get('/api/incidents/categories', config),
+                apiClient.get('/api/incidents/locations', config),
+                apiClient.get('/api/evidence-types', config),
+            ]);
+
+            setFilterOptions({
+                classes: studentsRes.data?.classes || [],
+                sections: studentsRes.data?.sections || [],
+                incidentTypes: normalizeOptionList(categoriesRes.data),
+                locations: normalizeOptionList(locationsRes.data),
+                evidence: normalizeOptionList(evidenceRes.data),
+            });
+        } catch {
+            setFilterOptions({
+                classes: [],
+                sections: [],
+                incidentTypes: [],
+                locations: [],
+                evidence: [],
+            });
+        }
+    }, [config, user?._id]);
+
+    const fetchStaff = useCallback(async () => {
+        if (!user?._id) return;
+
+        try {
+            const { data } = await apiClient.get('/api/auth/users', config);
+            // Keep ALL users in staffList (role info needed for filter logic);
+            // admins are excluded from the dropdown via allStaffOptions.
+            setStaffList(Array.isArray(data) ? data : []);
+        } catch {
+            setStaffList([]);
+        }
+    }, [config, user?._id]);
+
+    const fetchRecentLogs = useCallback(async () => {
+        if (!user?._id || user?.role !== 'Admin') return;
+
+        try {
+            const { data } = await apiClient.get('/api/logs', {
+                ...config,
+                params: { page: 1, limit: 6 },
+            });
+            const logs = Array.isArray(data) ? data : data?.logs;
+            setRecentLogs(Array.isArray(logs) ? logs : []);
+        } catch {
+            setRecentLogs([]);
+        }
+    }, [config, user?.role, user?._id]);
+
+    const fetchLetterStatusForIncidents = useCallback(async (incidentsList) => {
+        if (!user?._id || !incidentsList || incidentsList.length === 0) return;
+
+        try {
+            const incidentIds = incidentsList.map((incident) => incident._id || incident.id).filter(Boolean);
+            const { data } = await apiClient.post(
+                '/api/issued-letters/status/batch',
+                { incidentIds },
+                config
+            );
+            setLetterStatusMap(data || {});
+        } catch {
+            setLetterStatusMap({});
+        }
+    }, [config, user?._id]);
+
+    useEffect(() => {
+        fetchIncidents();
+    }, [dateRange.end, dateRange.start, fetchIncidents, filters.classes, filters.evidence, filters.incidentTypes, filters.locations, filters.sections, filters.statuses, selectedStaff, user?._id]);
+
+    useEffect(() => {
+        fetchFilterOptions();
+        fetchStaff();
+        fetchRecentLogs();
+    }, [fetchFilterOptions, fetchRecentLogs, fetchStaff]);
+
+    useEffect(() => {
+        if (user?.role === 'Teacher' && user?.name) {
+            setSelectedStaff([user.name]);
+        }
+    }, [user?.name, user?.role]);
+
+    useEffect(() => {
+        if (incidents.length > 0) {
+            // Refetch letter status when the incident count changes, not on every array reference update.
+            fetchLetterStatusForIncidents(incidents);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on incidents.length only
+    }, [incidents.length, fetchLetterStatusForIncidents]);
+
+    const filteredIncidents = useMemo(() => incidents, [incidents]);
+
+    const analytics = useMemo(() => {
+        const total = filteredIncidents.length;
+        const open = filteredIncidents.filter((incident) => incident.status === 'Open').length;
+        const inProgress = filteredIncidents.filter((incident) => incident.status === 'In Progress').length;
+        const closed = filteredIncidents.filter((incident) => incident.status === 'Closed').length;
+        const lettersIssued = filteredIncidents.filter((incident) => {
+            const incidentId = incident._id || incident.id;
+            return letterStatusMap[incidentId]?.hasLetter;
+        }).length;
+
+        const statusData = [
+            { name: 'Open', value: open, color: STATUS_COLORS.Open },
+            { name: 'In Progress', value: inProgress, color: STATUS_COLORS['In Progress'] },
+            { name: 'Closed', value: closed, color: STATUS_COLORS.Closed },
+        ];
+
+        return {
+            total,
+            open,
+            inProgress,
+            closed,
+            lettersIssued,
+            active: open + inProgress,
+            unassigned: filteredIncidents.filter((incident) => !incident?.assignedHandler || incident?.assignedHandler?.role === 'Admin' || incident?.assignedHandler?.role === 'admin').length,
+            resolutionRate: total > 0 ? `${Math.round((closed / total) * 100)}%` : '0%',
+            statusData,
+            pressureTrendData: buildDailySeries({
+                items: filteredIncidents,
+                dateRange,
+                resolveDate: getIncidentTimestamp,
+                fallbackDays: 14,
+                project: ({ label, fullLabel, bucketItems }) => {
+                    const bucketOpen = bucketItems.filter((incident) => incident.status === 'Open').length;
+                    const bucketInProgress = bucketItems.filter((incident) => incident.status === 'In Progress').length;
+                    const bucketClosed = bucketItems.filter((incident) => incident.status === 'Closed').length;
+
+                    return {
+                        id: fullLabel,
+                        name: label,
+                        fullDate: fullLabel,
+                        total: bucketItems.length,
+                        active: bucketOpen + bucketInProgress,
+                        open: bucketOpen,
+                        inProgress: bucketInProgress,
+                        closed: bucketClosed,
+                    };
+                },
+            }),
+            statusTrendData: buildStatusTrendSeries({
+                items: filteredIncidents,
+                dateRange,
+                fallbackDays: 14,
+            }),
+            creationTrendData: buildCreationTrendSeries({
+                items: filteredIncidents,
+                dateRange,
+                fallbackDays: 14,
+            }),
+            categoryData: buildDistribution(filteredIncidents, (incident) => incident.category || 'Uncategorized'),
+            locationData: buildDistribution(filteredIncidents, (incident) => incident.location || 'Unknown'),
+            evidenceData: buildEvidenceDistribution(filteredIncidents),
+            classWiseData: buildClassResolution(filteredIncidents),
+            staffWorkload: buildStaffWorkload(filteredIncidents),
+            categoryHeatmap: buildCategoryHeatmap(filteredIncidents),
+        };
+    }, [dateRange, filteredIncidents, letterStatusMap]);
+
+    const recentActions = useMemo(() => {
+        if (recentLogs.length > 0) {
+            return recentLogs.map((log) => ({
+                id: log._id,
+                title: log.actionName || 'System action',
+                description: `${log.performedByName || log.performedBy || 'System'} · ${formatActivityRecordLabel(log.entityType)}`,
+                timestamp: formatShortDateTime(log.createdAt),
+                icon: Activity,
+                tone:
+                    log?.actionName?.toLowerCase().includes('delete')
+                        ? 'red'
+                        : log?.actionName?.toLowerCase().includes('close')
+                            ? 'emerald'
+                            : log?.actionName?.toLowerCase().includes('update')
+                                ? 'blue'
+                                : 'amber',
+            }));
+        }
+
+        return buildAnalyticsActivityFeed(filteredIncidents, { ActivityIcon: Activity });
+    }, [filteredIncidents, recentLogs]);
+
+    const filteredIncidentDetails = useMemo(
+        () =>
+            [...filteredIncidents].sort((a, b) => {
+                const classA = String(a.class || a.studentDetails?.className || '').toLowerCase();
+                const classB = String(b.class || b.studentDetails?.className || '').toLowerCase();
+                if (classA !== classB) return classA.localeCompare(classB);
+
+                const sectionA = String(a.section || a.studentDetails?.section || '').toLowerCase();
+                const sectionB = String(b.section || b.studentDetails?.section || '').toLowerCase();
+                if (sectionA !== sectionB) return sectionA.localeCompare(sectionB);
+
+                return String(a.studentDetails?.name || '').localeCompare(String(b.studentDetails?.name || ''));
+            }),
+        [filteredIncidents]
+    );
+
+    const hasActiveFilters = useMemo(
+        () =>
+            filters.classes.length > 0 ||
+            filters.sections.length > 0 ||
+            filters.incidentTypes.length > 0 ||
+            filters.locations.length > 0 ||
+            filters.evidence.length > 0 ||
+            filters.statuses.length > 0 ||
+            selectedStaff.length > 0 ||
+            Boolean(dateRange.start) ||
+            Boolean(dateRange.end),
+        [dateRange.end, dateRange.start, filters, selectedStaff.length]
+    );
+
+    const resetFilters = useCallback(() => {
+        setFilters({
+            classes: [],
+            sections: [],
+            incidentTypes: [],
+            locations: [],
+            evidence: [],
+            statuses: [],
+        });
+        setSelectedStaff(user?.role === 'Teacher' && user?.name ? [user.name] : []);
+        setDateRange({ start: '', end: '' });
+        fetchIncidents({ reset: true });
+    }, [fetchIncidents, user?.name, user?.role]);
+
+    const exportIncidentDetailsToExcel = useCallback(() => {
+        try {
+            setIsExporting(true);
+
+            const excelData = filteredIncidentDetails.map((incident) => {
+                const incidentId = incident._id || incident.id;
+                const letterInfo = letterStatusMap[incidentId] || {};
+
+                return {
+                    'Admission Number': incident.admissionNo || 'N/A',
+                    'Student Name': incident.studentDetails?.name || incident.studentsInvolved?.[0] || 'N/A',
+                    Class: incident.class || incident.studentDetails?.className || 'N/A',
+                    Section: incident.section || incident.studentDetails?.section || 'N/A',
+                    Category: incident.category || 'N/A',
+                    Location: incident.location || 'N/A',
+                    Evidence: (incident.evidence || []).map((entry) => entry?.evidenceType).filter(Boolean).join(', ') || 'None',
+                    Reporter: incident.reportedBy?.name || 'Unknown',
+                    Handler: resolveHandlerLabel(incident),
+                    Status: incident.status || 'N/A',
+                    Opened: formatShortDate(getIncidentTimestamp(incident)),
+                    Closed: formatShortDate(incident.closedAt),
+                    Letter: letterInfo.hasLetter ? 'Issued' : 'Not Issued',
+                };
+            });
+
+            const ws = XLSX.utils.json_to_sheet(excelData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Incident Details');
+            XLSX.writeFile(wb, `incident_details_${new Date().toISOString().split('T')[0]}.xlsx`);
+        } finally {
+            setIsExporting(false);
+        }
+    }, [filteredIncidentDetails, letterStatusMap]);
+
+    if (loading) {
+        return (
+            <div className="flex min-h-screen bg-slate-100">
+                <div className="flex min-w-0 flex-1 flex-col">
+                    <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+                        <div className="mx-auto max-w-[1600px]">
+                            <DashboardPageSkeleton />
+                        </div>
+                    </main>
+                </div>
+            </div>
+        );
+    }
+
+    const detailColumns = [
+        { key: 'admissionNo', label: 'Admission No', render: (row) => <span className="font-mono text-xs text-slate-600">{row.admissionNo || 'N/A'}</span> },
+        { key: 'studentName', label: 'Student', render: (row) => row.studentDetails?.name || row.studentsInvolved?.[0] || 'N/A' },
+        { key: 'className', label: 'Class', render: (row) => row.class || row.studentDetails?.className || 'N/A' },
+        { key: 'section', label: 'Section', render: (row) => row.section || row.studentDetails?.section || 'N/A' },
+        { key: 'category', label: 'Type', render: (row) => row.category || 'N/A' },
+        { key: 'location', label: 'Location', render: (row) => row.location || 'N/A' },
+        {
+            key: 'evidence',
+            label: 'Evidence',
+            render: (row) =>
+                row.evidence && row.evidence.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                        {row.evidence.map((entry, index) => (
+                            <span key={`${row._id}-e-${index}`} className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-600">
+                                {entry.evidenceType || 'Evidence'}
+                            </span>
+                        ))}
+                    </div>
+                ) : (
+                    <span className="text-xs text-slate-400">None</span>
+                ),
+        },
+        { key: 'reporter', label: 'Reporter', render: (row) => row.reportedBy?.name || 'Unknown' },
+        { key: 'handler', label: 'Handler', render: (row) => resolveHandlerLabel(row) },
+        {
+            key: 'status',
+            label: 'Status',
+            render: (row) => (
+                <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${toneForStatus(row.status)}`}>
+                    {row.status}
+                </span>
+            ),
+        },
+        { key: 'opened', label: 'Opened', render: (row) => formatShortDate(getIncidentTimestamp(row)) },
+        { key: 'closed', label: 'Closed', render: (row) => formatShortDate(row.closedAt) },
+        {
+            key: 'letter',
+            label: 'Letter',
+            render: (row) => {
+                const incidentId = row._id || row.id;
+                const issued = Boolean(letterStatusMap[incidentId]?.hasLetter);
+                return (
+                    <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${issued ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+                        {issued ? 'Issued' : 'Pending'}
+                    </span>
+                );
+            },
+        },
+        {
+            key: 'actions',
+            label: 'Actions',
+            render: (row) => (
+                <button
+                    onClick={() => navigate(`/incidents/${row._id || row.id}`)}
+                    className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
+                >
+                    View
+                </button>
+            ),
+        },
+    ];
+
+    const statusTrendColumns = [
+        { key: 'name', label: 'Period' },
+        { key: 'open', label: 'Open' },
+        { key: 'inProgress', label: 'In Progress' },
+        { key: 'closed', label: 'Closed' },
+    ];
+
+    const creationTrendColumns = [
+        { key: 'name', label: 'Period' },
+        { key: 'created', label: 'New Incidents' },
+    ];
+
+    const statusTableRows = analytics.statusData.map((entry) => ({
+        ...entry,
+        share: formatShare(entry.value, analytics.total),
+    }));
+
+    const statusColumns = [
+        { key: 'name', label: 'Status' },
+        { key: 'value', label: 'Incidents' },
+        { key: 'share', label: 'Share' },
+    ];
+
+    const workloadColumns = [
+        { key: 'name', label: 'Staff Member' },
+        { key: 'open', label: 'Open' },
+        { key: 'inProgress', label: 'In Progress' },
+        { key: 'closed', label: 'Closed' },
+        { key: 'total', label: 'Total' },
+    ];
+
+    const categoryHeatmapColumns = [
+        { key: 'label', label: 'Category' },
+        { key: 'open', label: 'Open' },
+        { key: 'inProgress', label: 'In Progress' },
+        { key: 'closed', label: 'Closed' },
+        { key: 'total', label: 'Total' },
+    ];
+
+    const categoryHeatmapRows = analytics.categoryHeatmap.map((row) => ({
+        ...row,
+        total: row.open + row.inProgress + row.closed,
+    }));
+
+    const categoryColumns = [
+        { key: 'name', label: 'Category' },
+        { key: 'count', label: 'Incidents' },
+    ];
+
+    const evidenceColumns = [
+        { key: 'name', label: 'Evidence Type' },
+        { key: 'count', label: 'Records' },
+    ];
+
+    const classResolutionColumns = [
+        { key: 'className', label: 'Class' },
+        { key: 'open', label: 'Open' },
+        { key: 'closed', label: 'Closed' },
+        { key: 'total', label: 'Total' },
+    ];
+
+    const classResolutionRows = analytics.classWiseData.map((row) => ({
+        ...row,
+        total: row.total ?? row.open + row.closed,
+    }));
+
+    const locationColumns = [
+        { key: 'name', label: 'Location' },
+        { key: 'count', label: 'Incidents' },
+    ];
+
+    return (
+        <div className="flex min-h-screen bg-slate-100">
+            <div className="flex min-w-0 flex-1 flex-col">
+                <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+                    <div className="mx-auto max-w-[1600px] space-y-6">
+                        <DashboardHero
+                            eyebrow="Reports & trends"
+                            title="School reports & summary"
+                            description="A clear view of incident volumes, handling load, incident types, and how cases move from open through closed."
+                            icon={ShieldCheck}
+                            actions={
+                                <div className="flex flex-wrap gap-2">
+                                    <button
+                                        onClick={() => setActiveTab('overview')}
+                                        className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 ${activeTab === 'overview' ? 'bg-white text-slate-900 shadow-sm dark:bg-white dark:text-slate-950' : 'bg-white/10 text-white hover:bg-white/20 dark:bg-white/10 dark:text-white dark:hover:bg-white/20'}`}
+                                    >
+                                        <BarChart3 size={16} className="mr-2 inline" />
+                                        Overview
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('monitor')}
+                                        className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 ${activeTab === 'monitor' ? 'bg-white text-slate-900 shadow-sm dark:bg-white dark:text-slate-950' : 'bg-white/10 text-white hover:bg-white/20 dark:bg-white/10 dark:text-white dark:hover:bg-white/20'}`}
+                                    >
+                                        <Activity size={16} className="mr-2 inline" />
+                                        Activity feed
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('details')}
+                                        className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 ${activeTab === 'details' ? 'bg-white text-slate-900 shadow-sm dark:bg-white dark:text-slate-950' : 'bg-white/10 text-white hover:bg-white/20 dark:bg-white/10 dark:text-white dark:hover:bg-white/20'}`}
+                                    >
+                                        <List size={16} className="mr-2 inline" />
+                                        Case details
+                                    </button>
+                                </div>
+                            }
+                            meta={
+                                <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
+                                    <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5">
+                                        {filteredIncidents.length} filtered incident{filteredIncidents.length === 1 ? '' : 's'}
+                                    </span>
+                                    <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5">
+                                        Resolution rate {analytics.resolutionRate}
+                                    </span>
+                                </div>
+                            }
+                        />
+
+                        <UnifiedFilterBar
+                            hasActiveFilters={hasActiveFilters}
+                            onReset={resetFilters}
+                            title="Search & filters"
+                            actions={
+                                <button
+                                    onClick={exportIncidentDetailsToExcel}
+                                    disabled={isExporting}
+                                    className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
+                                >
+                                    <Download size={14} />
+                                    {isExporting ? 'Exporting...' : 'Export Excel'}
+                                </button>
+                            }
+                        >
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-8">
+                                <UnifiedDateInput
+                                    label="From Date"
+                                    value={dateRange.start}
+                                    onChange={(value) => setDateRange((current) => ({ ...current, start: value }))}
+                                />
+                                <UnifiedDateInput
+                                    label="To Date"
+                                    value={dateRange.end}
+                                    onChange={(value) => setDateRange((current) => ({ ...current, end: value }))}
+                                />
+                                <UnifiedMultiSelect
+                                    label="Class"
+                                    options={filterOptions.classes}
+                                    selected={filters.classes}
+                                    onChange={(value) => setFilters((current) => ({ ...current, classes: value }))}
+                                    placeholder="All Classes"
+                                    searchPlaceholder="Search class..."
+                                />
+                                <UnifiedMultiSelect
+                                    label="Section"
+                                    options={filterOptions.sections}
+                                    selected={filters.sections}
+                                    onChange={(value) => setFilters((current) => ({ ...current, sections: value }))}
+                                    placeholder="All Sections"
+                                    searchPlaceholder="Search section..."
+                                />
+                                <UnifiedMultiSelect
+                                    label="Incident Category"
+                                    options={filterOptions.incidentTypes}
+                                    selected={filters.incidentTypes}
+                                    onChange={(value) => setFilters((current) => ({ ...current, incidentTypes: value }))}
+                                    placeholder="All Categories"
+                                    searchPlaceholder="Search category..."
+                                />
+                                <UnifiedMultiSelect
+                                    label="Location"
+                                    options={filterOptions.locations}
+                                    selected={filters.locations}
+                                    onChange={(value) => setFilters((current) => ({ ...current, locations: value }))}
+                                    placeholder="All Locations"
+                                    searchPlaceholder="Search location..."
+                                />
+                                <UnifiedMultiSelect
+                                    label="Evidence Type"
+                                    options={filterOptions.evidence}
+                                    selected={filters.evidence}
+                                    onChange={(value) => setFilters((current) => ({ ...current, evidence: value }))}
+                                    placeholder="All Evidence Types"
+                                    searchPlaceholder="Search evidence..."
+                                />
+                                <UnifiedMultiSelect
+                                    label="Status"
+                                    options={STATUS_OPTIONS}
+                                    selected={filters.statuses}
+                                    onChange={(value) => setFilters((current) => ({ ...current, statuses: value }))}
+                                    placeholder="All Status"
+                                    searchPlaceholder="Search status..."
+                                />
+                                {user?.role !== 'Teacher' ? (
+                                    <UnifiedMultiSelect
+                                        label="Staff Members"
+                                        options={allStaffOptions}
+                                        selected={selectedStaff}
+                                        onChange={setSelectedStaff}
+                                        placeholder="All Staff"
+                                        searchPlaceholder="Search staff..."
+                                    />
+                                ) : (
+                                    <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Scope</p>
+                                        <p className="mt-2 text-sm font-semibold text-slate-900">{user?.name}</p>
+                                    </div>
+                                )}
+                            </div>
+                        </UnifiedFilterBar>
+
+                        {activeTab === 'overview' ? (
+                            <>
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+                                    <DashboardStatCard title="Total Incidents" value={analytics.total} icon={FileText} tone="blue" helper="All incidents in current view" />
+                                    <DashboardStatCard title="Open" value={analytics.open} icon={AlertTriangle} tone="amber" helper="Requires immediate action" />
+                                    <DashboardStatCard title="In Progress" value={analytics.inProgress} icon={Clock} tone="blue" helper="Being handled right now" />
+                                    <DashboardStatCard title="Resolved" value={analytics.closed} icon={CheckCircle} tone="emerald" helper={`Resolution rate ${analytics.resolutionRate}`} />
+                                    <DashboardStatCard title="Letters sent" value={analytics.lettersIssued} icon={TrendingUp} tone="cyan" helper="Letters completed for these incidents" />
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+                                    <DashboardWidgetPanel
+                                        className="xl:col-span-7"
+                                        title="Incident status over time"
+                                        description="Shows how counts of open, in-progress, and closed incidents change day by day."
+                                        icon={TrendingUp}
+                                        chart={<IncidentStatusTrendChart data={analytics.statusTrendData} idPrefix="professional-status" />}
+                                        footer={
+                                            <LegendList
+                                                items={[
+                                                    { label: 'Open', color: STATUS_COLORS.Open },
+                                                    { label: 'In Progress', color: STATUS_COLORS['In Progress'] },
+                                                    { label: 'Closed', color: STATUS_COLORS.Closed },
+                                                ]}
+                                            />
+                                        }
+                                        tableColumns={statusTrendColumns}
+                                        tableRows={analytics.statusTrendData}
+                                        emptyMessage="No status trend data is available for the current filters."
+                                    />
+
+                                    <DashboardWidgetPanel
+                                        className="xl:col-span-5"
+                                        title="New incidents by day"
+                                        description="Counts how many new incident reports appear on each calendar day."
+                                        icon={AlertTriangle}
+                                        chart={<DailyCreationTrendChart data={analytics.creationTrendData} />}
+                                        tableColumns={creationTrendColumns}
+                                        tableRows={analytics.creationTrendData}
+                                        emptyMessage="No creation trend data is available for the current filters."
+                                    />
+
+                                    <DashboardWidgetPanel
+                                        className="xl:col-span-6"
+                                        title="Where incidents stand today"
+                                        description="Open, in-progress, and closed incidents as parts of the whole."
+                                        icon={BarChart3}
+                                        chart={
+                                            <ChartSurface height={240}>
+                                                <ResponsiveContainer width="100%" height="100%" minWidth={1}>
+                                            <PieChart>
+                                                    <Pie
+                                                        data={analytics.statusData}
+                                                        dataKey="value"
+                                                        nameKey="name"
+                                                        innerRadius={62}
+                                                        outerRadius={92}
+                                                        paddingAngle={4}
+                                                    >
+                                                        {analytics.statusData.map((entry) => (
+                                                            <Cell key={entry.name} fill={entry.color} />
+                                                        ))}
+                                                    </Pie>
+                                                    <ChartTooltip />
+                                                </PieChart>
+                                            </ResponsiveContainer>
+
+                                            </ChartSurface>
+                                        }
+                                        footer={
+                                            <LegendList
+                                                items={analytics.statusData.map((entry) => ({
+                                                    label: entry.name,
+                                                    value: entry.value,
+                                                    color: entry.color,
+                                                }))}
+                                            />
+                                        }
+                                        tableColumns={statusColumns}
+                                        tableRows={statusTableRows}
+                                        emptyMessage="No status data is available for the current filters."
+                                    />
+
+                                    <DashboardWidgetPanel
+                                        className="xl:col-span-7"
+                                        title="Workload by staff member"
+                                        description="Shows how incidents are divided among staff—for open work, ongoing follow-up, and completed cases."
+                                        icon={Users}
+                                        chart={
+                                            analytics.staffWorkload.length === 0 ? (
+                                                <EmptyStatePanel
+                                                    title="No workload data"
+                                                    description="Adjust the filters to reveal staff handling distribution."
+                                                />
+                                            ) : (
+                                                <ChartSurface height={340}>
+                                                <ResponsiveContainer width="100%" height="100%" minWidth={1}>
+                                                <BarChart data={analytics.staffWorkload} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+                                                        <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" vertical={false} />
+                                                        <XAxis dataKey="name" tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} />
+                                                        <YAxis tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                                                        <ChartTooltip />
+                                                        <Bar dataKey="open" stackId="workload" fill={STATUS_COLORS.Open} radius={[6, 6, 0, 0]} name="Open" />
+                                                        <Bar dataKey="inProgress" stackId="workload" fill={STATUS_COLORS['In Progress']} name="In Progress" />
+                                                        <Bar dataKey="closed" stackId="workload" fill={STATUS_COLORS.Closed} radius={[6, 6, 0, 0]} name="Closed">
+                                                            <LabelList dataKey="total" position="top" fill={CHART_THEME.label} fontSize={12} />
+                                                        </Bar>
+                                                    </BarChart>
+                                                </ResponsiveContainer>
+
+                                                </ChartSurface>
+                                            )
+                                        }
+                                        tableColumns={workloadColumns}
+                                        tableRows={analytics.staffWorkload}
+                                        emptyMessage="No staff workload data is available for the current filters."
+                                    />
+
+                                    <DashboardWidgetPanel
+                                        className="xl:col-span-5"
+                                        title="Category summary (grid view)"
+                                        description="See how often each incident type appears while open, in progress, or already closed."
+                                        icon={BarChart3}
+                                        chart={
+                                            <CategoryHeatmap
+                                                rows={analytics.categoryHeatmap}
+                                                columns={[
+                                                    { key: 'open', label: 'Open', rgb: '249, 115, 22' },
+                                                    { key: 'inProgress', label: 'In Progress', rgb: '59, 130, 246' },
+                                                    { key: 'closed', label: 'Closed', rgb: '34, 197, 94' },
+                                                ]}
+                                            />
+                                        }
+                                        tableColumns={categoryHeatmapColumns}
+                                        tableRows={categoryHeatmapRows}
+                                        emptyMessage="No category frequency data is available for the current filters."
+                                    />
+
+                                    <DashboardWidgetPanel
+                                        className="xl:col-span-6"
+                                        title="Category Distribution"
+                                        description="Incident types ranked by how often they appear."
+                                        icon={FileText}
+                                        chart={
+                                            <ChartSurface height={320}>
+                                                <ResponsiveContainer width="100%" height="100%" minWidth={1}>
+                                                <BarChart data={analytics.categoryData.slice(0, 8)} layout="vertical" margin={{ top: 10, right: 24, left: 8, bottom: 0 }}>
+                                                    <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" horizontal={false} />
+                                                    <XAxis type="number" tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                                                    <YAxis dataKey="name" type="category" width={110} tick={{ fill: CHART_THEME.axisStrong, fontSize: 12 }} axisLine={false} tickLine={false} />
+                                                    <ChartTooltip />
+                                                    <Bar dataKey="count" fill={CHART_COLORS.category} radius={[0, 8, 8, 0]} name="Incidents">
+                                                        <LabelList dataKey="count" position="right" fill={CHART_THEME.label} fontSize={12} />
+                                                    </Bar>
+                                                </BarChart>
+                                            </ResponsiveContainer>
+
+                                            </ChartSurface>
+                                        }
+                                        tableColumns={categoryColumns}
+                                        tableRows={analytics.categoryData}
+                                        emptyMessage="No category distribution data is available for the current filters."
+                                    />
+
+                                    <DashboardWidgetPanel
+                                        className="xl:col-span-6"
+                                        title="Evidence Distribution"
+                                        description="Evidence capture mix for the current dataset."
+                                        icon={ShieldCheck}
+                                        chart={
+                                            analytics.evidenceData.length === 0 ? (
+                                                <EmptyStatePanel title="No evidence data" description="No evidence records are available for the current filters." />
+                                            ) : (
+                                                <ChartSurface height={260}>
+                                                <ResponsiveContainer width="100%" height="100%" minWidth={1}>
+                                                    <PieChart>
+                                                        <Pie
+                                                            data={analytics.evidenceData.slice(0, 6)}
+                                                            dataKey="count"
+                                                            nameKey="name"
+                                                            innerRadius={54}
+                                                            outerRadius={88}
+                                                            paddingAngle={4}
+                                                        >
+                                                            {analytics.evidenceData.slice(0, 6).map((entry, index) => (
+                                                                <Cell
+                                                                    key={entry.name}
+                                                                    fill={[CHART_COLORS.evidence, STATUS_COLORS['In Progress'], STATUS_COLORS.Closed, STATUS_COLORS.Open, CHART_COLORS.category, CHART_COLORS.neutralPrimary][index % 6]}
+                                                                />
+                                                            ))}
+                                                        </Pie>
+                                                        <ChartTooltip />
+                                                    </PieChart>
+                                                </ResponsiveContainer>
+
+                                                </ChartSurface>
+                                            )
+                                        }
+                                        footer={
+                                            analytics.evidenceData.length > 0 ? (
+                                                <LegendList
+                                                    items={analytics.evidenceData.slice(0, 6).map((entry, index) => ({
+                                                        label: entry.name,
+                                                        value: entry.count,
+                                                        color: [CHART_COLORS.evidence, STATUS_COLORS['In Progress'], STATUS_COLORS.Closed, STATUS_COLORS.Open, CHART_COLORS.category, CHART_COLORS.neutralPrimary][index % 6],
+                                                    }))}
+                                                />
+                                            ) : null
+                                        }
+                                        tableColumns={evidenceColumns}
+                                        tableRows={analytics.evidenceData}
+                                        emptyMessage="No evidence data is available for the current filters."
+                                    />
+
+                                    <DashboardWidgetPanel
+                                        className="xl:col-span-6"
+                                        title="Class Resolution Snapshot"
+                                        description="Open versus closed cases by class for fast intervention targeting."
+                                        icon={TrendingUp}
+                                        chart={
+                                            <ChartSurface height={320}>
+                                                <ResponsiveContainer width="100%" height="100%" minWidth={1}>
+                                                <BarChart data={analytics.classWiseData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+                                                    <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" vertical={false} />
+                                                    <XAxis dataKey="className" tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} />
+                                                    <YAxis tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                                                    <ChartTooltip />
+                                                    <Bar dataKey="open" fill={STATUS_COLORS.Open} radius={[6, 6, 0, 0]} name="Open">
+                                                        <LabelList dataKey="open" position="top" fill={CHART_THEME.label} fontSize={12} />
+                                                    </Bar>
+                                                    <Bar dataKey="closed" fill={STATUS_COLORS.Closed} radius={[6, 6, 0, 0]} name="Closed">
+                                                        <LabelList dataKey="closed" position="top" fill={CHART_THEME.label} fontSize={12} />
+                                                    </Bar>
+                                                </BarChart>
+                                            </ResponsiveContainer>
+
+                                            </ChartSurface>
+                                        }
+                                        tableColumns={classResolutionColumns}
+                                        tableRows={classResolutionRows}
+                                        emptyMessage="No class resolution data is available for the current filters."
+                                    />
+
+                                    <DashboardWidgetPanel
+                                        className="xl:col-span-6"
+                                        title="Location Distribution"
+                                        description="Most active locations in the filtered incident set."
+                                        icon={ShieldCheck}
+                                        chart={
+                                            <ChartSurface height={320}>
+                                                <ResponsiveContainer width="100%" height="100%" minWidth={1}>
+                                                <BarChart data={analytics.locationData.slice(0, 8)} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+                                                    <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" vertical={false} />
+                                                    <XAxis dataKey="name" tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} />
+                                                    <YAxis tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                                                    <ChartTooltip />
+                                                    <Bar dataKey="count" fill={CHART_COLORS.location} radius={[6, 6, 0, 0]} name="Incidents">
+                                                        <LabelList dataKey="count" position="top" fill={CHART_THEME.label} fontSize={12} />
+                                                    </Bar>
+                                                </BarChart>
+                                            </ResponsiveContainer>
+
+                                            </ChartSurface>
+                                        }
+                                        tableColumns={locationColumns}
+                                        tableRows={analytics.locationData}
+                                        emptyMessage="No location data is available for the current filters."
+                                    />
+                                </div>
+                            </>
+                        ) : activeTab === 'monitor' ? (
+                            <>
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+                                    <DashboardStatCard title="Active Incidents" value={analytics.active} icon={TrendingUp} tone="blue" helper="Open and in-progress workload" />
+                                    <DashboardStatCard title="Open" value={analytics.open} icon={Clock} tone="amber" helper="Waiting for first action" />
+                                    <DashboardStatCard title="In Progress" value={analytics.inProgress} icon={Activity} tone="blue" helper="Currently being handled" />
+                                    <DashboardStatCard title="Closed" value={analytics.closed} icon={CheckCircle} tone="emerald" helper="Resolved in current view" />
+                                    <DashboardStatCard title="Unassigned" value={analytics.unassigned} icon={Users} tone="red" helper="Needs ownership" />
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+                                    <DashboardWidgetPanel
+                                        className="xl:col-span-8"
+                                        title="Daily workload trend"
+                                        description="Estimated daily workload (open plus in‑progress incidents) over time."
+                                        icon={TrendingUp}
+                                        chart={
+                                            analytics.pressureTrendData.length === 0 ? (
+                                                <EmptyStatePanel
+                                                    title="No trend line yet"
+                                                    description="Adjust the current filters or widen the selected date range to populate the trend."
+                                                />
+                                            ) : (
+                                                <ChartSurface height={360}>
+                                                    <ResponsiveContainer width="100%" height="100%" minWidth={1}>
+                                                        <LineChart data={analytics.pressureTrendData} margin={{ top: 16, right: 12, left: -20, bottom: 0 }}>
+                                                            <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" vertical={false} />
+                                                            <XAxis dataKey="name" tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} />
+                                                            <YAxis tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                                                            <ChartTooltip labelFormatter={(_, payload) => payload?.[0]?.payload?.fullDate || 'Timeline Date'} />
+                                                            <Line type="monotone" dataKey="total" stroke={CHART_COLORS.neutralPrimary} strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 6 }} name="Total Incidents" isAnimationActive={false} connectNulls />
+                                                            <Line type="monotone" dataKey="active" stroke={STATUS_COLORS['In Progress']} strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 6 }} name="Active Incidents" isAnimationActive={false} connectNulls />
+                                                        </LineChart>
+                                                    </ResponsiveContainer>
+                                                </ChartSurface>
+                                            )
+                                        }
+                                        tableColumns={[
+                                            { key: 'name', label: 'Period' },
+                                            { key: 'total', label: 'Total Incidents' },
+                                            { key: 'active', label: 'Active Incidents' },
+                                            { key: 'open', label: 'Open' },
+                                            { key: 'inProgress', label: 'In Progress' },
+                                            { key: 'closed', label: 'Closed' },
+                                        ]}
+                                        tableRows={analytics.pressureTrendData}
+                                        emptyMessage="No workload trend is available for the current filters."
+                                    />
+
+                                    <DashboardPanel
+                                        className="xl:col-span-4"
+                                        title="Recent activity across the school"
+                                        description="A high-signal feed of the latest activity across the current scope."
+                                        icon={Activity}
+                                    >
+                                        <ActivityFeed items={recentActions} emptyMessage="No recent activity is available for the current scope." />
+                                    </DashboardPanel>
+
+                                    <DashboardWidgetPanel
+                                        className="xl:col-span-7"
+                                        title="Staff Workload"
+                                        description="Stacked workload by assignee, with unassigned items preserved."
+                                        icon={Users}
+                                        chart={
+                                            analytics.staffWorkload.length === 0 ? (
+                                                <EmptyStatePanel
+                                                    title="No workload data"
+                                                    description="There are no assigned incidents in the current scope."
+                                                />
+                                            ) : (
+                                                <ChartSurface height={380}>
+                                                    <ResponsiveContainer width="100%" height="100%" minWidth={1}>
+                                                        <BarChart data={analytics.staffWorkload} margin={{ top: 24, right: 12, left: -20, bottom: 0 }}>
+                                                            <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" vertical={false} />
+                                                            <XAxis dataKey="name" tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} />
+                                                            <YAxis tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                                                            <ChartTooltip labelFormatter={(_, payload) => payload?.[0]?.payload?.name || 'Staff Member'} />
+                                                            <Bar dataKey="open" stackId="staff" fill={STATUS_COLORS.Open} radius={[8, 8, 0, 0]} name="Open" isAnimationActive={false} />
+                                                            <Bar dataKey="inProgress" stackId="staff" fill={STATUS_COLORS['In Progress']} name="In Progress" isAnimationActive={false} />
+                                                            <Bar dataKey="closed" stackId="staff" fill={STATUS_COLORS.Closed} name="Closed" isAnimationActive={false}>
+                                                                <LabelList dataKey="total" position="top" fill={CHART_THEME.label} fontSize={12} />
+                                                            </Bar>
+                                                        </BarChart>
+                                                    </ResponsiveContainer>
+                                                </ChartSurface>
+                                            )
+                                        }
+                                        tableColumns={workloadColumns}
+                                        tableRows={analytics.staffWorkload}
+                                        emptyMessage="No staff workload data is available for the current filters."
+                                    />
+
+                                    <DashboardWidgetPanel
+                                        className="xl:col-span-5"
+                                        title="Status at a glance"
+                                        description="A live lifecycle breakdown for the selected staff and filters."
+                                        icon={AlertTriangle}
+                                        chart={
+                                            <ChartSurface height={360}>
+                                                <ResponsiveContainer width="100%" height="100%" minWidth={1}>
+                                                    <PieChart>
+                                                        <Pie
+                                                            data={analytics.statusData}
+                                                            dataKey="value"
+                                                            nameKey="name"
+                                                            innerRadius={82}
+                                                            outerRadius={124}
+                                                            paddingAngle={4}
+                                                            isAnimationActive={false}
+                                                        >
+                                                            {analytics.statusData.map((entry) => (
+                                                                <Cell key={entry.name} fill={entry.color} />
+                                                            ))}
+                                                        </Pie>
+                                                        <ChartTooltip />
+                                                    </PieChart>
+                                                </ResponsiveContainer>
+                                            </ChartSurface>
+                                        }
+                                        footer={<LegendList items={analytics.statusData.map((row) => ({ label: row.name, value: row.value, color: row.color }))} />}
+                                        tableColumns={statusColumns}
+                                        tableRows={statusTableRows}
+                                        emptyMessage="No status snapshot data is available for the current filters."
+                                    />
+                                </div>
+                            </>
+                        ) : (
+                            <DashboardPanel
+                                title="Single incident breakdown"
+                                description="Sortable, exportable detail view of every incident included in the current analytics scope."
+                                icon={List}
+                            >
+                                <AnalyticsDataTable
+                                    columns={detailColumns}
+                                    rows={filteredIncidentDetails}
+                                    emptyMessage="No incidents found for the current filter set."
+                                />
+                            </DashboardPanel>
+                        )}
+                    </div>
+                </main>
+            </div>
+        </div>
+    );
+};
+
+export default ProfessionalAnalytics;
