@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -21,7 +21,6 @@ const INPUT_ERROR_CLASS_NAME =
     'w-full rounded-2xl border border-red-300 bg-red-50/60 px-4 py-3.5 pl-12 text-sm text-slate-800 outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-red-400 focus:bg-white focus:ring-4 focus:ring-red-500/15 dark:border-red-500/50 dark:bg-red-950/30 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:bg-red-950/40 dark:focus:ring-red-400/20';
 
 const ForgotPassword = () => {
-    const navigate = useNavigate();
     const forgotMutation = useForgotPassword();
 
     const {
@@ -36,9 +35,6 @@ const ForgotPassword = () => {
     const onSubmit = async (data) => {
         try {
             await forgotMutation.mutateAsync(data);
-            setTimeout(() => {
-                navigate('/verify-otp', { state: { email: data.email.trim() } });
-            }, 700);
         } catch {
             // error shown via forgotMutation.error
         }
@@ -46,7 +42,7 @@ const ForgotPassword = () => {
 
     const serverError = forgotMutation.error?.response?.data?.message || forgotMutation.error?.message;
     const successMsg = forgotMutation.isSuccess
-        ? forgotMutation.data?.message || 'A reset code has been sent to your email address.'
+        ? forgotMutation.data?.message || 'Password reset request sent to the Super Admin.'
         : null;
 
     return (

@@ -10,6 +10,7 @@ import {
     Plus,
     RefreshCw,
     Shield,
+    KeyRound,
     Trash2,
     UserCheck,
     UserPlus,
@@ -47,6 +48,7 @@ const formatDate = (value) => {
 };
 
 const getRoleBadgeTone = (role) => {
+    if (role === 'Super Admin') return 'border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-400/30 dark:bg-purple-500/10 dark:text-purple-200';
     if (role === 'Admin') return 'border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-400/30 dark:bg-indigo-500/10 dark:text-indigo-200';
     if (role === 'Teacher') return 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-400/30 dark:bg-blue-500/10 dark:text-blue-200';
     return 'border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200';
@@ -138,6 +140,8 @@ const UserManagement = () => {
 
     const [usersList, setUsersList] = useState([]);
     const [studentRegistry, setStudentRegistry] = useState([]);
+    const [resetRequests, setResetRequests] = useState([]);
+    const [temporaryPasswordResult, setTemporaryPasswordResult] = useState(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState(null);
@@ -175,6 +179,12 @@ const UserManagement = () => {
         return Array.isArray(data) ? [...data].sort((a, b) => a.name.localeCompare(b.name)) : [];
     }, [config]);
 
+    const loadResetRequests = useCallback(async () => {
+        if (user?.role !== 'Super Admin') return [];
+        const { data } = await apiClient.get('/api/auth/password-reset-requests', config);
+        return Array.isArray(data) ? data : [];
+    }, [config, user?.role]);
+
     const fetchData = useCallback(
         async (showLoader = true, options = {}) => {
             if (!user?._id) return;
@@ -189,10 +199,11 @@ const UserManagement = () => {
             setError(null);
 
             try {
-                const [userData, studentData] = await Promise.all([loadUsers(), loadStudents()]);
+                const [userData, studentData, resetData] = await Promise.all([loadUsers(), loadStudents(), loadResetRequests()]);
                 if (!isMounted()) return;
                 setUsersList(userData);
                 setStudentRegistry(studentData);
+                setResetRequests(resetData);
             } catch (requestError) {
                 if (!isMounted()) return;
                 setUsersList([]);
@@ -207,7 +218,7 @@ const UserManagement = () => {
                 }
             }
         },
-        [loadStudents, loadUsers, user?._id]
+        [loadResetRequests, loadStudents, loadUsers, user?._id]
     );
 
     useEffect(() => {
@@ -219,12 +230,14 @@ const UserManagement = () => {
     }, [fetchData]);
 
     const summary = useMemo(() => {
+        const superAdminCount = usersList.filter((entry) => entry.role === 'Super Admin').length;
         const adminCount = usersList.filter((entry) => entry.role === 'Admin').length;
         const teacherCount = usersList.filter((entry) => entry.role === 'Teacher').length;
         const staffCount = usersList.filter((entry) => entry.role !== 'Admin').length;
 
         return {
             totalUsers: usersList.length,
+            superAdminCount,
             adminCount,
             teacherCount,
             staffCount,
@@ -234,7 +247,7 @@ const UserManagement = () => {
 
     const roleFilterOptions = useMemo(() => {
         // Map DB role values to display labels: 'Admin' → 'Administration'
-        const values = new Set(['Admin', 'Teacher']);
+        const values = new Set(['Super Admin', 'Admin', 'Teacher']);
         usersList.forEach((entry) => {
             if (entry.role) values.add(entry.role);
         });
@@ -245,6 +258,7 @@ const UserManagement = () => {
     const roleOptionLabels = useMemo(
         () => ({
             Admin: 'Administration',
+            'Super Admin': 'Super Admin',
             Teacher: 'Teacher',
         }),
         []
@@ -361,6 +375,27 @@ const UserManagement = () => {
             addToast(requestError.response?.data?.message || 'Unable to create user.', 'error');
         } finally {
             setSubmittingUser(false);
+        }
+    };
+
+    const completeResetRequest = async (requestId) => {
+        try {
+            const { data } = await apiClient.post(`/api/auth/password-reset-requests/${requestId}/complete`, {}, config);
+            setTemporaryPasswordResult(data);
+            addToast('Temporary password generated.', 'success');
+            fetchData(false);
+        } catch (requestError) {
+            addToast(requestError.response?.data?.message || 'Unable to reset password.', 'error');
+        }
+    };
+
+    const rejectResetRequest = async (requestId) => {
+        try {
+            await apiClient.post(`/api/auth/password-reset-requests/${requestId}/reject`, {}, config);
+            addToast('Password reset request rejected.', 'success');
+            fetchData(false);
+        } catch (requestError) {
+            addToast(requestError.response?.data?.message || 'Unable to reject request.', 'error');
         }
     };
 
@@ -603,6 +638,43 @@ const UserManagement = () => {
                             <DashboardStatCard title="Teachers" value={summary.teacherCount} icon={UserPlus} tone="emerald" />
                             <DashboardStatCard title="Students" value={summary.totalStudents} icon={UserCheck} tone="amber" />
                         </div>
+
+                        {user?.role === 'Super Admin' ? (
+                            <DashboardPanel
+                                title="Password Reset Requests"
+                                description="Generate temporary passwords for staff who requested account recovery."
+                                icon={KeyRound}
+                            >
+                                {temporaryPasswordResult?.temporaryPassword ? (
+                                    <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                                        Temporary password for <span className="font-semibold">{temporaryPasswordResult.user?.email}</span>:
+                                        <span className="ml-2 rounded-lg bg-white px-2 py-1 font-mono font-semibold">{temporaryPasswordResult.temporaryPassword}</span>
+                                    </div>
+                                ) : null}
+                                {resetRequests.length === 0 ? (
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">No pending reset requests.</p>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {resetRequests.map((request) => (
+                                            <div key={request._id} className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-950 sm:flex-row sm:items-center sm:justify-between">
+                                                <div>
+                                                    <p className="font-semibold text-slate-900 dark:text-slate-100">{request.user?.name || request.email}</p>
+                                                    <p className="text-sm text-slate-500 dark:text-slate-400">{request.email}</p>
+                                                </div>
+                                                <div className="flex flex-wrap gap-2">
+                                                    <button type="button" onClick={() => completeResetRequest(request._id)} className="rounded-xl bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+                                                        Generate Temporary Password
+                                                    </button>
+                                                    <button type="button" onClick={() => rejectResetRequest(request._id)} className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-white dark:border-slate-700 dark:text-slate-200">
+                                                        Reject
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </DashboardPanel>
+                        ) : null}
 
                         {error ? (
                             <div className="rounded-[28px] border border-rose-200 bg-rose-50/90 px-5 py-4 shadow-sm">

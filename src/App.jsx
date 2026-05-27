@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
 import ToastProvider from './components/ToastProvider';
@@ -38,6 +38,7 @@ const Register = lazyWithChunkRetry(() => import('./pages/Register'));
 const ForgotPassword = lazyWithChunkRetry(() => import('./pages/ForgotPassword'));
 const VerifyOTP = lazyWithChunkRetry(() => import('./pages/VerifyOTP'));
 const ResetPassword = lazyWithChunkRetry(() => import('./pages/ResetPassword'));
+const ForceChangePassword = lazyWithChunkRetry(() => import('./pages/ForceChangePassword'));
 const Dashboard = lazyWithChunkRetry(() => import('./pages/Dashboard'));
 const CreateIncident = lazyWithChunkRetry(() => import('./pages/CreateIncident'));
 const IncidentList = lazyWithChunkRetry(() => import('./pages/IncidentList'));
@@ -89,12 +90,16 @@ const loadPage = (element) => (
 
 const PrivateRoute = ({ children }) => {
   const { user } = useAuth();
+  const location = useLocation();
+  if (user?.mustChangePassword && location.pathname !== '/change-password') {
+    return <Navigate to="/change-password" replace />;
+  }
   return user ? children : <Navigate to="/login" />;
 };
 
 const AdminRoute = ({ children }) => {
   const { user } = useAuth();
-  return user && user.role === 'Admin' ? children : <Navigate to="/dashboard" />;
+  return user && ['Super Admin', 'Admin'].includes(user.role) ? children : <Navigate to="/dashboard" />;
 };
 
 function App() {
@@ -122,6 +127,7 @@ function App() {
                   }
                 >
                   <Route path="/dashboard" element={loadPage(<Dashboard />)} />
+                  <Route path="/change-password" element={loadPage(<ForceChangePassword />)} />
                   <Route path="/analytics" element={loadPage(<ProfessionalAnalytics />)} />
                   <Route path="/student-analytics/:admissionNo" element={loadPage(<StudentAnalytics />)} />
                   <Route path="/student-analytics" element={loadPage(<StudentAnalytics />)} />

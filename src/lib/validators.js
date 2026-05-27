@@ -42,7 +42,9 @@ export const registerSchema = z
             .min(6, 'Password must be at least 6 characters')
             .max(200, 'Password is too long'),
         confirmPassword: z.string().min(1, 'Please confirm your password'),
-        role: z.string().trim().min(1, 'Role is required').max(40),
+        role: z.enum(['Super Admin', 'Admin', 'Teacher'], {
+            message: 'Select a valid role',
+        }),
     })
     .refine((data) => data.password === data.confirmPassword, {
         message: 'Passwords do not match',

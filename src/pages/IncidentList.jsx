@@ -22,6 +22,12 @@ import {
 } from '../components/analytics/DashboardPrimitives';
 import { buildIncidentFilterParams, getIncidentTimestamp, REQUEST_CONFIG, resolveHandlerLabel } from '../utils/analytics';
 import apiClient from '../config/apiClient';
+import {
+    migrateIncidentStorageForUser,
+    pruneIncidentStorage,
+    readUserList,
+    writeUserList,
+} from '../utils/userStorage';
 
 const STATUS_OPTIONS = ['Open', 'In Progress', 'Closed'];
 const READ_STATUS_OPTIONS = ['All', 'Unread', 'Read'];
@@ -66,26 +72,25 @@ const IncidentList = () => {
     const [classList, setClassList] = useState([]);
     const [sectionList, setSectionList] = useState([]);
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
-    const [readIncidents, setReadIncidents] = useState(() => {
-        try {
-            const saved = localStorage.getItem('readIncidents');
-            return saved ? JSON.parse(saved) : [];
-        } catch {
-            return [];
-        }
-    });
-    const [priorityIncidents, setPriorityIncidents] = useState(() => {
-        try {
-            const saved = localStorage.getItem('priorityIncidents');
-            return saved ? JSON.parse(saved) : [];
-        } catch {
-            return [];
-        }
-    });
+    const [readIncidents, setReadIncidents] = useState([]);
+    const [priorityIncidents, setPriorityIncidents] = useState([]);
     const [activeTab, setActiveTab] = useState('all');
     const [readStatusFilter, setReadStatusFilter] = useState('All');
 
     const config = REQUEST_CONFIG;
+
+    useEffect(() => {
+        if (!user?._id) {
+            setReadIncidents([]);
+            setPriorityIncidents([]);
+            return;
+        }
+
+        migrateIncidentStorageForUser(user._id);
+        pruneIncidentStorage(user._id);
+        setReadIncidents(readUserList('readIncidents', user._id));
+        setPriorityIncidents(readUserList('priorityIncidents', user._id));
+    }, [user?._id]);
 
     const allStaffOptions = useMemo(
         // Show a single unified "Administration" entry for all admin accounts;
@@ -216,33 +221,24 @@ const IncidentList = () => {
 
         setPriorityIncidents((current) => {
             const next = [...new Set([...current, ...incidentIds])];
-            try {
-                localStorage.setItem('priorityIncidents', JSON.stringify(next));
-            } catch {
-            }
+            writeUserList('priorityIncidents', user?._id, next);
             return next;
         });
-    }, [notifications]);
+    }, [notifications, user?._id]);
 
     const markAsRead = useCallback((incidentId) => {
         setReadIncidents((current) => {
             const next = [...new Set([...current, incidentId])];
-            try {
-                localStorage.setItem('readIncidents', JSON.stringify(next));
-            } catch {
-            }
+            writeUserList('readIncidents', user?._id, next);
             return next;
         });
 
         setPriorityIncidents((current) => {
             const next = current.filter((id) => id !== incidentId);
-            try {
-                localStorage.setItem('priorityIncidents', JSON.stringify(next));
-            } catch {
-            }
+            writeUserList('priorityIncidents', user?._id, next);
             return next;
         });
-    }, []);
+    }, [user?._id]);
 
     const isPriority = useCallback((incident) => {
         const incidentId = incident._id || incident.id;

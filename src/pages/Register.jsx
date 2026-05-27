@@ -19,6 +19,7 @@ import {
     UserPlus,
 } from 'lucide-react';
 import apiClient from '../config/apiClient';
+import { useAuth } from '../context/AuthContext';
 import { useRegister } from '../hooks/useAuthMutations';
 import { registerSchema } from '../lib/validators';
 
@@ -34,6 +35,7 @@ const Register = () => {
     const [success, setSuccess] = useState(false);
     const redirectTimerRef = useRef(null);
     const navigate = useNavigate();
+    const { user, login } = useAuth();
     const registerMutation = useRegister();
 
     const { data: adminData } = useQuery({
@@ -42,10 +44,18 @@ const Register = () => {
         staleTime: 30 * 1000,
     });
 
-    const adminExists = adminData?.exists ?? true;
+    const superAdminExists = adminData?.exists ?? true;
 
     const roleOptions = useMemo(() => {
-        const options = [
+        if (!superAdminExists) {
+            return [{
+                value: 'Super Admin',
+                title: 'Super Admin',
+                description: 'Initial owner account for administrator setup and recovery.',
+            }];
+        }
+
+        return [
             {
                 value: 'Teacher',
                 title: 'Teacher',
@@ -57,10 +67,9 @@ const Register = () => {
                 description: 'School-wide tools, uploads, and staff management.',
             },
         ];
-        return adminExists ? options.filter((r) => r.value !== 'Admin') : options;
-    }, [adminExists]);
+    }, [superAdminExists]);
 
-    const defaultRole = adminExists ? 'Teacher' : 'Admin';
+    const defaultRole = superAdminExists ? 'Teacher' : 'Super Admin';
 
     const {
         register,
@@ -76,9 +85,8 @@ const Register = () => {
     const selectedRole = watch('role');
 
     useEffect(() => {
-        if (adminExists && selectedRole === 'Admin') setValue('role', 'Teacher');
-        if (!adminExists && selectedRole === 'Teacher') setValue('role', 'Admin');
-    }, [adminExists, selectedRole, setValue]);
+        if (!superAdminExists && selectedRole !== 'Super Admin') setValue('role', 'Super Admin');
+    }, [superAdminExists, selectedRole, setValue]);
 
     useEffect(() => () => {
         if (redirectTimerRef.current) {
@@ -89,7 +97,12 @@ const Register = () => {
     const onSubmit = async (data) => {
         const { confirmPassword: _, ...payload } = data;
         try {
-            await registerMutation.mutateAsync(payload);
+            if (superAdminExists) {
+                await apiClient.post('/api/auth/users', payload);
+            } else {
+                const createdUser = await registerMutation.mutateAsync(payload);
+                if (createdUser) login(createdUser);
+            }
             setSuccess(true);
             redirectTimerRef.current = setTimeout(() => navigate('/login'), 2000);
         } catch {
@@ -171,6 +184,11 @@ const Register = () => {
                                         </div>
                                     )}
 
+                                    {superAdminExists && !['Super Admin', 'Admin'].includes(user?.role) ? (
+                                        <div className="rounded-3xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-6 text-amber-800">
+                                            Registration is closed after the first Super Admin setup. Please ask an administrator to create your account.
+                                        </div>
+                                    ) : (
                                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
                                         <div className="grid gap-5 md:grid-cols-2">
                                             <div className="md:col-span-2">
@@ -326,6 +344,7 @@ const Register = () => {
                                             )}
                                         </button>
                                     </form>
+                                    )}
 
                                     <div className="mt-8 flex flex-col gap-4 border-t border-slate-200 pt-6 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
                                         <button

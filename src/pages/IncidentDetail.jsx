@@ -42,6 +42,11 @@ import {
     EmptyStatePanel,
 } from '../components/analytics/DashboardPrimitives';
 import { formatShortDate, formatShortDateTime, getIncidentTimestamp, resolveHandlerLabel } from '../utils/analytics';
+import {
+    migrateIncidentStorageForUser,
+    readUserList,
+    writeUserList,
+} from '../utils/userStorage';
 
 const STATUS_STYLES = {
     Open: { badge: 'border-orange-200 bg-orange-50 text-orange-700', tone: 'amber' },
@@ -173,21 +178,19 @@ const IncidentDetail = () => {
 
     useEffect(() => { fetchFieldOptions(); }, [fetchFieldOptions]);
 
-    // Mark read in localStorage and mark related notifications as read
+    // Mark read in user-scoped localStorage and mark related notifications as read.
     useEffect(() => {
-        if (!id) return;
-        try {
-            const saved = localStorage.getItem('readIncidents');
-            const readIds = saved ? JSON.parse(saved) : [];
-            if (!readIds.includes(id)) {
-                localStorage.setItem('readIncidents', JSON.stringify([...new Set([...readIds, id])]));
-            }
-            const savedPriority = localStorage.getItem('priorityIncidents');
-            const priorityIds = savedPriority ? JSON.parse(savedPriority) : [];
-            if (priorityIds.includes(id)) {
-                localStorage.setItem('priorityIncidents', JSON.stringify(priorityIds.filter((pid) => pid !== id)));
-            }
-        } catch { /* ignore storage errors */ }
+        if (!id || !user?._id) return;
+
+        migrateIncidentStorageForUser(user._id);
+        const readIds = readUserList('readIncidents', user._id);
+        if (!readIds.includes(id)) {
+            writeUserList('readIncidents', user._id, [...readIds, id]);
+        }
+        const priorityIds = readUserList('priorityIncidents', user._id);
+        if (priorityIds.includes(id)) {
+            writeUserList('priorityIncidents', user._id, priorityIds.filter((pid) => pid !== id));
+        }
 
         const related = notifications.filter(
             (n) => n?.read !== true && (
@@ -206,7 +209,7 @@ const IncidentDetail = () => {
                     console.error('Failed to mark incident notifications as read', err);
                 });
         }
-    }, [id]); // eslint-disable-line react-hooks/exhaustive-deps -- mark notifications read when route id changes only
+    }, [id, user?._id]); // eslint-disable-line react-hooks/exhaustive-deps -- mark notifications read when route id/user changes only
 
     const handleSelectOption = (option) => {
         const label = option?.label;
@@ -294,14 +297,12 @@ const IncidentDetail = () => {
             if (!id || !user?._id || !isValidMongoObjectId(id)) return;
             try {
                 await apiClient.put(`/api/notifications/read/${id}`, {});
-                try {
-                    const savedRead = JSON.parse(localStorage.getItem('readIncidents') || '[]');
-                    if (!savedRead.includes(id)) {
-                        localStorage.setItem('readIncidents', JSON.stringify([...savedRead, id]));
-                    }
-                    const savedPriority = JSON.parse(localStorage.getItem('priorityIncidents') || '[]');
-                    localStorage.setItem('priorityIncidents', JSON.stringify(savedPriority.filter((pid) => pid !== id)));
-                } catch { /* ignore */ }
+                const savedRead = readUserList('readIncidents', user._id);
+                if (!savedRead.includes(id)) {
+                    writeUserList('readIncidents', user._id, [...savedRead, id]);
+                }
+                const savedPriority = readUserList('priorityIncidents', user._id);
+                writeUserList('priorityIncidents', user._id, savedPriority.filter((pid) => pid !== id));
                 window.dispatchEvent(new CustomEvent('notifications-updated'));
             } catch { /* non-fatal */ }
         };

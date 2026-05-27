@@ -43,7 +43,7 @@ const Login = () => {
         try {
             const user = await loginMutation.mutateAsync(data);
             login(user);
-            navigate('/dashboard');
+            navigate(user?.mustChangePassword ? '/change-password' : '/dashboard');
         } catch {
             // error shown via loginMutation.error below
         }
