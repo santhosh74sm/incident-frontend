@@ -74,6 +74,18 @@ const resolveFileUrl = (value) => {
     return `${API_BASE}/${normalized.replace(/^\/+/, '')}`;
 };
 
+const withEvidenceDisposition = (fileUrl, disposition) => {
+    if (!fileUrl) return null;
+    try {
+        const url = new URL(fileUrl, API_BASE);
+        url.searchParams.set('disposition', disposition);
+        return url.toString();
+    } catch {
+        const separator = fileUrl.includes('?') ? '&' : '?';
+        return `${fileUrl}${separator}disposition=${encodeURIComponent(disposition)}`;
+    }
+};
+
 const getEvidenceFilename = (value, fallback) => {
     if (!value) return fallback;
     const normalized = String(value).replace(/\\/g, '/');
@@ -382,14 +394,14 @@ const IncidentDetail = () => {
 
     const handleOpenEvidenceFile = (fileUrl) => {
         if (!fileUrl) { addToast('File not found', 'error'); return; }
-        window.open(fileUrl, '_blank', 'noopener,noreferrer');
+        window.open(withEvidenceDisposition(fileUrl, 'inline'), '_blank', 'noopener,noreferrer');
     };
 
     const handleDownloadEvidenceFile = async (fileUrl, filename) => {
         if (!fileUrl) { addToast('File not found', 'error'); return; }
         try {
             // Use fetch with credentials for auth-gated files
-            const response = await fetch(fileUrl, { credentials: 'include' });
+            const response = await fetch(withEvidenceDisposition(fileUrl, 'attachment'), { credentials: 'include' });
             if (!response.ok) { addToast('File not found', 'error'); return; }
             const blob = await response.blob();
             const objectUrl = window.URL.createObjectURL(blob);
@@ -797,6 +809,7 @@ const IncidentDetail = () => {
                                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                             {evidenceAssets.map((entry, index) => {
                                                 const fileUrl = resolveFileUrl(entry?.fileUrl);
+                                                const previewUrl = withEvidenceDisposition(fileUrl, 'inline');
                                                 const fileLabel = getEvidenceFilename(entry?.fileUrl, `evidence_${index + 1}`);
                                                 const isImage = /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(fileLabel);
                                                 return (
@@ -811,8 +824,8 @@ const IncidentDetail = () => {
                                                                 Asset {index + 1}
                                                             </span>
                                                         </div>
-                                                        {isImage && fileUrl ? (
-                                                            <img src={fileUrl} alt={entry?.evidenceType || `Evidence ${index + 1}`}
+                                                        {isImage && previewUrl ? (
+                                                            <img src={previewUrl} alt={entry?.evidenceType || `Evidence ${index + 1}`}
                                                                 className="mt-4 h-44 w-full rounded-2xl border border-slate-200 object-cover" />
                                                         ) : (
                                                             <div className="mt-4 flex h-44 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white text-sm font-medium text-slate-500">
