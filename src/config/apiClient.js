@@ -64,6 +64,25 @@ let csrfPromise = null;
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const normalizeResponseIds = (value, seen = new WeakSet()) => {
+    if (value == null || typeof value !== 'object') return value;
+
+    if (Array.isArray(value)) {
+        value.forEach((item) => normalizeResponseIds(item, seen));
+        return value;
+    }
+
+    if (seen.has(value)) return value;
+    seen.add(value);
+
+    if (value.id != null && value._id == null) {
+        value._id = value.id;
+    }
+
+    Object.values(value).forEach((entry) => normalizeResponseIds(entry, seen));
+    return value;
+};
+
 const getRequestPath = (config = {}) => {
     const rawUrl = config.url || '';
 
@@ -208,6 +227,7 @@ apiClient.interceptors.request.use(async (config) => {
 apiClient.interceptors.response.use(
     (response) => {
         rememberCsrfToken(response.headers);
+        normalizeResponseIds(response.data);
         if (response.config && !isAuthRestoreRequest(response.config)) {
             resetAuthEventGuard();
         }

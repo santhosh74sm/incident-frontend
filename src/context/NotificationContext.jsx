@@ -60,8 +60,8 @@ const NotificationProvider = memo(({ children }) => {
     const mountedRef       = useRef(true);
 
     const enabled = useMemo(
-        () => Boolean(user?._id && ['Super Admin', 'Admin', 'Teacher', 'super_admin', 'admin', 'teacher'].includes(user?.role)),
-        [user?._id, user?.role]
+        () => Boolean((user?.id || user?._id) && ['Super Admin', 'Admin', 'Teacher', 'super_admin', 'admin', 'teacher'].includes(user?.role)),
+        [user?.id, user?._id, user?.role]
     );
 
     // ── REST fallback fetch ───────────────────────────────────────────────────

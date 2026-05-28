@@ -107,16 +107,16 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
 
     const hasUnread = unreadCount > 0;
     const iconButtonBase =
-        'inline-flex h-10 min-h-[40px] min-w-[40px] w-10 items-center justify-center rounded-2xl bg-white/80 text-slate-600 backdrop-blur transition-all duration-200 hover:bg-white hover:text-slate-950 hover:shadow-sm dark:bg-slate-900/80 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white';
+        'inline-flex h-10 min-h-[40px] min-w-[40px] w-10 items-center justify-center rounded-xl bg-white/80 text-slate-600 backdrop-blur transition-all duration-200 hover:bg-white hover:text-slate-950 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white';
 
     return (
         <nav
-            className={`fixed right-0 top-0 z-[60] h-14 bg-white/80 px-3 py-2 backdrop-blur-xl transition-all duration-200 dark:bg-slate-950/80 sm:px-4 lg:px-6 ${
-                isSidebarCollapsed ? 'left-0 lg:left-[136px]' : 'left-0 lg:left-[324px]'
+            className={`fixed right-0 top-0 z-[60] h-14 bg-white/80 px-3 py-2 backdrop-blur-xl transition-all duration-200 dark:bg-slate-950/80 sm:px-4 lg:px-5 ${
+                isSidebarCollapsed ? 'left-0 lg:left-[92px]' : 'left-0 lg:left-[292px]'
             }`}
         >
             <div className="pl-14 sm:pl-16 lg:pl-0">
-                <div className="h-10 rounded-[18px] bg-white/90 px-2 backdrop-blur-xl dark:bg-slate-900/90 sm:px-3">
+                <div className="h-10 rounded-2xl bg-white/90 px-2 backdrop-blur-xl dark:bg-slate-900/90 sm:px-3">
                     <div className="flex h-full min-w-0 items-center justify-between gap-2">
                         <div className="hidden min-w-0 lg:block">
                             <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{user?.role || 'Staff'} Workspace</p>
@@ -125,7 +125,7 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                         <button
                             type="button"
                             onClick={openCommandPalette}
-                            className="group inline-flex h-10 min-h-[40px] min-w-[40px] items-center justify-center rounded-2xl bg-white/70 text-slate-900 backdrop-blur transition-all duration-200 hover:bg-white hover:shadow-sm dark:bg-slate-900/70 dark:text-slate-100 dark:hover:bg-slate-800 sm:hidden"
+                            className="group inline-flex h-10 min-h-[40px] min-w-[40px] items-center justify-center rounded-xl bg-white/70 text-slate-900 backdrop-blur transition-all duration-200 hover:bg-white hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:bg-slate-900/70 dark:text-slate-100 dark:hover:bg-slate-800 sm:hidden"
                             aria-label="Open search"
                             title="Search"
                         >
@@ -135,11 +135,11 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                         <button
                             type="button"
                             onClick={openCommandPalette}
-                            className="group hidden min-w-0 max-w-[200px] shrink-0 items-center gap-2 rounded-2xl bg-white/70 px-2.5 py-1.5 text-left backdrop-blur transition-all duration-200 hover:bg-white hover:shadow-sm dark:bg-slate-900/70 dark:hover:bg-slate-800 sm:flex lg:max-w-[220px]"
+                            className="group hidden min-w-0 max-w-[200px] shrink-0 items-center gap-2 rounded-xl bg-white/70 px-2.5 py-1.5 text-left backdrop-blur transition-all duration-200 hover:bg-white hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:bg-slate-900/70 dark:hover:bg-slate-800 sm:flex lg:max-w-[220px]"
                             aria-label="Open search"
                             title="Search"
                         >
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-950 text-white shadow-lg shadow-slate-950/15 transition-all duration-200 group-hover:bg-indigo-600">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-950 text-white shadow-lg shadow-slate-950/15 transition-all duration-200 group-hover:bg-indigo-600">
                                 <Command size={16} />
                             </div>
                             <div className="min-w-0 flex-1">
@@ -172,7 +172,7 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                                     onClick={toggleNotificationPanel}
                                     disabled={!notificationsEnabled}
                                     data-notification-trigger
-                                    className={`relative inline-flex h-10 min-h-[40px] min-w-[40px] w-10 items-center justify-center rounded-2xl transition-all duration-200 ${
+                                    className={`relative inline-flex h-10 min-h-[40px] min-w-[40px] w-10 items-center justify-center rounded-xl transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
                                         showNotificationPanel || hasUnread
                                             ? 'bg-indigo-50 text-indigo-700 shadow-sm shadow-indigo-100/70'
                                             : iconButtonBase
@@ -197,7 +197,7 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                                     type="button"
                                     title="Profile"
                                     onClick={toggleProfileDropdown}
-                                    className={`flex min-h-[40px] items-center gap-2 rounded-2xl px-2 py-1 transition-all duration-200 sm:gap-3 sm:px-3 ${
+                                    className={`flex min-h-[40px] items-center gap-2 rounded-xl px-2 py-1 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 sm:gap-3 sm:px-3 ${
                                         showDropdown
                                             ? 'bg-indigo-50 shadow-sm shadow-indigo-100/70 dark:bg-indigo-950/70 dark:shadow-none'
                                             : 'bg-white/80 hover:bg-white hover:shadow-sm dark:bg-slate-900/80 dark:hover:bg-slate-800'
@@ -212,7 +212,7 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                                         </p>
                                     </div>
 
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 to-blue-600 text-sm font-bold text-white shadow-lg shadow-indigo-500/20">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-blue-600 text-sm font-bold text-white shadow-lg shadow-indigo-500/20">
                                         {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                                     </div>
 

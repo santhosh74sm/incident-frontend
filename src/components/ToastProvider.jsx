@@ -59,7 +59,7 @@ const ToastProvider = ({ children }) => {
         <ToastContext.Provider value={{ addToast }}>
             {children}
             {createPortal(
-                <div className="fixed right-4 top-4 z-[9999] flex flex-col gap-2">
+                <div className="fixed left-4 right-4 top-16 z-[9999] flex flex-col items-end gap-2 sm:left-auto sm:top-4">
                     {toasts.map((toast) => (
                         <Toast
                             key={toast.id}

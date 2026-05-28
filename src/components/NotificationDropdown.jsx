@@ -142,8 +142,9 @@ const resolveNotificationPath = (notification, role) => {
     ) {
         return notification.routePath;
     }
-    if (isValidMongoObjectId(notification?.incident?._id)) {
-        return `/incidents/${notification.incident._id}`;
+    const incidentId = notification?.incident?.id || notification?.incident?._id;
+    if (isValidMongoObjectId(incidentId)) {
+        return `/incidents/${incidentId}`;
     }
     if (notification?.entityType === 'Incident' && isValidMongoObjectId(notification?.entityId)) {
         return `/incidents/${notification.entityId}`;

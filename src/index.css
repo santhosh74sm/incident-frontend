@@ -11,6 +11,15 @@
     @apply overflow-x-hidden bg-white text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100;
   }
 
+  *, ::before, ::after {
+    @apply box-border;
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(99 102 241);
+    outline-offset: 2px;
+  }
+
   :root {
     --chart-grid: #e2e8f0;
     --chart-axis: #64748b;
@@ -29,6 +38,17 @@
   select,
   textarea {
     @apply transition-colors duration-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }
 

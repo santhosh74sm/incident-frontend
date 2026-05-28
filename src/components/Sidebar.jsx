@@ -20,6 +20,8 @@ import {
 import { useAuth } from '../context/AuthContext';
 
 const DESKTOP_COLLAPSE_KEY = 'workspaceSidebarCollapsed';
+const SIDEBAR_EXPANDED_WIDTH = 'lg:w-[292px]';
+const SIDEBAR_COLLAPSED_WIDTH = 'lg:w-[92px]';
 
 const Sidebar = ({ onDesktopCollapsedChange }) => {
     const navigate = useNavigate();
@@ -129,13 +131,13 @@ const Sidebar = ({ onDesktopCollapsedChange }) => {
                 to={item.path}
                 title={collapsed ? item.title : undefined}
                 onClick={(event) => handleNavItemClick(event, item.path, mobile)}
-                className={`group relative flex w-full items-center rounded-2xl border py-3 text-left transition-all duration-200 ${
-                    collapsed ? 'justify-center px-2.5' : 'gap-3 px-3.5'
+                className={`group relative flex w-full items-center rounded-xl border py-2.5 text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/70 ${
+                    collapsed ? 'justify-center px-2' : 'gap-3 px-3'
                 } ${
                     isActive
                         ? 'border-indigo-400/30 bg-indigo-500/15 text-white shadow-[0_16px_30px_rgba(15,23,42,0.28)]'
                         : 'border-transparent text-slate-300 hover:border-slate-700 hover:bg-slate-800/80 hover:text-white'
-                } ${nested ? 'min-h-[46px]' : 'min-h-[50px]'}`}
+                } ${nested ? 'min-h-[44px]' : 'min-h-[48px]'}`}
             >
                 <span
                     className={`absolute bottom-2 left-0 top-2 w-1 rounded-r-full transition-all duration-200 ${
@@ -146,7 +148,7 @@ const Sidebar = ({ onDesktopCollapsedChange }) => {
                 />
 
                 <span
-                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-all duration-200 ${
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition-all duration-200 ${
                         isActive
                             ? 'border-indigo-300/30 bg-indigo-500/20 text-white'
                             : 'border-slate-700 bg-slate-900/75 text-slate-300 group-hover:border-slate-600 group-hover:bg-slate-800 group-hover:text-white'
@@ -172,11 +174,11 @@ const Sidebar = ({ onDesktopCollapsedChange }) => {
         const scrollKey = mobile ? 'mobile' : 'desktop';
 
         return (
-            <div className="flex h-full flex-col bg-[radial-gradient(circle_at_top,rgba(79,70,229,0.2),transparent_34%),linear-gradient(180deg,rgba(2,6,23,0.98)_0%,rgba(15,23,42,0.99)_44%,rgba(2,6,23,1)_100%)]">
-                <div className="border-b border-white/10 px-5 py-5 shadow-[0_1px_0_rgba(255,255,255,0.04)]">
-                    <div className="flex items-center justify-between gap-3">
+            <div className="flex h-full flex-col bg-[radial-gradient(circle_at_top,rgba(79,70,229,0.18),transparent_34%),linear-gradient(180deg,rgba(2,6,23,0.98)_0%,rgba(15,23,42,0.99)_44%,rgba(2,6,23,1)_100%)]">
+                <div className={`relative border-b border-white/10 shadow-[0_1px_0_rgba(255,255,255,0.04)] ${collapsed ? 'px-3 py-4' : 'px-4 py-4'}`}>
+                    <div className={`flex items-center ${collapsed ? 'justify-center' : 'justify-between gap-3'}`}>
                         <div className={`flex min-w-0 items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
-                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-indigo-300/25 bg-gradient-to-br from-indigo-500 to-blue-600 text-white shadow-[0_18px_34px_rgba(79,70,229,0.3)]">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-indigo-300/25 bg-gradient-to-br from-indigo-500 to-blue-600 text-white shadow-[0_18px_34px_rgba(79,70,229,0.3)]">
                                 <ShieldCheck size={22} />
                             </div>
 
@@ -192,12 +194,12 @@ const Sidebar = ({ onDesktopCollapsedChange }) => {
                             ) : null}
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className={`flex items-center gap-2 ${collapsed ? 'absolute right-2 top-2' : ''}`}>
                             {!mobile ? (
                                 <button
                                     type="button"
                                     onClick={() => setIsDesktopCollapsed((current) => !current)}
-                                    className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-700 bg-slate-900/75 text-slate-200 transition-all duration-200 hover:border-indigo-400/40 hover:bg-slate-800 hover:text-white"
+                                    className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-700 bg-slate-900/75 text-slate-200 transition-all duration-200 hover:border-indigo-400/40 hover:bg-slate-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/70"
                                     aria-label={isDesktopCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                                 >
                                     {isDesktopCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
@@ -208,7 +210,7 @@ const Sidebar = ({ onDesktopCollapsedChange }) => {
                                 <button
                                     type="button"
                                     onClick={() => setIsMobileOpen(false)}
-                                    className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-700 bg-slate-900/75 text-slate-200 transition-all duration-200 hover:border-indigo-400/40 hover:bg-slate-800 hover:text-white"
+                                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-700 bg-slate-900/75 text-slate-200 transition-all duration-200 hover:border-indigo-400/40 hover:bg-slate-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/70"
                                     aria-label="Close navigation"
                                 >
                                     <X size={18} />
@@ -223,9 +225,9 @@ const Sidebar = ({ onDesktopCollapsedChange }) => {
                     onScroll={(event) => {
                         scrollPositionsRef.current[scrollKey] = event.currentTarget.scrollTop;
                     }}
-                    className="flex-1 overflow-y-auto px-3 py-4 [scrollbar-color:rgba(148,163,184,0.55)_transparent] [scrollbar-width:thin]"
+                    className={`flex-1 overflow-y-auto py-4 [scrollbar-color:rgba(148,163,184,0.55)_transparent] [scrollbar-width:thin] ${collapsed ? 'px-2' : 'px-3'}`}
                 >
-                    <div className="space-y-6">
+                    <div className={collapsed ? 'space-y-4' : 'space-y-5'}>
                         <section>
                             {!collapsed ? (
                                 <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-[0.24em] text-slate-400">
@@ -238,7 +240,7 @@ const Sidebar = ({ onDesktopCollapsedChange }) => {
                             </div>
                         </section>
 
-                        <section className="border-t border-white/10 pt-5">
+                        <section className="border-t border-white/10 pt-4">
                             {!collapsed ? (
                                 <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-[0.24em] text-slate-400">
                                     Reports & trends
@@ -249,8 +251,8 @@ const Sidebar = ({ onDesktopCollapsedChange }) => {
                                 type="button"
                                 title={collapsed ? 'Reports' : undefined}
                                 onClick={() => setOpenAnalytics((current) => !current)}
-                                className={`group relative flex w-full items-center rounded-2xl border py-3 transition-all duration-200 ${
-                                    collapsed ? 'justify-center px-2.5' : 'gap-3 px-3.5'
+                                className={`group relative flex min-h-[48px] w-full items-center rounded-xl border py-2.5 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/70 ${
+                                    collapsed ? 'justify-center px-2' : 'gap-3 px-3'
                                 } ${
                                     isAnalyticsActive
                                         ? 'border-indigo-400/30 bg-indigo-500/15 text-white'
@@ -266,7 +268,7 @@ const Sidebar = ({ onDesktopCollapsedChange }) => {
                                 />
 
                                 <span
-                                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-all duration-200 ${
+                                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition-all duration-200 ${
                                         isAnalyticsActive
                                             ? 'border-indigo-300/30 bg-indigo-500/20 text-white'
                                             : 'border-slate-700 bg-slate-900/75 text-slate-300 group-hover:border-slate-600 group-hover:bg-slate-800 group-hover:text-white'
@@ -297,14 +299,14 @@ const Sidebar = ({ onDesktopCollapsedChange }) => {
                     </div>
                 </div>
 
-                <div className="border-t border-white/10 p-3">
+                <div className={`border-t border-white/10 ${collapsed ? 'p-2' : 'p-3'}`}>
                     <div
-                        className={`rounded-3xl border border-slate-700/90 bg-slate-900/75 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${
+                        className={`rounded-2xl border border-slate-700/90 bg-slate-900/75 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${
                             collapsed ? 'flex justify-center' : ''
                         }`}
                     >
                         <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 text-sm font-bold text-white shadow-[0_18px_34px_rgba(79,70,229,0.24)]">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 text-sm font-bold text-white shadow-[0_18px_34px_rgba(79,70,229,0.24)]">
                                 {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                             </div>
 
@@ -326,11 +328,11 @@ const Sidebar = ({ onDesktopCollapsedChange }) => {
                             logout();
                             navigate('/login');
                         }}
-                        className={`mt-2 flex w-full items-center rounded-2xl border border-transparent px-3 py-3 text-slate-400 transition-all duration-200 hover:border-rose-400/15 hover:bg-rose-500/12 hover:text-rose-100 ${
+                        className={`mt-2 flex min-h-[48px] w-full items-center rounded-xl border border-transparent px-2.5 py-2.5 text-slate-400 transition-all duration-200 hover:border-rose-400/15 hover:bg-rose-500/12 hover:text-rose-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/70 ${
                             collapsed ? 'justify-center' : 'gap-3'
                         }`}
                     >
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-700 bg-slate-900/75 text-slate-400 transition-all duration-200">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-700 bg-slate-900/75 text-slate-400 transition-all duration-200">
                             <LogOut size={18} strokeWidth={2.1} />
                         </span>
                         {!collapsed ? <span className="text-sm font-semibold">Sign Out</span> : null}
@@ -345,7 +347,7 @@ const Sidebar = ({ onDesktopCollapsedChange }) => {
             <button
                 type="button"
                 onClick={() => setIsMobileOpen(true)}
-                className={`fixed left-3 top-3 z-[72] inline-flex h-11 min-h-[44px] min-w-[44px] w-11 items-center justify-center rounded-2xl border border-slate-700 bg-slate-950 text-white shadow-[0_18px_40px_rgba(2,6,23,0.45)] transition-all duration-200 hover:border-indigo-400/40 hover:bg-slate-900 sm:left-4 sm:top-4 lg:hidden ${
+                className={`fixed left-3 top-3 z-[72] inline-flex h-11 min-h-[44px] min-w-[44px] w-11 items-center justify-center rounded-xl border border-slate-700 bg-slate-950 text-white shadow-[0_18px_40px_rgba(2,6,23,0.45)] transition-all duration-200 hover:border-indigo-400/40 hover:bg-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 sm:left-4 sm:top-4 lg:hidden ${
                     isMobileOpen ? 'pointer-events-none opacity-0' : ''
                 }`}
                 aria-label="Open navigation menu"
@@ -354,11 +356,11 @@ const Sidebar = ({ onDesktopCollapsedChange }) => {
             </button>
 
             <div
-                className={`fixed left-0 top-0 z-30 hidden h-screen lg:block lg:px-4 lg:py-4 ${
-                    isDesktopCollapsed ? 'lg:w-[136px]' : 'lg:w-[324px]'
+                className={`fixed left-0 top-0 z-30 hidden h-screen lg:block lg:px-3 lg:py-3 ${
+                    isDesktopCollapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_EXPANDED_WIDTH
                 }`}
             >
-                <aside className="h-full overflow-hidden rounded-[30px] border border-slate-700/90 bg-slate-950 text-slate-100 shadow-[16px_0_48px_rgba(2,6,23,0.42)] backdrop-blur-xl">
+                <aside className="h-full overflow-hidden rounded-2xl border border-slate-700/90 bg-slate-950 text-slate-100 shadow-[12px_0_38px_rgba(2,6,23,0.38)] backdrop-blur-xl">
                     {renderSidebarBody()}
                 </aside>
             </div>
@@ -373,7 +375,7 @@ const Sidebar = ({ onDesktopCollapsedChange }) => {
             ) : null}
 
             <aside
-                className={`fixed inset-y-0 left-0 z-[70] w-[min(294px,calc(100vw-1.25rem))] overflow-hidden rounded-r-[30px] border border-slate-800/90 bg-slate-950/95 text-slate-100 shadow-[0_30px_70px_rgba(2,6,23,0.5)] backdrop-blur-xl transition-all duration-200 lg:hidden ${
+                className={`fixed inset-y-0 left-0 z-[70] w-[min(294px,calc(100vw-1.25rem))] overflow-hidden rounded-r-2xl border border-slate-800/90 bg-slate-950/95 text-slate-100 shadow-[0_30px_70px_rgba(2,6,23,0.5)] backdrop-blur-xl transition-all duration-200 lg:hidden ${
                     isMobileOpen ? 'translate-x-0 pointer-events-auto' : '-translate-x-full pointer-events-none'
                 }`}
             >
