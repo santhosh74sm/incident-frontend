@@ -100,6 +100,69 @@ const formatFileSize = (size = 0) => {
     return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 };
 
+const EvidenceImagePreview = ({ src, alt }) => {
+    const [objectUrl, setObjectUrl] = useState('');
+    const [failed, setFailed] = useState(false);
+
+    useEffect(() => {
+        if (!src) return undefined;
+
+        let cancelled = false;
+        let nextObjectUrl = '';
+
+        setObjectUrl('');
+        setFailed(false);
+
+        apiClient.get(src, {
+            responseType: 'blob',
+            headers: { Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8' },
+        }).then((response) => {
+            const contentType = String(response.headers?.['content-type'] || response.data?.type || '').toLowerCase();
+            if (!contentType.startsWith('image/')) {
+                throw new Error('Preview response was not an image.');
+            }
+
+            nextObjectUrl = window.URL.createObjectURL(response.data);
+            if (!cancelled) {
+                setObjectUrl(nextObjectUrl);
+            } else {
+                window.URL.revokeObjectURL(nextObjectUrl);
+            }
+        }).catch(() => {
+            if (!cancelled) setFailed(true);
+        });
+
+        return () => {
+            cancelled = true;
+            if (nextObjectUrl) window.URL.revokeObjectURL(nextObjectUrl);
+        };
+    }, [src]);
+
+    if (failed) {
+        return (
+            <div className="mt-4 flex h-44 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white text-sm font-medium text-slate-500">
+                Preview unavailable
+            </div>
+        );
+    }
+
+    if (!objectUrl) {
+        return (
+            <div className="mt-4 flex h-44 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white text-sm font-medium text-slate-500">
+                Loading preview...
+            </div>
+        );
+    }
+
+    return (
+        <img
+            src={objectUrl}
+            alt={alt}
+            className="mt-4 h-44 w-full rounded-2xl border border-slate-200 object-cover"
+        />
+    );
+};
+
 const DetailField = ({ icon: Icon, label, value, helper = null, action = null }) => (
     <div className={FIELD_CARD_CLASS}>
         <div className="flex items-start gap-3">
@@ -825,8 +888,10 @@ const IncidentDetail = () => {
                                                             </span>
                                                         </div>
                                                         {isImage && previewUrl ? (
-                                                            <img src={previewUrl} alt={entry?.evidenceType || `Evidence ${index + 1}`}
-                                                                className="mt-4 h-44 w-full rounded-2xl border border-slate-200 object-cover" />
+                                                            <EvidenceImagePreview
+                                                                src={previewUrl}
+                                                                alt={entry?.evidenceType || `Evidence ${index + 1}`}
+                                                            />
                                                         ) : (
                                                             <div className="mt-4 flex h-44 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white text-sm font-medium text-slate-500">
                                                                 Preview not available
