@@ -3,6 +3,8 @@ import * as XLSX from 'xlsx';
 export const ACCEPTED_UPLOAD_FORMATS = '.xlsx, .xls, .csv';
 
 export const isSupportedFile = (file) => /\.(xlsx|xls|csv)$/i.test(file?.name || '');
+const MAX_PREVIEW_ROWS = 5000;
+const MAX_PREVIEW_COLUMNS = 80;
 
 export const normalizeHeaderKey = (value = '') =>
     String(value)
@@ -41,6 +43,15 @@ export const buildPreviewFromFile = async (
 
     if (!worksheet) {
         throw new Error('The selected workbook does not contain a readable sheet.');
+    }
+
+    if (worksheet['!ref']) {
+        const range = XLSX.utils.decode_range(worksheet['!ref']);
+        const rowCount = range.e.r - range.s.r + 1;
+        const columnCount = range.e.c - range.s.c + 1;
+        if (rowCount > MAX_PREVIEW_ROWS || columnCount > MAX_PREVIEW_COLUMNS) {
+            throw new Error(`The selected workbook is too large. Limit it to ${MAX_PREVIEW_ROWS} rows and ${MAX_PREVIEW_COLUMNS} columns.`);
+        }
     }
 
     const rows = XLSX.utils.sheet_to_json(worksheet, { defval: '', raw: false });

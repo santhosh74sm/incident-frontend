@@ -26,6 +26,8 @@ const RETRYABLE_METHODS = new Set(['get', 'head', 'options']);
 const MAX_RETRIES = 2;
 const AUTH_RESTORE_PATH = '/api/auth/me';
 const REFRESH_PATH = '/api/auth/refresh';
+const CSRF_PATH = '/api/auth/csrf';
+const CSRF_FALLBACK_PATH = '/api/auth/csrf-token';
 const CSRF_COOKIE_NAME = 'csrfToken';
 const CSRF_HEADER_NAME = 'X-CSRF-Token';
 const CSRF_METHODS = new Set(['post', 'put', 'patch', 'delete']);
@@ -33,6 +35,8 @@ const CSRF_METHODS = new Set(['post', 'put', 'patch', 'delete']);
 const PUBLIC_AUTH_PATHS = [
     '/api/auth/admin-exists',
     '/api/auth/bootstrap-status',
+    '/api/auth/csrf',
+    '/api/auth/csrf-token',
     '/api/auth/register',
     '/api/auth/login',
 ];
@@ -49,6 +53,8 @@ const LEGACY_AUTH_STORAGE_KEYS = [
 
 let logoutDispatched = false;
 let refreshPromise = null;
+let csrfTokenMemory = '';
+let csrfPromise = null;
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -65,6 +71,7 @@ const getRequestPath = (config = {}) => {
 const isPublicAuthRequest = (config = {}) => PUBLIC_AUTH_PATHS.includes(getRequestPath(config));
 const isAuthRestoreRequest = (config = {}) => getRequestPath(config) === AUTH_RESTORE_PATH;
 const isRefreshRequest = (config = {}) => getRequestPath(config) === REFRESH_PATH;
+const isCsrfRequest = (config = {}) => [CSRF_PATH, CSRF_FALLBACK_PATH].includes(getRequestPath(config));
 const isAccessTokenExpired = (error) => error.response?.data?.code === 'ACCESS_TOKEN_EXPIRED';
 const isRefreshRaceGrace = (error) => error.response?.data?.code === 'REFRESH_RETRY_GRACE';
 
@@ -78,6 +85,43 @@ const getCookieValue = (name) => {
         .join('=') || '';
 };
 
+const rememberCsrfToken = (headers = {}) => {
+    const token =
+        headers.get?.('x-csrf-token') ||
+        headers['x-csrf-token'] ||
+        headers['X-CSRF-Token'];
+    if (token) csrfTokenMemory = token;
+};
+
+const ensureCsrfToken = async () => {
+    const cookieToken = decodeURIComponent(getCookieValue(CSRF_COOKIE_NAME));
+    if (csrfTokenMemory || cookieToken) return csrfTokenMemory || cookieToken;
+
+    if (!csrfPromise) {
+        csrfPromise = axios
+            .get(`${API_BASE}${CSRF_PATH}`, { withCredentials: true })
+            .catch((error) => {
+                if (error.response?.status === 404) {
+                    return axios.get(`${API_BASE}${CSRF_FALLBACK_PATH}`, { withCredentials: true });
+                }
+                throw error;
+            })
+            .then((response) => {
+                rememberCsrfToken(response.headers);
+                const token = csrfTokenMemory || response.data?.csrfToken || '';
+                if (!token) {
+                    throw new Error('CSRF bootstrap did not return a token.');
+                }
+                return token;
+            })
+            .finally(() => {
+                csrfPromise = null;
+            });
+    }
+
+    return csrfPromise;
+};
+
 const removeAuthHeader = (headers) => {
     if (!headers) return;
 
@@ -85,9 +129,18 @@ const removeAuthHeader = (headers) => {
     delete headers.authorization;
 };
 
+const removeContentTypeHeader = (headers) => {
+    if (!headers) return;
+    headers.delete?.('Content-Type');
+    delete headers['Content-Type'];
+    delete headers['content-type'];
+};
+
 export const clearLegacyAuthState = () => {
     removeAuthHeader(apiClient.defaults.headers.common);
     removeAuthHeader(axios.defaults.headers.common);
+    csrfTokenMemory = '';
+    csrfPromise = null;
 
     if (typeof window === 'undefined') return;
 
@@ -124,11 +177,16 @@ apiClient.interceptors.request.use(async (config) => {
         removeAuthHeader(config.headers);
     }
 
+    if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+        removeContentTypeHeader(config.headers);
+    }
+
     const method = String(config.method || 'get').toLowerCase();
-    if (CSRF_METHODS.has(method)) {
-        const csrfToken = decodeURIComponent(getCookieValue(CSRF_COOKIE_NAME));
+    if (CSRF_METHODS.has(method) && !isCsrfRequest(config)) {
+        const csrfToken = await ensureCsrfToken();
         if (csrfToken) {
             config.headers = config.headers || {};
+            config.headers.set?.(CSRF_HEADER_NAME, csrfToken);
             config.headers[CSRF_HEADER_NAME] = csrfToken;
         }
     }
@@ -138,6 +196,7 @@ apiClient.interceptors.request.use(async (config) => {
 
 apiClient.interceptors.response.use(
     (response) => {
+        rememberCsrfToken(response.headers);
         if (response.config && !isAuthRestoreRequest(response.config)) {
             resetAuthEventGuard();
         }

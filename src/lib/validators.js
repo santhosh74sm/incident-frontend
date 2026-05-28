@@ -39,8 +39,12 @@ export const registerSchema = z
             .max(254, 'Email is too long'),
         password: z
             .string()
-            .min(6, 'Password must be at least 6 characters')
-            .max(200, 'Password is too long'),
+            .min(12, 'Password must be at least 12 characters')
+            .max(200, 'Password is too long')
+            .regex(/[a-z]/, 'Password must include a lowercase letter')
+            .regex(/[A-Z]/, 'Password must include an uppercase letter')
+            .regex(/\d/, 'Password must include a number')
+            .regex(/[^A-Za-z0-9]/, 'Password must include a symbol'),
         confirmPassword: z.string().min(1, 'Please confirm your password'),
         role: z.enum(['Super Admin', 'Admin', 'Teacher'], {
             message: 'Select a valid role',
