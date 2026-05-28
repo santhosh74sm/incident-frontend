@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
     AlertCircle,
@@ -20,10 +20,14 @@ import {
 import { useAuth } from '../context/AuthContext';
 
 const DESKTOP_COLLAPSE_KEY = 'workspaceSidebarCollapsed';
-const SIDEBAR_EXPANDED_WIDTH = 'lg:w-[292px]';
-const SIDEBAR_COLLAPSED_WIDTH = 'lg:w-[92px]';
+const SIDEBAR_EXPANDED_WIDTH = 'lg:w-[280px]';
+const SIDEBAR_COLLAPSED_WIDTH = 'lg:w-[72px]';
+const navItemShell =
+    'group relative flex w-full items-center rounded-lg border text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/70';
+const navIconShell =
+    'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition-all duration-200';
 
-const Sidebar = ({ onDesktopCollapsedChange }) => {
+const Sidebar = memo(({ onDesktopCollapsedChange }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const { user, logout } = useAuth();
@@ -97,7 +101,7 @@ const Sidebar = ({ onDesktopCollapsedChange }) => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    const matchesPath = (path) => {
+    const matchesPath = useCallback((path) => {
         if (path === '/incidents') {
             return location.pathname === '/incidents' || location.pathname.startsWith('/incidents/');
         }
@@ -107,11 +111,14 @@ const Sidebar = ({ onDesktopCollapsedChange }) => {
         }
 
         return location.pathname === path;
-    };
+    }, [location.pathname]);
 
-    const visibleMenuItems = menuItems.filter((item) => item.roles.includes(user?.role));
+    const visibleMenuItems = useMemo(
+        () => menuItems.filter((item) => item.roles.includes(user?.role)),
+        [menuItems, user?.role]
+    );
 
-    const handleNavItemClick = (event, path, mobile = false) => {
+    const handleNavItemClick = useCallback((event, path, mobile = false) => {
         if (matchesPath(path)) {
             event.preventDefault();
         }
@@ -119,7 +126,7 @@ const Sidebar = ({ onDesktopCollapsedChange }) => {
         if (mobile) {
             setIsMobileOpen(false);
         }
-    };
+    }, [matchesPath]);
 
     const renderNavItem = (item, nested = false, collapsed = isDesktopCollapsed, mobile = false) => {
         const Icon = item.icon;
@@ -131,13 +138,13 @@ const Sidebar = ({ onDesktopCollapsedChange }) => {
                 to={item.path}
                 title={collapsed ? item.title : undefined}
                 onClick={(event) => handleNavItemClick(event, item.path, mobile)}
-                className={`group relative flex w-full items-center rounded-xl border py-2.5 text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/70 ${
-                    collapsed ? 'justify-center px-2' : 'gap-3 px-3'
+                className={`${navItemShell} ${
+                    collapsed ? 'min-h-[42px] justify-center px-1 py-1' : 'min-h-[46px] gap-3 px-2.5 py-2'
                 } ${
                     isActive
                         ? 'border-indigo-400/30 bg-indigo-500/15 text-white shadow-[0_16px_30px_rgba(15,23,42,0.28)]'
                         : 'border-transparent text-slate-300 hover:border-slate-700 hover:bg-slate-800/80 hover:text-white'
-                } ${nested ? 'min-h-[44px]' : 'min-h-[48px]'}`}
+                }`}
             >
                 <span
                     className={`absolute bottom-2 left-0 top-2 w-1 rounded-r-full transition-all duration-200 ${
@@ -148,7 +155,7 @@ const Sidebar = ({ onDesktopCollapsedChange }) => {
                 />
 
                 <span
-                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition-all duration-200 ${
+                    className={`${navIconShell} ${
                         isActive
                             ? 'border-indigo-300/30 bg-indigo-500/20 text-white'
                             : 'border-slate-700 bg-slate-900/75 text-slate-300 group-hover:border-slate-600 group-hover:bg-slate-800 group-hover:text-white'
@@ -175,10 +182,10 @@ const Sidebar = ({ onDesktopCollapsedChange }) => {
 
         return (
             <div className="flex h-full flex-col bg-[radial-gradient(circle_at_top,rgba(79,70,229,0.18),transparent_34%),linear-gradient(180deg,rgba(2,6,23,0.98)_0%,rgba(15,23,42,0.99)_44%,rgba(2,6,23,1)_100%)]">
-                <div className={`relative border-b border-white/10 shadow-[0_1px_0_rgba(255,255,255,0.04)] ${collapsed ? 'px-3 py-4' : 'px-4 py-4'}`}>
-                    <div className={`flex items-center ${collapsed ? 'justify-center' : 'justify-between gap-3'}`}>
+                <div className={`border-b border-white/10 shadow-[0_1px_0_rgba(255,255,255,0.04)] ${collapsed ? 'px-1.5 py-3' : 'px-3 py-3.5'}`}>
+                    <div className={`flex items-center ${collapsed ? 'flex-col justify-center gap-2' : 'justify-between gap-3'}`}>
                         <div className={`flex min-w-0 items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-indigo-300/25 bg-gradient-to-br from-indigo-500 to-blue-600 text-white shadow-[0_18px_34px_rgba(79,70,229,0.3)]">
+                            <div className={`${collapsed ? 'h-10 w-10' : 'h-11 w-11'} flex shrink-0 items-center justify-center rounded-xl border border-indigo-300/25 bg-gradient-to-br from-indigo-500 to-blue-600 text-white shadow-[0_18px_34px_rgba(79,70,229,0.3)]`}>
                                 <ShieldCheck size={22} />
                             </div>
 
@@ -194,12 +201,12 @@ const Sidebar = ({ onDesktopCollapsedChange }) => {
                             ) : null}
                         </div>
 
-                        <div className={`flex items-center gap-2 ${collapsed ? 'absolute right-2 top-2' : ''}`}>
+                        <div className="flex items-center gap-2">
                             {!mobile ? (
                                 <button
                                     type="button"
                                     onClick={() => setIsDesktopCollapsed((current) => !current)}
-                                    className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-700 bg-slate-900/75 text-slate-200 transition-all duration-200 hover:border-indigo-400/40 hover:bg-slate-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/70"
+                                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-900/75 text-slate-200 transition-all duration-200 hover:border-indigo-400/40 hover:bg-slate-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/70"
                                     aria-label={isDesktopCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                                 >
                                     {isDesktopCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
@@ -225,9 +232,9 @@ const Sidebar = ({ onDesktopCollapsedChange }) => {
                     onScroll={(event) => {
                         scrollPositionsRef.current[scrollKey] = event.currentTarget.scrollTop;
                     }}
-                    className={`flex-1 overflow-y-auto py-4 [scrollbar-color:rgba(148,163,184,0.55)_transparent] [scrollbar-width:thin] ${collapsed ? 'px-2' : 'px-3'}`}
+                    className={`flex-1 overflow-y-auto [scrollbar-color:rgba(148,163,184,0.55)_transparent] [scrollbar-width:thin] ${collapsed ? 'px-1.5 py-3' : 'px-2.5 py-3'}`}
                 >
-                    <div className={collapsed ? 'space-y-4' : 'space-y-5'}>
+                    <div className={collapsed ? 'space-y-3' : 'space-y-4'}>
                         <section>
                             {!collapsed ? (
                                 <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-[0.24em] text-slate-400">
@@ -235,12 +242,12 @@ const Sidebar = ({ onDesktopCollapsedChange }) => {
                                 </p>
                             ) : null}
 
-                            <div className="space-y-1.5">
+                            <div className={collapsed ? 'space-y-1' : 'space-y-1.5'}>
                                 {visibleMenuItems.map((item) => renderNavItem(item, false, collapsed, mobile))}
                             </div>
                         </section>
 
-                        <section className="border-t border-white/10 pt-4">
+                        <section className={collapsed ? 'border-t border-white/10 pt-3' : 'border-t border-white/10 pt-4'}>
                             {!collapsed ? (
                                 <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-[0.24em] text-slate-400">
                                     Reports & trends
@@ -251,8 +258,8 @@ const Sidebar = ({ onDesktopCollapsedChange }) => {
                                 type="button"
                                 title={collapsed ? 'Reports' : undefined}
                                 onClick={() => setOpenAnalytics((current) => !current)}
-                                className={`group relative flex min-h-[48px] w-full items-center rounded-xl border py-2.5 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/70 ${
-                                    collapsed ? 'justify-center px-2' : 'gap-3 px-3'
+                                className={`${navItemShell} ${
+                                    collapsed ? 'min-h-[42px] justify-center px-1 py-1' : 'min-h-[46px] gap-3 px-2.5 py-2'
                                 } ${
                                     isAnalyticsActive
                                         ? 'border-indigo-400/30 bg-indigo-500/15 text-white'
@@ -268,7 +275,7 @@ const Sidebar = ({ onDesktopCollapsedChange }) => {
                                 />
 
                                 <span
-                                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition-all duration-200 ${
+                                    className={`${navIconShell} ${
                                         isAnalyticsActive
                                             ? 'border-indigo-300/30 bg-indigo-500/20 text-white'
                                             : 'border-slate-700 bg-slate-900/75 text-slate-300 group-hover:border-slate-600 group-hover:bg-slate-800 group-hover:text-white'
@@ -291,7 +298,7 @@ const Sidebar = ({ onDesktopCollapsedChange }) => {
                             </button>
 
                             {openAnalytics ? (
-                                <div className={`mt-2 space-y-1.5 ${collapsed ? '' : 'pl-2'}`}>
+                                <div className={`${collapsed ? 'mt-1.5 space-y-1' : 'mt-2 space-y-1.5 pl-2'}`}>
                                     {analyticsItems.map((item) => renderNavItem(item, true, collapsed, mobile))}
                                 </div>
                             ) : null}
@@ -299,14 +306,14 @@ const Sidebar = ({ onDesktopCollapsedChange }) => {
                     </div>
                 </div>
 
-                <div className={`border-t border-white/10 ${collapsed ? 'p-2' : 'p-3'}`}>
+                <div className={`border-t border-white/10 ${collapsed ? 'p-1.5' : 'p-2.5'}`}>
                     <div
-                        className={`rounded-2xl border border-slate-700/90 bg-slate-900/75 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${
+                        className={`rounded-xl border border-slate-700/90 bg-slate-900/75 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${
                             collapsed ? 'flex justify-center' : ''
                         }`}
                     >
                         <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 text-sm font-bold text-white shadow-[0_18px_34px_rgba(79,70,229,0.24)]">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-blue-600 text-sm font-bold text-white shadow-[0_18px_34px_rgba(79,70,229,0.24)]">
                                 {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                             </div>
 
@@ -328,9 +335,9 @@ const Sidebar = ({ onDesktopCollapsedChange }) => {
                             logout();
                             navigate('/login');
                         }}
-                        className={`mt-2 flex min-h-[48px] w-full items-center rounded-xl border border-transparent px-2.5 py-2.5 text-slate-400 transition-all duration-200 hover:border-rose-400/15 hover:bg-rose-500/12 hover:text-rose-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/70 ${
+                        className={`mt-1.5 flex w-full items-center rounded-lg border border-transparent text-slate-400 transition-all duration-200 hover:border-rose-400/15 hover:bg-rose-500/12 hover:text-rose-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/70 ${
                             collapsed ? 'justify-center' : 'gap-3'
-                        }`}
+                        } ${collapsed ? 'min-h-[42px] px-1 py-1' : 'min-h-[46px] px-2.5 py-2'}`}
                     >
                         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-700 bg-slate-900/75 text-slate-400 transition-all duration-200">
                             <LogOut size={18} strokeWidth={2.1} />
@@ -356,11 +363,11 @@ const Sidebar = ({ onDesktopCollapsedChange }) => {
             </button>
 
             <div
-                className={`fixed left-0 top-0 z-30 hidden h-screen lg:block lg:px-3 lg:py-3 ${
+                className={`fixed left-0 top-0 z-30 hidden h-screen lg:block ${
                     isDesktopCollapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_EXPANDED_WIDTH
                 }`}
             >
-                <aside className="h-full overflow-hidden rounded-2xl border border-slate-700/90 bg-slate-950 text-slate-100 shadow-[12px_0_38px_rgba(2,6,23,0.38)] backdrop-blur-xl">
+                <aside className="h-full overflow-hidden border-r border-slate-700/90 bg-slate-950 text-slate-100 shadow-[10px_0_30px_rgba(2,6,23,0.28)] backdrop-blur-xl">
                     {renderSidebarBody()}
                 </aside>
             </div>
@@ -383,6 +390,6 @@ const Sidebar = ({ onDesktopCollapsedChange }) => {
             </aside>
         </>
     );
-};
+});
 
 export default Sidebar;

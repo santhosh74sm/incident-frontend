@@ -112,7 +112,7 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
     return (
         <nav
             className={`fixed right-0 top-0 z-[60] h-14 bg-white/80 px-3 py-2 backdrop-blur-xl transition-all duration-200 dark:bg-slate-950/80 sm:px-4 lg:px-5 ${
-                isSidebarCollapsed ? 'left-0 lg:left-[92px]' : 'left-0 lg:left-[292px]'
+                isSidebarCollapsed ? 'left-0 lg:left-[72px]' : 'left-0 lg:left-[280px]'
             }`}
         >
             <div className="pl-14 sm:pl-16 lg:pl-0">
