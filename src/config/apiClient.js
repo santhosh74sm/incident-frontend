@@ -26,6 +26,9 @@ const RETRYABLE_METHODS = new Set(['get', 'head', 'options']);
 const MAX_RETRIES = 2;
 const AUTH_RESTORE_PATH = '/api/auth/me';
 const REFRESH_PATH = '/api/auth/refresh';
+const CSRF_COOKIE_NAME = 'csrfToken';
+const CSRF_HEADER_NAME = 'X-CSRF-Token';
+const CSRF_METHODS = new Set(['post', 'put', 'patch', 'delete']);
 
 const PUBLIC_AUTH_PATHS = [
     '/api/auth/admin-exists',
@@ -63,6 +66,17 @@ const isPublicAuthRequest = (config = {}) => PUBLIC_AUTH_PATHS.includes(getReque
 const isAuthRestoreRequest = (config = {}) => getRequestPath(config) === AUTH_RESTORE_PATH;
 const isRefreshRequest = (config = {}) => getRequestPath(config) === REFRESH_PATH;
 const isAccessTokenExpired = (error) => error.response?.data?.code === 'ACCESS_TOKEN_EXPIRED';
+const isRefreshRaceGrace = (error) => error.response?.data?.code === 'REFRESH_RETRY_GRACE';
+
+const getCookieValue = (name) => {
+    if (typeof document === 'undefined') return '';
+    return document.cookie
+        .split('; ')
+        .find((row) => row.startsWith(`${name}=`))
+        ?.split('=')
+        .slice(1)
+        .join('=') || '';
+};
 
 const removeAuthHeader = (headers) => {
     if (!headers) return;
@@ -110,6 +124,15 @@ apiClient.interceptors.request.use(async (config) => {
         removeAuthHeader(config.headers);
     }
 
+    const method = String(config.method || 'get').toLowerCase();
+    if (CSRF_METHODS.has(method)) {
+        const csrfToken = decodeURIComponent(getCookieValue(CSRF_COOKIE_NAME));
+        if (csrfToken) {
+            config.headers = config.headers || {};
+            config.headers[CSRF_HEADER_NAME] = csrfToken;
+        }
+    }
+
     return config;
 });
 
@@ -136,6 +159,12 @@ apiClient.interceptors.response.use(
                 resetAuthEventGuard();
                 return apiClient(config);
             } catch (refreshError) {
+                if (isRefreshRaceGrace(refreshError)) {
+                    await wait(250);
+                    resetAuthEventGuard();
+                    return apiClient(config);
+                }
+
                 clearLegacyAuthState();
                 dispatchAuthLogout(refreshError.response?.data?.code || 'refresh-failed');
                 return Promise.reject(refreshError);

@@ -35,7 +35,7 @@ export const buildPreviewFromFile = async (
 ) => {
     const toCanonicalHeader = createHeaderMapper(headerAliases);
     const buffer = await file.arrayBuffer();
-    const workbook = XLSX.read(buffer, { type: 'array' });
+    const workbook = XLSX.read(buffer, { type: 'array', cellFormula: false, cellHTML: false, cellNF: false });
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
 
