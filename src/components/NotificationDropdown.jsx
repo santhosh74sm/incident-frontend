@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useNotifications } from '../context/NotificationContext';
 import { useAuth } from '../context/AuthContext';
+import { getRecordId } from '../utils/ids';
 
 // ─── Pure helpers (no hooks, no side-effects) ─────────────────────────────────
 
@@ -142,7 +143,7 @@ const resolveNotificationPath = (notification, role) => {
     ) {
         return notification.routePath;
     }
-    const incidentId = notification?.incident?.id || notification?.incident?._id;
+    const incidentId = getRecordId(notification?.incident);
     if (isValidMongoObjectId(incidentId)) {
         return `/incidents/${incidentId}`;
     }
@@ -218,7 +219,7 @@ const NotificationSection = ({ title, count, items, onItemClick }) => {
                         getTargetDetails(notification);
                     const isUnread = notification?.read !== true;
                     const notificationKey =
-                        notification?._id ||
+                        getRecordId(notification) ||
                         `${notification?.entityType || 'notification'}-${
                             notification?.entityId || notification?.createdAt || index
                         }-${index}`;

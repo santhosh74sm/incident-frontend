@@ -47,6 +47,7 @@ import {
     readUserList,
     writeUserList,
 } from '../utils/userStorage';
+import { getRecordId } from '../utils/ids';
 
 const STATUS_STYLES = {
     Open: { badge: 'border-orange-200 bg-orange-50 text-orange-700', tone: 'amber' },
@@ -233,6 +234,7 @@ const IncidentDetail = () => {
     const [dragActiveIndex, setDragActiveIndex] = useState(null);
     const [evidenceUploadDone, setEvidenceUploadDone] = useState(false);
     const [showUploadForm, setShowUploadForm] = useState(false);
+    const userId = getRecordId(user);
 
     const fetchFieldOptions = useCallback(async () => {
         try {
@@ -255,28 +257,28 @@ const IncidentDetail = () => {
 
     // Mark read in user-scoped localStorage and mark related notifications as read.
     useEffect(() => {
-        if (!id || !user?._id) return;
+        if (!id || !userId) return;
 
-        migrateIncidentStorageForUser(user._id);
-        const readIds = readUserList('readIncidents', user._id);
+        migrateIncidentStorageForUser(userId);
+        const readIds = readUserList('readIncidents', userId);
         if (!readIds.includes(id)) {
-            writeUserList('readIncidents', user._id, [...readIds, id]);
+            writeUserList('readIncidents', userId, [...readIds, id]);
         }
-        const priorityIds = readUserList('priorityIncidents', user._id);
+        const priorityIds = readUserList('priorityIncidents', userId);
         if (priorityIds.includes(id)) {
-            writeUserList('priorityIncidents', user._id, priorityIds.filter((pid) => pid !== id));
+            writeUserList('priorityIncidents', userId, priorityIds.filter((pid) => pid !== id));
         }
 
         const related = notifications.filter(
             (n) => n?.read !== true && (
-                (n?.incident?._id || n?.incident) === id ||
+                getRecordId(n?.incident || '') === id ||
                 n?.routePath === `/incidents/${id}` ||
                 n?.entityId === id
             )
         );
         related.forEach((n) => markNotificationAsRead(n));
 
-        if (user?._id) {
+        if (userId) {
             apiClient
                 .put(`/api/notifications/read/${id}`, {})
                 .then(() => refreshNotifications({ silent: true }))
@@ -284,7 +286,7 @@ const IncidentDetail = () => {
                     console.error('Failed to mark incident notifications as read', err);
                 });
         }
-    }, [id, user?._id]); // eslint-disable-line react-hooks/exhaustive-deps -- mark notifications read when route id/user changes only
+    }, [id, userId]); // eslint-disable-line react-hooks/exhaustive-deps -- mark notifications read when route id/user changes only
 
     const handleSelectOption = (option) => {
         const label = option?.label;
@@ -314,7 +316,7 @@ const IncidentDetail = () => {
     };
 
     const fetchIncident = useCallback(async () => {
-        if (!id || !user?._id) return;
+        if (!id || !userId) return;
         if (!isValidMongoObjectId(id)) {
             setIncident(null);
             setError('Invalid incident link. Please open the incident from the list again.');
@@ -336,27 +338,27 @@ const IncidentDetail = () => {
         } finally {
             setLoading(false);
         }
-    }, [id, user?._id]);
+    }, [id, userId]);
 
     const fetchStaff = useCallback(async () => {
-        if (!['Super Admin', 'Admin'].includes(user?.role) || !user?._id) return;
+        if (!['Super Admin', 'Admin'].includes(user?.role) || !userId) return;
         try {
             const { data } = await apiClient.get('/api/auth/users');
             setStaffList(Array.isArray(data) ? data : []);
         } catch {
             setStaffList([]);
         }
-    }, [user?.role, user?._id]);
+    }, [user?.role, userId]);
 
     const fetchGeneratedLetter = useCallback(async () => {
-        if (!id || !user?._id || !isValidMongoObjectId(id)) return;
+        if (!id || !userId || !isValidMongoObjectId(id)) return;
         try {
             const { data } = await apiClient.get(`/api/issued-letters/incident/${id}`);
             setGeneratedLetter(Array.isArray(data) && data.length > 0 ? data[0] : null);
         } catch {
             setGeneratedLetter(null);
         }
-    }, [id, user?._id]);
+    }, [id, userId]);
 
     useEffect(() => {
         setLoading(true);
@@ -369,20 +371,20 @@ const IncidentDetail = () => {
     // Backend mark-by-incidentId on mount
     useEffect(() => {
         const markRead = async () => {
-            if (!id || !user?._id || !isValidMongoObjectId(id)) return;
+            if (!id || !userId || !isValidMongoObjectId(id)) return;
             try {
                 await apiClient.put(`/api/notifications/read/${id}`, {});
-                const savedRead = readUserList('readIncidents', user._id);
+                const savedRead = readUserList('readIncidents', userId);
                 if (!savedRead.includes(id)) {
-                    writeUserList('readIncidents', user._id, [...savedRead, id]);
+                    writeUserList('readIncidents', userId, [...savedRead, id]);
                 }
-                const savedPriority = readUserList('priorityIncidents', user._id);
-                writeUserList('priorityIncidents', user._id, savedPriority.filter((pid) => pid !== id));
+                const savedPriority = readUserList('priorityIncidents', userId);
+                writeUserList('priorityIncidents', userId, savedPriority.filter((pid) => pid !== id));
                 window.dispatchEvent(new CustomEvent('notifications-updated'));
             } catch { /* non-fatal */ }
         };
         markRead();
-    }, [id, user?._id]);
+    }, [id, userId]);
 
     const handleSubmitProgress = async () => {
         if (!note.trim()) return;
@@ -570,8 +572,8 @@ const IncidentDetail = () => {
     }, [fetchIncident, id]);
 
     const handleGeneratedLetterDownload = useCallback(async () => {
-        const letterId = generatedLetter?._id || incident?.letterGenerated?._id;
-        if (!letterId || !user?._id) return;
+        const letterId = getRecordId(generatedLetter) || getRecordId(incident?.letterGenerated);
+        if (!letterId || !userId) return;
         try {
             const response = await apiClient.get(`/api/issued-letters/${letterId}/download`, { responseType: 'blob' });
             const studentName = slugify(incident?.studentsInvolved?.[0] || 'Student');
@@ -592,13 +594,13 @@ const IncidentDetail = () => {
         } catch (err) {
             addToast(err.response?.data?.message || 'Failed to download letter.', 'error');
         }
-    }, [addToast, generatedLetter, incident, user?._id]);
+    }, [addToast, generatedLetter, incident, userId]);
 
     const isHandler = useMemo(() => {
         if (!incident || !user) return false;
         if (['Super Admin', 'Admin'].includes(user.role)) return true;
-        return Boolean(incident.assignedHandler && incident.assignedHandler._id === user._id);
-    }, [incident, user]);
+        return Boolean(incident.assignedHandler && getRecordId(incident.assignedHandler) === userId);
+    }, [incident, user, userId]);
 
     const timelineData = useMemo(() => {
         if (!incident) return [];
@@ -958,7 +960,7 @@ const IncidentDetail = () => {
                                                                         <option value="" disabled>Select evidence type...</option>
                                                                         {evidenceTypes.map((type) => {
                                                                             const label = type?.name || type;
-                                                                            return <option key={type?._id || label} value={label}>{label}</option>;
+                                                                            return <option key={getRecordId(type) || label} value={label}>{label}</option>;
                                                                         })}
                                                                     </select>
                                                                     <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -1076,7 +1078,7 @@ const IncidentDetail = () => {
                                                     value={selectedHandler} onChange={(e) => setSelectedHandler(e.target.value)}>
                                                     <option value="">Choose investigator...</option>
                                                     {staffList.map((staff) => (
-                                                        <option key={staff._id} value={staff._id}>{staff.name} ({staff.role})</option>
+                                                        <option key={getRecordId(staff)} value={getRecordId(staff)}>{staff.name} ({staff.role})</option>
                                                     ))}
                                                 </select>
                                             </div>
@@ -1086,7 +1088,7 @@ const IncidentDetail = () => {
                                                 {actionLoading ? <Loader2 size={16} className="mr-2 inline animate-spin" /> : null}
                                                 Assign Selected Investigator
                                             </button>
-                                            <button type="button" onClick={() => handleAction('approve', { handlerId: user?._id })}
+                                            <button type="button" onClick={() => handleAction('approve', { handlerId: userId })}
                                                 disabled={actionLoading}
                                                 className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60">
                                                 Assign to Myself
@@ -1147,13 +1149,13 @@ const IncidentDetail = () => {
                                         <div className="mt-4 space-y-4">
                                             <div className="space-y-2">
                                                 {(fieldOptions[activeFieldTab] || []).map((option) => (
-                                                    <div key={option._id}
+                                                    <div key={getRecordId(option)}
                                                         className={`group flex items-center gap-3 rounded-2xl border px-3 py-3 transition ${editMode ? 'border-slate-200 bg-slate-50' : 'cursor-pointer border-slate-200 bg-white hover:border-blue-200 hover:bg-blue-50/60'}`}
                                                         onClick={() => { if (!editMode) handleSelectOption(option); }}>
                                                         <div className={`flex h-8 w-8 items-center justify-center rounded-xl ${editMode ? 'bg-slate-100 text-slate-400' : 'bg-blue-50 text-blue-600'}`}>
                                                             {editMode ? (
                                                                 <Trash2 size={14} className="cursor-pointer transition hover:text-red-600"
-                                                                    onClick={(e) => { e.stopPropagation(); handleDeleteOption(option._id); }} />
+                                                                    onClick={(e) => { e.stopPropagation(); handleDeleteOption(getRecordId(option)); }} />
                                                             ) : <CheckCircle size={16} />}
                                                         </div>
                                                         <span className="text-sm font-medium text-slate-700">{option.label}</span>

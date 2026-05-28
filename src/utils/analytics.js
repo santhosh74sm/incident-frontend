@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import { getRecordId } from './ids';
 
 /** Plain-language label for activity record types shown to staff (not internal API names). */
 export const formatActivityRecordLabel = (type) => {
@@ -242,7 +243,7 @@ export const buildDashboardActivityFeed = (incidents = [], { icons = {} } = {}) 
     sortIncidentsByRecentActivity(incidents)
         .slice(0, 6)
         .map((incident) => ({
-            id: incident._id,
+            id: getRecordId(incident),
             title: incident.title || 'Untitled incident',
             description: `${incident.studentsInvolved?.[0] || incident.studentDetails?.name || 'Student unavailable'} - ${incident.status || 'Unknown'}`,
             timestamp: formatShortDateTime(incident.updatedAt || getIncidentTimestamp(incident)),
@@ -275,7 +276,7 @@ export const buildAnalyticsActivityFeed = (items, { ActivityIcon } = {}) =>
             }
 
             return {
-                id: incident?._id || incident?.id || `${title}-${incidentDate}`,
+                id: getRecordId(incident) || `${title}-${incidentDate}`,
                 title,
                 description,
                 timestamp: formatShortDateTime(incidentDate),

@@ -23,6 +23,7 @@ import React, {
 } from 'react';
 import apiClient, { API_BASE } from '../config/apiClient';
 import { useAuth } from './AuthContext';
+import { getRecordId } from '../utils/ids';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -58,10 +59,11 @@ const NotificationProvider = memo(({ children }) => {
     const heartbeatTimer   = useRef(null);
     const reconnectDelay   = useRef(RECONNECT_BASE_MS);
     const mountedRef       = useRef(true);
+    const userId           = getRecordId(user);
 
     const enabled = useMemo(
-        () => Boolean((user?.id || user?._id) && ['Super Admin', 'Admin', 'Teacher', 'super_admin', 'admin', 'teacher'].includes(user?.role)),
-        [user?.id, user?._id, user?.role]
+        () => Boolean(userId && ['Super Admin', 'Admin', 'Teacher', 'super_admin', 'admin', 'teacher'].includes(user?.role)),
+        [userId, user?.role]
     );
 
     // ── REST fallback fetch ───────────────────────────────────────────────────
@@ -245,13 +247,13 @@ const NotificationProvider = memo(({ children }) => {
 
     const markNotificationAsRead = useCallback(
         async (notification) => {
-            const notificationId = notification?._id || notification;
+            const notificationId = getRecordId(notification) || notification;
             const isAlreadyRead  = notification?.read === true;
             if (!enabled || !notificationId || isAlreadyRead) return;
 
             // Optimistic update
             setNotifications((prev) =>
-                prev.map((n) => (n._id === notificationId ? { ...n, read: true } : n))
+                prev.map((n) => (getRecordId(n) === notificationId ? { ...n, read: true } : n))
             );
 
             try {
@@ -259,7 +261,7 @@ const NotificationProvider = memo(({ children }) => {
                 // Server will push updated list via SSE automatically
             } catch (error) {
                 if (error.response?.status === 404 || error.response?.status === 400) {
-                    setNotifications((prev) => prev.filter((n) => n._id !== notificationId));
+                    setNotifications((prev) => prev.filter((n) => getRecordId(n) !== notificationId));
                     return;
                 }
                 // Revert optimistic update on unexpected error

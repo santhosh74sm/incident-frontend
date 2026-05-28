@@ -1,6 +1,12 @@
 const INCIDENT_KEY_PREFIXES = ['readIncidents', 'priorityIncidents'];
 const MAX_STORED_IDS = 500;
 
+const normalizeId = (value) => {
+    if (value == null) return '';
+    if (typeof value === 'string' || typeof value === 'number') return String(value);
+    return String(value.id ?? value._id ?? '');
+};
+
 const parseList = (value) => {
     try {
         const parsed = JSON.parse(value || '[]');
@@ -20,7 +26,7 @@ export const readUserList = (key, userId) => {
 export const writeUserList = (key, userId, ids) => {
     if (typeof window === 'undefined' || !userId) return;
 
-    const uniqueIds = [...new Set((Array.isArray(ids) ? ids : []).filter(Boolean).map(String))];
+    const uniqueIds = [...new Set((Array.isArray(ids) ? ids : []).map(normalizeId).filter(Boolean))];
     const prunedIds = uniqueIds.slice(-MAX_STORED_IDS);
     window.localStorage.setItem(getUserScopedKey(key, userId), JSON.stringify(prunedIds));
 };

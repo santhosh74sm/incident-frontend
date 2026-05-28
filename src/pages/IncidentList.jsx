@@ -28,6 +28,7 @@ import {
     readUserList,
     writeUserList,
 } from '../utils/userStorage';
+import { getRecordId } from '../utils/ids';
 
 const STATUS_OPTIONS = ['Open', 'In Progress', 'Closed'];
 const READ_STATUS_OPTIONS = ['All', 'Unread', 'Read'];
@@ -78,19 +79,20 @@ const IncidentList = () => {
     const [readStatusFilter, setReadStatusFilter] = useState('All');
 
     const config = REQUEST_CONFIG;
+    const userId = getRecordId(user);
 
     useEffect(() => {
-        if (!user?._id) {
+        if (!userId) {
             setReadIncidents([]);
             setPriorityIncidents([]);
             return;
         }
 
-        migrateIncidentStorageForUser(user._id);
-        pruneIncidentStorage(user._id);
-        setReadIncidents(readUserList('readIncidents', user._id));
-        setPriorityIncidents(readUserList('priorityIncidents', user._id));
-    }, [user?._id]);
+        migrateIncidentStorageForUser(userId);
+        pruneIncidentStorage(userId);
+        setReadIncidents(readUserList('readIncidents', userId));
+        setPriorityIncidents(readUserList('priorityIncidents', userId));
+    }, [userId]);
 
     const allStaffOptions = useMemo(
         // Show a single unified "Administration" entry for all admin accounts;
@@ -100,7 +102,7 @@ const IncidentList = () => {
     );
 
     const fetchIncidents = useCallback(async (options = { reset: false }) => {
-        if (!user?._id) return;
+        if (!userId) return;
 
         try {
             setLoading(true);
@@ -115,7 +117,7 @@ const IncidentList = () => {
                         ? staffList
                             .filter((staff) => !['Super Admin', 'Admin', 'super_admin', 'admin'].includes(staff.role))
                             .filter((staff) => selectedStaff.includes(staff.name))
-                            .map((staff) => staff._id)
+                            .map((staff) => getRecordId(staff))
                         : [];
 
                 const params = buildIncidentFilterParams({
@@ -143,20 +145,20 @@ const IncidentList = () => {
         } finally {
             setLoading(false);
         }
-    }, [allStaffOptions, categoryFilter, classFilter, config, dateRange.end, dateRange.start, sectionFilter, selectedStaff, staffList, statusFilter, user?._id]);
+    }, [allStaffOptions, categoryFilter, classFilter, config, dateRange.end, dateRange.start, sectionFilter, selectedStaff, staffList, statusFilter, userId]);
 
     const fetchStaff = useCallback(async () => {
-        if (!user?._id) return;
+        if (!userId) return;
         try {
             const { data } = await apiClient.get('/api/auth/users', config);
             setStaffList(Array.isArray(data) ? data : []);
         } catch {
             setStaffList([]);
         }
-    }, [config, user?._id]);
+    }, [config, userId]);
 
     const fetchCategories = useCallback(async () => {
-        if (!user?._id) return;
+        if (!userId) return;
         try {
             const { data } = await apiClient.get('/api/incidents/categories', config);
             const categories = Array.isArray(data)
@@ -166,10 +168,10 @@ const IncidentList = () => {
         } catch {
             setCategoryList([]);
         }
-    }, [config, user?._id]);
+    }, [config, userId]);
 
     const fetchClasses = useCallback(async () => {
-        if (!user?._id) return;
+        if (!userId) return;
         try {
             const { data } = await apiClient.get('/api/incidents/classes', config);
             const classes = Array.isArray(data) ? data : [];
@@ -188,10 +190,10 @@ const IncidentList = () => {
         } catch {
             setClassList(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']);
         }
-    }, [config, user?._id]);
+    }, [config, userId]);
 
     const fetchSections = useCallback(async () => {
-        if (!user?._id) return;
+        if (!userId) return;
         try {
             const { data } = await apiClient.get('/api/incidents/sections', config);
             const sections = Array.isArray(data) ? data : [];
@@ -199,7 +201,7 @@ const IncidentList = () => {
         } catch {
             setSectionList(['A', 'B', 'C', 'D', 'E']);
         }
-    }, [config, user?._id]);
+    }, [config, userId]);
 
     useEffect(() => {
         fetchStaff();
@@ -210,43 +212,43 @@ const IncidentList = () => {
 
     useEffect(() => {
         fetchIncidents();
-    }, [categoryFilter, classFilter, dateRange.end, dateRange.start, fetchIncidents, sectionFilter, selectedStaff, statusFilter, user?._id]);
+    }, [categoryFilter, classFilter, dateRange.end, dateRange.start, fetchIncidents, sectionFilter, selectedStaff, statusFilter, userId]);
 
     useEffect(() => {
         if (!notifications || notifications.length === 0) return;
         
         const incidentIds = notifications
-            .filter((notification) => notification.incident?._id)
-            .map((notification) => notification.incident._id);
+            .map((notification) => getRecordId(notification.incident))
+            .filter(Boolean);
 
         setPriorityIncidents((current) => {
             const next = [...new Set([...current, ...incidentIds])];
-            writeUserList('priorityIncidents', user?._id, next);
+            writeUserList('priorityIncidents', userId, next);
             return next;
         });
-    }, [notifications, user?._id]);
+    }, [notifications, userId]);
 
     const markAsRead = useCallback((incidentId) => {
         setReadIncidents((current) => {
             const next = [...new Set([...current, incidentId])];
-            writeUserList('readIncidents', user?._id, next);
+            writeUserList('readIncidents', userId, next);
             return next;
         });
 
         setPriorityIncidents((current) => {
             const next = current.filter((id) => id !== incidentId);
-            writeUserList('priorityIncidents', user?._id, next);
+            writeUserList('priorityIncidents', userId, next);
             return next;
         });
-    }, [user?._id]);
+    }, [userId]);
 
     const isPriority = useCallback((incident) => {
-        const incidentId = incident._id || incident.id;
+        const incidentId = getRecordId(incident);
         return priorityIncidents.includes(incidentId);
     }, [priorityIncidents]);
 
     const isUnread = useCallback((incident) => {
-        const incidentId = incident._id || incident.id;
+        const incidentId = getRecordId(incident);
         return !readIncidents.includes(incidentId);
     }, [readIncidents]);
 
@@ -578,7 +580,7 @@ const IncidentList = () => {
 
                                         return (
                                             <div
-                                                key={incident._id}
+                                                key={getRecordId(incident)}
                                                 className={`rounded-[26px] border bg-white/95 p-5 shadow-md shadow-slate-200/60 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg dark:bg-slate-900/95 dark:shadow-slate-950/30 ${
                                                     priority ? 'border-amber-200 ring-1 ring-amber-200/70 dark:border-amber-500/40 dark:ring-amber-500/20' : unread ? 'border-blue-200 ring-1 ring-blue-200/70 dark:border-blue-500/40 dark:ring-blue-500/20' : 'border-white/70 dark:border-slate-800'
                                                 }`}
@@ -646,8 +648,9 @@ const IncidentList = () => {
                                                         <button
                                                             type="button"
                                                             onClick={() => {
-                                                                markAsRead(incident._id || incident.id);
-                                                                navigate(`/incidents/${incident._id}`);
+                                                                const incidentId = getRecordId(incident);
+                                                                markAsRead(incidentId);
+                                                                navigate(`/incidents/${incidentId}`);
                                                             }}
                                                             className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
                                                         >

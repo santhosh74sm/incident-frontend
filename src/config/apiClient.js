@@ -83,6 +83,12 @@ const normalizeResponseIds = (value, seen = new WeakSet()) => {
     return value;
 };
 
+export const getPublicId = (value) => {
+    if (value == null) return '';
+    if (typeof value === 'string' || typeof value === 'number') return String(value);
+    return String(value.id ?? value._id ?? '');
+};
+
 const getRequestPath = (config = {}) => {
     const rawUrl = config.url || '';
 

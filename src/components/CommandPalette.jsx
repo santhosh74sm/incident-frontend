@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getRecordId } from '../utils/ids';
 
 
 const typeIconMap = {
@@ -133,7 +134,7 @@ const CommandPalette = () => {
     }, [isOpen]);
 
     useEffect(() => {
-        if (!isOpen || !user?._id) return undefined;
+        if (!isOpen || !getRecordId(user)) return undefined;
 
         const trimmedQuery = query.trim();
 
@@ -168,7 +169,7 @@ const CommandPalette = () => {
             controller.abort();
             clearTimeout(timeout);
         };
-    }, [isOpen, query, user?._id]);
+    }, [isOpen, query, user]);
 
     const quickActions = useMemo(
         () => quickActionItems.filter((item) => item.roles.includes(user?.role)),
