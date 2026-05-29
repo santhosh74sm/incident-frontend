@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/ToastProvider';
+import { PASSWORD_MIN_LENGTH, PASSWORD_POLICY_TEXT } from '../lib/validators';
 import {
     AnalyticsDataTable,
     DashboardHero,
@@ -49,6 +50,13 @@ const READONLY_CLASS_NAME =
     'w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:shadow-none';
 
 const getRoleGroup = (role) => (['Super Admin', 'Admin'].includes(normalizeRole(role)) ? 'Administration' : 'Teacher');
+const isStrongPassword = (password) =>
+    typeof password === 'string' &&
+    password.length >= PASSWORD_MIN_LENGTH &&
+    /[a-z]/.test(password) &&
+    /[A-Z]/.test(password) &&
+    /\d/.test(password) &&
+    /[^A-Za-z0-9]/.test(password);
 
 const formatDate = (value) => {
     if (!value) return 'Not available';
@@ -410,6 +418,12 @@ const UserManagement = () => {
 
     const handleAddUser = async (event) => {
         event.preventDefault();
+
+        if (!isStrongPassword(newUser.password)) {
+            addToast('Password must be at least 8 characters and include uppercase, lowercase, number, and symbol.', 'error');
+            return;
+        }
+
         setSubmittingUser(true);
 
         try {
@@ -1003,8 +1017,10 @@ const UserManagement = () => {
                                         value={newUser.password}
                                         onChange={(event) => setNewUser((current) => ({ ...current, password: event.target.value }))}
                                         placeholder="Create a temporary password"
+                                        minLength={PASSWORD_MIN_LENGTH}
                                         className={INPUT_CLASS_NAME}
                                     />
+                                    <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">{PASSWORD_POLICY_TEXT}</p>
                                 </div>
                             </div>
 

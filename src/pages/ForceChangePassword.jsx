@@ -3,6 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Loader2 } from 'lucide-react';
 import apiClient from '../config/apiClient';
 import { useAuth } from '../context/AuthContext';
+import { PASSWORD_MIN_LENGTH, PASSWORD_POLICY_TEXT } from '../lib/validators';
+
+const isStrongPassword = (password) =>
+    typeof password === 'string' &&
+    password.length >= PASSWORD_MIN_LENGTH &&
+    /[a-z]/.test(password) &&
+    /[A-Z]/.test(password) &&
+    /\d/.test(password) &&
+    /[^A-Za-z0-9]/.test(password);
 
 const PasswordField = ({ value, onChange, placeholder, visible, onToggle, minLength }) => {
     const VisibilityIcon = visible ? EyeOff : Eye;
@@ -57,8 +66,8 @@ const ForceChangePassword = () => {
             return;
         }
 
-        if (newPassword.length < 6) {
-            setError('New password must be at least 6 characters.');
+        if (!isStrongPassword(newPassword)) {
+            setError('New password must be at least 8 characters and include uppercase, lowercase, number, and symbol.');
             return;
         }
 
@@ -121,15 +130,16 @@ const ForceChangePassword = () => {
                         value={newPassword}
                         onChange={setNewPassword}
                         placeholder="New password"
-                        minLength={6}
+                        minLength={PASSWORD_MIN_LENGTH}
                         visible={visibleFields.next}
                         onToggle={() => toggleVisibility('next')}
                     />
+                    <p className="-mt-2 text-xs text-slate-500 dark:text-slate-400">{PASSWORD_POLICY_TEXT}</p>
                     <PasswordField
                         value={confirmPassword}
                         onChange={setConfirmPassword}
                         placeholder="Repeat new password"
-                        minLength={6}
+                        minLength={PASSWORD_MIN_LENGTH}
                         visible={visibleFields.confirm}
                         onToggle={() => toggleVisibility('confirm')}
                     />

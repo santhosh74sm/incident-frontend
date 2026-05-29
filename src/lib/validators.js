@@ -11,6 +11,9 @@
 
 import { z } from 'zod';
 
+export const PASSWORD_MIN_LENGTH = 8;
+export const PASSWORD_POLICY_TEXT = 'Use at least 8 characters with uppercase, lowercase, number, and symbol.';
+
 // ─── Auth schemas ─────────────────────────────────────────────────────────────
 
 export const loginSchema = z.object({
@@ -39,7 +42,7 @@ export const registerSchema = z
             .max(254, 'Email is too long'),
         password: z
             .string()
-            .min(12, 'Password must be at least 12 characters')
+            .min(PASSWORD_MIN_LENGTH, 'Password must be at least 8 characters')
             .max(200, 'Password is too long')
             .regex(/[a-z]/, 'Password must include a lowercase letter')
             .regex(/[A-Z]/, 'Password must include an uppercase letter')

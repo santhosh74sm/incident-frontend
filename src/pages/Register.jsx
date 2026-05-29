@@ -21,7 +21,7 @@ import {
 import apiClient from '../config/apiClient';
 import { useAuth } from '../context/AuthContext';
 import { useRegister } from '../hooks/useAuthMutations';
-import { registerSchema } from '../lib/validators';
+import { PASSWORD_POLICY_TEXT, registerSchema } from '../lib/validators';
 
 const INPUT_CLASS_NAME =
     'w-full rounded-xl border border-slate-200 bg-slate-50/90 px-4 py-3.5 pl-12 pr-12 text-sm text-slate-800 outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/15 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-indigo-400 dark:focus:bg-slate-800/70 dark:focus:ring-indigo-400/20';
@@ -258,6 +258,9 @@ const Register = () => {
                                                 </div>
                                                 {errors.password && (
                                                     <p className="mt-1.5 text-xs font-medium text-red-600">{errors.password.message}</p>
+                                                )}
+                                                {!errors.password && (
+                                                    <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">{PASSWORD_POLICY_TEXT}</p>
                                                 )}
                                             </div>
 
