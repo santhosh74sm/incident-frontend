@@ -107,7 +107,7 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
 
     const hasUnread = unreadCount > 0;
     const iconButtonBase =
-        'inline-flex h-10 min-h-[40px] min-w-[40px] w-10 items-center justify-center rounded-xl bg-white/80 text-slate-600 backdrop-blur transition-all duration-200 hover:bg-white hover:text-slate-950 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white';
+        'inline-flex h-11 min-h-[44px] min-w-[44px] w-11 items-center justify-center rounded-xl bg-white/80 text-slate-600 backdrop-blur transition-all duration-200 hover:bg-white hover:text-slate-950 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white';
 
     return (
         <nav
@@ -125,7 +125,7 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                         <button
                             type="button"
                             onClick={openCommandPalette}
-                            className="group inline-flex h-10 min-h-[40px] min-w-[40px] items-center justify-center rounded-xl bg-white/70 text-slate-900 backdrop-blur transition-all duration-200 hover:bg-white hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:bg-slate-900/70 dark:text-slate-100 dark:hover:bg-slate-800 sm:hidden"
+                            className="group inline-flex h-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-xl bg-white/70 text-slate-900 backdrop-blur transition-all duration-200 hover:bg-white hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:bg-slate-900/70 dark:text-slate-100 dark:hover:bg-slate-800 sm:hidden"
                             aria-label="Open search"
                             title="Search"
                         >
@@ -172,7 +172,7 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                                     onClick={toggleNotificationPanel}
                                     disabled={!notificationsEnabled}
                                     data-notification-trigger
-                                    className={`relative inline-flex h-10 min-h-[40px] min-w-[40px] w-10 items-center justify-center rounded-xl transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+                                    className={`relative inline-flex h-11 min-h-[44px] min-w-[44px] w-11 items-center justify-center rounded-xl transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
                                         showNotificationPanel || hasUnread
                                             ? 'bg-indigo-50 text-indigo-700 shadow-sm shadow-indigo-100/70'
                                             : iconButtonBase
@@ -197,7 +197,7 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                                     type="button"
                                     title="Profile"
                                     onClick={toggleProfileDropdown}
-                                    className={`flex min-h-[40px] items-center gap-2 rounded-xl px-2 py-1 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 sm:gap-3 sm:px-3 ${
+                                    className={`flex min-h-[44px] items-center gap-2 rounded-xl px-2 py-1 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 sm:gap-3 sm:px-3 ${
                                         showDropdown
                                             ? 'bg-indigo-50 shadow-sm shadow-indigo-100/70 dark:bg-indigo-950/70 dark:shadow-none'
                                             : 'bg-white/80 hover:bg-white hover:shadow-sm dark:bg-slate-900/80 dark:hover:bg-slate-800'

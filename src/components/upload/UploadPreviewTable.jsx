@@ -24,7 +24,7 @@ const UploadPreviewTable = ({ preview }) => {
                 </div>
             </div>
 
-            <div className="overflow-x-auto px-5 py-4">
+            <div className="hidden overflow-x-auto px-5 py-4 md:block">
                 <table className="min-w-[720px] text-sm">
                     <thead>
                         <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
@@ -49,6 +49,33 @@ const UploadPreviewTable = ({ preview }) => {
                         ))}
                     </tbody>
                 </table>
+            </div>
+
+            <div className="space-y-3 px-4 py-4 md:hidden">
+                {preview.rows?.map((row) => (
+                    <article
+                        key={`preview-card-${row.__rowNumber}`}
+                        className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900"
+                    >
+                        <div className="border-b border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
+                            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+                                Row {row.__rowNumber}
+                            </p>
+                        </div>
+                        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                            {columns.map((column) => (
+                                <div key={`${row.__rowNumber}-${column}-mobile`} className="grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-3 px-4 py-3">
+                                    <span className="min-w-0 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                                        {column}
+                                    </span>
+                                    <span className="min-w-0 break-words text-right text-sm font-medium text-slate-800 dark:text-slate-100">
+                                        {String(row[column] ?? '-') || '-'}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </article>
+                ))}
             </div>
 
             {((preview.missingColumns?.length || 0) > 0 || (preview.rowIssues?.length || 0) > 0) && (

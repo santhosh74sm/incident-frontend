@@ -20,7 +20,7 @@ import {
     DashboardStatCard,
     EmptyStatePanel,
 } from '../components/analytics/DashboardPrimitives';
-import { buildIncidentFilterParams, getIncidentTimestamp, REQUEST_CONFIG, resolveHandlerLabel } from '../utils/analytics';
+import { buildIncidentFilterParams, getIncidentTimestamp, resolveHandlerLabel } from '../utils/analytics';
 import apiClient from '../config/apiClient';
 import {
     migrateIncidentStorageForUser,
@@ -78,7 +78,7 @@ const IncidentList = () => {
     const [activeTab, setActiveTab] = useState('all');
     const [readStatusFilter, setReadStatusFilter] = useState('All');
 
-    const config = REQUEST_CONFIG;
+    const config = useMemo(() => ({ headers: {} }), []);
     const userId = getRecordId(user);
 
     useEffect(() => {

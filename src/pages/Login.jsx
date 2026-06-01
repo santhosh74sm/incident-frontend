@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -25,6 +25,8 @@ const INPUT_ERROR_CLASS_NAME =
     'w-full rounded-xl border border-red-300 bg-red-50/60 px-4 py-3.5 pl-12 pr-12 text-sm text-slate-800 outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-red-400 focus:bg-white focus:ring-4 focus:ring-red-500/15 dark:border-red-500/50 dark:bg-red-950/30 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:bg-red-950/40 dark:focus:ring-red-400/20';
 
 const Login = () => {
+    const emailId = useId();
+    const passwordId = useId();
     const [showPassword, setShowPassword] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
@@ -123,34 +125,40 @@ const Login = () => {
 
                             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
                                 <div>
-                                    <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                    <label htmlFor={emailId} className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
                                         Email Address
                                     </label>
                                     <div className="relative">
                                         <Mail className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                         <input
                                             type="email"
+                                            id={emailId}
                                             autoComplete="email"
                                             placeholder="name@school.edu"
+                                            aria-invalid={Boolean(errors.email)}
+                                            aria-describedby={errors.email ? `${emailId}-error` : undefined}
                                             className={errors.email ? INPUT_ERROR_CLASS_NAME : INPUT_CLASS_NAME}
                                             {...register('email')}
                                         />
                                     </div>
                                     {errors.email && (
-                                        <p className="mt-1.5 text-xs font-medium text-red-600">{errors.email.message}</p>
+                                        <p id={`${emailId}-error`} className="mt-1.5 text-xs font-medium text-red-600">{errors.email.message}</p>
                                     )}
                                 </div>
 
                                 <div>
-                                    <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                    <label htmlFor={passwordId} className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
                                         Password
                                     </label>
                                     <div className="relative">
                                         <Lock className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                         <input
                                             type={showPassword ? 'text' : 'password'}
+                                            id={passwordId}
                                             autoComplete="current-password"
                                             placeholder="Enter your password"
+                                            aria-invalid={Boolean(errors.password)}
+                                            aria-describedby={errors.password ? `${passwordId}-error` : undefined}
                                             className={errors.password ? INPUT_ERROR_CLASS_NAME : INPUT_CLASS_NAME}
                                             {...register('password')}
                                         />
@@ -164,7 +172,7 @@ const Login = () => {
                                         </button>
                                     </div>
                                     {errors.password && (
-                                        <p className="mt-1.5 text-xs font-medium text-red-600 dark:text-red-300">{errors.password.message}</p>
+                                        <p id={`${passwordId}-error`} className="mt-1.5 text-xs font-medium text-red-600 dark:text-red-300">{errors.password.message}</p>
                                     )}
                                     <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300">
                                         Password resets are handled by the Super Admin. Ask them for a temporary password.

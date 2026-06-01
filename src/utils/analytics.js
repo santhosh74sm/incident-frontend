@@ -20,8 +20,6 @@ export const formatActivityRecordLabel = (type) => {
     return map[key] || map[compact] || 'School record';
 };
 
-export const REQUEST_CONFIG = { headers: {} };
-
 export const STATUS_OPTIONS = ['Open', 'In Progress', 'Closed'];
 
 export const STATUS_COLORS = {

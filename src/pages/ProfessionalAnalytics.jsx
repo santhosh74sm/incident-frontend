@@ -54,7 +54,6 @@ import {
     buildIncidentFilterParams,
     CHART_COLORS,
     formatShare,
-    REQUEST_CONFIG,
     resolveHandlerLabel,
     STATUS_COLORS,
     STATUS_OPTIONS,
@@ -161,7 +160,7 @@ const ProfessionalAnalytics = () => {
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
     const [letterStatusMap, setLetterStatusMap] = useState({});
 
-    const config = REQUEST_CONFIG;
+    const config = useMemo(() => ({ headers: {} }), []);
 
     const allStaffOptions = useMemo(
         // Single unified "Administration" entry for all admin accounts; teachers listed individually.

@@ -902,7 +902,7 @@ const CreateIncident = () => {
         }
 
         const maxFileSize = 10 * 1024 * 1024; // 10MB
-        const allowedExtensions = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.csv', '.zip']);
+        const allowedExtensions = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.csv']);
         let hasFileError = false;
 
         const hasEvidenceTypeWithoutFile = evidenceEntries.some((entry) => entry.evidenceType && !entry.file);
@@ -2281,7 +2281,7 @@ const CreateIncident = () => {
                                                     </div>
                                                     <input
                                                         type="file"
-                                                        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                                                        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"
                                                         className="hidden"
                                                         onChange={(event) => {
                                                             const nextFile = event.target.files?.[0];

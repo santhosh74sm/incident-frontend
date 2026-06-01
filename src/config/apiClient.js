@@ -17,8 +17,6 @@ if (process.env.NODE_ENV === 'development') {
     console.info('[apiClient] API base URL:', API_BASE);
 }
 
-axios.defaults.withCredentials = true;
-
 const apiClient = axios.create({
     baseURL: API_BASE,
     withCredentials: true,
@@ -64,11 +62,11 @@ let csrfPromise = null;
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const normalizeResponseIds = (value, seen = new WeakSet()) => {
+const normalizeResponseIdsInPlace = (value, seen = new WeakSet()) => {
     if (value == null || typeof value !== 'object') return value;
 
     if (Array.isArray(value)) {
-        value.forEach((item) => normalizeResponseIds(item, seen));
+        value.forEach((item) => normalizeResponseIdsInPlace(item, seen));
         return value;
     }
 
@@ -79,9 +77,21 @@ const normalizeResponseIds = (value, seen = new WeakSet()) => {
         value._id = value.id;
     }
 
-    Object.values(value).forEach((entry) => normalizeResponseIds(entry, seen));
+    Object.values(value).forEach((entry) => normalizeResponseIdsInPlace(entry, seen));
     return value;
 };
+
+const cloneResponseData = (value) => {
+    if (value === undefined) return value;
+
+    if (typeof window !== 'undefined' && typeof window.structuredClone === 'function') {
+        return window.structuredClone(value);
+    }
+
+    return JSON.parse(JSON.stringify(value));
+};
+
+const normalizeResponseIds = (value) => normalizeResponseIdsInPlace(cloneResponseData(value));
 
 export const getPublicId = (value) => {
     if (value == null) return '';
@@ -233,7 +243,7 @@ apiClient.interceptors.request.use(async (config) => {
 apiClient.interceptors.response.use(
     (response) => {
         rememberCsrfToken(response.headers);
-        normalizeResponseIds(response.data);
+        response.data = normalizeResponseIds(response.data);
         if (response.config && !isAuthRestoreRequest(response.config)) {
             resetAuthEventGuard();
         }

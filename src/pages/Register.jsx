@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -30,6 +30,10 @@ const INPUT_ERROR_CLASS_NAME =
     'w-full rounded-xl border border-red-300 bg-red-50/60 px-4 py-3.5 pl-12 pr-12 text-sm text-slate-800 outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-red-400 focus:bg-white focus:ring-4 focus:ring-red-500/15 dark:border-red-500/50 dark:bg-red-950/30 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:bg-red-950/40 dark:focus:ring-red-400/20';
 
 const Register = () => {
+    const nameId = useId();
+    const emailId = useId();
+    const passwordId = useId();
+    const confirmPasswordId = useId();
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [success, setSuccess] = useState(false);
@@ -197,53 +201,62 @@ const Register = () => {
                                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
                                         <div className="grid gap-5 md:grid-cols-2">
                                             <div className="md:col-span-2">
-                                                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                                <label htmlFor={nameId} className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
                                                     Full Name
                                                 </label>
                                                 <div className="relative">
                                                     <User className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                                     <input
                                                         type="text"
+                                                        id={nameId}
                                                         autoComplete="name"
                                                         placeholder="Enter full name"
+                                                        aria-invalid={Boolean(errors.name)}
+                                                        aria-describedby={errors.name ? `${nameId}-error` : undefined}
                                                         className={errors.name ? INPUT_ERROR_CLASS_NAME : INPUT_CLASS_NAME}
                                                         {...register('name')}
                                                     />
                                                 </div>
                                                 {errors.name && (
-                                                    <p className="mt-1.5 text-xs font-medium text-red-600">{errors.name.message}</p>
+                                                    <p id={`${nameId}-error`} className="mt-1.5 text-xs font-medium text-red-600">{errors.name.message}</p>
                                                 )}
                                             </div>
 
                                             <div className="md:col-span-2">
-                                                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                                <label htmlFor={emailId} className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
                                                     Email Address
                                                 </label>
                                                 <div className="relative">
                                                     <Mail className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                                     <input
                                                         type="email"
+                                                        id={emailId}
                                                         autoComplete="email"
                                                         placeholder="name@school.edu"
+                                                        aria-invalid={Boolean(errors.email)}
+                                                        aria-describedby={errors.email ? `${emailId}-error` : undefined}
                                                         className={errors.email ? INPUT_ERROR_CLASS_NAME : INPUT_CLASS_NAME}
                                                         {...register('email')}
                                                     />
                                                 </div>
                                                 {errors.email && (
-                                                    <p className="mt-1.5 text-xs font-medium text-red-600">{errors.email.message}</p>
+                                                    <p id={`${emailId}-error`} className="mt-1.5 text-xs font-medium text-red-600">{errors.email.message}</p>
                                                 )}
                                             </div>
 
                                             <div>
-                                                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                                <label htmlFor={passwordId} className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
                                                     Password
                                                 </label>
                                                 <div className="relative">
                                                     <Lock className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                                     <input
                                                         type={showPassword ? 'text' : 'password'}
+                                                        id={passwordId}
                                                         autoComplete="new-password"
                                                         placeholder="Create password"
+                                                        aria-invalid={Boolean(errors.password)}
+                                                        aria-describedby={errors.password ? `${passwordId}-error` : `${passwordId}-hint`}
                                                         className={errors.password ? INPUT_ERROR_CLASS_NAME : INPUT_CLASS_NAME}
                                                         {...register('password')}
                                                     />
@@ -257,23 +270,26 @@ const Register = () => {
                                                     </button>
                                                 </div>
                                                 {errors.password && (
-                                                    <p className="mt-1.5 text-xs font-medium text-red-600">{errors.password.message}</p>
+                                                    <p id={`${passwordId}-error`} className="mt-1.5 text-xs font-medium text-red-600">{errors.password.message}</p>
                                                 )}
                                                 {!errors.password && (
-                                                    <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">{PASSWORD_POLICY_TEXT}</p>
+                                                    <p id={`${passwordId}-hint`} className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">{PASSWORD_POLICY_TEXT}</p>
                                                 )}
                                             </div>
 
                                             <div>
-                                                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                                <label htmlFor={confirmPasswordId} className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
                                                     Confirm Password
                                                 </label>
                                                 <div className="relative">
                                                     <Lock className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                                     <input
                                                         type={showConfirmPassword ? 'text' : 'password'}
+                                                        id={confirmPasswordId}
                                                         autoComplete="new-password"
                                                         placeholder="Confirm password"
+                                                        aria-invalid={Boolean(errors.confirmPassword)}
+                                                        aria-describedby={errors.confirmPassword ? `${confirmPasswordId}-error` : undefined}
                                                         className={errors.confirmPassword ? INPUT_ERROR_CLASS_NAME : INPUT_CLASS_NAME}
                                                         {...register('confirmPassword')}
                                                     />
@@ -287,7 +303,7 @@ const Register = () => {
                                                     </button>
                                                 </div>
                                                 {errors.confirmPassword && (
-                                                    <p className="mt-1.5 text-xs font-medium text-red-600">{errors.confirmPassword.message}</p>
+                                                    <p id={`${confirmPasswordId}-error`} className="mt-1.5 text-xs font-medium text-red-600">{errors.confirmPassword.message}</p>
                                                 )}
                                             </div>
                                         </div>
@@ -296,7 +312,7 @@ const Register = () => {
                                             <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
                                                 Account Role
                                             </label>
-                                            <div className="grid gap-3 sm:grid-cols-2">
+                                            <div className="grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Account role">
                                                 {roleOptions.map((role) => {
                                                     const isSelected = selectedRole === role.value;
                                                     return (
@@ -304,6 +320,8 @@ const Register = () => {
                                                             key={role.value}
                                                             type="button"
                                                             onClick={() => setValue('role', role.value, { shouldValidate: true })}
+                                                            role="radio"
+                                                            aria-checked={isSelected}
                                                             className={`rounded-2xl border px-4 py-4 text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
                                                                 isSelected
                                                                     ? 'border-indigo-400 bg-indigo-50 shadow-lg shadow-indigo-100/40 dark:border-indigo-400/50 dark:bg-indigo-500/10 dark:shadow-none'
