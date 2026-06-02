@@ -18,7 +18,7 @@ import UploadPreviewTable from '../components/upload/UploadPreviewTable';
 import UploadStatusBanner from '../components/upload/UploadStatusBanner';
 import { useToast } from '../components/ToastProvider';
 import { downloadWorkbook } from '../utils/downloadFiles';
-import { getErrorMessage, showError, showSuccess } from '../utils/notifications';
+import { withFeedback } from '../utils/notifications';
 import {
     ACCEPTED_UPLOAD_FORMATS,
     buildPreviewFromFile,
@@ -75,12 +75,17 @@ const downloadStudentTemplate = async (addToast) => {
     XLSX.utils.book_append_sheet(workbook, dataSheet, 'Students');
     XLSX.utils.book_append_sheet(workbook, instructionSheet, 'Instructions');
     try {
-        await downloadWorkbook(XLSX, workbook, 'student_upload_template.xlsx', {
-            title: 'Student upload template',
-        });
-        showSuccess(addToast, 'Template downloaded successfully.');
-    } catch (error) {
-        showError(addToast, getErrorMessage(error, 'Download failed.'));
+        await withFeedback(
+            addToast,
+            () => downloadWorkbook(XLSX, workbook, 'student_upload_template.xlsx', {
+                title: 'Student upload template',
+            }),
+            {
+                successMessage: 'Template downloaded successfully.',
+                errorMessage: 'Download failed.',
+            }
+        );
+    } catch {
     }
 };
 

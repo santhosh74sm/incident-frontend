@@ -49,7 +49,7 @@ import {
 } from '../utils/userStorage';
 import { getRecordId } from '../utils/ids';
 import { downloadBlob, downloadRemoteFile, isNativeDownloadPlatform, openRemoteFile, parseDownloadFilename } from '../utils/downloadFiles';
-import { getErrorMessage, showError, showSuccess } from '../utils/notifications';
+import { withFeedback } from '../utils/notifications';
 
 const STATUS_STYLES = {
     Open: { badge: 'border-orange-200 bg-orange-50 text-orange-700', tone: 'amber' },
@@ -463,37 +463,47 @@ const IncidentDetail = () => {
         if (!fileUrl) { addToast('File not found', 'error'); return; }
         if (isNativeDownloadPlatform()) {
             try {
-                await openRemoteFile(
-                    withEvidenceDisposition(fileUrl, 'inline'),
-                    filename || fileUrl.split('/').pop() || 'evidence-file',
+                await withFeedback(
+                    addToast,
+                    () => openRemoteFile(
+                        withEvidenceDisposition(fileUrl, 'inline'),
+                        filename || fileUrl.split('/').pop() || 'evidence-file',
+                        {
+                            errorMessage: 'File not found',
+                        }
+                    ),
                     {
-                        errorMessage: 'File not found',
+                        successMessage: 'File opened successfully.',
+                        errorMessage: 'Could not open file.',
                     }
                 );
-                showSuccess(addToast, 'File opened successfully.');
             } catch {
-                showError(addToast, 'Could not open file.');
             }
             return;
         }
         window.open(withEvidenceDisposition(fileUrl, 'inline'), '_blank', 'noopener,noreferrer');
-        showSuccess(addToast, 'File opened successfully.');
+        addToast('File opened successfully.', 'success');
     };
 
     const handleDownloadEvidenceFile = async (fileUrl, filename) => {
         if (!fileUrl) { addToast('File not found', 'error'); return; }
         try {
-            await downloadRemoteFile(
-                withEvidenceDisposition(fileUrl, 'attachment'),
-                filename || 'evidence-file',
+            await withFeedback(
+                addToast,
+                () => downloadRemoteFile(
+                    withEvidenceDisposition(fileUrl, 'attachment'),
+                    filename || 'evidence-file',
+                    {
+                        title: 'Evidence file',
+                        errorMessage: 'File not found',
+                    }
+                ),
                 {
-                    title: 'Evidence file',
-                    errorMessage: 'File not found',
+                    successMessage: 'Evidence downloaded successfully.',
+                    errorMessage: 'Download failed.',
                 }
             );
-            showSuccess(addToast, 'Evidence downloaded successfully.');
-        } catch (error) {
-            showError(addToast, getErrorMessage(error, 'Download failed.'));
+        } catch {
         }
     };
 
@@ -545,12 +555,17 @@ const IncidentDetail = () => {
             const blob = new Blob([response.data], {
                 type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             });
-            await downloadBlob(blob, filename, {
-                title: 'Incident case report',
-            });
-            showSuccess(addToast, 'Report downloaded successfully.');
-        } catch (err) {
-            showError(addToast, getErrorMessage(err, 'Report download failed.'));
+            await withFeedback(
+                addToast,
+                () => downloadBlob(blob, filename, {
+                    title: 'Incident case report',
+                }),
+                {
+                    successMessage: 'Report downloaded successfully.',
+                    errorMessage: 'Report download failed.',
+                }
+            );
+        } catch {
         } finally {
             setActionLoading(false);
         }
@@ -589,16 +604,21 @@ const IncidentDetail = () => {
             const section = slugify(incident?.section || 'S');
             const admissionNo = slugify(incident?.admissionNo || '00000');
             const filename = `LET_${className}_${section}_${studentName}_${admissionNo}.docx`;
-            await downloadBlob(
-                new Blob([response.data], {
-                    type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                }),
-                filename,
-                { title: 'Generated letter' }
+            await withFeedback(
+                addToast,
+                () => downloadBlob(
+                    new Blob([response.data], {
+                        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    }),
+                    filename,
+                    { title: 'Generated letter' }
+                ),
+                {
+                    successMessage: 'Letter downloaded successfully.',
+                    errorMessage: 'Download failed.',
+                }
             );
-            showSuccess(addToast, 'Letter downloaded successfully.');
-        } catch (err) {
-            showError(addToast, getErrorMessage(err, 'Download failed.'));
+        } catch {
         }
     }, [addToast, generatedLetter, incident, userId]);
 

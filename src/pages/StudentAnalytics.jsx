@@ -64,7 +64,7 @@ import {
     toneForStatus,
 } from '../utils/analytics';
 import { downloadBlob, downloadWorkbook } from '../utils/downloadFiles';
-import { getErrorMessage, showError, showSuccess } from '../utils/notifications';
+import { withFeedback } from '../utils/notifications';
 
 const slugify = (value) => {
     if (!value) return 'Student';
@@ -358,16 +358,21 @@ const StudentAnalytics = () => {
                 headers: {},
                 responseType: 'blob',
             });
-            await downloadBlob(
-                new Blob([response.data], {
-                    type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                }),
-                `LET_${slugify(letter.className || 'Class')}_${slugify(letter.section || 'S')}_${slugify(letter.studentName || 'Student')}_${slugify(letter.admissionNo || '00000')}.docx`,
-                { title: 'Issued letter' }
+            await withFeedback(
+                addToast,
+                () => downloadBlob(
+                    new Blob([response.data], {
+                        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    }),
+                    `LET_${slugify(letter.className || 'Class')}_${slugify(letter.section || 'S')}_${slugify(letter.studentName || 'Student')}_${slugify(letter.admissionNo || '00000')}.docx`,
+                    { title: 'Issued letter' }
+                ),
+                {
+                    successMessage: 'Letter downloaded successfully.',
+                    errorMessage: 'Download failed.',
+                }
             );
-            showSuccess(addToast, 'Letter downloaded successfully.');
-        } catch (error) {
-            showError(addToast, getErrorMessage(error, 'Download failed.'));
+        } catch {
         } finally {
             setDownloadingLetterId(null);
         }
@@ -396,15 +401,20 @@ const StudentAnalytics = () => {
         const ws = XLSX.utils.json_to_sheet(excelData);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Incident Timeline');
-        await downloadWorkbook(
-            XLSX,
-            wb,
-            `Incident_Report_${slugify(selectedStudent?.name || 'Student')}_${new Date().toISOString().split('T')[0]}.xlsx`,
-            { title: 'Incident report' }
+        await withFeedback(
+            addToast,
+            () => downloadWorkbook(
+                XLSX,
+                wb,
+                `Incident_Report_${slugify(selectedStudent?.name || 'Student')}_${new Date().toISOString().split('T')[0]}.xlsx`,
+                { title: 'Incident report' }
+            ),
+            {
+                successMessage: 'Excel exported successfully.',
+                errorMessage: 'Export failed.',
+            }
         );
-        showSuccess(addToast, 'Excel exported successfully.');
-        } catch (error) {
-            showError(addToast, getErrorMessage(error, 'Export failed.'));
+        } catch {
         }
     };
 

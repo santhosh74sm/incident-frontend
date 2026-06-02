@@ -21,7 +21,7 @@ import UploadPreviewTable from '../components/upload/UploadPreviewTable';
 import UploadStatusBanner from '../components/upload/UploadStatusBanner';
 import { useToast } from '../components/ToastProvider';
 import { downloadBlob } from '../utils/downloadFiles';
-import { getErrorMessage, showError, showSuccess } from '../utils/notifications';
+import { withFeedback } from '../utils/notifications';
 import {
     ACCEPTED_UPLOAD_FORMATS,
     buildPreviewFromFile,
@@ -351,13 +351,17 @@ const BulkUpload = () => {
                 throw new Error('The school server returned an empty sample file.');
             }
 
-            await downloadBlob(blob, 'incident_upload_template.xlsx', {
-                title: 'Incident upload template',
-            });
-
-            showSuccess(addToast, 'Template downloaded successfully.');
+            await withFeedback(
+                addToast,
+                () => downloadBlob(blob, 'incident_upload_template.xlsx', {
+                    title: 'Incident upload template',
+                }),
+                {
+                    successMessage: 'Template downloaded successfully.',
+                    errorMessage: 'Download failed.',
+                }
+            );
         } catch (error) {
-            showError(addToast, getErrorMessage(error, 'Download failed.'));
             setMessage({
                 type: 'error',
                 text: error.response?.data?.message || 'Could not download the sample file. Please try again.',

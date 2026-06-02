@@ -4,7 +4,7 @@ import mammoth from 'mammoth';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/ToastProvider';
 import { downloadBlob } from '../utils/downloadFiles';
-import { getErrorMessage, showError, showSuccess } from '../utils/notifications';
+import { withFeedback } from '../utils/notifications';
 import {
     AlertTriangle,
     CalendarDays,
@@ -1068,14 +1068,19 @@ const LetterTemplates = () => {
                 }
             );
 
-            await downloadBlob(
-                new Blob([response.data]),
-                `${sanitizeFilename(template.title)}_${language}.docx`,
-                { title: `${LANGUAGE_META[language].label} Word file` }
+            await withFeedback(
+                addToast,
+                () => downloadBlob(
+                    new Blob([response.data]),
+                    `${sanitizeFilename(template.title)}_${language}.docx`,
+                    { title: `${LANGUAGE_META[language].label} Word file` }
+                ),
+                {
+                    successMessage: `${LANGUAGE_META[language].label} Word file downloaded successfully.`,
+                    errorMessage: 'Download failed.',
+                }
             );
-            showSuccess(addToast, `${LANGUAGE_META[language].label} Word file downloaded successfully.`);
-        } catch (error) {
-            showError(addToast, getErrorMessage(error, 'Download failed.'));
+        } catch {
         } finally {
             setDownloadingKey('');
         }
@@ -1126,14 +1131,19 @@ const LetterTemplates = () => {
 
     const downloadGuide = async () => {
         try {
-            await downloadBlob(
-                new Blob([buildTagGuideText()], { type: 'text/plain;charset=utf-8' }),
-                'Letter_merge_fields_guide.txt',
-                { title: 'Letter merge fields guide' }
+            await withFeedback(
+                addToast,
+                () => downloadBlob(
+                    new Blob([buildTagGuideText()], { type: 'text/plain;charset=utf-8' }),
+                    'Letter_merge_fields_guide.txt',
+                    { title: 'Letter merge fields guide' }
+                ),
+                {
+                    successMessage: 'Merge field guide downloaded successfully.',
+                    errorMessage: 'Download failed.',
+                }
             );
-            showSuccess(addToast, 'Merge field guide downloaded successfully.');
-        } catch (error) {
-            showError(addToast, getErrorMessage(error, 'Download failed.'));
+        } catch {
         }
     };
 

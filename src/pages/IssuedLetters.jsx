@@ -29,7 +29,7 @@ import {
     getLetterTimelineTimestamp,
 } from '../utils/analytics';
 import { downloadBlob } from '../utils/downloadFiles';
-import { getErrorMessage, showError, showSuccess } from '../utils/notifications';
+import { withFeedback } from '../utils/notifications';
 
 const PAGE_SIZE = 10;
 
@@ -446,15 +446,19 @@ const IssuedLetters = () => {
                 responseType: 'blob',
             });
 
-            await downloadBlob(
-                new Blob([response.data]),
-                buildLetterFilename(letter, 'docx'),
-                { title: 'Issued letter' }
+            await withFeedback(
+                addToast,
+                () => downloadBlob(
+                    new Blob([response.data]),
+                    buildLetterFilename(letter, 'docx'),
+                    { title: 'Issued letter' }
+                ),
+                {
+                    successMessage: 'Letter downloaded successfully.',
+                    errorMessage: 'Download failed.',
+                }
             );
-
-            showSuccess(addToast, 'Letter downloaded successfully.');
-        } catch (error) {
-            showError(addToast, getErrorMessage(error, 'Download failed.'));
+        } catch {
         } finally {
             setDownloadingKey('');
         }

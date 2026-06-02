@@ -69,7 +69,7 @@ import {
     toneForStatus,
 } from '../utils/analytics';
 import { downloadWorkbook } from '../utils/downloadFiles';
-import { getErrorMessage, showError, showSuccess } from '../utils/notifications';
+import { withFeedback } from '../utils/notifications';
 
 
 const buildClassResolution = (items) => {
@@ -473,15 +473,20 @@ const ProfessionalAnalytics = () => {
             const ws = XLSX.utils.json_to_sheet(excelData);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Incident Details');
-            await downloadWorkbook(
-                XLSX,
-                wb,
-                `incident_details_${new Date().toISOString().split('T')[0]}.xlsx`,
-                { title: 'Incident details export' }
+            await withFeedback(
+                addToast,
+                () => downloadWorkbook(
+                    XLSX,
+                    wb,
+                    `incident_details_${new Date().toISOString().split('T')[0]}.xlsx`,
+                    { title: 'Incident details export' }
+                ),
+                {
+                    successMessage: 'Excel exported successfully.',
+                    errorMessage: 'Export failed.',
+                }
             );
-            showSuccess(addToast, 'Excel exported successfully.');
-        } catch (error) {
-            showError(addToast, getErrorMessage(error, 'Export failed.'));
+        } catch {
         } finally {
             setIsExporting(false);
         }
