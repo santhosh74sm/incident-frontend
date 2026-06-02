@@ -29,6 +29,7 @@ import {
     Users,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../components/ToastProvider';
 import { UnifiedDateInput, UnifiedFilterBar, UnifiedMultiSelect } from '../components/UnifiedFilters';
 import {
     ActivityFeed,
@@ -67,6 +68,8 @@ import {
     normalizeOptionList,
     toneForStatus,
 } from '../utils/analytics';
+import { downloadWorkbook } from '../utils/downloadFiles';
+import { getErrorMessage, showError, showSuccess } from '../utils/notifications';
 
 
 const buildClassResolution = (items) => {
@@ -134,6 +137,7 @@ const buildCategoryHeatmap = (items) => {
 
 const ProfessionalAnalytics = () => {
     const { user } = useAuth();
+    const { addToast } = useToast();
     const navigate = useNavigate();
     const [incidents, setIncidents] = useState([]);
     const [staffList, setStaffList] = useState([]);
@@ -441,7 +445,7 @@ const ProfessionalAnalytics = () => {
         fetchIncidents({ reset: true });
     }, [fetchIncidents, user?.name, user?.role]);
 
-    const exportIncidentDetailsToExcel = useCallback(() => {
+    const exportIncidentDetailsToExcel = useCallback(async () => {
         try {
             setIsExporting(true);
 
@@ -469,11 +473,19 @@ const ProfessionalAnalytics = () => {
             const ws = XLSX.utils.json_to_sheet(excelData);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Incident Details');
-            XLSX.writeFile(wb, `incident_details_${new Date().toISOString().split('T')[0]}.xlsx`);
+            await downloadWorkbook(
+                XLSX,
+                wb,
+                `incident_details_${new Date().toISOString().split('T')[0]}.xlsx`,
+                { title: 'Incident details export' }
+            );
+            showSuccess(addToast, 'Excel exported successfully.');
+        } catch (error) {
+            showError(addToast, getErrorMessage(error, 'Export failed.'));
         } finally {
             setIsExporting(false);
         }
-    }, [filteredIncidentDetails, letterStatusMap]);
+    }, [addToast, filteredIncidentDetails, letterStatusMap]);
 
     if (loading) {
         return (

@@ -28,6 +28,8 @@ import {
     formatShortDateTime,
     getLetterTimelineTimestamp,
 } from '../utils/analytics';
+import { downloadBlob } from '../utils/downloadFiles';
+import { getErrorMessage, showError, showSuccess } from '../utils/notifications';
 
 const PAGE_SIZE = 10;
 
@@ -35,17 +37,6 @@ const sanitizeFilename = (value = 'letter') =>
     String(value)
         .trim()
         .replace(/[^a-zA-Z0-9.-]/g, '_');
-
-const triggerBrowserDownload = (blob, filename) => {
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', filename);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
-};
 
 const getTimelineSource = (letter) => {
     if (letter?.incident?.incidentDate) return 'Incident date';
@@ -455,14 +446,15 @@ const IssuedLetters = () => {
                 responseType: 'blob',
             });
 
-            triggerBrowserDownload(
+            await downloadBlob(
                 new Blob([response.data]),
-                buildLetterFilename(letter, 'docx')
+                buildLetterFilename(letter, 'docx'),
+                { title: 'Issued letter' }
             );
 
-            addToast('Word file downloaded.');
+            showSuccess(addToast, 'Letter downloaded successfully.');
         } catch (error) {
-            addToast(error.response?.data?.message || 'Download failed.', 'error');
+            showError(addToast, getErrorMessage(error, 'Download failed.'));
         } finally {
             setDownloadingKey('');
         }

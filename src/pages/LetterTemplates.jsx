@@ -3,6 +3,8 @@ import apiClient from '../config/apiClient';
 import mammoth from 'mammoth';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/ToastProvider';
+import { downloadBlob } from '../utils/downloadFiles';
+import { getErrorMessage, showError, showSuccess } from '../utils/notifications';
 import {
     AlertTriangle,
     CalendarDays,
@@ -212,17 +214,6 @@ const formatDate = (value) => {
         day: 'numeric',
         year: 'numeric',
     });
-};
-
-const triggerBrowserDownload = (blob, filename) => {
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', filename);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
 };
 
 const getVariantMeta = (template, language) => {
@@ -1077,13 +1068,14 @@ const LetterTemplates = () => {
                 }
             );
 
-            triggerBrowserDownload(
+            await downloadBlob(
                 new Blob([response.data]),
-                `${sanitizeFilename(template.title)}_${language}.docx`
+                `${sanitizeFilename(template.title)}_${language}.docx`,
+                { title: `${LANGUAGE_META[language].label} Word file` }
             );
-            addToast(`${LANGUAGE_META[language].label} Word file downloaded.`);
+            showSuccess(addToast, `${LANGUAGE_META[language].label} Word file downloaded successfully.`);
         } catch (error) {
-            addToast(error.response?.data?.message || 'Download failed.', 'error');
+            showError(addToast, getErrorMessage(error, 'Download failed.'));
         } finally {
             setDownloadingKey('');
         }
@@ -1132,12 +1124,17 @@ const LetterTemplates = () => {
         copyToClipboard(tags);
     };
 
-    const downloadGuide = () => {
-        triggerBrowserDownload(
-            new Blob([buildTagGuideText()], { type: 'text/plain;charset=utf-8' }),
-            'Letter_merge_fields_guide.txt'
-        );
-        addToast('Merge field guide downloaded.');
+    const downloadGuide = async () => {
+        try {
+            await downloadBlob(
+                new Blob([buildTagGuideText()], { type: 'text/plain;charset=utf-8' }),
+                'Letter_merge_fields_guide.txt',
+                { title: 'Letter merge fields guide' }
+            );
+            showSuccess(addToast, 'Merge field guide downloaded successfully.');
+        } catch (error) {
+            showError(addToast, getErrorMessage(error, 'Download failed.'));
+        }
     };
 
     const currentVariant = getVariantMeta(selectedTemplate, activeLanguage);

@@ -29,6 +29,7 @@ import {
     Users,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../components/ToastProvider';
 import { UnifiedDateInput, UnifiedFilterBar, UnifiedMultiSelect } from '../components/UnifiedFilters';
 import {
     AnalyticsDataTable,
@@ -62,6 +63,8 @@ import {
     STATUS_OPTIONS,
     toneForStatus,
 } from '../utils/analytics';
+import { downloadBlob, downloadWorkbook } from '../utils/downloadFiles';
+import { getErrorMessage, showError, showSuccess } from '../utils/notifications';
 
 const slugify = (value) => {
     if (!value) return 'Student';
@@ -70,6 +73,7 @@ const slugify = (value) => {
 
 const StudentAnalytics = () => {
     const { user } = useAuth();
+    const { addToast } = useToast();
     const navigate = useNavigate();
     const params = useParams();
 
@@ -354,24 +358,22 @@ const StudentAnalytics = () => {
                 headers: {},
                 responseType: 'blob',
             });
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute(
-                'download',
-                `LET_${slugify(letter.className || 'Class')}_${slugify(letter.section || 'S')}_${slugify(letter.studentName || 'Student')}_${slugify(letter.admissionNo || '00000')}.docx`
+            await downloadBlob(
+                new Blob([response.data], {
+                    type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                }),
+                `LET_${slugify(letter.className || 'Class')}_${slugify(letter.section || 'S')}_${slugify(letter.studentName || 'Student')}_${slugify(letter.admissionNo || '00000')}.docx`,
+                { title: 'Issued letter' }
             );
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            window.URL.revokeObjectURL(url);
-        } catch {
+            showSuccess(addToast, 'Letter downloaded successfully.');
+        } catch (error) {
+            showError(addToast, getErrorMessage(error, 'Download failed.'));
         } finally {
             setDownloadingLetterId(null);
         }
     };
 
-    const exportIncidentTimelineToExcel = () => {
+    const exportIncidentTimelineToExcel = async () => {
         try {
             const excelData = studentAnalytics.incidentDetails.map((incident) => {
             const incidentId = incident._id || incident.id;
@@ -394,8 +396,15 @@ const StudentAnalytics = () => {
         const ws = XLSX.utils.json_to_sheet(excelData);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Incident Timeline');
-        XLSX.writeFile(wb, `Incident_Report_${slugify(selectedStudent?.name || 'Student')}_${new Date().toISOString().split('T')[0]}.xlsx`);
-        } catch {
+        await downloadWorkbook(
+            XLSX,
+            wb,
+            `Incident_Report_${slugify(selectedStudent?.name || 'Student')}_${new Date().toISOString().split('T')[0]}.xlsx`,
+            { title: 'Incident report' }
+        );
+        showSuccess(addToast, 'Excel exported successfully.');
+        } catch (error) {
+            showError(addToast, getErrorMessage(error, 'Export failed.'));
         }
     };
 

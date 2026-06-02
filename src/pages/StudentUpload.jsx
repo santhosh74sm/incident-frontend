@@ -17,6 +17,8 @@ import UploadMetricCard from '../components/upload/UploadMetricCard';
 import UploadPreviewTable from '../components/upload/UploadPreviewTable';
 import UploadStatusBanner from '../components/upload/UploadStatusBanner';
 import { useToast } from '../components/ToastProvider';
+import { downloadWorkbook } from '../utils/downloadFiles';
+import { getErrorMessage, showError, showSuccess } from '../utils/notifications';
 import {
     ACCEPTED_UPLOAD_FORMATS,
     buildPreviewFromFile,
@@ -43,7 +45,7 @@ const buildStudentPreview = (file) =>
         maxRowIssues: 8,
     });
 
-const downloadStudentTemplate = () => {
+const downloadStudentTemplate = async (addToast) => {
     const workbook = XLSX.utils.book_new();
 
     const dataSheet = XLSX.utils.aoa_to_sheet([
@@ -72,7 +74,14 @@ const downloadStudentTemplate = () => {
 
     XLSX.utils.book_append_sheet(workbook, dataSheet, 'Students');
     XLSX.utils.book_append_sheet(workbook, instructionSheet, 'Instructions');
-    XLSX.writeFile(workbook, 'student_upload_template.xlsx');
+    try {
+        await downloadWorkbook(XLSX, workbook, 'student_upload_template.xlsx', {
+            title: 'Student upload template',
+        });
+        showSuccess(addToast, 'Template downloaded successfully.');
+    } catch (error) {
+        showError(addToast, getErrorMessage(error, 'Download failed.'));
+    }
 };
 
 const StudentUpload = () => {
@@ -293,7 +302,7 @@ const StudentUpload = () => {
 
                                     <button
                                         type="button"
-                                        onClick={downloadStudentTemplate}
+                                        onClick={() => downloadStudentTemplate(addToast)}
                                         disabled={uploading || parsing}
                                         className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
                                     >

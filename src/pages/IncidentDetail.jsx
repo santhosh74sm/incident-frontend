@@ -48,6 +48,8 @@ import {
     writeUserList,
 } from '../utils/userStorage';
 import { getRecordId } from '../utils/ids';
+import { downloadBlob, downloadRemoteFile, isNativeDownloadPlatform, openRemoteFile, parseDownloadFilename } from '../utils/downloadFiles';
+import { getErrorMessage, showError, showSuccess } from '../utils/notifications';
 
 const STATUS_STYLES = {
     Open: { badge: 'border-orange-200 bg-orange-50 text-orange-700', tone: 'amber' },
@@ -457,28 +459,41 @@ const IncidentDetail = () => {
             prev.map((e, i) => i === index ? { ...e, file: null, preview: null } : e)
         );
 
-    const handleOpenEvidenceFile = (fileUrl) => {
+    const handleOpenEvidenceFile = async (fileUrl, filename) => {
         if (!fileUrl) { addToast('File not found', 'error'); return; }
+        if (isNativeDownloadPlatform()) {
+            try {
+                await openRemoteFile(
+                    withEvidenceDisposition(fileUrl, 'inline'),
+                    filename || fileUrl.split('/').pop() || 'evidence-file',
+                    {
+                        errorMessage: 'File not found',
+                    }
+                );
+                showSuccess(addToast, 'File opened successfully.');
+            } catch {
+                showError(addToast, 'Could not open file.');
+            }
+            return;
+        }
         window.open(withEvidenceDisposition(fileUrl, 'inline'), '_blank', 'noopener,noreferrer');
+        showSuccess(addToast, 'File opened successfully.');
     };
 
     const handleDownloadEvidenceFile = async (fileUrl, filename) => {
         if (!fileUrl) { addToast('File not found', 'error'); return; }
         try {
-            // Use fetch with credentials for auth-gated files
-            const response = await fetch(withEvidenceDisposition(fileUrl, 'attachment'), { credentials: 'include' });
-            if (!response.ok) { addToast('File not found', 'error'); return; }
-            const blob = await response.blob();
-            const objectUrl = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = objectUrl;
-            link.download = filename || 'evidence-file';
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            window.URL.revokeObjectURL(objectUrl);
-        } catch {
-            addToast('File not found', 'error');
+            await downloadRemoteFile(
+                withEvidenceDisposition(fileUrl, 'attachment'),
+                filename || 'evidence-file',
+                {
+                    title: 'Evidence file',
+                    errorMessage: 'File not found',
+                }
+            );
+            showSuccess(addToast, 'Evidence downloaded successfully.');
+        } catch (error) {
+            showError(addToast, getErrorMessage(error, 'Download failed.'));
         }
     };
 
@@ -525,28 +540,21 @@ const IncidentDetail = () => {
         try {
             setActionLoading(true);
             const response = await apiClient.get(`/api/incidents/${id}/export-report`, { responseType: 'blob' });
-            const contentDisposition = response.headers['content-disposition'];
-            let filename = contentDisposition
-                ? contentDisposition.split('filename=')[1]?.replace(/"/g, '')
-                : `incident_report_${id}.docx`;
+            let filename = parseDownloadFilename(response.headers['content-disposition'], `incident_report_${id}.docx`);
             if (!filename.endsWith('.docx')) filename = `${filename.replace(/\.[^/.]+$/, '')}.docx`;
             const blob = new Blob([response.data], {
                 type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             });
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', filename);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
+            await downloadBlob(blob, filename, {
+                title: 'Incident case report',
+            });
+            showSuccess(addToast, 'Report downloaded successfully.');
         } catch (err) {
-            alert(`Failed to export report: ${err.response?.data?.message || err.message || 'Unknown error'}`);
+            showError(addToast, getErrorMessage(err, 'Report download failed.'));
         } finally {
             setActionLoading(false);
         }
-    }, [id]);
+    }, [addToast, id]);
 
     // All workflow transitions use PUT — matching backend route definitions
     const handleAction = useCallback(async (path, payload = {}) => {
@@ -581,18 +589,16 @@ const IncidentDetail = () => {
             const section = slugify(incident?.section || 'S');
             const admissionNo = slugify(incident?.admissionNo || '00000');
             const filename = `LET_${className}_${section}_${studentName}_${admissionNo}.docx`;
-            const url = window.URL.createObjectURL(new Blob([response.data], {
-                type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            }));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', filename);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            window.URL.revokeObjectURL(url);
+            await downloadBlob(
+                new Blob([response.data], {
+                    type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                }),
+                filename,
+                { title: 'Generated letter' }
+            );
+            showSuccess(addToast, 'Letter downloaded successfully.');
         } catch (err) {
-            addToast(err.response?.data?.message || 'Failed to download letter.', 'error');
+            showError(addToast, getErrorMessage(err, 'Download failed.'));
         }
     }, [addToast, generatedLetter, incident, userId]);
 
@@ -902,7 +908,7 @@ const IncidentDetail = () => {
                                                         <div className="mt-4 flex flex-wrap gap-2">
                                                             {fileUrl ? (
                                                                 <>
-                                                                    <button type="button" onClick={() => handleOpenEvidenceFile(fileUrl)}
+                                                                    <button type="button" onClick={() => handleOpenEvidenceFile(fileUrl, fileLabel)}
                                                                         className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
                                                                         <ExternalLink size={15} className="mr-2" />Open
                                                                     </button>
