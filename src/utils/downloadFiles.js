@@ -3,7 +3,7 @@ import { Directory, Filesystem } from '@capacitor/filesystem';
 
 const DOWNLOAD_DIR = 'downloads';
 const OPEN_DIR = 'open-cache';
-const NATIVE_DOWNLOAD_DIRECTORY = Directory.Documents;
+const NATIVE_DOWNLOAD_DIRECTORY = Directory.External;
 const NATIVE_OPEN_DIRECTORY = Directory.Cache;
 const NativeFileOpener = registerPlugin('NativeFileOpener');
 
