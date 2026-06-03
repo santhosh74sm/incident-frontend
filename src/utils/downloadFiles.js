@@ -1,11 +1,16 @@
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { Directory, Filesystem } from '@capacitor/filesystem';
 
-const DOWNLOAD_DIR = 'downloads';
+const DOWNLOAD_SUBDIRECTORY = 'Incident Tracking System';
 const OPEN_DIR = 'open-cache';
-const NATIVE_DOWNLOAD_DIRECTORY = Directory.External;
 const NATIVE_OPEN_DIRECTORY = Directory.Cache;
 const NativeFileOpener = registerPlugin('NativeFileOpener');
+const NativeDownloadManager = registerPlugin('NativeDownloadManager');
+
+const logDownloadStep = (step, details = {}) => {
+    // Visible in browser DevTools and Android Logcat/Chrome remote debugging.
+    console.info(`[download] ${step}`, details);
+};
 
 export const isNativeDownloadPlatform = () =>
     typeof Capacitor?.isNativePlatform === 'function' && Capacitor.isNativePlatform();
@@ -26,6 +31,7 @@ export const sanitizeDownloadFilename = (filename = 'download') => {
 };
 
 const webDownloadBlob = (blob, filename) => {
+    logDownloadStep('web-download-start', { filename, size: blob?.size, type: blob?.type });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -34,6 +40,7 @@ const webDownloadBlob = (blob, filename) => {
     link.click();
     link.remove();
     window.URL.revokeObjectURL(url);
+    logDownloadStep('web-download-complete', { filename });
 };
 
 const blobToBase64 = (blob) =>
@@ -71,38 +78,134 @@ const inferMimeType = (filename, explicitType = '') => {
     return types[extension] || 'application/octet-stream';
 };
 
-export const saveBlobForNative = async (blob, filename, options = {}) => {
+export const saveBlobToPublicDownloads = async (blob, filename, options = {}) => {
+    const safeFilename = sanitizeDownloadFilename(filename);
+    const mimeType = inferMimeType(safeFilename, options.mimeType || blob.type);
+
+    logDownloadStep('native-public-download-start', {
+        filename: safeFilename,
+        mimeType,
+        size: blob?.size,
+        targetFolder: `Downloads/${options.subdirectory || DOWNLOAD_SUBDIRECTORY}`,
+    });
+
+    try {
+        const base64Data = await blobToBase64(blob);
+        logDownloadStep('native-public-download-base64-ready', {
+            filename: safeFilename,
+            base64Length: base64Data.length,
+        });
+
+        const result = await NativeDownloadManager.saveToDownloads({
+            base64Data,
+            filename: safeFilename,
+            mimeType,
+            subdirectory: options.subdirectory || DOWNLOAD_SUBDIRECTORY,
+        });
+
+        logDownloadStep('native-public-download-complete', {
+            filename: safeFilename,
+            uri: result?.uri,
+            path: result?.path,
+            displayPath: result?.displayPath,
+        });
+
+        return {
+            ...result,
+            filename: safeFilename,
+            mimeType,
+            native: true,
+            public: true,
+            displayPath: result?.displayPath || result?.path || `Downloads/${options.subdirectory || DOWNLOAD_SUBDIRECTORY}/${safeFilename}`,
+        };
+    } catch (error) {
+        logDownloadStep('native-public-download-error', {
+            filename: safeFilename,
+            message: error?.message,
+            error,
+        });
+        throw error;
+    }
+};
+
+export const saveBlobForNativeOpen = async (blob, filename, options = {}) => {
     const safeFilename = sanitizeDownloadFilename(filename);
     const base64Data = await blobToBase64(blob);
-    const path = `${options.directoryName || DOWNLOAD_DIR}/${safeFilename}`;
-    const directory = options.directory || NATIVE_DOWNLOAD_DIRECTORY;
+    const path = `${options.directoryName || OPEN_DIR}/${safeFilename}`;
+    const directory = options.directory || NATIVE_OPEN_DIRECTORY;
+    const mimeType = inferMimeType(safeFilename, options.mimeType || blob.type);
 
-    await Filesystem.writeFile({
-        path,
-        data: base64Data,
-        directory,
-        recursive: true,
-    });
-
-    const { uri } = await Filesystem.getUri({
-        path,
-        directory,
-    });
-
-    return {
-        uri,
+    logDownloadStep('native-open-cache-write-start', {
         filename: safeFilename,
         path,
         directory,
-        native: true,
-        mimeType: inferMimeType(safeFilename, options.mimeType || blob.type),
-    };
+        mimeType,
+        size: blob?.size,
+    });
+
+    try {
+        const writeResult = await Filesystem.writeFile({
+            path,
+            data: base64Data,
+            directory,
+            recursive: true,
+        });
+
+        logDownloadStep('native-open-cache-write-complete', {
+            filename: safeFilename,
+            writeResult,
+            path,
+            directory,
+        });
+
+        const uriResult = await Filesystem.getUri({
+            path,
+            directory,
+        });
+
+        logDownloadStep('native-open-cache-get-uri-complete', {
+            filename: safeFilename,
+            uriResult,
+            finalPath: path,
+        });
+
+        return {
+            uri: uriResult.uri,
+            filename: safeFilename,
+            path,
+            displayPath: path,
+            directory,
+            native: true,
+            public: false,
+            mimeType,
+        };
+    } catch (error) {
+        logDownloadStep('native-open-cache-error', {
+            filename: safeFilename,
+            path,
+            directory,
+            message: error?.message,
+            error,
+        });
+        throw error;
+    }
 };
 
 export const openNativeFile = async (savedFile) => {
+    logDownloadStep('native-open-viewer-start', {
+        uri: savedFile?.uri,
+        path: savedFile?.path,
+        mimeType: savedFile?.mimeType,
+    });
+
     await NativeFileOpener.open({
         uri: savedFile.uri,
         mimeType: savedFile.mimeType || inferMimeType(savedFile.filename),
+    });
+
+    logDownloadStep('native-open-viewer-complete', {
+        uri: savedFile?.uri,
+        path: savedFile?.path,
     });
 
     return savedFile;
@@ -111,22 +214,37 @@ export const openNativeFile = async (savedFile) => {
 export const downloadBlob = async (blob, filename, options = {}) => {
     const safeFilename = sanitizeDownloadFilename(filename);
 
+    logDownloadStep('download-start', {
+        filename: safeFilename,
+        native: isNativeDownloadPlatform(),
+        platform: Capacitor.getPlatform?.(),
+    });
+
     if (!isNativeDownloadPlatform()) {
         webDownloadBlob(blob, safeFilename);
-        return { filename: safeFilename, native: false };
+        return { filename: safeFilename, native: false, displayPath: safeFilename };
     }
 
-    return saveBlobForNative(blob, safeFilename, options);
+    return saveBlobToPublicDownloads(blob, safeFilename, options);
 };
 
 export const downloadRemoteFile = async (url, filename, options = {}) => {
+    logDownloadStep('remote-download-fetch-start', { url, filename });
     const response = await fetch(url, {
         credentials: 'include',
         ...(options.fetchOptions || {}),
     });
 
+    logDownloadStep('remote-download-fetch-complete', {
+        url,
+        filename,
+        ok: response.ok,
+        status: response.status,
+        contentType: response.headers.get('content-type'),
+    });
+
     if (!response.ok) {
-        throw new Error(options.errorMessage || 'File download failed.');
+        throw new Error(options.errorMessage || `File download failed with HTTP ${response.status}.`);
     }
 
     const blob = await response.blob();
@@ -136,29 +254,41 @@ export const downloadRemoteFile = async (url, filename, options = {}) => {
 export const openBlob = async (blob, filename, options = {}) => {
     const safeFilename = sanitizeDownloadFilename(filename);
 
+    logDownloadStep('open-start', {
+        filename: safeFilename,
+        native: isNativeDownloadPlatform(),
+        platform: Capacitor.getPlatform?.(),
+    });
+
     if (!isNativeDownloadPlatform()) {
         const url = window.URL.createObjectURL(blob);
         window.open(url, '_blank', 'noopener,noreferrer');
         window.setTimeout(() => window.URL.revokeObjectURL(url), 30000);
+        logDownloadStep('web-open-complete', { filename: safeFilename });
         return { filename: safeFilename, native: false };
     }
 
-    const savedFile = await saveBlobForNative(blob, safeFilename, {
-        ...options,
-        directory: NATIVE_OPEN_DIRECTORY,
-        directoryName: OPEN_DIR,
-    });
+    const savedFile = await saveBlobForNativeOpen(blob, safeFilename, options);
     return openNativeFile(savedFile);
 };
 
 export const openRemoteFile = async (url, filename, options = {}) => {
+    logDownloadStep('remote-open-fetch-start', { url, filename });
     const response = await fetch(url, {
         credentials: 'include',
         ...(options.fetchOptions || {}),
     });
 
+    logDownloadStep('remote-open-fetch-complete', {
+        url,
+        filename,
+        ok: response.ok,
+        status: response.status,
+        contentType: response.headers.get('content-type'),
+    });
+
     if (!response.ok) {
-        throw new Error(options.errorMessage || 'File open failed.');
+        throw new Error(options.errorMessage || `File open failed with HTTP ${response.status}.`);
     }
 
     const blob = await response.blob();
@@ -168,20 +298,29 @@ export const openRemoteFile = async (url, filename, options = {}) => {
 export const downloadWorkbook = async (XLSX, workbook, filename, options = {}) => {
     const safeFilename = sanitizeDownloadFilename(filename);
 
+    logDownloadStep('workbook-download-start', {
+        filename: safeFilename,
+        native: isNativeDownloadPlatform(),
+        platform: Capacitor.getPlatform?.(),
+    });
+
     if (!isNativeDownloadPlatform()) {
         XLSX.writeFile(workbook, safeFilename);
-        return { filename: safeFilename, native: false };
+        logDownloadStep('workbook-web-download-complete', { filename: safeFilename });
+        return { filename: safeFilename, native: false, displayPath: safeFilename };
     }
 
+    const mimeType = options.mimeType || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
     const base64Data = XLSX.write(workbook, {
         type: 'base64',
         bookType: options.bookType || 'xlsx',
     });
-    const blob = await fetch(
-        `data:${options.mimeType || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'};base64,${base64Data}`
-    ).then((response) => response.blob());
+    const blob = await fetch(`data:${mimeType};base64,${base64Data}`).then((response) => response.blob());
 
-    return saveBlobForNative(blob, safeFilename, options);
+    return saveBlobToPublicDownloads(blob, safeFilename, {
+        ...options,
+        mimeType,
+    });
 };
 
 export const parseDownloadFilename = (contentDisposition, fallback = 'download') => {

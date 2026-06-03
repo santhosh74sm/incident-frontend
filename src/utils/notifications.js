@@ -24,7 +24,13 @@ export const withFeedback = async (
 ) => {
     try {
         const result = await operation();
-        showSuccess(addToast, successMessage);
+        const resolvedSuccessMessage =
+            typeof successMessage === 'function'
+                ? successMessage(result)
+                : result?.displayPath
+                    ? `${successMessage} Saved to: ${result.displayPath}`
+                    : successMessage;
+        showSuccess(addToast, resolvedSuccessMessage);
         return result;
     } catch (error) {
         showError(addToast, getErrorText(error, errorMessage));
