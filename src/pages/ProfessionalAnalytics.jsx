@@ -38,6 +38,8 @@ import {
     CHART_THEME,
     ChartTooltip,
     ChartSurface,
+    CompactXAxisTick,
+    CompactYAxisTick,
     DashboardHero,
     DashboardPageSkeleton,
     DashboardPanel,
@@ -45,6 +47,7 @@ import {
     DashboardWidgetPanel,
     EmptyStatePanel,
     LegendList,
+    useCompactChart,
 } from '../components/analytics/DashboardPrimitives';
 import { DailyCreationTrendChart, IncidentStatusTrendChart } from '../components/analytics/TrendCharts';
 import apiClient from '../config/apiClient';
@@ -139,6 +142,7 @@ const ProfessionalAnalytics = () => {
     const { user } = useAuth();
     const { addToast } = useToast();
     const navigate = useNavigate();
+    const compactChart = useCompactChart();
     const [incidents, setIncidents] = useState([]);
     const [staffList, setStaffList] = useState([]);
     const [selectedStaff, setSelectedStaff] = useState([]);
@@ -165,6 +169,24 @@ const ProfessionalAnalytics = () => {
     const [letterStatusMap, setLetterStatusMap] = useState({});
 
     const config = useMemo(() => ({ headers: {} }), []);
+    const compactXAxisProps = useMemo(
+        () => compactChart
+            ? { height: 72, interval: 0, tickMargin: 12, tick: <CompactXAxisTick maxLength={12} /> }
+            : { tick: { fill: CHART_THEME.axis, fontSize: 12 } },
+        [compactChart]
+    );
+    const compactYAxisProps = useMemo(
+        () => compactChart
+            ? { tick: <CompactYAxisTick maxLength={17} /> }
+            : { tick: { fill: CHART_THEME.axisStrong, fontSize: 12 } },
+        [compactChart]
+    );
+    const horizontalBarMargin = useMemo(
+        () => compactChart
+            ? { top: 24, right: 12, left: -12, bottom: 36 }
+            : { top: 20, right: 10, left: -20, bottom: 0 },
+        [compactChart]
+    );
 
     const allStaffOptions = useMemo(
         // Single unified "Administration" entry for all admin accounts; teachers listed individually.
@@ -876,9 +898,9 @@ const ProfessionalAnalytics = () => {
                                             ) : (
                                                 <ChartSurface height={340}>
                                                 <ResponsiveContainer width="100%" height="100%" minWidth={1}>
-                                                <BarChart data={analytics.staffWorkload} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+                                                <BarChart data={analytics.staffWorkload} margin={horizontalBarMargin}>
                                                         <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" vertical={false} />
-                                                        <XAxis dataKey="name" tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} />
+                                                        <XAxis dataKey="name" axisLine={false} tickLine={false} {...compactXAxisProps} />
                                                         <YAxis tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
                                                         <ChartTooltip />
                                                         <Bar dataKey="open" stackId="workload" fill={STATUS_COLORS.Open} radius={[6, 6, 0, 0]} name="Open" />
@@ -928,7 +950,7 @@ const ProfessionalAnalytics = () => {
                                                 <BarChart data={analytics.categoryData.slice(0, 8)} layout="vertical" margin={{ top: 10, right: 24, left: 8, bottom: 0 }}>
                                                     <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" horizontal={false} />
                                                     <XAxis type="number" tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
-                                                    <YAxis dataKey="name" type="category" width={110} tick={{ fill: CHART_THEME.axisStrong, fontSize: 12 }} axisLine={false} tickLine={false} />
+                                                    <YAxis dataKey="name" type="category" width={compactChart ? 124 : 110} axisLine={false} tickLine={false} {...compactYAxisProps} />
                                                     <ChartTooltip />
                                                     <Bar dataKey="count" fill={CHART_COLORS.category} radius={[0, 8, 8, 0]} name="Incidents">
                                                         <LabelList dataKey="count" position="right" fill={CHART_THEME.label} fontSize={12} />
@@ -1001,9 +1023,9 @@ const ProfessionalAnalytics = () => {
                                         chart={
                                             <ChartSurface height={320}>
                                                 <ResponsiveContainer width="100%" height="100%" minWidth={1}>
-                                                <BarChart data={analytics.classWiseData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+                                                <BarChart data={analytics.classWiseData} margin={horizontalBarMargin}>
                                                     <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" vertical={false} />
-                                                    <XAxis dataKey="className" tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} />
+                                                    <XAxis dataKey="className" axisLine={false} tickLine={false} {...compactXAxisProps} />
                                                     <YAxis tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
                                                     <ChartTooltip />
                                                     <Bar dataKey="open" fill={STATUS_COLORS.Open} radius={[6, 6, 0, 0]} name="Open">
@@ -1030,9 +1052,9 @@ const ProfessionalAnalytics = () => {
                                         chart={
                                             <ChartSurface height={320}>
                                                 <ResponsiveContainer width="100%" height="100%" minWidth={1}>
-                                                <BarChart data={analytics.locationData.slice(0, 8)} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+                                                <BarChart data={analytics.locationData.slice(0, 8)} margin={horizontalBarMargin}>
                                                     <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" vertical={false} />
-                                                    <XAxis dataKey="name" tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} />
+                                                    <XAxis dataKey="name" axisLine={false} tickLine={false} {...compactXAxisProps} />
                                                     <YAxis tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
                                                     <ChartTooltip />
                                                     <Bar dataKey="count" fill={CHART_COLORS.location} radius={[6, 6, 0, 0]} name="Incidents">
@@ -1074,9 +1096,9 @@ const ProfessionalAnalytics = () => {
                                             ) : (
                                                 <ChartSurface height={360}>
                                                     <ResponsiveContainer width="100%" height="100%" minWidth={1}>
-                                                        <LineChart data={analytics.pressureTrendData} margin={{ top: 16, right: 12, left: -20, bottom: 0 }}>
+                                                        <LineChart data={analytics.pressureTrendData} margin={{ top: 16, right: 12, left: -20, bottom: compactChart ? 34 : 0 }}>
                                                             <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" vertical={false} />
-                                                            <XAxis dataKey="name" tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} />
+                                                            <XAxis dataKey="name" axisLine={false} tickLine={false} {...compactXAxisProps} />
                                                             <YAxis tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
                                                             <ChartTooltip labelFormatter={(_, payload) => payload?.[0]?.payload?.fullDate || 'Timeline Date'} />
                                                             <Line type="monotone" dataKey="total" stroke={CHART_COLORS.neutralPrimary} strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 6 }} name="Total Incidents" isAnimationActive={false} connectNulls />
@@ -1121,9 +1143,9 @@ const ProfessionalAnalytics = () => {
                                             ) : (
                                                 <ChartSurface height={380}>
                                                     <ResponsiveContainer width="100%" height="100%" minWidth={1}>
-                                                        <BarChart data={analytics.staffWorkload} margin={{ top: 24, right: 12, left: -20, bottom: 0 }}>
+                                                        <BarChart data={analytics.staffWorkload} margin={compactChart ? { top: 24, right: 12, left: -12, bottom: 36 } : { top: 24, right: 12, left: -20, bottom: 0 }}>
                                                             <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" vertical={false} />
-                                                            <XAxis dataKey="name" tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} />
+                                                            <XAxis dataKey="name" axisLine={false} tickLine={false} {...compactXAxisProps} />
                                                             <YAxis tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
                                                             <ChartTooltip labelFormatter={(_, payload) => payload?.[0]?.payload?.name || 'Staff Member'} />
                                                             <Bar dataKey="open" stackId="staff" fill={STATUS_COLORS.Open} radius={[8, 8, 0, 0]} name="Open" isAnimationActive={false} />

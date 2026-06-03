@@ -1,4 +1,4 @@
-import React, { memo, useState } from 'react';
+import React, { memo, useLayoutEffect, useRef, useState } from 'react';
 import { Eye, EyeOff, Table } from 'lucide-react';
 import { Tooltip } from 'recharts';
 
@@ -84,14 +84,106 @@ export const ChartTooltip = ({ labelFormatter, valueFormatter, cursor = false })
     />
 );
 
-export const ChartSurface = memo(({ height = 400, className = '', children }) => (
-    <div
-        className={`relative w-full min-w-0 overflow-hidden ${className}`}
-        style={{ height: `${Math.max(height, 300)}px`, minHeight: '300px', minWidth: '1px' }}
-    >
-        {children}
-    </div>
-));
+export const truncateChartLabel = (value, maxLength = 14) => {
+    const label = value === null || value === undefined ? '' : String(value);
+    return label.length > maxLength ? `${label.slice(0, Math.max(maxLength - 1, 1))}...` : label;
+};
+
+export const CompactXAxisTick = ({ x, y, payload, maxLength = 14 }) => {
+    const label = payload?.value === null || payload?.value === undefined ? '' : String(payload.value);
+
+    return (
+        <g transform={`translate(${x},${y})`}>
+            <title>{label}</title>
+            <text
+                x={0}
+                y={0}
+                dy={12}
+                textAnchor="end"
+                transform="rotate(-35)"
+                fill={CHART_THEME.axis}
+                fontSize={11}
+            >
+                {truncateChartLabel(label, maxLength)}
+            </text>
+        </g>
+    );
+};
+
+export const CompactYAxisTick = ({ x, y, payload, maxLength = 16 }) => {
+    const label = payload?.value === null || payload?.value === undefined ? '' : String(payload.value);
+
+    return (
+        <g transform={`translate(${x},${y})`}>
+            <title>{label}</title>
+            <text x={0} y={0} dy={4} textAnchor="end" fill={CHART_THEME.axisStrong} fontSize={11}>
+                {truncateChartLabel(label, maxLength)}
+            </text>
+        </g>
+    );
+};
+
+export const useCompactChart = () => {
+    const getMatches = () => {
+        if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+        return window.matchMedia('(max-width: 640px), (pointer: coarse) and (max-width: 900px)').matches;
+    };
+    const [matches, setMatches] = useState(getMatches);
+
+    useLayoutEffect(() => {
+        if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return undefined;
+        const mediaQuery = window.matchMedia('(max-width: 640px), (pointer: coarse) and (max-width: 900px)');
+        const handleChange = () => setMatches(mediaQuery.matches);
+
+        handleChange();
+        mediaQuery.addEventListener?.('change', handleChange);
+        return () => mediaQuery.removeEventListener?.('change', handleChange);
+    }, []);
+
+    return matches;
+};
+
+export const ChartSurface = memo(({ height = 400, className = '', children }) => {
+    const surfaceRef = useRef(null);
+    const [hasValidSize, setHasValidSize] = useState(false);
+    const safeHeight = Math.max(Number(height) || 0, 300);
+
+    useLayoutEffect(() => {
+        const node = surfaceRef.current;
+        if (!node) return undefined;
+
+        const updateSize = () => {
+            const { width, height: measuredHeight } = node.getBoundingClientRect();
+            setHasValidSize(width > 0 && measuredHeight > 0);
+        };
+
+        updateSize();
+        const resizeObserver = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(updateSize) : null;
+        resizeObserver?.observe(node);
+        window.addEventListener('orientationchange', updateSize);
+        window.addEventListener('resize', updateSize);
+
+        return () => {
+            resizeObserver?.disconnect();
+            window.removeEventListener('orientationchange', updateSize);
+            window.removeEventListener('resize', updateSize);
+        };
+    }, []);
+
+    return (
+        <div
+            ref={surfaceRef}
+            className={`relative w-full min-w-0 overflow-visible ${className}`}
+            style={{ height: `${safeHeight}px`, minHeight: '300px', minWidth: '1px' }}
+        >
+            {hasValidSize ? (
+                <div className="h-full w-full min-w-[1px]">
+                    {children}
+                </div>
+            ) : null}
+        </div>
+    );
+});
 
 export const DashboardHero = ({ eyebrow, title, description, icon: Icon, actions = null, meta = null }) => (
     <section className="dashboard-hero">

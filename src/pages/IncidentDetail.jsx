@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/ToastProvider';
@@ -224,6 +224,8 @@ const IncidentDetail = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [actionLoading, setActionLoading] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [activeFieldTab, setActiveFieldTab] = useState('handler');
     const [editMode, setEditMode] = useState(false);
     const [fieldOptions, setFieldOptions] = useState({ handler: [], assigner: [] });
@@ -236,6 +238,8 @@ const IncidentDetail = () => {
     const [dragActiveIndex, setDragActiveIndex] = useState(null);
     const [evidenceUploadDone, setEvidenceUploadDone] = useState(false);
     const [showUploadForm, setShowUploadForm] = useState(false);
+    const exportInFlightRef = useRef(false);
+    const deleteInFlightRef = useRef(false);
     const userId = getRecordId(user);
 
     const fetchFieldOptions = useCallback(async () => {
@@ -534,21 +538,26 @@ const IncidentDetail = () => {
     };
 
     const handleDelete = useCallback(async () => {
+        if (deleteInFlightRef.current) return;
         if (!window.confirm('Permanently delete this incident? This cannot be undone.')) return;
+        deleteInFlightRef.current = true;
+        setIsDeleting(true);
         try {
-            setActionLoading(true);
             await apiClient.delete(`/api/incidents/${id}`);
             navigate('/incidents');
         } catch (err) {
             alert(err.response?.data?.message || err.message || 'Delete failed.');
         } finally {
-            setActionLoading(false);
+            deleteInFlightRef.current = false;
+            setIsDeleting(false);
         }
     }, [id, navigate]);
 
     const handleExportReport = useCallback(async () => {
+        if (exportInFlightRef.current) return;
+        exportInFlightRef.current = true;
+        setIsExporting(true);
         try {
-            setActionLoading(true);
             const response = await apiClient.get(`/api/incidents/${id}/export-report`, { responseType: 'blob' });
             let filename = parseDownloadFilename(response.headers['content-disposition'], `incident_report_${id}.docx`);
             if (!filename.endsWith('.docx')) filename = `${filename.replace(/\.[^/.]+$/, '')}.docx`;
@@ -567,7 +576,8 @@ const IncidentDetail = () => {
             );
         } catch {
         } finally {
-            setActionLoading(false);
+            exportInFlightRef.current = false;
+            setIsExporting(false);
         }
     }, [addToast, id]);
 
@@ -741,15 +751,15 @@ const IncidentDetail = () => {
                                         className="rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20">
                                         <ArrowLeft size={16} className="mr-2 inline" />Back to List
                                     </button>
-                                    <button type="button" onClick={handleExportReport} disabled={actionLoading}
+                                    <button type="button" onClick={handleExportReport} disabled={isExporting}
                                         className="rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-slate-100 disabled:opacity-60">
-                                        {actionLoading ? <Loader2 size={16} className="mr-2 inline animate-spin" /> : <Download size={16} className="mr-2 inline" />}
+                                        {isExporting ? <Loader2 size={16} className="mr-2 inline animate-spin" /> : <Download size={16} className="mr-2 inline" />}
                                         Export Report
                                     </button>
                                     {['Super Admin', 'Admin'].includes(user?.role) ? (
-                                        <button type="button" onClick={handleDelete} disabled={actionLoading}
+                                        <button type="button" onClick={handleDelete} disabled={isDeleting}
                                             className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60">
-                                            {actionLoading ? <Loader2 size={16} className="mr-2 inline animate-spin" /> : <Trash2 size={16} className="mr-2 inline" />}
+                                            {isDeleting ? <Loader2 size={16} className="mr-2 inline animate-spin" /> : <Trash2 size={16} className="mr-2 inline" />}
                                             Delete Incident
                                         </button>
                                     ) : null}

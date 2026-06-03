@@ -36,6 +36,8 @@ import {
     CHART_THEME,
     ChartTooltip,
     ChartSurface,
+    CompactXAxisTick,
+    CompactYAxisTick,
     DashboardHero,
     DashboardPageSkeleton,
     DashboardPanel,
@@ -43,6 +45,7 @@ import {
     DashboardWidgetPanel,
     EmptyStatePanel,
     LegendList,
+    useCompactChart,
 } from '../components/analytics/DashboardPrimitives';
 import { DailyCreationTrendChart, IncidentStatusTrendChart } from '../components/analytics/TrendCharts';
 import {
@@ -76,6 +79,7 @@ const StudentAnalytics = () => {
     const { addToast } = useToast();
     const navigate = useNavigate();
     const params = useParams();
+    const compactChart = useCompactChart();
 
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -103,6 +107,24 @@ const StudentAnalytics = () => {
     const [letterStatusMap, setLetterStatusMap] = useState({});
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
     const [locationDistribution, setLocationDistribution] = useState([]);
+    const compactXAxisProps = useMemo(
+        () => compactChart
+            ? { height: 72, interval: 0, tickMargin: 12, tick: <CompactXAxisTick maxLength={12} /> }
+            : { tick: { fill: CHART_THEME.axis, fontSize: 12 } },
+        [compactChart]
+    );
+    const compactYAxisProps = useMemo(
+        () => compactChart
+            ? { tick: <CompactYAxisTick maxLength={17} /> }
+            : { tick: { fill: CHART_THEME.axisStrong, fontSize: 12 } },
+        [compactChart]
+    );
+    const horizontalBarMargin = useMemo(
+        () => compactChart
+            ? { top: 24, right: 12, left: -12, bottom: 36 }
+            : { top: 20, right: 10, left: -20, bottom: 0 },
+        [compactChart]
+    );
 
     const filteredStudents = useMemo(
         () =>
@@ -859,7 +881,7 @@ const StudentAnalytics = () => {
                                                         <BarChart data={studentAnalytics.locationData.slice(0, 6)} layout="vertical" margin={{ top: 10, right: 24, left: 8, bottom: 0 }}>
                                                             <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" horizontal={false} />
                                                             <XAxis type="number" tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
-                                                            <YAxis dataKey="location" type="category" width={96} tick={{ fill: CHART_THEME.axisStrong, fontSize: 12 }} axisLine={false} tickLine={false} />
+                                                            <YAxis dataKey="location" type="category" width={compactChart ? 118 : 96} axisLine={false} tickLine={false} {...compactYAxisProps} />
                                                             <ChartTooltip />
                                                             <Bar dataKey="count" fill={CHART_COLORS.location} radius={[0, 8, 8, 0]} name="Incidents">
                                                                 <LabelList dataKey="count" position="right" fill={CHART_THEME.label} fontSize={12} />
@@ -891,9 +913,9 @@ const StudentAnalytics = () => {
                                                 chart={
                                                     <ChartSurface height={280}>
                                                 <ResponsiveContainer width="100%" height="100%" minWidth={1}>
-                                                        <BarChart data={studentAnalytics.categoryData.slice(0, 6)} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+                                                        <BarChart data={studentAnalytics.categoryData.slice(0, 6)} margin={horizontalBarMargin}>
                                                             <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" vertical={false} />
-                                                            <XAxis dataKey="category" tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} />
+                                                            <XAxis dataKey="category" axisLine={false} tickLine={false} {...compactXAxisProps} />
                                                             <YAxis tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
                                                             <ChartTooltip />
                                                             <Bar dataKey="count" fill={CHART_COLORS.category} radius={[6, 6, 0, 0]} name="Incidents">
@@ -920,9 +942,9 @@ const StudentAnalytics = () => {
                                                     ) : (
                                                         <ChartSurface height={280}>
                                                 <ResponsiveContainer width="100%" height="100%" minWidth={1}>
-                                                            <BarChart data={studentAnalytics.evidenceData.slice(0, 8)} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+                                                            <BarChart data={studentAnalytics.evidenceData.slice(0, 8)} margin={horizontalBarMargin}>
                                                                 <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" vertical={false} />
-                                                                <XAxis dataKey="name" tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} />
+                                                                <XAxis dataKey="name" axisLine={false} tickLine={false} {...compactXAxisProps} />
                                                                 <YAxis tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
                                                                 <ChartTooltip />
                                                                 <Bar dataKey="count" fill={CHART_COLORS.evidence} radius={[6, 6, 0, 0]} name="Evidence Count">
