@@ -115,6 +115,7 @@ const isRefreshRequest = (config = {}) => getRequestPath(config) === REFRESH_PAT
 const isCsrfRequest = (config = {}) => [CSRF_PATH, CSRF_FALLBACK_PATH].includes(getRequestPath(config));
 const isAccessTokenExpired = (error) => error.response?.data?.code === 'ACCESS_TOKEN_EXPIRED';
 const isRefreshRaceGrace = (error) => error.response?.data?.code === 'REFRESH_RETRY_GRACE';
+const isCsrfInvalid = (error) => error.response?.status === 403 && error.response?.data?.code === 'CSRF_TOKEN_INVALID';
 
 const getCookieValue = (name) => {
     if (typeof document === 'undefined') return '';
@@ -136,9 +137,10 @@ const rememberCsrfToken = (headers = {}) => {
 
 const ensureCsrfToken = async () => {
     const cookieToken = decodeURIComponent(getCookieValue(CSRF_COOKIE_NAME));
-    if (csrfTokenMemory || cookieToken) return csrfTokenMemory || cookieToken;
+    if (cookieToken) return cookieToken;
 
     if (!csrfPromise) {
+        csrfTokenMemory = '';
         csrfPromise = axios
             .get(`${API_BASE}${CSRF_PATH}`, { withCredentials: true })
             .catch((error) => {
@@ -149,7 +151,7 @@ const ensureCsrfToken = async () => {
             })
             .then((response) => {
                 rememberCsrfToken(response.headers);
-                const token = csrfTokenMemory || response.data?.csrfToken || '';
+                const token = decodeURIComponent(getCookieValue(CSRF_COOKIE_NAME)) || csrfTokenMemory || response.data?.csrfToken || '';
                 if (!token) {
                     throw new Error('CSRF bootstrap did not return a token.');
                 }
@@ -252,6 +254,23 @@ apiClient.interceptors.response.use(
     async (error) => {
         const config = error.config || {};
         const status = error.response?.status;
+        const method = String(config.method || 'get').toLowerCase();
+
+        if (
+            isCsrfInvalid(error) &&
+            CSRF_METHODS.has(method) &&
+            !config.__csrfRetried &&
+            !isCsrfRequest(config)
+        ) {
+            csrfTokenMemory = '';
+            config.__csrfRetried = true;
+            const csrfToken = await ensureCsrfToken();
+            config.headers = config.headers || {};
+            config.headers.set?.(CSRF_HEADER_NAME, csrfToken);
+            config.headers[CSRF_HEADER_NAME] = csrfToken;
+            return apiClient(config);
+        }
+
         if (
             status === 401 &&
             isAccessTokenExpired(error) &&
@@ -286,7 +305,6 @@ apiClient.interceptors.response.use(
             dispatchAuthLogout(error.response?.data?.code || 'session-invalid');
         }
 
-        const method = String(config.method || 'get').toLowerCase();
         const retryCount = config.__retryCount || 0;
         const canRetry =
             status !== 401 &&

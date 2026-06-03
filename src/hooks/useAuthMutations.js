@@ -17,5 +17,5 @@ export const useLogin = () =>
 export const useRegister = () =>
     useMutation({
         mutationFn: (data) =>
-            apiClient.post('/api/auth/register', data).then((r) => r.data),
+            apiClient.post('/api/auth/workspaces', data).then((r) => r.data),
     });

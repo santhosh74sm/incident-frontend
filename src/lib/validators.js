@@ -26,14 +26,20 @@ export const loginSchema = z.object({
         .min(1, 'Password is required')
         .max(200, 'Password is too long'),
     loginType: z.enum(['staff', 'student']).default('staff'),
+    schoolId: z.string().trim().max(40, 'School ID is too long').optional(),
 });
 
 export const registerSchema = z
     .object({
-        name: z
+        schoolName: z
             .string()
             .trim()
-            .min(1, 'Full name is required')
+            .min(2, 'School name is required')
+            .max(160, 'School name is too long'),
+        superAdminName: z
+            .string()
+            .trim()
+            .min(1, 'Super Admin name is required')
             .max(120, 'Name is too long'),
         email: z
             .string()
@@ -49,9 +55,6 @@ export const registerSchema = z
             .regex(/\d/, 'Password must include a number')
             .regex(/[^A-Za-z0-9]/, 'Password must include a symbol'),
         confirmPassword: z.string().min(1, 'Please confirm your password'),
-        role: z.enum(['Super Admin', 'Admin', 'Teacher'], {
-            message: 'Select a valid role',
-        }),
     })
     .refine((data) => data.password === data.confirmPassword, {
         message: 'Passwords do not match',

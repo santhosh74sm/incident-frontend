@@ -199,12 +199,12 @@ const Login = () => {
                             </form>
 
                             <div className="mt-8 flex flex-col gap-4 border-t border-slate-200 pt-6 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
-                                <p className="text-sm text-slate-500 dark:text-slate-400">New to the staff portal?</p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">New school?</p>
                                 <Link
                                     to="/register"
                                     className="inline-flex items-center gap-2 rounded-lg text-sm font-semibold text-blue-700 transition-all duration-200 hover:text-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-blue-300 dark:hover:text-blue-200"
                                 >
-                                    Create account
+                                    Create school workspace
                                     <ArrowRight size={16} />
                                 </Link>
                             </div>

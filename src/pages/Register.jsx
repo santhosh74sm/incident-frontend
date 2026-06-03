@@ -2,7 +2,6 @@ import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useQuery } from '@tanstack/react-query';
 import {
     AlertCircle,
     ArrowLeft,
@@ -18,7 +17,6 @@ import {
     User,
     UserPlus,
 } from 'lucide-react';
-import apiClient from '../config/apiClient';
 import { useAuth } from '../context/AuthContext';
 import { useRegister } from '../hooks/useAuthMutations';
 import { PASSWORD_POLICY_TEXT, registerSchema } from '../lib/validators';
@@ -31,6 +29,7 @@ const INPUT_ERROR_CLASS_NAME =
 
 const Register = () => {
     const nameId = useId();
+    const schoolNameId = useId();
     const emailId = useId();
     const passwordId = useId();
     const confirmPasswordId = useId();
@@ -40,16 +39,10 @@ const Register = () => {
     const [protectedRegisterError, setProtectedRegisterError] = useState('');
     const redirectTimerRef = useRef(null);
     const navigate = useNavigate();
-    const { user, login } = useAuth();
+    const { login } = useAuth();
     const registerMutation = useRegister();
 
-    const { data: adminData } = useQuery({
-        queryKey: ['admin-exists'],
-        queryFn: () => apiClient.get('/api/auth/admin-exists').then((r) => r.data),
-        staleTime: 30 * 1000,
-    });
-
-    const superAdminExists = adminData?.exists ?? true;
+    const superAdminExists = false;
 
     const roleOptions = useMemo(() => {
         if (!superAdminExists) {
@@ -77,7 +70,7 @@ const Register = () => {
         ];
     }, [superAdminExists]);
 
-    const defaultRole = superAdminExists ? 'Teacher' : 'Super Admin';
+    const defaultRole = 'Super Admin';
 
     const {
         register,
@@ -87,7 +80,7 @@ const Register = () => {
         formState: { errors, isSubmitting },
     } = useForm({
         resolver: zodResolver(registerSchema),
-        defaultValues: { name: '', email: '', password: '', confirmPassword: '', role: defaultRole },
+        defaultValues: { schoolName: '', superAdminName: '', email: '', password: '', confirmPassword: '', role: defaultRole },
     });
 
     const selectedRole = watch('role');
@@ -103,17 +96,13 @@ const Register = () => {
     }, []);
 
     const onSubmit = async (data) => {
-        const { confirmPassword: _, ...payload } = data;
+        const { confirmPassword: _, role: _role, ...payload } = data;
         setProtectedRegisterError('');
         try {
-            if (superAdminExists) {
-                await apiClient.post('/api/auth/users', payload);
-            } else {
-                const createdUser = await registerMutation.mutateAsync(payload);
-                if (createdUser) login(createdUser);
-            }
+            const createdUser = await registerMutation.mutateAsync(payload);
+            if (createdUser) login(createdUser);
             setSuccess(true);
-            redirectTimerRef.current = setTimeout(() => navigate('/login'), 2000);
+            redirectTimerRef.current = setTimeout(() => navigate('/dashboard'), 1200);
         } catch (requestError) {
             setProtectedRegisterError(requestError.response?.data?.message || 'Unable to create account.');
         }
@@ -158,12 +147,12 @@ const Register = () => {
                                     <UserPlus size={26} />
                                 </div>
                                 <div>
-                                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-100">Create Account</p>
-                                    <h2 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">Register staff</h2>
+                                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-100">Create Workspace</p>
+                                    <h2 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">Add your school</h2>
                                 </div>
                             </div>
                             <p className="mt-5 max-w-md text-sm leading-7 text-slate-300">
-                                Create the initial administrator account, or sign in as an administrator to add staff later.
+                                Create a private school workspace and its Super Admin account.
                             </p>
                         </div>
 
@@ -174,7 +163,7 @@ const Register = () => {
                                         <div className="flex items-start gap-3">
                                             <Sparkles className="mt-0.5 text-indigo-600" size={18} />
                                             <p className="leading-6">
-                                                First setup must create an administrator. After setup, staff creation requires an administrator session.
+                                                Each school gets its own isolated workspace and Super Admin account.
                                             </p>
                                         </div>
                                     </div>
@@ -193,16 +182,33 @@ const Register = () => {
                                         </div>
                                     )}
 
-                                    {superAdminExists && !['Super Admin', 'Admin'].includes(user?.role) ? (
-                                        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-6 text-amber-800">
-                                            Registration is closed after the first Super Admin setup. Please ask an administrator to create your account.
-                                        </div>
-                                    ) : (
                                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
                                         <div className="grid gap-5 md:grid-cols-2">
                                             <div className="md:col-span-2">
+                                                <label htmlFor={schoolNameId} className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                                    School Name
+                                                </label>
+                                                <div className="relative">
+                                                    <ShieldCheck className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                                    <input
+                                                        type="text"
+                                                        id={schoolNameId}
+                                                        autoComplete="organization"
+                                                        placeholder="ABC Higher Secondary School"
+                                                        aria-invalid={Boolean(errors.schoolName)}
+                                                        aria-describedby={errors.schoolName ? `${schoolNameId}-error` : undefined}
+                                                        className={errors.schoolName ? INPUT_ERROR_CLASS_NAME : INPUT_CLASS_NAME}
+                                                        {...register('schoolName')}
+                                                    />
+                                                </div>
+                                                {errors.schoolName && (
+                                                    <p id={`${schoolNameId}-error`} className="mt-1.5 text-xs font-medium text-red-600">{errors.schoolName.message}</p>
+                                                )}
+                                            </div>
+
+                                            <div className="md:col-span-2">
                                                 <label htmlFor={nameId} className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                                                    Full Name
+                                                    Super Admin Name
                                                 </label>
                                                 <div className="relative">
                                                     <User className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -210,15 +216,15 @@ const Register = () => {
                                                         type="text"
                                                         id={nameId}
                                                         autoComplete="name"
-                                                        placeholder="Enter full name"
-                                                        aria-invalid={Boolean(errors.name)}
-                                                        aria-describedby={errors.name ? `${nameId}-error` : undefined}
-                                                        className={errors.name ? INPUT_ERROR_CLASS_NAME : INPUT_CLASS_NAME}
-                                                        {...register('name')}
+                                                        placeholder="Enter Super Admin name"
+                                                        aria-invalid={Boolean(errors.superAdminName)}
+                                                        aria-describedby={errors.superAdminName ? `${nameId}-error` : undefined}
+                                                        className={errors.superAdminName ? INPUT_ERROR_CLASS_NAME : INPUT_CLASS_NAME}
+                                                        {...register('superAdminName')}
                                                     />
                                                 </div>
-                                                {errors.name && (
-                                                    <p id={`${nameId}-error`} className="mt-1.5 text-xs font-medium text-red-600">{errors.name.message}</p>
+                                                {errors.superAdminName && (
+                                                    <p id={`${nameId}-error`} className="mt-1.5 text-xs font-medium text-red-600">{errors.superAdminName.message}</p>
                                                 )}
                                             </div>
 
@@ -310,7 +316,7 @@ const Register = () => {
 
                                         <div>
                                             <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                                                Account Role
+                                                    Account Role
                                             </label>
                                             <div className="grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Account role">
                                                 {roleOptions.map((role) => {
@@ -371,8 +377,6 @@ const Register = () => {
                                             )}
                                         </button>
                                     </form>
-                                    )}
-
                                     <div className="mt-8 flex flex-col gap-4 border-t border-slate-200 pt-6 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
                                         <button
                                             type="button"
@@ -396,9 +400,9 @@ const Register = () => {
                                     <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 shadow-inner">
                                         <CheckCircle2 size={40} />
                                     </div>
-                                    <h3 className="mt-6 text-2xl font-semibold text-slate-900 dark:text-slate-100">Account created</h3>
+                                    <h3 className="mt-6 text-2xl font-semibold text-slate-900 dark:text-slate-100">Workspace created</h3>
                                     <p className="mt-3 text-sm leading-7 text-slate-600 dark:text-slate-300">
-                                        The staff account was created successfully. Redirecting to the login screen now.
+                                        Your school workspace is ready. Redirecting to the dashboard now.
                                     </p>
                                     <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/30 dark:text-emerald-100">
                                         <Loader2 className="animate-spin" size={16} />
