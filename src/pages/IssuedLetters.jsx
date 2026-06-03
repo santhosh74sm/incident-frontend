@@ -30,8 +30,18 @@ import {
 } from '../utils/analytics';
 import { downloadBlob } from '../utils/downloadFiles';
 import { withFeedback } from '../utils/notifications';
+import BulkDeleteControls from '../components/BulkDeleteControls';
 
 const PAGE_SIZE = 10;
+const normalizeRole = (role) => {
+    const roleMap = {
+        admin: 'Admin',
+        teacher: 'Teacher',
+        super_admin: 'Super Admin',
+        'super admin': 'Super Admin',
+    };
+    return roleMap[String(role || '').trim().toLowerCase()] || role;
+};
 
 const sanitizeFilename = (value = 'letter') =>
     String(value)
@@ -334,6 +344,7 @@ const IssuedLetters = () => {
     const [downloadingKey, setDownloadingKey] = useState('');
 
     const config = useMemo(() => ({ headers: {} }), []);
+    const isSuperAdmin = normalizeRole(user?.role) === 'Super Admin';
 
     const fetchFilters = useCallback(async () => {
         if (!user?._id) return;
@@ -617,8 +628,23 @@ const IssuedLetters = () => {
                                         Page {page} of {totalPages} - {filteredLetters.length} total result{filteredLetters.length === 1 ? '' : 's'}
                                     </p>
                                 </div>
-                                <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                                    Actions: view, save, delete
+                                <div className="flex flex-wrap items-center gap-2">
+                                    {isSuperAdmin ? (
+                                        <BulkDeleteControls
+                                            moduleName="issued-letters"
+                                            filteredIds={filteredLetters.map((letter) => letter._id).filter(Boolean)}
+                                            allCount={letters.length}
+                                            source={{ page: 'IssuedLetters', filteredCount: filteredLetters.length }}
+                                            addToast={addToast}
+                                            onComplete={() => {
+                                                fetchLetters(false);
+                                                fetchFilters();
+                                            }}
+                                        />
+                                    ) : null}
+                                    <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                                        Actions: view, save, delete
+                                    </div>
                                 </div>
                             </div>
 

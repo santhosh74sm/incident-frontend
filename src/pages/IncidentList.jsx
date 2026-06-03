@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
+import { useToast } from '../components/ToastProvider';
+import BulkDeleteControls from '../components/BulkDeleteControls';
 import { UnifiedDateInput, UnifiedFilterBar, UnifiedMultiSelect, UnifiedSearchInput } from '../components/UnifiedFilters';
 import {
     DashboardHero,
@@ -32,6 +34,15 @@ import { getRecordId } from '../utils/ids';
 
 const STATUS_OPTIONS = ['Open', 'In Progress', 'Closed'];
 const READ_STATUS_OPTIONS = ['All', 'Unread', 'Read'];
+const normalizeRole = (role) => {
+    const roleMap = {
+        admin: 'Admin',
+        teacher: 'Teacher',
+        super_admin: 'Super Admin',
+        'super admin': 'Super Admin',
+    };
+    return roleMap[String(role || '').trim().toLowerCase()] || role;
+};
 
 const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -58,6 +69,7 @@ const IncidentList = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const { notifications } = useNotifications();
+    const { addToast } = useToast();
 
     const [incidents, setIncidents] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -80,6 +92,7 @@ const IncidentList = () => {
 
     const config = useMemo(() => ({ headers: {} }), []);
     const userId = getRecordId(user);
+    const isSuperAdmin = normalizeRole(user?.role) === 'Super Admin';
 
     useEffect(() => {
         if (!userId) {
@@ -558,8 +571,18 @@ const IncidentList = () => {
                         {!error && filteredIncidents.length > 0 ? (
                             <DashboardPanel
                                 title="Incident Results"
-                                description="High-contrast incident cards with standardized pills for fast scanning and action."
+                                description={`${filteredIncidents.length} incident${filteredIncidents.length === 1 ? '' : 's'} in the current view.`}
                                 icon={FileText}
+                                actions={isSuperAdmin ? (
+                                    <BulkDeleteControls
+                                        moduleName="incidents"
+                                        filteredIds={filteredIncidents.map((incident) => getRecordId(incident)).filter(Boolean)}
+                                        allCount={incidents.length}
+                                        source={{ page: 'IncidentList', filteredCount: filteredIncidents.length }}
+                                        addToast={addToast}
+                                        onComplete={() => fetchIncidents({ reset: true })}
+                                    />
+                                ) : null}
                             >
                                 <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
                                     {filteredIncidents.map((incident) => {
