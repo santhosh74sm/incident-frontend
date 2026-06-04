@@ -116,6 +116,7 @@ const isCsrfRequest = (config = {}) => [CSRF_PATH, CSRF_FALLBACK_PATH].includes(
 const isAccessTokenExpired = (error) => error.response?.data?.code === 'ACCESS_TOKEN_EXPIRED';
 const isRefreshRaceGrace = (error) => error.response?.data?.code === 'REFRESH_RETRY_GRACE';
 const isCsrfInvalid = (error) => error.response?.status === 403 && error.response?.data?.code === 'CSRF_TOKEN_INVALID';
+const isConfirmedInvalidSession = (error) => error.response?.status === 401;
 
 const getCookieValue = (name) => {
     if (typeof document === 'undefined') return '';
@@ -290,8 +291,10 @@ apiClient.interceptors.response.use(
                     return apiClient(config);
                 }
 
-                clearLegacyAuthState();
-                dispatchAuthLogout(refreshError.response?.data?.code || 'refresh-failed');
+                if (isConfirmedInvalidSession(refreshError)) {
+                    clearLegacyAuthState();
+                    dispatchAuthLogout(refreshError.response?.data?.code || 'refresh-failed');
+                }
                 return Promise.reject(refreshError);
             }
         }

@@ -1,10 +1,11 @@
-import React, { createContext, memo, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import apiClient, { clearLegacyAuthState, resetAuthEventGuard } from '../config/apiClient';
 
 const AuthContext = createContext({
     user: null,
     loading: true,
     authReady: false,
+    authRestoreError: null,
     login: () => {},
     logout: async () => {},
     restoreAuth: async () => {},
@@ -14,6 +15,12 @@ export const AuthProvider = memo(({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [authReady, setAuthReady] = useState(false);
+    const [authRestoreError, setAuthRestoreError] = useState(null);
+    const userRef = useRef(null);
+
+    useEffect(() => {
+        userRef.current = user;
+    }, [user]);
 
     const restoreAuth = useCallback(async ({ silent = false } = {}) => {
         if (!silent) setLoading(true);
@@ -26,14 +33,19 @@ export const AuthProvider = memo(({ children }) => {
                 },
             });
             resetAuthEventGuard();
+            setAuthRestoreError(null);
             setUser(data || null);
             return data || null;
         } catch (error) {
             if (error.response?.status === 401) {
                 clearLegacyAuthState();
+                setAuthRestoreError(null);
+                setUser(null);
+                return null;
             }
-            setUser(null);
-            return null;
+
+            setAuthRestoreError(error);
+            return userRef.current;
         } finally {
             setAuthReady(true);
             if (!silent) setLoading(false);
@@ -49,6 +61,7 @@ export const AuthProvider = memo(({ children }) => {
 
         const handleLogout = () => {
             clearLegacyAuthState();
+            setAuthRestoreError(null);
             setUser(null);
             setAuthReady(true);
             setLoading(false);
@@ -64,6 +77,7 @@ export const AuthProvider = memo(({ children }) => {
 
     const login = useCallback((userData) => {
         resetAuthEventGuard();
+        setAuthRestoreError(null);
         setUser(userData);
         setAuthReady(true);
     }, []);
@@ -75,14 +89,15 @@ export const AuthProvider = memo(({ children }) => {
             // Session may already be expired; local state still needs clearing.
         }
         clearLegacyAuthState();
+        setAuthRestoreError(null);
         setUser(null);
         setAuthReady(true);
         setLoading(false);
     }, []);
 
     const value = useMemo(
-        () => ({ user, login, logout, loading, authReady, restoreAuth }),
-        [authReady, loading, login, logout, restoreAuth, user]
+        () => ({ user, login, logout, loading, authReady, authRestoreError, restoreAuth }),
+        [authReady, authRestoreError, loading, login, logout, restoreAuth, user]
     );
 
     return (
