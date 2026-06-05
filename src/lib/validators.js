@@ -26,7 +26,6 @@ export const loginSchema = z.object({
         .min(1, 'Password is required')
         .max(200, 'Password is too long'),
     loginType: z.enum(['staff', 'student']).default('staff'),
-    schoolId: z.string().trim().max(40, 'School ID is too long').optional(),
 });
 
 export const registerSchema = z

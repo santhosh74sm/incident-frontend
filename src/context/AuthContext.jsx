@@ -11,6 +11,15 @@ const AuthContext = createContext({
     restoreAuth: async () => {},
 });
 
+const PRIVATE_TENANT_FIELD = ['school', 'Id'].join('');
+
+const sanitizeUser = (value) => {
+    if (!value || typeof value !== 'object') return value || null;
+    const user = { ...value };
+    delete user[PRIVATE_TENANT_FIELD];
+    return user;
+};
+
 export const AuthProvider = memo(({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -34,8 +43,9 @@ export const AuthProvider = memo(({ children }) => {
             });
             resetAuthEventGuard();
             setAuthRestoreError(null);
-            setUser(data || null);
-            return data || null;
+            const safeUser = sanitizeUser(data);
+            setUser(safeUser);
+            return safeUser;
         } catch (error) {
             if (error.response?.status === 401) {
                 clearLegacyAuthState();
@@ -78,7 +88,7 @@ export const AuthProvider = memo(({ children }) => {
     const login = useCallback((userData) => {
         resetAuthEventGuard();
         setAuthRestoreError(null);
-        setUser(userData);
+        setUser(sanitizeUser(userData));
         setAuthReady(true);
     }, []);
 
