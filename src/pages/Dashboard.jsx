@@ -136,6 +136,29 @@ const QuickActionLink = memo(({ to, tone, icon: Icon, title, description }) => {
     );
 });
 
+const dashboardDataRequests = new Map();
+
+const fetchDashboardData = (user) => {
+    const requestKey = `${user?._id || user?.id || 'unknown'}:${user?.role || 'unknown'}`;
+    if (!dashboardDataRequests.has(requestKey)) {
+        const requests = [
+            apiClient.get('/api/incidents', { params: { page: 1, limit: 20 } }),
+            ['Super Admin', 'Admin'].includes(user.role)
+                ? apiClient.get('/api/logs', { params: { page: 1, limit: 6 } })
+                : Promise.resolve({ data: [] }),
+        ];
+
+        dashboardDataRequests.set(
+            requestKey,
+            Promise.all(requests).finally(() => {
+                dashboardDataRequests.delete(requestKey);
+            })
+        );
+    }
+
+    return dashboardDataRequests.get(requestKey);
+};
+
 const LifecycleOverviewPanel = memo(({ rows }) => (
     <DashboardPanel title="Progress snapshot" description="Where incidents stand right now—in plain language." icon={Activity}>
         <div className="space-y-4">
@@ -170,6 +193,8 @@ const DashboardContent = memo(() => {
     const [incidents, setIncidents] = useState([]);
     const [recentLogs, setRecentLogs] = useState([]);
     const [loading, setLoading] = useState(true);
+    const userId = user?._id || user?.id;
+    const userRole = user?.role;
 
     const handleViewIncident = useCallback(
         (incidentId) => navigate(`/incidents/${incidentId}`),
@@ -214,22 +239,15 @@ const DashboardContent = memo(() => {
     ], [handleViewIncident]);
 
     useEffect(() => {
-        if (!user?._id) return;
+        if (!userId) return;
 
         let mounted = true;
+        const requestUser = { _id: userId, role: userRole };
 
         const fetchData = async () => {
             try {
                 setLoading(true);
-
-                const requests = [
-                    apiClient.get('/api/incidents', { params: { page: 1, limit: 20 } }),
-                    ['Super Admin', 'Admin'].includes(user.role)
-                        ? apiClient.get('/api/logs', { params: { page: 1, limit: 6 } })
-                        : Promise.resolve({ data: [] }),
-                ];
-
-                const [incidentRes, logsRes] = await Promise.all(requests);
+                const [incidentRes, logsRes] = await fetchDashboardData(requestUser);
 
                 if (!mounted) return;
 
@@ -259,7 +277,7 @@ const DashboardContent = memo(() => {
         fetchData();
 
         return () => { mounted = false; };
-    }, [user?.role, user?._id]);
+    }, [userId, userRole]);
 
     const summary = useMemo(() => {
         const total = incidents.length;

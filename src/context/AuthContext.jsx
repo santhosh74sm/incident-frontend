@@ -12,12 +12,30 @@ const AuthContext = createContext({
 });
 
 const PRIVATE_TENANT_FIELD = ['school', 'Id'].join('');
+let restoreAuthRequest = null;
 
 const sanitizeUser = (value) => {
     if (!value || typeof value !== 'object') return value || null;
     const user = { ...value };
     delete user[PRIVATE_TENANT_FIELD];
     return user;
+};
+
+const fetchCurrentUser = () => {
+    if (!restoreAuthRequest) {
+        restoreAuthRequest = apiClient
+            .get('/api/auth/me', {
+                __skipAuthLogout: true,
+                headers: {
+                    'Cache-Control': 'no-store',
+                },
+            })
+            .finally(() => {
+                restoreAuthRequest = null;
+            });
+    }
+
+    return restoreAuthRequest;
 };
 
 export const AuthProvider = memo(({ children }) => {
@@ -35,12 +53,7 @@ export const AuthProvider = memo(({ children }) => {
         if (!silent) setLoading(true);
 
         try {
-            const { data } = await apiClient.get('/api/auth/me', {
-                __skipAuthLogout: true,
-                headers: {
-                    'Cache-Control': 'no-store',
-                },
-            });
+            const { data } = await fetchCurrentUser();
             resetAuthEventGuard();
             setAuthRestoreError(null);
             const safeUser = sanitizeUser(data);

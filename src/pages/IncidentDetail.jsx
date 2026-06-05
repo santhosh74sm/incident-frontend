@@ -288,9 +288,7 @@ const IncidentDetail = () => {
             apiClient
                 .put(`/api/notifications/read/${id}`, {})
                 .then(() => refreshNotifications({ silent: true }))
-                .catch((err) => {
-                    console.error('Failed to mark incident notifications as read', err);
-                });
+                .catch(() => {});
         }
     }, [id, userId]); // eslint-disable-line react-hooks/exhaustive-deps -- mark notifications read when route id/user changes only
 
@@ -986,9 +984,10 @@ const IncidentDetail = () => {
                                                         </div>
                                                         <div className="mt-4 grid gap-4">
                                                             <div>
-                                                                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Evidence Category</label>
+                                                                <label htmlFor={`evidence-category-${index}`} className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Evidence Category</label>
                                                                 <div className="relative">
                                                                     <select
+                                                                        id={`evidence-category-${index}`}
                                                                         className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                                                                         value={entry.evidenceType}
                                                                         onChange={(e) => handleEvidenceTypeChange(index, e.target.value)}
@@ -1003,6 +1002,7 @@ const IncidentDetail = () => {
                                                                 </div>
                                                             </div>
                                                             <label
+                                                                htmlFor={`evidence-file-${index}`}
                                                                 className={`cursor-pointer rounded-2xl border-2 border-dashed bg-white px-4 py-8 text-center transition ${
                                                                     dragActiveIndex === index ? 'border-indigo-400 bg-indigo-50/40' : 'border-slate-300 hover:border-indigo-400 hover:bg-indigo-50/20'
                                                                 }`}
@@ -1019,7 +1019,8 @@ const IncidentDetail = () => {
                                                                     <span className="text-sm font-medium">{entry.file ? 'File selected. Click to replace.' : 'Click or drag a file to upload'}</span>
                                                                     <span className="text-xs text-slate-400">Supports image, PDF, DOC, DOCX, XLS, and XLSX</span>
                                                                 </div>
-                                                                <input type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" className="hidden"
+                                                                <input id={`evidence-file-${index}`} type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" className="hidden"
+                                                                    aria-label={`Evidence ${index + 1} file`}
                                                                     onChange={(e) => { const f = e.target.files?.[0]; if (f) handleEvidenceFileChange(index, f); e.target.value = ''; }} />
                                                             </label>
                                                             {entry.file ? (

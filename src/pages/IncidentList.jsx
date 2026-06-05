@@ -160,68 +160,45 @@ const IncidentList = () => {
         }
     }, [allStaffOptions, categoryFilter, classFilter, config, dateRange.end, dateRange.start, sectionFilter, selectedStaff, staffList, statusFilter, userId]);
 
-    const fetchStaff = useCallback(async () => {
+    const fetchFilterData = useCallback(async () => {
         if (!userId) return;
         try {
-            const { data } = await apiClient.get('/api/auth/users', config);
-            setStaffList(Array.isArray(data) ? data : []);
-        } catch {
-            setStaffList([]);
-        }
-    }, [config, userId]);
+            const [staffRes, categoriesRes, classesRes, sectionsRes] = await Promise.all([
+                apiClient.get('/api/auth/users', config).catch(() => ({ data: [] })),
+                apiClient.get('/api/incidents/categories', config).catch(() => ({ data: [] })),
+                apiClient.get('/api/incidents/classes', config).catch(() => ({ data: [] })),
+                apiClient.get('/api/incidents/sections', config).catch(() => ({ data: [] })),
+            ]);
 
-    const fetchCategories = useCallback(async () => {
-        if (!userId) return;
-        try {
-            const { data } = await apiClient.get('/api/incidents/categories', config);
-            const categories = Array.isArray(data)
-                ? data.map((item) => (typeof item === 'string' ? item : item?.name)).filter(Boolean)
+            const categories = Array.isArray(categoriesRes.data)
+                ? categoriesRes.data.map((item) => (typeof item === 'string' ? item : item?.name)).filter(Boolean)
                 : [];
+            const classes = Array.isArray(classesRes.data) ? [...classesRes.data] : [];
+            const sortedClasses = classes.length > 0
+                ? classes.sort((a, b) => {
+                    const aNum = parseInt(a, 10);
+                    const bNum = parseInt(b, 10);
+                    if (!Number.isNaN(aNum) && !Number.isNaN(bNum)) return aNum - bNum;
+                    return a.localeCompare(b);
+                })
+                : ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+            const sections = Array.isArray(sectionsRes.data) ? sectionsRes.data : [];
+
+            setStaffList(Array.isArray(staffRes.data) ? staffRes.data : []);
             setCategoryList(categories);
-        } catch {
-            setCategoryList([]);
-        }
-    }, [config, userId]);
-
-    const fetchClasses = useCallback(async () => {
-        if (!userId) return;
-        try {
-            const { data } = await apiClient.get('/api/incidents/classes', config);
-            const classes = Array.isArray(data) ? data : [];
-            if (classes.length === 0) {
-                setClassList(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']);
-                return;
-            }
-
-            const sortedClasses = classes.sort((a, b) => {
-                const aNum = parseInt(a, 10);
-                const bNum = parseInt(b, 10);
-                if (!Number.isNaN(aNum) && !Number.isNaN(bNum)) return aNum - bNum;
-                return a.localeCompare(b);
-            });
             setClassList(sortedClasses);
-        } catch {
-            setClassList(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']);
-        }
-    }, [config, userId]);
-
-    const fetchSections = useCallback(async () => {
-        if (!userId) return;
-        try {
-            const { data } = await apiClient.get('/api/incidents/sections', config);
-            const sections = Array.isArray(data) ? data : [];
             setSectionList(sections.length > 0 ? sections : ['A', 'B', 'C', 'D', 'E']);
         } catch {
+            setStaffList([]);
+            setCategoryList([]);
+            setClassList(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']);
             setSectionList(['A', 'B', 'C', 'D', 'E']);
         }
     }, [config, userId]);
 
     useEffect(() => {
-        fetchStaff();
-        fetchCategories();
-        fetchClasses();
-        fetchSections();
-    }, [fetchCategories, fetchClasses, fetchSections, fetchStaff]);
+        fetchFilterData();
+    }, [fetchFilterData]);
 
     useEffect(() => {
         fetchIncidents();
