@@ -710,9 +710,9 @@ const IncidentDetail = () => {
 
     const statusStyle = getStatusStyle(incident?.status);
     const heroDescription = useMemo(() => {
-        if (!incident) return 'Review the incident record, evidence, and operational history.';
-        return `${incident.category || 'Uncategorized'} incident recorded for ${studentNames || 'N/A'} on ${formatShortDate(getIncidentTimestamp(incident))}.`;
-    }, [incident, studentNames]);
+        if (!incident) return 'Review incident details and progress.';
+        return 'Review incident details and progress.';
+    }, [incident]);
 
     const showRejectionAlert = Boolean(incident?.rejectionReason && !incident?.closureRequested && incident?.status !== 'Closed');
     const showClosureRequestedAlert = Boolean(incident?.closureRequested && incident?.status !== 'Closed');

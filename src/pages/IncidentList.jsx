@@ -336,7 +336,7 @@ const IncidentList = () => {
                         <DashboardHero
                             eyebrow="Incident Management"
                             title="All Incidents"
-                            description="Search by student name or admission number, apply filters to narrow results, and open any case for full details."
+                            description="View and manage incident records."
                             icon={ShieldCheck}
                             meta={(
                                 <div className="flex flex-wrap items-center gap-2 text-sm">

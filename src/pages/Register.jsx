@@ -101,7 +101,7 @@ const Register = () => {
                         Incident Tracking System
                     </h1>
                     <p className="mt-4 max-w-xl text-sm leading-7 text-slate-300 sm:text-base">
-                        Create one private workspace for your school. Staff and student records stay separated by school.
+                        Create a private school workspace.
                     </p>
                     <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:mt-10 lg:grid-cols-1">
                         <div className="rounded-2xl border border-white/10 bg-white/5 p-5 sm:p-6">
@@ -128,7 +128,7 @@ const Register = () => {
                                 </div>
                             </div>
                             <p className="mt-5 max-w-md text-sm leading-7 text-slate-300">
-                                Create a private school workspace and its Super Admin account.
+                                Create a school workspace.
                             </p>
                         </div>
 

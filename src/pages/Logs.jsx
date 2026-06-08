@@ -326,7 +326,7 @@ const Logs = () => {
                                     <div>
                                         <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-50">School Activity History</h1>
                                         <p className="mt-2 max-w-2xl text-sm text-slate-600 dark:text-slate-400">
-                                            See who changed what and when, with simple search and date filters suited for school oversight.
+                                            Review school activity logs.
                                         </p>
                                     </div>
                                 </div>

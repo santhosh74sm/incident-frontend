@@ -1,8 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
-import { useNavigate } from 'react-router-dom';
 import {
-    ArrowLeft,
     CheckCircle2,
     CloudUpload,
     Download,
@@ -151,7 +149,6 @@ const CheckItem = ({ children }) => (
 
 /* ─── Main component ──────────────────────────────────────────────── */
 const StudentUpload = () => {
-    const navigate     = useNavigate();
     const fileInputRef = useRef(null);
     const mountedRef   = useRef(true);
     const { addToast } = useToast();
@@ -324,16 +321,6 @@ const StudentUpload = () => {
             <main className="overflow-x-hidden px-3 py-4 sm:p-4 lg:p-6">
                 <div className="mx-auto w-full max-w-7xl min-w-0 space-y-6">
 
-                    {/* Back button */}
-                    <button
-                        type="button"
-                        onClick={() => navigate('/user-management')}
-                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-                    >
-                        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-                        Back to Management
-                    </button>
-
                     {/* ── Hero header ─────────────────────────────────── */}
                     <section
                         aria-label="Student Upload"
@@ -350,8 +337,7 @@ const StudentUpload = () => {
                                         Upload Student Records
                                     </h1>
                                     <p className="mt-2.5 max-w-xl text-sm leading-relaxed text-indigo-100/85">
-                                        Add or update student master data by uploading a spreadsheet.
-                                        Preview your file before saving — nothing changes until you confirm.
+                                        Upload and manage student records.
                                     </p>
                                 </div>
                                 <div className="grid w-full grid-cols-1 gap-3 sm:w-auto sm:grid-cols-3">

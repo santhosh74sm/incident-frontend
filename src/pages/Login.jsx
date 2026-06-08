@@ -80,7 +80,7 @@ const Login = () => {
                         Incident Tracking System
                     </h1>
                     <p className="mt-4 max-w-xl text-sm leading-7 text-slate-300 sm:text-base">
-                        Simple tools for schools to record incidents, assign follow-up, and keep clear records.
+                        Sign in to manage school incidents.
                     </p>
                     <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:mt-10 lg:grid-cols-1">
                         <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
@@ -107,7 +107,7 @@ const Login = () => {
                                 </div>
                             </div>
                             <p className="mt-5 max-w-md text-sm leading-7 text-slate-300">
-                                Use the email and password given by your school.
+                                Use your school account.
                             </p>
                         </div>
 

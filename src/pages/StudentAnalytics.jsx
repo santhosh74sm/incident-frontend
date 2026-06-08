@@ -573,7 +573,7 @@ const StudentAnalytics = () => {
                                 <DashboardHero
                                     eyebrow="Student summaries"
                                     title="Student directory"
-                                    description="Look up any student by name or admission number, filter by class and section, then open a concise history of incidents and letters."
+                                    description="View student records and incident history."
                                     icon={Users}
                                     meta={
                                         <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
@@ -690,7 +690,7 @@ const StudentAnalytics = () => {
                                 <DashboardHero
                                     eyebrow="Student summary"
                                     title={selectedStudent?.name || 'Student summary'}
-                                    description={`Admission No ${selectedStudent?.admissionNo || 'N/A'} · Class ${selectedStudent?.className || 'N/A'} · Section ${selectedStudent?.section || 'N/A'}`}
+                                    description="View student incidents and letters."
                                     icon={TrendingUp}
                                     actions={
                                         <button

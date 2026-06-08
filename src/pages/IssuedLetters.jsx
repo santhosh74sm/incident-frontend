@@ -510,7 +510,7 @@ const IssuedLetters = () => {
                                         Generated Letters
                                     </h1>
                                     <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-300 sm:text-base">
-                                        Search by student name or admission number, filter by class, section, or category, and download or delete letter records.
+                                        View and manage issued letters.
                                     </p>
                                 </div>
 
@@ -524,7 +524,7 @@ const IssuedLetters = () => {
                                     className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
                                     {refreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                                    Refresh data
+                                    Refresh
                                 </button>
                             </div>
                         </section>

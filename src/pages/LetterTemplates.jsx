@@ -1177,7 +1177,7 @@ const LetterTemplates = () => {
                                         Letter Templates
                                     </h1>
                                     <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-300 sm:text-base">
-                                        Manage English and Tamil Word files for each incident category. Preview the document, upload a new version, and download at any time.
+                                        Manage official letter template files.
                                     </p>
                                 </div>
 

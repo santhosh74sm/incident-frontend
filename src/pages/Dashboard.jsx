@@ -364,14 +364,14 @@ const DashboardContent = memo(() => {
                 <DashboardHero
                     eyebrow="School overview"
                     title="Dashboard"
-                    description="See open incidents, who is handling them, and the current case workload in one place."
+                    description="Monitor incidents and school activity."
                     icon={ShieldCheck}
                     actions={(
                         <>
                             {canReportIncident && (
                                 <Link
                                     to="/create-incident"
-                                    className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/15"
+                                    className="btn-primary"
                                 >
                                     <FileText size={15} aria-hidden="true" />
                                     New Incident
@@ -379,7 +379,7 @@ const DashboardContent = memo(() => {
                             )}
                             <Link
                                 to="/analytics"
-                                className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-blue-50"
+                                className="btn-secondary"
                             >
                                 <TrendingUp size={15} aria-hidden="true" />
                                 View Reports

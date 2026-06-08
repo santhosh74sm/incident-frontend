@@ -1562,7 +1562,7 @@ const CreateIncident = () => {
                                         </div>
                                         <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">Create Incident</h1>
                                         <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-indigo-100/80">
-                                            Select the student, enter incident details, attach evidence, and submit. The form guides you through each step.
+                                            Create and submit incident reports.
                                         </p>
                                     </div>
 

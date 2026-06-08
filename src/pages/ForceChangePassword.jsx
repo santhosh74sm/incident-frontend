@@ -205,7 +205,7 @@ const ForceChangePassword = () => {
                         Update Your Password
                     </h1>
                     <p className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-                        For your security, please set a new password before continuing.
+                        Set a secure new password.
                     </p>
                 </div>
 

@@ -661,7 +661,7 @@ const UserManagement = () => {
                         <DashboardHero
                             eyebrow="Administration"
                             title="User Management"
-                            description="Add staff accounts, maintain the student registry, and manage roles and permissions across the school."
+                            description="Manage users, roles, and student records."
                             icon={Users}
                             actions={(
                                 <>
@@ -805,16 +805,6 @@ const UserManagement = () => {
                                     title="Staff Filters"
                                     hasActiveFilters={hasActiveStaffFilters}
                                     onReset={clearStaffFilters}
-                                    actions={(
-                                        <button
-                                            type="button"
-                                            onClick={() => fetchData(false)}
-                                            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition-all duration-300 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800"
-                                        >
-                                            <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
-                                            Refresh
-                                        </button>
-                                    )}
                                 >
                                     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                                         <UnifiedSearchInput
@@ -872,28 +862,16 @@ const UserManagement = () => {
                                     title="Student Filters"
                                     hasActiveFilters={hasActiveStudentFilters}
                                     onReset={clearStudentFilters}
-                                    actions={(
-                                        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
-                                            {currentRole === 'Super Admin' ? (
-                                                <BulkDeleteControls
-                                                    moduleName="students"
-                                                    filteredIds={filteredStudents.map((student) => student._id).filter(Boolean)}
-                                                    allCount={studentRegistry.length}
-                                                    source={{ page: 'UserManagement', tab: 'students', filteredCount: filteredStudents.length }}
-                                                    addToast={addToast}
-                                                    onComplete={() => fetchData(false)}
-                                                />
-                                            ) : null}
-                                            <button
-                                                type="button"
-                                                onClick={() => fetchData(false)}
-                                                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition-all duration-300 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800 sm:w-auto"
-                                            >
-                                                <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
-                                                Refresh
-                                            </button>
-                                        </div>
-                                    )}
+                                    actions={currentRole === 'Super Admin' ? (
+                                        <BulkDeleteControls
+                                            moduleName="students"
+                                            filteredIds={filteredStudents.map((student) => student._id).filter(Boolean)}
+                                            allCount={studentRegistry.length}
+                                            source={{ page: 'UserManagement', tab: 'students', filteredCount: filteredStudents.length }}
+                                            addToast={addToast}
+                                            onComplete={() => fetchData(false)}
+                                        />
+                                    ) : null}
                                 >
                                     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                                         <UnifiedSearchInput
