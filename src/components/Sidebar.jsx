@@ -3,7 +3,6 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
     AlertCircle,
     BarChart3,
-    ChevronDown,
     ChevronLeft,
     ChevronRight,
     ClipboardList,
@@ -123,7 +122,6 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
 
     const [isMobileOpen, setIsMobileOpen] = useState(false);
     const [isDesktopCollapsed, setIsDesktopCollapsed] = useState(false);
-    const [openReports, setOpenReports] = useState(false);
 
     // ── Menu definitions ───────────────────────────────────────────────────
     const mainMenuItems = useMemo(
@@ -194,8 +192,8 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
 
     const reportsItems = useMemo(
         () => [
-            { title: 'School Analytics', icon: BarChart3, path: '/analytics', nested: true },
-            { title: 'Student Summaries', icon: ScrollText, path: '/student-analytics', nested: true },
+            { title: 'School Analytics', icon: BarChart3, path: '/analytics' },
+            { title: 'Student Summaries', icon: ScrollText, path: '/student-analytics' },
         ],
         []
     );
@@ -213,11 +211,6 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
     );
 
     // ── Derived ────────────────────────────────────────────────────────────
-    const isAnalyticsActive = useMemo(
-        () => location.pathname.includes('analytics'),
-        [location.pathname]
-    );
-
     const matchesPath = useCallback(
         (path) => {
             if (path === '/incidents') {
@@ -261,9 +254,8 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
     }, [isDesktopCollapsed, onDesktopCollapsedChange]);
 
     useEffect(() => {
-        if (isAnalyticsActive) setOpenReports(true);
         setIsMobileOpen(false);
-    }, [isAnalyticsActive, location.pathname]);
+    }, [location.pathname]);
 
     // Restore scroll positions on navigation
     useLayoutEffect(() => {
@@ -394,79 +386,8 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
 
                         {/* Incidents */}
                         {renderGroup(visibleMain, 'Incidents')}
-
-                        {/* Reports & Analytics — accordion */}
-                        <section aria-label="Reports">
-                            {!collapsed && <SectionLabel label="Reports" />}
-                            <div className="space-y-0.5">
-                                <button
-                                    type="button"
-                                    title={collapsed ? 'Reports' : undefined}
-                                    aria-expanded={openReports}
-                                    onClick={() => setOpenReports((prev) => !prev)}
-                                    className={`${NAV_ITEM_BASE} ${
-                                        collapsed
-                                            ? 'min-h-[42px] justify-center px-1 py-1'
-                                            : 'min-h-[44px] gap-3 px-2.5 py-2'
-                                    } ${
-                                        isAnalyticsActive
-                                            ? 'border-indigo-400/25 bg-indigo-500/12 text-white'
-                                            : 'border-transparent text-slate-300 hover:border-slate-700/80 hover:bg-slate-800/60 hover:text-white'
-                                    }`}
-                                >
-                                    <span
-                                        aria-hidden="true"
-                                        className={`absolute bottom-2 left-0 top-2 w-[3px] rounded-r-full transition-all duration-200 ${
-                                            isAnalyticsActive
-                                                ? 'bg-indigo-400 shadow-[0_0_18px_rgba(129,140,248,0.65)]'
-                                                : 'bg-transparent group-hover:bg-slate-600/60'
-                                        }`}
-                                    />
-                                    <span
-                                        className={`${NAV_ICON_BASE} ${
-                                            isAnalyticsActive
-                                                ? 'border-indigo-300/25 bg-indigo-500/18 text-white'
-                                                : 'border-slate-700/70 bg-slate-900/60 text-slate-400 group-hover:border-slate-600/80 group-hover:bg-slate-800/70 group-hover:text-slate-200'
-                                        }`}
-                                    >
-                                        <BarChart3 size={17} strokeWidth={2.2} aria-hidden="true" />
-                                    </span>
-                                    {!collapsed && (
-                                        <>
-                                            <span className="min-w-0 flex-1 truncate text-[13px] font-semibold leading-tight">
-                                                Reports & Analytics
-                                            </span>
-                                            <ChevronDown
-                                                size={14}
-                                                aria-hidden="true"
-                                                className={`shrink-0 text-slate-500 transition-transform duration-200 ${
-                                                    openReports ? 'rotate-180 text-slate-300' : ''
-                                                }`}
-                                            />
-                                        </>
-                                    )}
-                                </button>
-
-                                {openReports && (
-                                    <div
-                                        className={`${
-                                            collapsed ? 'mt-1 space-y-0.5' : 'ml-2 mt-0.5 space-y-0.5 border-l border-slate-700/50 pl-2'
-                                        }`}
-                                    >
-                                        {reportsItems.map((item) => (
-                                            <NavItem
-                                                key={item.path}
-                                                item={item}
-                                                collapsed={collapsed}
-                                                mobile={mobile}
-                                                onNavigate={closeMobile}
-                                                isActive={matchesPath(item.path)}
-                                            />
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </section>
+                        {/* Reports */}
+                        {renderGroup(reportsItems, 'Reports')}
 
                         {/* Manage (admin only) */}
                         {visibleManage.length > 0 && renderGroup(visibleManage, 'Manage')}

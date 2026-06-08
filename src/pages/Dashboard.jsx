@@ -16,7 +16,6 @@ import {
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../config/apiClient';
 import {
-    ActivityFeed,
     AnalyticsDataTable,
     DashboardHero,
     DashboardPageSkeleton,
@@ -26,9 +25,7 @@ import {
 import {
     formatShortDateTime,
     getIncidentTimestamp,
-    buildDashboardActivityFeed,
     resolveHandlerLabel,
-    formatActivityRecordLabel,
 } from '../utils/analytics';
 
 // ─── Error Boundary ───────────────────────────────────────────────────────────
@@ -203,16 +200,9 @@ const dashboardDataRequests = new Map();
 const fetchDashboardData = (user) => {
     const requestKey = `${user?._id || user?.id || 'unknown'}:${user?.role || 'unknown'}`;
     if (!dashboardDataRequests.has(requestKey)) {
-        const requests = [
-            apiClient.get('/api/incidents', { params: { page: 1, limit: 20 } }),
-            ['Super Admin', 'Admin'].includes(user.role)
-                ? apiClient.get('/api/logs', { params: { page: 1, limit: 6 } })
-                : Promise.resolve({ data: [] }),
-        ];
-
         dashboardDataRequests.set(
             requestKey,
-            Promise.all(requests).finally(() => {
+            apiClient.get('/api/incidents', { params: { page: 1, limit: 20 } }).finally(() => {
                 dashboardDataRequests.delete(requestKey);
             })
         );
@@ -227,7 +217,6 @@ const DashboardContent = memo(() => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const [incidents, setIncidents] = useState([]);
-    const [recentLogs, setRecentLogs] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const userId = user?._id || user?.id;
@@ -289,7 +278,7 @@ const DashboardContent = memo(() => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const [incidentRes, logsRes] = await fetchDashboardData(requestUser);
+                const incidentRes = await fetchDashboardData(requestUser);
                 if (!mounted) return;
 
                 const incidentList = Array.isArray(incidentRes.data)
@@ -297,19 +286,11 @@ const DashboardContent = memo(() => {
                     : Array.isArray(incidentRes.data?.data)
                         ? incidentRes.data.data
                         : [];
-                const logsData = logsRes.data;
-                const logs = Array.isArray(logsData)
-                    ? logsData
-                    : Array.isArray(logsData?.logs)
-                        ? logsData.logs
-                        : [];
 
                 setIncidents(incidentList);
-                setRecentLogs(logs);
             } catch {
                 if (!mounted) return;
                 setIncidents([]);
-                setRecentLogs([]);
             } finally {
                 if (mounted) setLoading(false);
             }
@@ -363,30 +344,6 @@ const DashboardContent = memo(() => {
         ];
     }, [summary]);
 
-    const activityItems = useMemo(() => {
-        if (recentLogs.length > 0) {
-            return recentLogs.map((log) => ({
-                id:          log._id,
-                title:       log.actionName || 'System action',
-                description: `${log.performedByName || log.performedBy || 'System'} · ${formatActivityRecordLabel(log.entityType)}`,
-                timestamp:   formatShortDateTime(log.createdAt),
-                icon:        Activity,
-                tone:
-                    log?.actionName?.toLowerCase().includes('delete')  ? 'red'
-                    : log?.actionName?.toLowerCase().includes('close') ? 'emerald'
-                    : log?.actionName?.toLowerCase().includes('update') ? 'blue'
-                    : 'amber',
-            }));
-        }
-        return buildDashboardActivityFeed(incidents, {
-            icons: {
-                closed:     CheckCircle,
-                inProgress: TrendingUp,
-                open:       AlertCircle,
-            },
-        });
-    }, [incidents, recentLogs]);
-
     // ── Loading state ─────────────────────────────────────────────────────
     if (loading) {
         return (
@@ -407,7 +364,7 @@ const DashboardContent = memo(() => {
                 <DashboardHero
                     eyebrow="School overview"
                     title="Dashboard"
-                    description="See open incidents, who is handling them, and what changed recently — all in one place."
+                    description="See open incidents, who is handling them, and the current case workload in one place."
                     icon={ShieldCheck}
                     actions={(
                         <>
@@ -520,18 +477,6 @@ const DashboardContent = memo(() => {
                         <LifecycleOverviewPanel rows={lifecycleRows} />
                     </div>
                 </section>
-
-                {/* ── Activity feed ── */}
-                <DashboardPanel
-                    title="Recent Activity"
-                    description="Updates from incidents and administrative actions."
-                    icon={Activity}
-                >
-                    <ActivityFeed
-                        items={activityItems}
-                        emptyMessage="No recent activity is available right now."
-                    />
-                </DashboardPanel>
 
             </div>
         </div>

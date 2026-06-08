@@ -11,11 +11,11 @@ const UploadPreviewTable = ({ preview }) => {
     return (
         <section
             aria-label="Spreadsheet preview"
-            className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/50"
+            className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/50"
         >
             {/* Header */}
             <div className="flex flex-col gap-3 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50 px-5 py-4 dark:border-slate-800 dark:from-slate-900 dark:to-slate-900/50 sm:flex-row sm:items-center sm:justify-between">
-                <div>
+                <div className="min-w-0">
                     <h3 className="flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-slate-100">
                         <Eye className="h-4 w-4 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
                         Spreadsheet Preview
@@ -27,7 +27,7 @@ const UploadPreviewTable = ({ preview }) => {
                 </div>
                 <div
                     aria-label={`${preview.totalRows ?? 0} rows detected`}
-                    className="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-200"
+                    className="inline-flex shrink-0 items-center gap-2 rounded-full bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-200"
                 >
                     <Table2 className="h-3.5 w-3.5" aria-hidden="true" />
                     {preview.totalRows ?? 0} {preview.totalRows === 1 ? 'row' : 'rows'} detected
@@ -55,7 +55,7 @@ const UploadPreviewTable = ({ preview }) => {
                                     {row.__rowNumber}
                                 </td>
                                 {columns.map((col) => (
-                                    <td key={`${row.__rowNumber}-${col}`} className="px-3 py-2.5">
+                                    <td key={`${row.__rowNumber}-${col}`} className="px-3 py-2.5 break-words">
                                         {String(row[col] ?? '–') || '–'}
                                     </td>
                                 ))}
