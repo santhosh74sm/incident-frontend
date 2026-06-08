@@ -3,6 +3,7 @@ import apiClient from '../config/apiClient';
 import dayjs from 'dayjs';
 import { formatActivityRecordLabel } from '../utils/analytics';
 import { UnifiedDateInput, UnifiedFilterBar, UnifiedSearchInput } from '../components/UnifiedFilters';
+import { DashboardHero } from '../components/analytics/DashboardPrimitives';
 import { useAuth } from '../context/AuthContext';
 import {
     AlertTriangle,
@@ -33,6 +34,7 @@ const EMPTY_FILTERS = {
 };
 
 const isPlainObject = (value) => Object.prototype.toString.call(value) === '[object Object]';
+const isObjectIdLike = (value) => typeof value === 'string' && /^[a-f\d]{24}$/i.test(value.trim());
 
 const formatLabel = (value = '') =>
     String(value)
@@ -49,6 +51,7 @@ const formatPrimitiveValue = (value) => {
         return value.length === 0 ? 'Not recorded' : value.map((item) => formatPrimitiveValue(item)).join(', ');
     }
     if (typeof value === 'object') return null;
+    if (isObjectIdLike(String(value))) return 'Internal reference';
     return String(value);
 };
 
@@ -101,16 +104,19 @@ const getActionPresentation = (actionName = '') => {
 
 const getTargetEntity = (log) => {
     const primaryLabel =
+        log?.targetLabel ||
         log?.targetEntityLabel ||
+        log?.metadata?.targetLabel ||
         log?.metadata?.Name ||
         log?.metadata?.name ||
         log?.metadata?.Title ||
         log?.metadata?.title ||
+        log?.metadata?.label ||
+        log?.metadata?.displayName ||
         log?.metadata?.studentName ||
         log?.metadata?.templateName ||
         log?.metadata?.letterNumber ||
-        log?.entityId ||
-        'System Record';
+        'Record unavailable';
 
     const admissionNumber =
         log?.targetAdmissionNumber ||
@@ -119,14 +125,14 @@ const getTargetEntity = (log) => {
         null;
 
     return {
-        label: primaryLabel,
+        label: isObjectIdLike(String(primaryLabel)) ? 'Record unavailable' : primaryLabel,
         admissionNumber,
     };
 };
 
 const getSummaryDetails = (log) => {
     const metadata = isPlainObject(log?.metadata) ? log.metadata : {};
-    const ignoredKeys = new Set(['before', 'after']);
+    const ignoredKeys = new Set(['before', 'after', 'schoolId', 'routePath', 'incidentId', 'targetLabel']);
 
     return Object.entries(metadata).filter(([key]) => !ignoredKeys.has(key));
 };
@@ -211,7 +217,7 @@ const Logs = () => {
         hasNextPage: false,
         hasPrevPage: false,
     });
-    const [entityTypes, setEntityTypes] = useState([]);
+    const [entityTypeOptions, setEntityTypeOptions] = useState([]);
     const [expandedRowId, setExpandedRowId] = useState(null);
 
     useEffect(() => {
@@ -253,7 +259,15 @@ const Logs = () => {
                 hasNextPage: false,
                 hasPrevPage: false,
             });
-            setEntityTypes(Array.isArray(data?.filters?.entityTypes) ? data.filters.entityTypes : []);
+            const rawEntityTypes = Array.isArray(data?.filters?.entityTypes) ? data.filters.entityTypes : [];
+            setEntityTypeOptions(
+                Array.isArray(data?.filters?.entityTypeOptions)
+                    ? data.filters.entityTypeOptions
+                    : rawEntityTypes.map((entityType) => ({
+                        value: entityType,
+                        label: formatActivityRecordLabel(entityType),
+                    }))
+            );
         } catch {
             setLogs([]);
             setPagination((current) => ({
@@ -307,7 +321,9 @@ const Logs = () => {
         return logs.filter((log) => dayjs(log.createdAt).isAfter(today)).length;
     }, [logs]);
 
-    const entitySummary = filters.entityType ? formatActivityRecordLabel(filters.entityType) : 'All areas';
+    const entitySummary = filters.entityType
+        ? entityTypeOptions.find((option) => option.value === filters.entityType)?.label || formatActivityRecordLabel(filters.entityType)
+        : 'All areas';
     const showingFrom = pagination.total === 0 ? 0 : (pagination.page - 1) * pagination.limit + 1;
     const showingTo = Math.min(pagination.page * pagination.limit, pagination.total);
 
@@ -316,25 +332,17 @@ const Logs = () => {
             <div className="flex min-w-0 flex-1 flex-col">
                 <main className="flex-1 overflow-y-auto p-4 lg:p-6">
                     <div className="mx-auto max-w-[1600px] space-y-6">
-                        <section className="overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-cyan-50 shadow-sm dark:border-slate-800 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
-                            <div className="flex flex-col gap-6 p-6 lg:flex-row lg:items-center lg:justify-between lg:p-8">
-                                <div className="space-y-3">
-                                    <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-700 dark:border-cyan-500/30 dark:bg-cyan-950/30 dark:text-cyan-200">
-                                        <ShieldCheck size={14} aria-hidden="true" />
-                                        Activity history
-                                    </div>
-                                    <div>
-                                        <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-50">School Activity History</h1>
-                                        <p className="mt-2 max-w-2xl text-sm text-slate-600 dark:text-slate-400">
-                                            Review school activity logs.
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="flex flex-wrap gap-3">
+                        <DashboardHero
+                            eyebrow="Activity history"
+                            title="School Activity History"
+                            description="Review school activity logs."
+                            icon={ShieldCheck}
+                            actions={(
+                                <>
                                     <button
                                         type="button"
                                         onClick={fetchLogs}
-                                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                                        className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 transition-all duration-300 hover:bg-blue-50 dark:bg-slate-100 dark:text-slate-950"
                                     >
                                         <RefreshCw size={16} aria-hidden="true" />
                                         Refresh
@@ -342,14 +350,14 @@ const Logs = () => {
                                     <button
                                         type="button"
                                         onClick={handleClearAll}
-                                        className="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700 shadow-sm transition hover:bg-rose-100 dark:border-rose-500/30 dark:bg-rose-950/30 dark:text-rose-200 dark:hover:bg-rose-950/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
+                                        className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/15"
                                     >
                                         <Trash2 size={16} aria-hidden="true" />
                                         Clear History
                                     </button>
-                                </div>
-                            </div>
-                        </section>
+                                </>
+                            )}
+                        />
 
                         <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
                             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -401,9 +409,9 @@ const Logs = () => {
                                         className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 transition-all outline-none hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-600 focus-visible:outline-none"
                                     >
                                         <option value="">All record types</option>
-                                        {entityTypes.map((entityType) => (
-                                            <option key={entityType} value={entityType}>
-                                                {formatActivityRecordLabel(entityType)}
+                                        {entityTypeOptions.map((option) => (
+                                            <option key={option.value} value={option.value}>
+                                                {option.label}
                                             </option>
                                         ))}
                                     </select>
@@ -539,7 +547,7 @@ const Logs = () => {
                                                             <td className="px-5 py-4 align-top">
                                                                 <div className="space-y-2">
                                                                     <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                                                                        {formatActivityRecordLabel(log.entityType)}
+                                                                        {log.displayEntityType || formatActivityRecordLabel(log.entityType)}
                                                                     </span>
                                                                     <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{target.label}</p>
                                                                     {target.admissionNumber && (
@@ -590,8 +598,8 @@ const Logs = () => {
                                                                             <dl className="space-y-3">
                                                                                 <MetadataField label="Action" value={log.actionName} />
                                                                                 <MetadataField label="Performed By" value={log.performedByName || log.performedBy} />
-                                                                                <MetadataField label="Record Information" value={formatActivityRecordLabel(log.entityType)} />
-                                                                                <MetadataField label="Record Number" value={log.entityId} />
+                                                                                <MetadataField label="Record Information" value={log.displayEntityType || formatActivityRecordLabel(log.entityType)} />
+                                                                                <MetadataField label="Related Record" value={target.label} />
                                                                                 <MetadataField label="Recorded At" value={dayjs(log.createdAt).format('DD MMM YYYY, hh:mm:ss A')} />
                                                                             </dl>
                                                                         </div>

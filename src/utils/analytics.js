@@ -4,20 +4,28 @@ import { getRecordId } from './ids';
 /** Plain-language label for activity record types shown to staff (not internal API names). */
 export const formatActivityRecordLabel = (type) => {
     const raw = String(type || '').trim();
-    if (!raw) return 'School record';
+    if (!raw) return 'System Activity';
     const key = raw.toLowerCase().replace(/\s+/g, ' ');
     const compact = key.replace(/[_-]/g, '');
     const map = {
         incident: 'Incident',
-        letter: 'Letter',
-        template: 'Letter file',
-        lettertemplate: 'Letter file',
+        letter: 'Issued Letter',
+        issuedletter: 'Issued Letter',
+        template: 'Letter Template',
+        lettertemplate: 'Letter Template',
+        category: 'Incident Category',
+        incidentcategory: 'Incident Category',
+        location: 'Location',
         student: 'Student',
-        user: 'Staff member',
-        bulkupload: 'Bulk upload',
-        log: 'Activity',
+        user: 'User',
+        staff: 'Staff',
+        system: 'System Activity',
+        analytics: 'System Activity',
+        bulkupload: 'System Activity',
+        evidencetype: 'System Activity',
+        log: 'System Activity',
     };
-    return map[key] || map[compact] || 'School record';
+    return map[key] || map[compact] || raw;
 };
 
 export const STATUS_OPTIONS = ['Open', 'In Progress', 'Closed'];

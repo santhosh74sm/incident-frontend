@@ -182,9 +182,9 @@ const NotificationSection = ({ title, count, items, onItemClick }) => {
     return (
         <section aria-label={`${title} notifications`}>
             {/* Sticky section header */}
-            <div className="sticky top-0 z-[1] border-y border-slate-100 bg-white/95 px-5 py-2.5 backdrop-blur dark:border-slate-800 dark:bg-slate-900/95">
+            <div className="sticky top-0 z-[1] border-y border-slate-100 bg-white/95 px-3 py-2.5 backdrop-blur dark:border-slate-800 dark:bg-slate-900/95 sm:px-5">
                 <div className="flex items-center justify-between gap-3">
-                    <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500">
+                    <p className="min-w-0 truncate text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500 sm:tracking-[0.22em]">
                         {title}
                     </p>
                     <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
@@ -219,11 +219,11 @@ const NotificationSection = ({ title, count, items, onItemClick }) => {
                                 type="button"
                                 onClick={() => onItemClick(notification)}
                                 aria-label={`${formatActionName(notification?.actionName)}${studentName ? ` — ${studentName}` : ''}${isUnread ? ' (unread)' : ''}`}
-                                className="relative z-[2] flex min-h-[56px] w-full touch-manipulation items-start gap-3 px-5 py-4 text-left transition-colors duration-200 hover:bg-slate-50/90 active:bg-slate-100/90 dark:hover:bg-slate-800/80 dark:active:bg-slate-800"
+                                className="relative z-[2] flex min-h-[56px] w-full min-w-0 touch-manipulation items-start gap-2 px-3 py-3 text-left transition-colors duration-200 hover:bg-slate-50/90 active:bg-slate-100/90 dark:hover:bg-slate-800/80 dark:active:bg-slate-800 sm:gap-3 sm:px-5 sm:py-4"
                             >
                                 {/* Icon badge */}
                                 <span
-                                    className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border ${presentation.toneClassName}`}
+                                    className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border sm:h-10 sm:w-10 ${presentation.toneClassName}`}
                                     aria-hidden
                                 >
                                     <Icon size={16} />
@@ -231,8 +231,8 @@ const NotificationSection = ({ title, count, items, onItemClick }) => {
 
                                 {/* Text content */}
                                 <div className="min-w-0 flex-1 overflow-hidden">
-                                    <div className="flex items-start justify-between gap-2">
-                                        <p className="min-w-0 flex-1 break-words text-sm font-semibold leading-snug text-slate-900 dark:text-slate-100">
+                                    <div className="flex min-w-0 items-start justify-between gap-2">
+                                        <p className="min-w-0 flex-1 break-words text-sm font-semibold leading-snug text-slate-900 [overflow-wrap:anywhere] dark:text-slate-100">
                                             {formatActionName(notification?.actionName)}
                                         </p>
                                         {isUnread ? (
@@ -250,42 +250,42 @@ const NotificationSection = ({ title, count, items, onItemClick }) => {
                                     </div>
 
                                     {studentName ? (
-                                        <p className="mt-1 break-words text-sm font-semibold text-slate-800 dark:text-slate-200">
+                                        <p className="mt-1 break-words text-sm font-semibold text-slate-800 [overflow-wrap:anywhere] dark:text-slate-200">
                                             {studentName}
                                         </p>
                                     ) : null}
 
-                                    <p className="mt-0.5 break-words text-sm text-slate-600 dark:text-slate-400">
+                                    <p className="mt-0.5 break-words text-sm text-slate-600 [overflow-wrap:anywhere] dark:text-slate-400">
                                         {notification?.performedByName || 'System'}
                                         {targetLabel ? ` | ${targetLabel}` : ''}
                                     </p>
 
                                     {notification?.message ? (
-                                        <p className="mt-1 line-clamp-3 break-words text-xs leading-5 text-slate-500 dark:text-slate-400">
+                                        <p className="mt-1 line-clamp-3 break-words text-xs leading-5 text-slate-500 [overflow-wrap:anywhere] dark:text-slate-400">
                                             {notification.message}
                                         </p>
                                     ) : null}
 
                                     {/* Meta chips */}
-                                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                                        <span className="rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-[11px] font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+                                    <div className="mt-2 flex min-w-0 flex-wrap items-center gap-1.5">
+                                        <span className="max-w-full rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-[11px] font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
                                             {formatRelativeTime(notification?.createdAt)}
                                         </span>
 
                                         {admissionNumber ? (
-                                            <span className="rounded-full border border-blue-100 bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold text-blue-700 dark:border-blue-500/30 dark:bg-blue-950/40 dark:text-blue-300">
+                                            <span className="max-w-full break-words rounded-full border border-blue-100 bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold text-blue-700 dark:border-blue-500/30 dark:bg-blue-950/40 dark:text-blue-300">
                                                 AdNo: {admissionNumber}
                                             </span>
                                         ) : null}
 
                                         {classSection ? (
-                                            <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                            <span className="max-w-full break-words rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
                                                 {classSection}
                                             </span>
                                         ) : null}
 
                                         {notification?.entityType ? (
-                                            <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                            <span className="max-w-full break-words rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
                                                 {formatActivityRecordLabel(notification.entityType)}
                                             </span>
                                         ) : null}
@@ -354,8 +354,8 @@ const NotificationDropdown = ({ onClose }) => {
 
     // ── Panel header ──────────────────────────────────────────────────────────
     const header = (
-        <div className="shrink-0 border-b border-slate-100 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.10),transparent_70%)] px-4 py-4 dark:border-slate-800 sm:px-5">
-            <div className="flex items-start justify-between gap-3">
+        <div className="shrink-0 border-b border-slate-100 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.10),transparent_70%)] px-3 py-4 dark:border-slate-800 sm:px-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 {/* Title */}
                 <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
@@ -379,7 +379,7 @@ const NotificationDropdown = ({ onClose }) => {
                 </div>
 
                 {/* Action buttons */}
-                <div className="flex shrink-0 items-center gap-2">
+                <div className="grid w-full shrink-0 grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2 sm:flex sm:w-auto">
                     <button
                         type="button"
                         onClick={() => refreshNotifications()}
@@ -395,7 +395,7 @@ const NotificationDropdown = ({ onClose }) => {
                         onClick={markAllAsRead}
                         disabled={unreadCount === 0}
                         aria-disabled={unreadCount === 0}
-                        className="min-h-[44px] touch-manipulation rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-700 transition-colors duration-200 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-blue-500/30 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-950/60"
+                        className="min-h-[44px] min-w-0 touch-manipulation rounded-xl border border-blue-200 bg-blue-50 px-2 py-2 text-xs font-semibold text-blue-700 transition-colors duration-200 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-blue-500/30 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-950/60 sm:px-4"
                     >
                         Mark all read
                     </button>
@@ -421,7 +421,7 @@ const NotificationDropdown = ({ onClose }) => {
         <div
             className={`overflow-y-auto overscroll-contain ${
                 isMobile ? 'min-h-0 flex-1' : 'max-h-[60vh]'
-            }`}
+            } overflow-x-hidden`}
             style={{ scrollbarWidth: 'thin', scrollbarColor: '#cbd5e1 transparent' }}
         >
             {loading && notifications.length === 0 ? (
@@ -479,7 +479,7 @@ const NotificationDropdown = ({ onClose }) => {
                     role="dialog"
                     aria-modal="true"
                     aria-label="Notifications"
-                    className="fixed inset-x-0 bottom-0 z-[90] flex flex-col overflow-hidden rounded-t-[28px] border-t border-slate-200/80 bg-white shadow-[0_-24px_60px_rgba(15,23,42,0.18)] dark:border-slate-800 dark:bg-slate-900"
+                    className="fixed inset-x-0 bottom-0 z-[90] flex max-w-full flex-col overflow-hidden rounded-t-[28px] border-t border-slate-200/80 bg-white shadow-[0_-24px_60px_rgba(15,23,42,0.18)] dark:border-slate-800 dark:bg-slate-900"
                     style={{
                         top: '56px',
                         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
