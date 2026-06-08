@@ -50,13 +50,8 @@ export const ThemeProvider = ({ children }) => {
             }
         };
 
-        if (typeof mediaQuery.addEventListener === 'function') {
-            mediaQuery.addEventListener('change', syncSystemTheme);
-            return () => mediaQuery.removeEventListener('change', syncSystemTheme);
-        }
-
-        mediaQuery.addListener(syncSystemTheme);
-        return () => mediaQuery.removeListener(syncSystemTheme);
+        mediaQuery.addEventListener('change', syncSystemTheme);
+        return () => mediaQuery.removeEventListener('change', syncSystemTheme);
     }, [themeMode]);
 
     const value = useMemo(

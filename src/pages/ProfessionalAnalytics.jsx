@@ -577,18 +577,7 @@ const ProfessionalAnalytics = () => {
                 );
             },
         },
-        {
-            key: 'actions',
-            label: 'Actions',
-            render: (row) => (
-                <button
-                    onClick={() => navigate(`/incidents/${row._id || row.id}`)}
-                    className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
-                >
-                    View
-                </button>
-            ),
-        },
+        { key: 'actions', label: 'Actions', render: (row) => (<button type="button" onClick={() => navigate(`/incidents/${row._id || row.id}`)} className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800">View</button>), },
     ];
 
     const statusTrendColumns = [

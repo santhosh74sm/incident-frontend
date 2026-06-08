@@ -1,4 +1,4 @@
-import React, { useState, useCallback, createContext, useContext } from 'react';
+import React, { useState, useCallback, createContext, useContext, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
@@ -14,7 +14,6 @@ export const useToast = () => {
 };
 
 const TOAST_DURATION_MS = 3000;
-let nextToastId = 0;
 
 const TOAST_STYLES = {
     success: 'bg-emerald-500',
@@ -41,10 +40,11 @@ const Toast = ({ message, type, onClose }) => (
 
 const ToastProvider = ({ children }) => {
     const [toasts, setToasts] = useState([]);
+    const nextToastIdRef = useRef(0);
 
     const addToast = useCallback((message, type = 'success') => {
-        nextToastId += 1;
-        const id = `toast-${Date.now()}-${nextToastId}`;
+        nextToastIdRef.current += 1;
+        const id = `toast-${Date.now()}-${nextToastIdRef.current}`;
         setToasts((current) => [...current, { id, message, type }]);
         setTimeout(() => {
             setToasts((current) => current.filter((t) => t.id !== id));

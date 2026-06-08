@@ -31,19 +31,11 @@ import {
 } from '../components/analytics/DashboardPrimitives';
 import { UnifiedFilterBar, UnifiedMultiSelect, UnifiedSearchInput } from '../components/UnifiedFilters';
 import BulkDeleteControls from '../components/BulkDeleteControls';
+import { normalizeRole } from '../utils/roles';
 
 const getCreateRoleOptions = (role) => (role === 'Super Admin' ? ['Admin', 'Teacher'] : ['Teacher']);
 const CLASS_OPTIONS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
 const PAGE_SIZE = 8;
-const normalizeRole = (role) => {
-    const roleMap = {
-        admin: 'Admin',
-        teacher: 'Teacher',
-        super_admin: 'Super Admin',
-        'super admin': 'Super Admin',
-    };
-    return roleMap[String(role || '').trim().toLowerCase()] || role;
-};
 
 const INPUT_CLASS_NAME =
     'w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 shadow-sm transition-all duration-300 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:shadow-none dark:focus:border-blue-400 dark:focus:ring-blue-400/20';
@@ -97,20 +89,20 @@ const RoleBadge = ({ role }) => {
 
 const ActionButton = ({ icon: Icon, label, tone = 'slate', onClick }) => {
     const toneClassName = {
-        slate: 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white',
-        blue: 'text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:text-blue-300 dark:hover:bg-blue-500/10 dark:hover:text-blue-100',
-        red: 'text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:text-rose-300 dark:hover:bg-rose-500/10 dark:hover:text-rose-100',
+        slate: 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white focus-visible:ring-slate-400',
+        blue: 'text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:text-blue-300 dark:hover:bg-blue-500/10 dark:hover:text-blue-100 focus-visible:ring-blue-400',
+        red: 'text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:text-rose-300 dark:hover:bg-rose-500/10 dark:hover:text-rose-100 focus-visible:ring-rose-400',
     }[tone];
 
     return (
         <button
             type="button"
             onClick={onClick}
-            className={`inline-flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-200 ${toneClassName}`}
+            className={`inline-flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 ${toneClassName}`}
             aria-label={label}
             title={label}
         >
-            <Icon size={16} />
+            <Icon size={16} aria-hidden="true" />
         </button>
     );
 };
@@ -122,7 +114,7 @@ const PaginationFooter = ({ currentPage, totalPages, totalItems, pageSize, onPag
     return (
         <div className="flex flex-col gap-3 border-t border-slate-100 px-5 py-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-slate-500 dark:text-slate-400">
-                Showing <span className="font-semibold text-slate-800 dark:text-slate-100">{start}</span>-
+                Showing <span className="font-semibold text-slate-800 dark:text-slate-100">{start}</span>–
                 <span className="font-semibold text-slate-800 dark:text-slate-100">{end}</span> of{' '}
                 <span className="font-semibold text-slate-800 dark:text-slate-100">{totalItems}</span> records
             </p>
@@ -132,9 +124,9 @@ const PaginationFooter = ({ currentPage, totalPages, totalItems, pageSize, onPag
                     type="button"
                     onClick={() => onPageChange(Math.max(1, currentPage - 1))}
                     disabled={currentPage === 1}
-                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition-all duration-300 hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800"
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition-all duration-300 hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
                 >
-                    <ChevronLeft size={14} />
+                    <ChevronLeft size={14} aria-hidden="true" />
                     Previous
                 </button>
 
@@ -146,10 +138,10 @@ const PaginationFooter = ({ currentPage, totalPages, totalItems, pageSize, onPag
                     type="button"
                     onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
                     disabled={currentPage === totalPages || totalPages === 0}
-                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition-all duration-300 hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800"
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition-all duration-300 hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
                 >
                     Next
-                    <ChevronRight size={14} />
+                    <ChevronRight size={14} aria-hidden="true" />
                 </button>
             </div>
         </div>
@@ -669,7 +661,7 @@ const UserManagement = () => {
                         <DashboardHero
                             eyebrow="Administration"
                             title="User Management"
-                            description="Manage staff access, maintain the student registry, and keep administrative records aligned with the professional dashboard workspace."
+                            description="Add staff accounts, maintain the student registry, and manage roles and permissions across the school."
                             icon={Users}
                             actions={(
                                 <>
@@ -737,7 +729,8 @@ const UserManagement = () => {
                                 <button
                                     type="button"
                                     onClick={() => setActiveTab('staff')}
-                                    className={`rounded-[22px] px-5 py-4 text-left transition-all duration-200 ${
+                                    aria-pressed={activeTab === 'staff'}
+                                    className={`rounded-[22px] px-5 py-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-400 ${
                                         activeTab === 'staff'
                                             ? 'bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-[0_18px_34px_rgba(15,23,42,0.18)]'
                                             : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'
@@ -769,7 +762,8 @@ const UserManagement = () => {
                                 <button
                                     type="button"
                                     onClick={() => setActiveTab('students')}
-                                    className={`rounded-[22px] px-5 py-4 text-left transition-all duration-200 ${
+                                    aria-pressed={activeTab === 'students'}
+                                    className={`rounded-[22px] px-5 py-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400 ${
                                         activeTab === 'students'
                                             ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_18px_34px_rgba(59,130,246,0.22)]'
                                             : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'
@@ -855,7 +849,7 @@ const UserManagement = () => {
                                     <AnalyticsDataTable
                                         columns={staffColumns}
                                         rows={paginatedUsers}
-                                        emptyMessage="No staff records match the current filters."
+                                        emptyMessage="No staff records match your search. Try a different name, email, or role."
                                     />
                                     </div>
                                     <PaginationFooter
@@ -941,7 +935,7 @@ const UserManagement = () => {
                                     <AnalyticsDataTable
                                         columns={studentColumns}
                                         rows={paginatedStudents}
-                                        emptyMessage="No student records match the current filters."
+                                        emptyMessage="No student records match your search. Try a different name, admission number, class, or section."
                                     />
                                     </div>
                                     <PaginationFooter

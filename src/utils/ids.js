@@ -11,3 +11,5 @@ export const sameRecordId = (left, right) => {
     const rightId = getRecordId(right);
     return Boolean(leftId && rightId && leftId === rightId);
 };
+
+export const isValidMongoObjectId = (value) => /^[a-f\d]{24}$/i.test(String(value || ''));

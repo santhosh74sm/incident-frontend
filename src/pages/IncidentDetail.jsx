@@ -47,7 +47,7 @@ import {
     readUserList,
     writeUserList,
 } from '../utils/userStorage';
-import { getRecordId } from '../utils/ids';
+import { getRecordId, isValidMongoObjectId } from '../utils/ids';
 import { downloadBlob, downloadRemoteFile, isNativeDownloadPlatform, openRemoteFile, parseDownloadFilename } from '../utils/downloadFiles';
 import { withFeedback } from '../utils/notifications';
 
@@ -89,13 +89,20 @@ const withEvidenceDisposition = (fileUrl, disposition) => {
     }
 };
 
-const getEvidenceFilename = (value, fallback) => {
-    if (!value) return fallback;
-    const normalized = String(value).replace(/\\/g, '/');
-    return decodeURIComponent(normalized.split('/').pop() || fallback);
-};
+const getEvidenceFilename = (entry, fallback) => {
+    if (entry?.originalName) return entry.originalName;
 
-const isValidMongoObjectId = (value) => /^[a-f\d]{24}$/i.test(String(value || ''));
+    const value = entry?.fileUrl;
+    if (!value) return fallback;
+
+    const normalized = String(value).replace(/\\/g, '/');
+    if (/\/api\/uploads\/s3\//i.test(normalized)) return fallback;
+
+    const rawName = normalized.split('?')[0].split('/').pop() || '';
+    const decodedName = decodeURIComponent(rawName);
+
+    return decodedName && !/^v1\./i.test(decodedName) ? decodedName : fallback;
+};
 
 const formatFileSize = (size = 0) => {
     if (size < 1024) return `${size} B`;
@@ -103,8 +110,9 @@ const formatFileSize = (size = 0) => {
     return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-const EvidenceImagePreview = ({ src, alt }) => {
+const EvidenceFilePreview = ({ src, alt }) => {
     const [objectUrl, setObjectUrl] = useState('');
+    const [previewType, setPreviewType] = useState('');
     const [failed, setFailed] = useState(false);
 
     useEffect(() => {
@@ -114,19 +122,24 @@ const EvidenceImagePreview = ({ src, alt }) => {
         let nextObjectUrl = '';
 
         setObjectUrl('');
+        setPreviewType('');
         setFailed(false);
 
         apiClient.get(src, {
             responseType: 'blob',
-            headers: { Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8' },
+            headers: { Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,application/pdf,*/*;q=0.8' },
         }).then((response) => {
             const contentType = String(response.headers?.['content-type'] || response.data?.type || '').toLowerCase();
-            if (!contentType.startsWith('image/')) {
-                throw new Error('Preview response was not an image.');
+            const canPreviewImage = contentType.startsWith('image/');
+            const canPreviewPdf = contentType.startsWith('application/pdf');
+
+            if (!canPreviewImage && !canPreviewPdf) {
+                throw new Error('Preview response was not an image or PDF.');
             }
 
             nextObjectUrl = window.URL.createObjectURL(response.data);
             if (!cancelled) {
+                setPreviewType(canPreviewPdf ? 'pdf' : 'image');
                 setObjectUrl(nextObjectUrl);
             } else {
                 window.URL.revokeObjectURL(nextObjectUrl);
@@ -157,12 +170,30 @@ const EvidenceImagePreview = ({ src, alt }) => {
         );
     }
 
-    return (
+    if (previewType === 'image') {
+        return (
         <img
             src={objectUrl}
             alt={alt}
             className="mt-4 h-44 w-full rounded-2xl border border-slate-200 object-cover"
         />
+        );
+    }
+
+    if (previewType === 'pdf') {
+        return (
+            <iframe
+                src={objectUrl}
+                title={alt}
+                className="mt-4 h-44 w-full rounded-2xl border border-slate-200 bg-white"
+            />
+        );
+    }
+
+    return (
+        <div className="mt-4 flex h-44 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white text-sm font-medium text-slate-500">
+            Preview unavailable
+        </div>
     );
 };
 
@@ -240,6 +271,7 @@ const IncidentDetail = () => {
     const [showUploadForm, setShowUploadForm] = useState(false);
     const exportInFlightRef = useRef(false);
     const deleteInFlightRef = useRef(false);
+    const markedIncidentReadRef = useRef('');
     const userId = getRecordId(user);
 
     const fetchFieldOptions = useCallback(async () => {
@@ -261,7 +293,7 @@ const IncidentDetail = () => {
 
     useEffect(() => { fetchFieldOptions(); }, [fetchFieldOptions]);
 
-    // Mark read in user-scoped localStorage and mark related notifications as read.
+    // Mark read in user-scoped localStorage.
     useEffect(() => {
         if (!id || !userId) return;
 
@@ -274,7 +306,10 @@ const IncidentDetail = () => {
         if (priorityIds.includes(id)) {
             writeUserList('priorityIncidents', userId, priorityIds.filter((pid) => pid !== id));
         }
+    }, [id, userId]);
 
+    useEffect(() => {
+        if (!id || !userId) return;
         const related = notifications.filter(
             (n) => n?.read !== true && (
                 getRecordId(n?.incident || '') === id ||
@@ -283,14 +318,20 @@ const IncidentDetail = () => {
             )
         );
         related.forEach((n) => markNotificationAsRead(n));
+    }, [id, markNotificationAsRead, notifications, userId]);
 
-        if (userId) {
-            apiClient
-                .put(`/api/notifications/read/${id}`, {})
-                .then(() => refreshNotifications({ silent: true }))
-                .catch(() => {});
-        }
-    }, [id, userId]); // eslint-disable-line react-hooks/exhaustive-deps -- mark notifications read when route id/user changes only
+    useEffect(() => {
+        const markReadKey = `${userId}:${id}`;
+        if (!id || !userId || !isValidMongoObjectId(id) || markedIncidentReadRef.current === markReadKey) return;
+
+        markedIncidentReadRef.current = markReadKey;
+        apiClient
+            .put(`/api/notifications/read/${id}`, {})
+            .then(() => refreshNotifications({ silent: true }))
+            .catch(() => {
+                markedIncidentReadRef.current = '';
+            });
+    }, [id, refreshNotifications, userId]);
 
     const handleSelectOption = (option) => {
         const label = option?.label;
@@ -371,24 +412,6 @@ const IncidentDetail = () => {
         fetchStaff();
         fetchGeneratedLetter();
     }, [fetchGeneratedLetter, fetchIncident, fetchStaff]);
-
-    // Backend mark-by-incidentId on mount
-    useEffect(() => {
-        const markRead = async () => {
-            if (!id || !userId || !isValidMongoObjectId(id)) return;
-            try {
-                await apiClient.put(`/api/notifications/read/${id}`, {});
-                const savedRead = readUserList('readIncidents', userId);
-                if (!savedRead.includes(id)) {
-                    writeUserList('readIncidents', userId, [...savedRead, id]);
-                }
-                const savedPriority = readUserList('priorityIncidents', userId);
-                writeUserList('priorityIncidents', userId, savedPriority.filter((pid) => pid !== id));
-                window.dispatchEvent(new CustomEvent('notifications-updated'));
-            } catch { /* non-fatal */ }
-        };
-        markRead();
-    }, [id, userId]);
 
     const handleSubmitProgress = async () => {
         if (!note.trim()) return;
@@ -650,7 +673,7 @@ const IncidentDetail = () => {
         }
         if (incident.approvedAt) {
             steps.push({
-                label: 'Command Authorized', time: incident.approvedAt,
+                label: 'Case Authorized', time: incident.approvedAt,
                 note: incident.assignedHandler?.name ? `Assigned to ${incident.assignedHandler.name}.` : 'Authorization recorded before assignment.',
                 icon: ShieldCheck, surfaceClass: 'bg-amber-50', iconClass: 'text-amber-600',
             });
@@ -665,7 +688,7 @@ const IncidentDetail = () => {
         }
         if (incident.closedAt && status === 'Closed') {
             steps.push({
-                label: 'Permanently Sealed', time: incident.closedAt,
+                label: 'Case Closed', time: incident.closedAt,
                 note: incident.actionTaken || 'The case was finalized and closed.',
                 icon: CheckCircle, surfaceClass: 'bg-emerald-50', iconClass: 'text-emerald-600',
             });
@@ -699,14 +722,10 @@ const IncidentDetail = () => {
 
     if (loading && !incident) {
         return (
-            <div className="flex min-h-screen bg-slate-100">
-                <div className="flex min-w-0 flex-1 flex-col">
-                    <div className="flex flex-1 items-center justify-center">
-                        <div className="text-center">
-                            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
-                            <p className="font-medium text-slate-500">Loading incident workspace...</p>
-                        </div>
-                    </div>
+            <div className="flex min-h-[60vh] items-center justify-center">
+                <div className="text-center">
+                    <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
+                    <p className="font-medium text-slate-500">Loading case workspace...</p>
                 </div>
             </div>
         );
@@ -714,39 +733,35 @@ const IncidentDetail = () => {
 
     if (error || !incident) {
         return (
-            <div className="flex min-h-screen bg-slate-100">
-                <div className="flex min-w-0 flex-1 flex-col">
-                    <div className="flex flex-1 items-center justify-center p-6">
-                        <div className="max-w-md rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-                            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
-                                <AlertTriangle className="h-8 w-8 text-red-600" />
-                            </div>
-                            <p className="mb-5 font-medium text-red-600">{error || 'Incident not found.'}</p>
-                            <button type="button" onClick={() => navigate('/incidents')}
-                                className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
-                                Back to List
-                            </button>
-                        </div>
+            <div className="flex min-h-[60vh] items-center justify-center p-6">
+                <div className="max-w-md rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
+                        <AlertTriangle className="h-8 w-8 text-red-600" />
                     </div>
+                    <p className="mb-5 font-medium text-red-600">{error || 'Incident not found.'}</p>
+                    <button type="button" onClick={() => navigate('/incidents')}
+                        aria-label="Back to incident list"
+                        className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+                        Back to List
+                    </button>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="flex min-h-screen bg-slate-100 text-slate-800">
-            <div className="flex min-w-0 flex-1 flex-col">
-                <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-                    <div className="mx-auto max-w-[1600px] space-y-6">
+        <div className="w-full min-w-0 p-4 lg:p-6">
+            <div className="mx-auto max-w-[1600px] space-y-6">
                         <DashboardHero
-                            eyebrow="Incident Workspace"
+                            eyebrow="Case Management"
                             title={incident.title || 'Untitled Incident'}
                             description={heroDescription}
                             icon={ShieldCheck}
                             actions={(
                                 <>
                                     <button type="button" onClick={() => navigate('/incidents')}
-                                        className="rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20">
+                                        aria-label="Back to incident list"
+                                        className="rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60">
                                         <ArrowLeft size={16} className="mr-2 inline" />Back to List
                                     </button>
                                     <button type="button" onClick={handleExportReport} disabled={isExporting}
@@ -772,7 +787,7 @@ const IncidentDetail = () => {
                                         {incident.approvalStatus || 'Pending'}
                                     </span>
                                     <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5">
-                                        Manual Date: {formatShortDate(getIncidentTimestamp(incident))}
+                                        Incident Date: {formatShortDate(getIncidentTimestamp(incident))}
                                     </span>
                                     <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5">
                                         Handler: {resolveHandlerLabel(incident)}
@@ -787,7 +802,7 @@ const IncidentDetail = () => {
                         />
 
                         {showRejectionAlert ? (
-                            <div className="rounded-3xl border border-red-200 bg-red-50 p-4 shadow-sm">
+                            <div role="alert" className="rounded-3xl border border-red-200 bg-red-50 p-4 shadow-sm">
                                 <div className="flex items-start gap-3">
                                     <div className="rounded-2xl bg-white p-2.5 text-red-600 shadow-sm"><ShieldAlert size={18} /></div>
                                     <div>
@@ -799,7 +814,7 @@ const IncidentDetail = () => {
                         ) : null}
 
                         {showClosureRequestedAlert ? (
-                            <div className="rounded-3xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
+                            <div role="alert" className="rounded-3xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
                                 <div className="flex items-start gap-3">
                                     <div className="rounded-2xl bg-white p-2.5 text-amber-600 shadow-sm"><Zap size={18} /></div>
                                     <div>
@@ -829,7 +844,7 @@ const IncidentDetail = () => {
                         </div>
 
                         <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
-                            <DashboardPanel className="xl:col-span-4" title="Student Info" description="Student identity and class placement for this incident." icon={Users}>
+                            <DashboardPanel className="xl:col-span-4" title="Student Information" description="Student identity and class placement for this incident." icon={Users}>
                                 <div className="grid gap-4">
                                     <DetailField icon={Users} label="Student Name" value={studentNames}
                                         action={incident.admissionNo ? (
@@ -845,11 +860,11 @@ const IncidentDetail = () => {
                                 </div>
                             </DashboardPanel>
 
-                            <DashboardPanel className="xl:col-span-4" title="Incident Context" description="Where the incident happened and what was reported." icon={MessageSquare}>
+                            <DashboardPanel className="xl:col-span-4" title="Incident Details" description="Where the incident happened and what was reported." icon={MessageSquare}>
                                 <div className="grid gap-4">
                                     <DetailField icon={FileText} label="Category" value={incident.category || 'N/A'} />
                                     <DetailField icon={MapPin} label="Location" value={incident.location || 'N/A'} />
-                                    <DetailField icon={Calendar} label="Timeline Date" value={formatShortDate(getIncidentTimestamp(incident))} helper="Uses the manual incident timeline date." />
+                                    <DetailField icon={Calendar} label="Incident Date" value={formatShortDate(getIncidentTimestamp(incident))} helper="Date the incident occurred." />
                                     <div className={FIELD_CARD_CLASS}>
                                         <div className="flex items-start gap-3">
                                             <div className="rounded-2xl bg-white p-2.5 text-slate-600 shadow-sm shadow-slate-200/70"><MessageSquare size={18} /></div>
@@ -864,7 +879,7 @@ const IncidentDetail = () => {
                                 </div>
                             </DashboardPanel>
 
-                            <DashboardPanel className="xl:col-span-4" title="Administration" description="Who reported the case, who is handling it, and key dates." icon={ShieldCheck}>
+                            <DashboardPanel className="xl:col-span-4" title="Case Administration" description="Who reported the case, who is handling it, and key dates." icon={ShieldCheck}>
                                 <div className="grid gap-4">
                                     <DetailField icon={ShieldCheck} label="Reported By" value={incident.reportedBy?.name || 'N/A'} helper={incident.reportedBy?.role || 'Reporter'} />
                                     <DetailField icon={UserCheck} label="Assigned Handler"
@@ -879,9 +894,9 @@ const IncidentDetail = () => {
 
                         <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
                             <div className="space-y-6 xl:col-span-8">
-                                <DashboardPanel title="Incident timeline" description="Important dates as this case moves from opened through closed." icon={Clock}>
+                                <DashboardPanel title="Case History" description="Important milestones as this case moves from opened through closed." icon={Clock}>
                                     {timelineData.length === 0 ? (
-                                        <EmptyStatePanel title="No timeline entries yet" description="Timeline milestones will appear here as the incident advances." />
+                                        <EmptyStatePanel title="No case history yet" description="Milestones will appear here as the case progresses through each stage." />
                                     ) : (
                                         <div className="space-y-4">
                                             {timelineData.map((step, index) => (
@@ -892,25 +907,25 @@ const IncidentDetail = () => {
                                 </DashboardPanel>
 
                                 <DashboardPanel
-                                    title="Evidence Management"
-                                    description="Uploaded evidence assets and supporting documents for this case."
+                                    title="Evidence Records"
+                                    description="Uploaded files and supporting documents attached to this case."
                                     icon={FileImage}
                                     actions={incident.status !== 'Closed' && ['Super Admin', 'Admin', 'Teacher'].includes(user?.role) ? (
                                         <button type="button" onClick={handleOpenEvidenceForm}
-                                            className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700">
+                                            aria-label="Add evidence to this case"
+                                            className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
                                             <Plus size={16} className="mr-2 inline" />Add Evidence
                                         </button>
                                     ) : null}
                                 >
                                     {evidenceAssets.length === 0 ? (
-                                        <EmptyStatePanel title="No evidence uploaded" description="Add supporting files when the case needs attachments." />
+                                        <EmptyStatePanel title="No evidence on record" description="Upload supporting files — photos, documents, or reports — to support this case." />
                                     ) : (
                                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                             {evidenceAssets.map((entry, index) => {
                                                 const fileUrl = resolveFileUrl(entry?.fileUrl);
                                                 const previewUrl = withEvidenceDisposition(fileUrl, 'inline');
-                                                const fileLabel = getEvidenceFilename(entry?.fileUrl, `evidence_${index + 1}`);
-                                                const isImage = /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(fileLabel);
+                                                const fileLabel = getEvidenceFilename(entry, `${entry?.evidenceType || 'Evidence'} file ${index + 1}`);
                                                 return (
                                                     <div key={`${entry?.fileUrl || entry?.evidenceType || 'ev'}-${index}`}
                                                         className="rounded-3xl border border-slate-200 bg-slate-50/80 p-4 shadow-sm shadow-slate-200/40">
@@ -923,13 +938,13 @@ const IncidentDetail = () => {
                                                                 Asset {index + 1}
                                                             </span>
                                                         </div>
-                                                        {isImage && previewUrl ? (
-                                                            <EvidenceImagePreview
+                                                        {previewUrl ? (
+                                                            <EvidenceFilePreview
                                                                 src={previewUrl}
                                                                 alt={entry?.evidenceType || `Evidence ${index + 1}`}
                                                             />
                                                         ) : (
-                                                            <div className="mt-4 flex h-44 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white text-sm font-medium text-slate-500">
+                                                            <div className="mt-4 flex h-44 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white text-sm font-medium text-slate-500" aria-label="File preview not available">
                                                                 Preview not available
                                                             </div>
                                                         )}
@@ -958,7 +973,7 @@ const IncidentDetail = () => {
                                             <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
                                                 <div>
                                                     <p className="text-sm font-semibold text-slate-900">Upload evidence</p>
-                                                    <p className="mt-1 text-sm text-slate-500">Attach one or more files and classify each one before saving.</p>
+                                                    <p className="mt-1 text-sm text-slate-500">Attach one or more files and choose a category for each before saving.</p>
                                                 </div>
                                                 <div className="flex flex-wrap gap-2">
                                                     <button type="button" onClick={handleAddEvidenceEntry}
@@ -1062,9 +1077,9 @@ const IncidentDetail = () => {
                                     ) : null}
                                 </DashboardPanel>
 
-                                <DashboardPanel title="Progress updates" description="Notes from staff, follow-up steps, and decisions along the way." icon={Activity}>
+                                <DashboardPanel title="Case Updates" description="Notes from staff, follow-up steps, and decisions along the way." icon={Activity}>
                                     {progressLogs.length === 0 ? (
-                                        <EmptyStatePanel title="No progress entries yet" description="Use field operations to start documenting updates and closure activity." />
+                                        <EmptyStatePanel title="No case updates yet" description="Use Field Operations to start documenting progress and actions." />
                                     ) : (
                                         <div className="space-y-4">
                                             {progressLogs.map((log, index) => (
@@ -1088,7 +1103,7 @@ const IncidentDetail = () => {
 
                             <div className="space-y-6 xl:col-span-4">
                                 {(incident.letterGenerated || generatedLetter) && ['Super Admin', 'Admin'].includes(user?.role) ? (
-                                    <DashboardPanel title="Generated Letter" description="Official letter output connected to this incident." icon={FileText}>
+                                    <DashboardPanel title="Generated Letter" description="Official letter linked to this case." icon={FileText}>
                                         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
                                             <p className="text-sm font-semibold text-emerald-800">
                                                 {generatedLetter?.letterNumber || incident.letterGenerated?.letterNumber || 'Letter Generated'}
@@ -1107,7 +1122,7 @@ const IncidentDetail = () => {
                                 ) : null}
 
                                 {showCaseAllocation ? (
-                                    <DashboardPanel title="Case Allocation" description="Authorize the case and assign an investigator." icon={UserPlus}>
+                                    <DashboardPanel title="Assign Investigator" description="Authorize this case and assign a staff member to handle it." icon={UserPlus}>
                                         <div className="space-y-4">
                                             <div>
                                                 <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Select Investigator</label>
@@ -1135,7 +1150,7 @@ const IncidentDetail = () => {
                                 ) : null}
 
                                 {showAdminCommand ? (
-                                    <DashboardPanel title="Admin Actions" description="Finalize the case or return it to the handler with a decision note." icon={Lock}>
+                                    <DashboardPanel title="Administrative Actions" description="Finalize the case or return it to the handler with a decision note." icon={Lock}>
                                         <div className="space-y-4">
                                             <textarea
                                                 className="min-h-[110px] w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
@@ -1161,7 +1176,7 @@ const IncidentDetail = () => {
                                 ) : null}
 
                                 {showFieldUpdates ? (
-                                    <DashboardPanel title="Field Operations" description="Use preset updates, add custom notes, and move the case forward." icon={UserCheck}
+                                    <DashboardPanel title="Field Operations" description="Select preset updates or add custom notes to advance the case." icon={UserCheck}
                                         actions={(
                                             <button type="button" onClick={() => setEditMode((v) => !v)}
                                                 className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${editMode ? 'bg-blue-600 text-white hover:bg-blue-700' : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}>
@@ -1199,7 +1214,7 @@ const IncidentDetail = () => {
                                                     </div>
                                                 ))}
                                                 {(fieldOptions[activeFieldTab] || []).length === 0 ? (
-                                                    <EmptyStatePanel title="No preset updates configured" description="Add preset options to speed up handler or assigner workflows." />
+                                                    <EmptyStatePanel title="No preset updates yet" description="Add preset options to speed up handler and assigner workflows." />
                                                 ) : null}
                                             </div>
                                             {editMode ? (
@@ -1245,8 +1260,6 @@ const IncidentDetail = () => {
                                 ) : null}
                             </div>
                         </div>
-                    </div>
-                </main>
             </div>
         </div>
     );

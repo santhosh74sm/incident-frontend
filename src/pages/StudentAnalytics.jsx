@@ -442,7 +442,7 @@ const StudentAnalytics = () => {
 
     if (loading && !selectedStudent) {
         return (
-            <div className="flex min-h-screen bg-slate-100">
+            <div className="flex min-h-screen bg-slate-100 dark:bg-slate-950">
                 <div className="flex min-w-0 flex-1 flex-col">
                     <main className="flex-1 overflow-y-auto p-4 lg:p-6">
                         <div className="mx-auto max-w-[1600px]">
@@ -499,18 +499,7 @@ const StudentAnalytics = () => {
                 );
             },
         },
-        {
-            key: 'actions',
-            label: 'Actions',
-            render: (row) => (
-                <button
-                    onClick={() => navigate(`/incidents/${row._id || row.id}`)}
-                    className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
-                >
-                    View
-                </button>
-            ),
-        },
+        { key: 'actions', label: 'Actions', render: (row) => (<button type="button" onClick={() => navigate(`/incidents/${row._id || row.id}`)} className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800">View</button>), },
     ];
 
     const letterColumns = [
@@ -575,7 +564,7 @@ const StudentAnalytics = () => {
     }));
 
     return (
-        <div className="flex min-h-screen bg-slate-100">
+        <div className="flex min-h-screen bg-slate-100 dark:bg-slate-950">
             <div className="flex min-w-0 flex-1 flex-col">
                 <main className="flex-1 overflow-y-auto p-4 lg:p-6">
                     <div className="mx-auto max-w-[1600px] space-y-6">
@@ -611,13 +600,13 @@ const StudentAnalytics = () => {
                                         <div>
                                             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Search</label>
                                             <div className="relative">
-                                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
                                                 <input
                                                     type="text"
                                                     value={searchTerm}
                                                     onChange={(event) => setSearchTerm(event.target.value)}
-                                                    placeholder="Name or admission number..."
-                                                    className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                                                    placeholder="Name or admission number…"
+                                                    className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:hover:border-slate-600 focus-visible:outline-none"
                                                 />
                                             </div>
                                         </div>
@@ -626,7 +615,7 @@ const StudentAnalytics = () => {
                                             <select
                                                 value={classFilter}
                                                 onChange={(event) => setClassFilter(event.target.value)}
-                                                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-600 focus-visible:outline-none"
                                             >
                                                 <option value="">All Classes</option>
                                                 {filterOptions.classes.map((option) => (
@@ -641,7 +630,7 @@ const StudentAnalytics = () => {
                                             <select
                                                 value={sectionFilter}
                                                 onChange={(event) => setSectionFilter(event.target.value)}
-                                                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-600 focus-visible:outline-none"
                                             >
                                                 <option value="">All Sections</option>
                                                 {filterOptions.sections.map((option) => (
@@ -671,8 +660,9 @@ const StudentAnalytics = () => {
                                         {filteredStudents.map((student) => (
                                             <button
                                                 key={student._id}
+                                                type="button"
                                                 onClick={() => setSelectedStudent(student)}
-                                                className="rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md"
+                                                className="rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                                             >
                                                 <div className="flex items-center gap-3">
                                                     <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-lg font-bold text-blue-700">
@@ -711,7 +701,7 @@ const StudentAnalytics = () => {
                                             }}
                                             className="rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
                                         >
-                                            <ArrowLeft size={16} className="mr-2 inline" />
+                                            <ArrowLeft size={16} className="mr-2 inline" aria-hidden="true" />
                                             Back to Directory
                                         </button>
                                     }
@@ -800,7 +790,7 @@ const StudentAnalytics = () => {
                                         <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
                                             <DashboardWidgetPanel
                                                 className="xl:col-span-8"
-                                                title="Incident Status Trend"
+                                                title="Incident Status Over Time"
                                                 description="Daily open, in-progress, and closed counts using the incident timeline date."
                                                 icon={TrendingUp}
                                                 chart={<IncidentStatusTrendChart data={studentAnalytics.statusTrendData} idPrefix="student-status" />}
@@ -820,7 +810,7 @@ const StudentAnalytics = () => {
 
                                             <DashboardWidgetPanel
                                                 className="xl:col-span-4"
-                                                title="Daily Creation Trend"
+                                                title="New Incidents by Day"
                                                 description="New incidents per day based on the timeline date."
                                                 icon={AlertTriangle}
                                                 chart={<DailyCreationTrendChart data={studentAnalytics.creationTrendData} />}
@@ -831,8 +821,8 @@ const StudentAnalytics = () => {
 
                                             <DashboardWidgetPanel
                                                 className="xl:col-span-4"
-                                                title="Letter Issuance Status"
-                                                description="Generated versus pending letters for the student."
+                                                title="Letter Status"
+                                                description="Letters generated versus letters still pending for this student."
                                                 icon={Mail}
                                                 chart={
                                                     <ChartSurface height={240}>
@@ -872,8 +862,8 @@ const StudentAnalytics = () => {
 
                                             <DashboardWidgetPanel
                                                 className="xl:col-span-4"
-                                                title="Location Distribution"
-                                                description="How many incidents were recorded at each location."
+                                                title="Where Incidents Occurred"
+                                                description="Number of incidents recorded at each school location."
                                                 icon={ShieldCheck}
                                                 chart={
                                                     <ChartSurface height={280}>
@@ -907,8 +897,8 @@ const StudentAnalytics = () => {
 
                                             <DashboardWidgetPanel
                                                 className="xl:col-span-4"
-                                                title="Category Distribution"
-                                                description="Most frequent incident categories affecting the student."
+                                                title="Incidents by Type"
+                                                description="Most frequent incident categories involving this student."
                                                 icon={FileText}
                                                 chart={
                                                     <ChartSurface height={280}>
@@ -933,8 +923,8 @@ const StudentAnalytics = () => {
 
                                             <DashboardWidgetPanel
                                                 className="xl:col-span-12"
-                                                title="Evidence Distribution"
-                                                description="Evidence capture profile across the student incident set."
+                                                title="Evidence Records"
+                                                description="Types of evidence captured across this student's incident history."
                                                 icon={ShieldCheck}
                                                 chart={
                                                     studentAnalytics.evidenceData.length === 0 ? (
@@ -974,15 +964,16 @@ const StudentAnalytics = () => {
                                         </div>
 
                                         <DashboardPanel
-                                            title="Incident Timeline"
-                                            description="Detailed incident history for the selected student."
+                                            title="Incident History"
+                                            description="Detailed incident records for this student."
                                             icon={FileText}
                                             actions={
                                                 <button
+                                                    type="button"
                                                     onClick={exportIncidentTimelineToExcel}
                                                     className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
                                                 >
-                                                    <Download size={14} />
+                                                    <Download size={14} aria-hidden="true" />
                                                     Export
                                                 </button>
                                             }
@@ -995,7 +986,7 @@ const StudentAnalytics = () => {
                                         </DashboardPanel>
 
                                         <DashboardPanel
-                                            title="Issued Letters History"
+                                            title="Letters Issued"
                                             description={`${filteredStudentLetters.length} letter${filteredStudentLetters.length === 1 ? '' : 's'} in the current view.`}
                                             icon={Mail}
                                         >

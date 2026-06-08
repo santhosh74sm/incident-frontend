@@ -191,7 +191,7 @@ export const DashboardHero = ({ eyebrow, title, description, icon: Icon, actions
             <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start">
                     {Icon ? (
-                        <div className="w-fit rounded-2xl border border-white/20 bg-white/10 p-3 text-white shadow-lg shadow-slate-950/10">
+                        <div className="w-fit shrink-0 rounded-2xl border border-white/20 bg-white/10 p-3 text-white shadow-lg shadow-slate-950/10">
                             <Icon size={22} />
                         </div>
                     ) : null}
@@ -201,16 +201,16 @@ export const DashboardHero = ({ eyebrow, title, description, icon: Icon, actions
                                 {eyebrow}
                             </span>
                         ) : null}
-                        <div>
+                        <div className="min-w-0">
                             <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">{title}</h1>
-                            <p className="mt-2 max-w-2xl text-sm leading-6 text-blue-100/90">{description}</p>
+                            <p className="mt-2 max-w-3xl text-sm leading-6 text-blue-100/90">{description}</p>
                         </div>
                     </div>
                 </div>
-                {actions ? <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">{actions}</div> : null}
+                {actions ? <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:flex-wrap">{actions}</div> : null}
             </div>
         </div>
-        {meta ? <div className="border-t border-slate-200 bg-white px-6 py-4 transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900">{meta}</div> : null}
+        {meta ? <div className="border-t border-slate-200 bg-white px-6 py-4 transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900"><div className="flex flex-wrap items-center gap-2">{meta}</div></div> : null}
     </section>
 );
 

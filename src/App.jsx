@@ -3,10 +3,10 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
 import ToastProvider from './components/ToastProvider';
-import CommandPalette from './components/CommandPalette';
 import DashboardLayout from './components/DashboardLayout';
 import AppErrorBoundary from './components/AppErrorBoundary';
 import { ThemeProvider } from './context/ThemeContext';
+import { normalizeRole } from './utils/roles';
 
 const CHUNK_RELOAD_KEY = 'st-incident-system:chunk-reload';
 
@@ -48,10 +48,21 @@ const StudentAnalytics = lazyWithChunkRetry(() => import('./pages/StudentAnalyti
 const Logs = lazyWithChunkRetry(() => import('./pages/Logs'));
 const LetterTemplates = lazyWithChunkRetry(() => import('./pages/LetterTemplates'));
 const IssuedLetters = lazyWithChunkRetry(() => import('./pages/IssuedLetters'));
+const CommandPalette = lazyWithChunkRetry(() => import('./components/CommandPalette'));
 
 const PageLoader = () => (
   <div className="flex min-h-[50vh] items-center justify-center">
     <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-indigo-600" />
+  </div>
+);
+
+const NotFoundPage = () => (
+  <div className="flex min-h-[70vh] items-center justify-center px-4 text-center">
+    <div>
+      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">404</p>
+      <h1 className="mt-3 text-2xl font-bold text-slate-900 dark:text-slate-100">Page not found</h1>
+      <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">This workspace page does not exist or is no longer available.</p>
+    </div>
   </div>
 );
 
@@ -94,16 +105,6 @@ const PrivateRoute = ({ children }) => {
   return user ? children : <Navigate to="/login" />;
 };
 
-const normalizeRole = (role) => {
-  const roleMap = {
-    admin: 'Admin',
-    teacher: 'Teacher',
-    super_admin: 'Super Admin',
-    'super admin': 'Super Admin',
-  };
-  return roleMap[String(role || '').trim().toLowerCase()] || role;
-};
-
 const AdminRoute = ({ children }) => {
   const { user } = useAuth();
   return user && ['Super Admin', 'Admin'].includes(normalizeRole(user.role)) ? children : <Navigate to="/dashboard" />;
@@ -118,7 +119,9 @@ function App() {
           <ToastProvider>
             <Router>
               <div className="min-h-screen bg-gray-50 font-sans text-slate-900 transition-colors duration-200 dark:bg-slate-950 dark:text-slate-100">
-              <CommandPalette />
+              <Suspense fallback={null}>
+                <CommandPalette />
+              </Suspense>
               <Routes>
                 <Route path="/login" element={loadPage(<Login />)} />
                 <Route path="/register" element={loadPage(<Register />)} />
@@ -190,7 +193,7 @@ function App() {
                 </Route>
 
                 <Route path="/" element={<Navigate to="/dashboard" />} />
-                <Route path="*" element={<Navigate to="/dashboard" />} />
+                <Route path="*" element={loadPage(<NotFoundPage />)} />
               </Routes>
               </div>
             </Router>

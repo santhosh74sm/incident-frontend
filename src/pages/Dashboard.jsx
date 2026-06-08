@@ -31,6 +31,8 @@ import {
     formatActivityRecordLabel,
 } from '../utils/analytics';
 
+// ─── Error Boundary ───────────────────────────────────────────────────────────
+
 class DashboardErrorBoundary extends React.Component {
     constructor(props) {
         super(props);
@@ -41,26 +43,26 @@ class DashboardErrorBoundary extends React.Component {
         return { hasError: true };
     }
 
-    componentDidCatch() {}
-
     render() {
         if (this.state.hasError) {
             return (
-                <div className="min-h-screen bg-slate-100 p-4 text-slate-800 lg:p-6">
-                    <div className="mx-auto max-w-[1600px] rounded-3xl border border-red-200 bg-white p-8 shadow-sm">
+                <div className="min-h-screen bg-slate-100 p-4 text-slate-800 dark:bg-slate-950 lg:p-6">
+                    <div className="mx-auto max-w-[1560px] rounded-2xl border border-red-200 bg-white p-8 shadow-sm dark:border-red-900/30 dark:bg-slate-900">
                         <div className="flex items-start gap-4">
-                            <div className="rounded-2xl bg-red-50 p-3 text-red-600">
-                                <AlertCircle size={22} />
+                            <div className="rounded-xl bg-red-50 p-3 text-red-600 dark:bg-red-950/40">
+                                <AlertCircle size={20} aria-hidden="true" />
                             </div>
                             <div>
-                                <h1 className="text-xl font-bold text-slate-900">Dashboard temporarily unavailable</h1>
-                                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                                    One dashboard widget failed to render. Other workspace routes remain available while this view recovers.
+                                <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                                    Dashboard temporarily unavailable
+                                </h1>
+                                <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600 dark:text-slate-400">
+                                    A dashboard section failed to render. All other workspace routes remain available.
                                 </p>
                                 <button
                                     type="button"
                                     onClick={() => this.setState({ hasError: false })}
-                                    className="mt-5 rounded-2xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                                    className="mt-4 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
                                 >
                                     Retry Dashboard
                                 </button>
@@ -75,66 +77,126 @@ class DashboardErrorBoundary extends React.Component {
     }
 }
 
+// ─── Quick Actions Panel ──────────────────────────────────────────────────────
+
+const QUICK_ACTION_TONES = {
+    blue:    { hover: 'hover:border-blue-200 hover:bg-blue-50/80 dark:hover:border-blue-800/60 dark:hover:bg-blue-950/30',    icon: 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300'    },
+    slate:   { hover: 'hover:border-slate-300 hover:bg-white dark:hover:border-slate-600 dark:hover:bg-slate-800/60',          icon: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'   },
+    orange:  { hover: 'hover:border-orange-200 hover:bg-orange-50/80 dark:hover:border-orange-800/50 dark:hover:bg-orange-950/30', icon: 'bg-orange-100 text-orange-700 dark:bg-orange-950/50 dark:text-orange-300' },
+    emerald: { hover: 'hover:border-emerald-200 hover:bg-emerald-50/80 dark:hover:border-emerald-800/50 dark:hover:bg-emerald-950/30', icon: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300' },
+};
+
+const QuickActionCard = memo(({ to, tone, icon: Icon, title, description }) => {
+    const t = QUICK_ACTION_TONES[tone] || QUICK_ACTION_TONES.slate;
+    return (
+        <Link
+            to={to}
+            className={`group flex min-h-[44px] flex-col justify-center rounded-xl border border-slate-200 bg-slate-50/80 p-4 transition-all duration-200 dark:border-slate-800 dark:bg-slate-900/60 ${t.hover}`}
+        >
+            <div className="flex items-center justify-between">
+                <div className={`rounded-lg p-2 ${t.icon}`}>
+                    <Icon size={16} aria-hidden="true" />
+                </div>
+                <ArrowRight
+                    size={14}
+                    aria-hidden="true"
+                    className="text-slate-400 transition-transform duration-200 group-hover:translate-x-0.5"
+                />
+            </div>
+            <p className="mt-3 text-[13px] font-bold text-slate-900 dark:text-slate-100">{title}</p>
+            <p className="mt-0.5 text-[12px] leading-snug text-slate-500 dark:text-slate-400">{description}</p>
+        </Link>
+    );
+});
+
 const QuickActionsPanel = memo(({ canReportIncident }) => (
-    <DashboardPanel title="Quick shortcuts" description="Jump to everyday tasks staff use most." icon={TrendingUp}>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
-            {canReportIncident ? (
-                <QuickActionLink
+    <DashboardPanel
+        title="Quick Actions"
+        description="Jump to the tasks you use most."
+        icon={TrendingUp}
+    >
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-4">
+            {canReportIncident && (
+                <QuickActionCard
                     to="/create-incident"
                     tone="blue"
                     icon={FileText}
-                    title="Report an incident"
+                    title="Report Incident"
                     description="Start a new incident record."
                 />
-            ) : null}
-            <QuickActionLink
+            )}
+            <QuickActionCard
                 to="/incidents"
                 tone="slate"
                 icon={Activity}
-                title="All incidents"
-                description="See open cases, assignments, and follow-ups."
+                title="All Incidents"
+                description="Open cases, assignments, follow-ups."
             />
-            <QuickActionLink
+            <QuickActionCard
                 to="/analytics"
                 tone="orange"
                 icon={TrendingUp}
-                title="School reports & summary"
+                title="School Reports"
                 description="School-wide summaries and charts."
             />
-            <QuickActionLink
+            <QuickActionCard
                 to="/student-analytics"
                 tone="emerald"
                 icon={GraduationCap}
-                title="Student summaries"
-                description="Look up one student’s involvement and letter history."
+                title="Student History"
+                description="One student's incidents and letters."
             />
         </div>
     </DashboardPanel>
 ));
 
-const QuickActionLink = memo(({ to, tone, icon: Icon, title, description }) => {
-    const toneClasses = {
-        blue: { hover: 'hover:border-blue-200 hover:bg-blue-50', icon: 'bg-blue-100 text-blue-700' },
-        slate: { hover: 'hover:border-slate-300 hover:bg-white', icon: 'bg-slate-200/70 text-slate-700' },
-        orange: { hover: 'hover:border-orange-200 hover:bg-orange-50', icon: 'bg-orange-100 text-orange-700' },
-        emerald: { hover: 'hover:border-emerald-200 hover:bg-emerald-50', icon: 'bg-emerald-100 text-emerald-700' },
-    };
+// ─── Lifecycle progress panel ─────────────────────────────────────────────────
 
-    const currentTone = toneClasses[tone] || toneClasses.slate;
+const LIFECYCLE_TONE_MAP = {
+    emerald: 'bg-emerald-500',
+    blue:    'bg-blue-500',
+    red:     'bg-red-500',
+    amber:   'bg-amber-500',
+};
 
+const LifecycleRow = memo(({ row }) => {
+    const barColor = LIFECYCLE_TONE_MAP[row.tone] || 'bg-amber-500';
     return (
-        <Link to={to} className={`flex min-h-[44px] flex-col justify-center rounded-2xl border border-slate-200 bg-slate-50 p-4 transition ${currentTone.hover}`}>
-            <div className="flex items-center justify-between">
-                <div className={`rounded-xl ${currentTone.icon} p-2`}>
-                    <Icon size={18} />
-                </div>
-                <ArrowRight size={16} className="text-slate-400" />
+        <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-900/60">
+            <div className="flex items-center justify-between gap-4 text-sm">
+                <span className="font-semibold text-slate-900 dark:text-slate-100">{row.label}</span>
+                <span className="shrink-0 text-slate-500 dark:text-slate-400">
+                    {row.count} &middot; {row.share}
+                </span>
             </div>
-            <p className="mt-4 font-semibold text-slate-900">{title}</p>
-            <p className="mt-1 text-sm text-slate-500">{description}</p>
-        </Link>
+            <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                <div
+                    className={`h-full rounded-full transition-all duration-500 ${barColor}`}
+                    style={{ width: row.share }}
+                    role="progressbar"
+                    aria-valuenow={row.count}
+                    aria-label={`${row.label}: ${row.share}`}
+                />
+            </div>
+        </div>
     );
 });
+
+const LifecycleOverviewPanel = memo(({ rows }) => (
+    <DashboardPanel
+        title="Incident Breakdown"
+        description="Where cases stand right now at a glance."
+        icon={Activity}
+    >
+        <div className="space-y-2.5">
+            {rows.map((row) => (
+                <LifecycleRow key={row.id} row={row} />
+            ))}
+        </div>
+    </DashboardPanel>
+));
+
+// ─── Module-level request dedup map (unchanged) ────────────────────────────────
 
 const dashboardDataRequests = new Map();
 
@@ -159,33 +221,7 @@ const fetchDashboardData = (user) => {
     return dashboardDataRequests.get(requestKey);
 };
 
-const LifecycleOverviewPanel = memo(({ rows }) => (
-    <DashboardPanel title="Progress snapshot" description="Where incidents stand right now—in plain language." icon={Activity}>
-        <div className="space-y-4">
-            {rows.map((row) => {
-                const tone = row.tone === 'emerald'
-                    ? 'bg-emerald-500'
-                    : row.tone === 'blue'
-                        ? 'bg-blue-500'
-                        : row.tone === 'red'
-                            ? 'bg-red-500'
-                            : 'bg-orange-500';
-
-                return (
-                    <div key={row.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                        <div className="flex items-center justify-between text-sm">
-                            <span className="font-semibold text-slate-900">{row.label}</span>
-                            <span className="text-slate-500">{row.count} incidents - {row.share}</span>
-                        </div>
-                        <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
-                            <div className={`h-full rounded-full ${tone}`} style={{ width: row.share }} />
-                        </div>
-                    </div>
-                );
-            })}
-        </div>
-    </DashboardPanel>
-));
+// ─── Main Dashboard content ────────────────────────────────────────────────────
 
 const DashboardContent = memo(() => {
     const { user } = useAuth();
@@ -193,6 +229,7 @@ const DashboardContent = memo(() => {
     const [incidents, setIncidents] = useState([]);
     const [recentLogs, setRecentLogs] = useState([]);
     const [loading, setLoading] = useState(true);
+
     const userId = user?._id || user?.id;
     const userRole = user?.role;
 
@@ -201,43 +238,48 @@ const DashboardContent = memo(() => {
         [navigate]
     );
 
-    const recentIncidentColumns = useMemo(() => [
-        { key: 'title', label: 'Incident' },
-        { key: 'student', label: 'Student' },
-        {
-            key: 'status',
-            label: 'Status',
-            render: (row) => (
-                <span
-                    className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${
-                        row.status === 'Closed'
-                            ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                            : row.status === 'In Progress'
-                                ? 'border-blue-200 bg-blue-50 text-blue-700'
-                                : 'border-orange-200 bg-orange-50 text-orange-700'
-                    }`}
-                >
-                    {row.status}
-                </span>
-            ),
-        },
-        { key: 'handler', label: 'Assigned To' },
-        { key: 'opened', label: 'Opened' },
-        {
-            key: 'actions',
-            label: 'Actions',
-            render: (row) => (
-                <button
-                    onClick={() => handleViewIncident(row.id)}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
-                >
-                    <Eye size={14} />
-                    View
-                </button>
-            ),
-        },
-    ], [handleViewIncident]);
+    // ── Table columns (memoized) ─────────────────────────────────────────
+    const recentIncidentColumns = useMemo(
+        () => [
+            { key: 'title',   label: 'Incident' },
+            { key: 'student', label: 'Student'  },
+            {
+                key: 'status',
+                label: 'Status',
+                render: (row) => (
+                    <span
+                        className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
+                            row.status === 'Closed'
+                                ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/50 dark:bg-emerald-950/40 dark:text-emerald-300'
+                                : row.status === 'In Progress'
+                                    ? 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800/50 dark:bg-blue-950/40 dark:text-blue-300'
+                                    : 'border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-800/50 dark:bg-orange-950/40 dark:text-orange-300'
+                        }`}
+                    >
+                        {row.status}
+                    </span>
+                ),
+            },
+            { key: 'handler', label: 'Assigned To' },
+            { key: 'opened',  label: 'Opened'      },
+            {
+                key: 'actions',
+                label: 'Actions',
+                render: (row) => (
+                    <button
+                        onClick={() => handleViewIncident(row.id)}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-blue-700 dark:hover:bg-blue-950/40 dark:hover:text-blue-300"
+                    >
+                        <Eye size={13} aria-hidden="true" />
+                        View
+                    </button>
+                ),
+            },
+        ],
+        [handleViewIncident]
+    );
 
+    // ── Fetch ────────────────────────────────────────────────────────────
     useEffect(() => {
         if (!userId) return;
 
@@ -248,7 +290,6 @@ const DashboardContent = memo(() => {
             try {
                 setLoading(true);
                 const [incidentRes, logsRes] = await fetchDashboardData(requestUser);
-
                 if (!mounted) return;
 
                 const incidentList = Array.isArray(incidentRes.data)
@@ -275,34 +316,39 @@ const DashboardContent = memo(() => {
         };
 
         fetchData();
-
         return () => { mounted = false; };
     }, [userId, userRole]);
 
+    // ── Derived summaries (unchanged calculations) ────────────────────────
     const summary = useMemo(() => {
-        const total = incidents.length;
-        const open = incidents.filter((i) => i.status === 'Open').length;
+        const total      = incidents.length;
+        const open       = incidents.filter((i) => i.status === 'Open').length;
         const inProgress = incidents.filter((i) => i.status === 'In Progress').length;
-        const closed = incidents.filter((i) => i.status === 'Closed').length;
+        const closed     = incidents.filter((i) => i.status === 'Closed').length;
         const unassigned = incidents.filter(
-            (i) => !i?.assignedHandler || ['Super Admin', 'Admin', 'super_admin', 'admin'].includes(i?.assignedHandler?.role)
+            (i) => !i?.assignedHandler ||
+                ['Super Admin', 'Admin', 'super_admin', 'admin'].includes(i?.assignedHandler?.role)
         ).length;
-
         return { total, open, inProgress, closed, unassigned, active: open + inProgress };
     }, [incidents]);
+
     const canReportIncident = ['Admin', 'Teacher'].includes(user?.role);
 
     const recentIncidentRows = useMemo(
         () =>
             [...incidents]
-                .sort((a, b) => new Date(getIncidentTimestamp(b) || 0) - new Date(getIncidentTimestamp(a) || 0))
+                .sort(
+                    (a, b) =>
+                        new Date(getIncidentTimestamp(b) || 0) -
+                        new Date(getIncidentTimestamp(a) || 0)
+                )
                 .slice(0, 6)
                 .map((incident) => ({
-                    id: incident._id,
-                    title: incident.title || 'Untitled incident',
+                    id:      incident._id,
+                    title:   incident.title || 'Untitled incident',
                     student: incident.studentDetails?.name || incident.studentsInvolved?.[0] || 'Student unavailable',
-                    status: incident.status || 'Open',
-                    opened: formatShortDateTime(getIncidentTimestamp(incident)),
+                    status:  incident.status || 'Open',
+                    opened:  formatShortDateTime(getIncidentTimestamp(incident)),
                     handler: resolveHandlerLabel(incident),
                 })),
         [incidents]
@@ -311,113 +357,153 @@ const DashboardContent = memo(() => {
     const lifecycleRows = useMemo(() => {
         const total = summary.total || 1;
         return [
-            { id: 'open', label: 'Open', count: summary.open, share: `${Math.round((summary.open / total) * 100)}%`, tone: 'amber' },
-            { id: 'progress', label: 'In Progress', count: summary.inProgress, share: `${Math.round((summary.inProgress / total) * 100)}%`, tone: 'blue' },
-            { id: 'closed', label: 'Closed', count: summary.closed, share: `${Math.round((summary.closed / total) * 100)}%`, tone: 'emerald' },
+            { id: 'open',     label: 'Open',        count: summary.open,       share: `${Math.round((summary.open / total) * 100)}%`,       tone: 'amber'   },
+            { id: 'progress', label: 'In Progress',  count: summary.inProgress, share: `${Math.round((summary.inProgress / total) * 100)}%`, tone: 'blue'    },
+            { id: 'closed',   label: 'Closed',       count: summary.closed,     share: `${Math.round((summary.closed / total) * 100)}%`,     tone: 'emerald' },
         ];
     }, [summary]);
 
     const activityItems = useMemo(() => {
         if (recentLogs.length > 0) {
             return recentLogs.map((log) => ({
-                id: log._id,
-                title: log.actionName || 'System action',
+                id:          log._id,
+                title:       log.actionName || 'System action',
                 description: `${log.performedByName || log.performedBy || 'System'} · ${formatActivityRecordLabel(log.entityType)}`,
-                timestamp: formatShortDateTime(log.createdAt),
-                icon: Activity,
+                timestamp:   formatShortDateTime(log.createdAt),
+                icon:        Activity,
                 tone:
-                    log?.actionName?.toLowerCase().includes('delete')
-                        ? 'red'
-                        : log?.actionName?.toLowerCase().includes('close')
-                            ? 'emerald'
-                            : log?.actionName?.toLowerCase().includes('update')
-                                ? 'blue'
-                                : 'amber',
+                    log?.actionName?.toLowerCase().includes('delete')  ? 'red'
+                    : log?.actionName?.toLowerCase().includes('close') ? 'emerald'
+                    : log?.actionName?.toLowerCase().includes('update') ? 'blue'
+                    : 'amber',
             }));
         }
         return buildDashboardActivityFeed(incidents, {
             icons: {
-                closed: CheckCircle,
+                closed:     CheckCircle,
                 inProgress: TrendingUp,
-                open: AlertCircle,
+                open:       AlertCircle,
             },
         });
     }, [incidents, recentLogs]);
 
+    // ── Loading state ─────────────────────────────────────────────────────
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-100 p-4 text-slate-800 lg:p-6">
-                <div className="mx-auto max-w-[1600px]">
+            <div className="min-h-screen bg-slate-100 p-4 text-slate-800 dark:bg-slate-950 lg:p-6">
+                <div className="mx-auto max-w-[1560px]">
                     <DashboardPageSkeleton />
                 </div>
             </div>
         );
     }
 
+    // ── Render ─────────────────────────────────────────────────────────────
     return (
-        <div className="min-h-screen bg-slate-100 p-4 text-slate-800 lg:p-6">
-            <div className="mx-auto max-w-[1600px] space-y-6">
+        <div className="min-h-screen bg-slate-100 p-4 text-slate-800 dark:bg-slate-950 lg:p-5">
+            <div className="mx-auto max-w-[1560px] space-y-5">
+
+                {/* Hero */}
                 <DashboardHero
                     eyebrow="School overview"
                     title="Dashboard"
-                    description="See how many incidents are open, who is handling them, and what changed recently—all in one place."
+                    description="See open incidents, who is handling them, and what changed recently — all in one place."
                     icon={ShieldCheck}
                     actions={(
                         <>
-                            {canReportIncident ? (
+                            {canReportIncident && (
                                 <Link
                                     to="/create-incident"
-                                    className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/15"
+                                    className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/15"
                                 >
-                                    <FileText size={16} />
-                                    New incident
+                                    <FileText size={15} aria-hidden="true" />
+                                    New Incident
                                 </Link>
-                            ) : null}
+                            )}
                             <Link
                                 to="/analytics"
-                                className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-blue-50"
+                                className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-blue-50"
                             >
-                                <TrendingUp size={16} />
-                                View reports & trends
+                                <TrendingUp size={15} aria-hidden="true" />
+                                View Reports
                             </Link>
                         </>
                     )}
                     meta={(
-                        <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
-                            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5">
-                                {summary.total} total incidents
+                        <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold dark:border-slate-700 dark:bg-slate-800">
+                                {summary.total} total
                             </span>
-                            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5">
-                                {summary.active} active workload
+                            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold dark:border-slate-700 dark:bg-slate-800">
+                                {summary.active} active
                             </span>
-                            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5">
-                                {activityItems.length} recent updates
+                            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold dark:border-slate-700 dark:bg-slate-800">
+                                {summary.unassigned} unassigned
                             </span>
                         </div>
                     )}
                 />
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-                    <DashboardStatCard title="Active Incidents" value={summary.active} icon={TrendingUp} tone="blue" helper="Open and in-progress workload" />
-                    <DashboardStatCard title="Open" value={summary.open} icon={AlertCircle} tone="amber" helper="Waiting for first action" />
-                    <DashboardStatCard title="In Progress" value={summary.inProgress} icon={Clock} tone="blue" helper="Currently being handled" />
-                    <DashboardStatCard title="Closed" value={summary.closed} icon={CheckCircle} tone="emerald" helper="Resolved in current scope" />
-                    <DashboardStatCard title="Unassigned" value={summary.unassigned} icon={Users} tone="red" helper="Needs ownership" />
-                </div>
+                {/* ── Stat cards ── */}
+                <section
+                    aria-label="Incident statistics"
+                    className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5"
+                >
+                    <DashboardStatCard
+                        title="Active"
+                        value={summary.active}
+                        icon={TrendingUp}
+                        tone="blue"
+                        helper="Open + in progress"
+                    />
+                    <DashboardStatCard
+                        title="Open"
+                        value={summary.open}
+                        icon={AlertCircle}
+                        tone="amber"
+                        helper="Awaiting first action"
+                    />
+                    <DashboardStatCard
+                        title="In Progress"
+                        value={summary.inProgress}
+                        icon={Clock}
+                        tone="blue"
+                        helper="Currently being handled"
+                    />
+                    <DashboardStatCard
+                        title="Closed"
+                        value={summary.closed}
+                        icon={CheckCircle}
+                        tone="emerald"
+                        helper="Resolved"
+                    />
+                    <DashboardStatCard
+                        title="Unassigned"
+                        value={summary.unassigned}
+                        icon={Users}
+                        tone="red"
+                        helper="Needs an owner"
+                    />
+                </section>
 
-                <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+                {/* ── Main body: table + side panels ── */}
+                <section
+                    aria-label="Recent incidents and actions"
+                    className="grid grid-cols-1 gap-5 xl:grid-cols-12"
+                >
+                    {/* Recent incidents table */}
                     <DashboardPanel
                         className="xl:col-span-7"
-                        title="Recent incidents"
-                        description="Most recently opened or updated cases."
+                        title="Recent Incidents"
+                        description="Latest cases — most recently opened or updated."
                         icon={FileText}
                         actions={(
                             <Link
                                 to="/incidents"
-                                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
                             >
                                 View All
-                                <ArrowRight size={14} />
+                                <ArrowRight size={13} aria-hidden="true" />
                             </Link>
                         )}
                     >
@@ -428,19 +514,31 @@ const DashboardContent = memo(() => {
                         />
                     </DashboardPanel>
 
-                    <div className="space-y-6 xl:col-span-5">
+                    {/* Right column */}
+                    <div className="flex flex-col gap-5 xl:col-span-5">
                         <QuickActionsPanel canReportIncident={canReportIncident} />
                         <LifecycleOverviewPanel rows={lifecycleRows} />
                     </div>
-                </div>
+                </section>
 
-                <DashboardPanel title="What happened recently" description="Updates drawn from incidents and administrative activity history." icon={Activity}>
-                    <ActivityFeed items={activityItems} emptyMessage="No recent activity is available right now." />
+                {/* ── Activity feed ── */}
+                <DashboardPanel
+                    title="Recent Activity"
+                    description="Updates from incidents and administrative actions."
+                    icon={Activity}
+                >
+                    <ActivityFeed
+                        items={activityItems}
+                        emptyMessage="No recent activity is available right now."
+                    />
                 </DashboardPanel>
+
             </div>
         </div>
     );
 });
+
+// ─── Export ───────────────────────────────────────────────────────────────────
 
 const Dashboard = () => (
     <DashboardErrorBoundary>

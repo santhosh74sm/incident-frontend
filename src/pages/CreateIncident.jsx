@@ -96,22 +96,26 @@ const formatManualSummary = (value) => {
     return parsed ? parsed.format('DD MMM YYYY, hh:mm A') : 'Not set';
 };
 
-const SectionCard = ({ icon: Icon, title, description, action, children, className = '' }) => (
-    <section className={`overflow-hidden rounded-xl border border-slate-200 bg-white shadow-md dark:border-slate-800 dark:bg-slate-900/50 ${className}`}>
-        <div className="flex flex-col gap-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50 dark:border-slate-800 dark:from-slate-900 dark:to-slate-900/50 px-5 py-4 md:flex-row md:items-start md:justify-between">
-            <div className="flex items-start gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
-                    <Icon className="h-5 w-5 text-indigo-600" />
-                </div>
+const SectionCard = ({ icon: Icon, title, description, action, children, className = '', step }) => (
+    <section className={`overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/50 ${className}`}>
+        <div className="flex flex-col gap-3 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-indigo-50/40 px-5 py-4 dark:border-slate-800 dark:from-slate-900 dark:to-slate-900/50 md:flex-row md:items-start md:justify-between">
+            <div className="flex items-center gap-3">
+                {step ? (
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-xs font-black text-white shadow-sm">
+                        {step}
+                    </div>
+                ) : (
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
+                        <Icon className="h-[18px] w-[18px] text-indigo-600" />
+                    </div>
+                )}
                 <div>
-                    <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
-                    {description && <p className="mt-1 text-sm text-slate-600">{description}</p>}
+                    <h2 className="text-base font-bold text-slate-900">{title}</h2>
+                    {description && <p className="mt-0.5 text-xs text-slate-500">{description}</p>}
                 </div>
             </div>
-
             {action}
         </div>
-
         <div className="p-5">{children}</div>
     </section>
 );
@@ -1155,13 +1159,12 @@ const CreateIncident = () => {
         await submitIncident(false);
     };
 
-    const templateLanguageCount = ['en', 'ta'].filter((language) => categoryTemplateStatus.templates?.[language]).length;
     const categoryHasTemplate = hasAvailableLetterTemplate(categoryTemplateStatus.templates);
     const selectedStudentsPreview = selectedStudentObjects.slice(0, 6);
 
     return (
-        <div className="flex min-h-screen bg-slate-100">
-            <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <div className="flex bg-slate-100">
+            <div className="flex min-w-0 flex-1 flex-col">
 
                 {modal.open && ['category', 'location', 'evidence'].includes(modal.type) && (
                     <div className="fixed inset-0 z-[100] flex min-h-[100dvh] items-center justify-center overflow-y-auto bg-slate-950/50 p-3 backdrop-blur-sm sm:p-4">
@@ -1547,52 +1550,50 @@ const CreateIncident = () => {
                     </div>
                 )}
 
-                <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+                <main className="flex-1 p-4 lg:p-6">
                     <div className="mx-auto max-w-7xl space-y-6">
-                        <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-md dark:border-slate-800 dark:bg-slate-900/50">
-                            <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-900 px-6 py-7 lg:px-8">
-                                <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-                                    <div className="max-w-3xl">
-                                        <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/15">
-                                            <FileText className="h-6 w-6 text-white" />
+                        <section className="overflow-hidden rounded-2xl border border-white/10 shadow-lg">
+                            <div className="bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.25),_transparent_40%),linear-gradient(135deg,#0f172a,#1e1b4b_50%,#312e81)] px-5 py-6 sm:px-8 sm:py-8">
+                                <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                                    <div>
+                                        <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-indigo-200">
+                                            <FileText className="h-3.5 w-3.5" />
+                                            Incident Management
                                         </div>
-                                        <h1 className="text-2xl font-bold text-white">Create Incident</h1>
-                                        <p className="mt-2 text-sm text-slate-200">
-                                            Capture incident details in clearer information blocks, keep manual timeline control intact, and preserve the existing submission and letter logic.
+                                        <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">Create Incident</h1>
+                                        <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-indigo-100/80">
+                                            Select the student, enter incident details, attach evidence, and submit. The form guides you through each step.
                                         </p>
                                     </div>
 
-                                    <div className="grid gap-3 sm:grid-cols-3">
-                                        <MetricCard
-                                            icon={Users}
-                                            label="Selected Students"
-                                            value={`${selectedStudents.length} chosen`}
-                                            tone="indigo"
-                                        />
-                                        <MetricCard
-                                            icon={Sparkles}
-                                            label="Official letter"
-                                            value={
-                                                !formData.category
-                                                    ? 'Select category'
-                                                    : categoryTemplateStatus.loading
-                                                    ? 'Checking...'
-                                                    : categoryTemplateStatus.error
-                                                    ? 'Check failed'
-                                                    : templateLanguageCount
-                                                    ? 'Official letter file ready'
-                                                    : 'No official letter file'
-                                            }
-                                            tone="blue"
-                                        />
-                                        <MetricCard
-                                            icon={Clock3}
-                                            label="Custom dates"
-                                            value={manualTiming ? manualSetup.status || 'Configured' : 'Auto timeline'}
-                                            tone="emerald"
-                                        />
+                                    <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                                        <div className="rounded-xl border border-white/10 bg-white/8 px-3 py-2.5 text-center backdrop-blur-sm">
+                                            <p className="text-[10px] font-semibold uppercase tracking-widest text-indigo-300">Students</p>
+                                            <p className="mt-1 text-xl font-black text-white tabular-nums">{selectedStudents.length}</p>
+                                        </div>
+                                        <div className="rounded-xl border border-white/10 bg-white/8 px-3 py-2.5 text-center backdrop-blur-sm">
+                                            <p className="text-[10px] font-semibold uppercase tracking-widest text-indigo-300">Letter</p>
+                                            <p className="mt-1 text-xs font-bold text-white">
+                                                {!formData.category ? '—' : categoryTemplateStatus.loading ? '…' : categoryHasTemplate ? 'Ready' : 'None'}
+                                            </p>
+                                        </div>
+                                        <div className="rounded-xl border border-white/10 bg-white/8 px-3 py-2.5 text-center backdrop-blur-sm">
+                                            <p className="text-[10px] font-semibold uppercase tracking-widest text-indigo-300">Timeline</p>
+                                            <p className="mt-1 text-xs font-bold text-white">{manualTiming ? 'Custom' : 'Auto'}</p>
+                                        </div>
                                     </div>
                                 </div>
+                            </div>
+
+                            {/* Step progress bar */}
+                            <div className="flex border-t border-white/5 bg-slate-900/95">
+                                {['Select Student', 'Incident Details', 'Admin Actions', 'Evidence', 'Submit'].map((stepLabel, index) => (
+                                    <div key={stepLabel} className="flex flex-1 flex-col items-center gap-1 border-r border-white/5 px-1 py-2.5 last:border-r-0">
+                                        <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-indigo-400">
+                                            <span className="hidden sm:inline">{index + 1}. </span>{stepLabel}
+                                        </span>
+                                    </div>
+                                ))}
                             </div>
                         </section>
 
@@ -1623,11 +1624,12 @@ const CreateIncident = () => {
                                 </StatusBanner>
                             )}
 
-                            <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+                            <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
                                 <SectionCard
                                     icon={Users}
                                     title="Student Selection"
-                                    description="Choose the class and section first, then search and select one or more students for this incident."
+                                    description="Choose class and section, then search and select student(s)."
+                                    step={1}
                                 >
                                     <div className="space-y-5">
                                         <div className="grid gap-4 md:grid-cols-2">
@@ -1707,8 +1709,14 @@ const CreateIncident = () => {
                                         )}
 
                                         {!formData.class || !formData.section ? (
-                                            <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
-                                                Select a class and section to load the available students.
+                                            <div className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/70 px-4 py-10 text-center">
+                                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100">
+                                                    <Users className="h-5 w-5 text-indigo-500" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-semibold text-slate-700">No students loaded yet</p>
+                                                    <p className="mt-1 text-xs text-slate-400">Select a class and section above to load the student list.</p>
+                                                </div>
                                             </div>
                                         ) : (
                                             <div className="space-y-4">
@@ -1754,7 +1762,7 @@ const CreateIncident = () => {
                                                     )}
                                                 </div>
 
-                                                <div className="h-[360px] overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-2">
+                                                <div className="h-[340px] overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-slate-50 p-2">
                                                     {fetchingStudents ? (
                                                         <div className="flex h-full items-center justify-center gap-2 text-sm font-medium text-slate-500">
                                                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -1822,11 +1830,12 @@ const CreateIncident = () => {
                                     </div>
                                 </SectionCard>
 
-                                <div className="space-y-6">
+                                <div className="space-y-5">
                                     <SectionCard
                                         icon={Tag}
                                         title="Incident Details"
-                                        description="Set the incident category, location, description, and priority flags."
+                                        description="Category is required. Location and description are optional."
+                                        step={2}
                                     >
                                         <div className="space-y-5">
                                             <div>
@@ -2081,8 +2090,9 @@ const CreateIncident = () => {
                                     {isAdministrationUser && (
                                     <SectionCard
                                         icon={ShieldCheck}
-                                        title="Administrative actions"
-                                        description="Assign a staff member or set incident dates manually when needed."
+                                        title="Administrative Actions"
+                                        description="Assign a handler or configure custom dates."
+                                        step={3}
                                     >
                                         <div className="space-y-5">
                                             <div>
@@ -2110,7 +2120,7 @@ const CreateIncident = () => {
                                             </div>
 
                                             <div
-                                                className={`max-h-[55vh] overflow-y-auto overflow-x-hidden rounded-xl border-2 p-4 md:max-h-none ${
+                                                className={`rounded-xl border-2 p-4 ${
                                                     manualTiming ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 bg-slate-50'
                                                 }`}
                                             >
@@ -2178,7 +2188,8 @@ const CreateIncident = () => {
                             <SectionCard
                                 icon={FileImage}
                                 title="Evidence & Attachments"
-                                description="Attach optional supporting files and keep each attachment mapped to the correct evidence type."
+                                description="Optional. Map each file to an evidence type before submitting."
+                                step={4}
                                 action={
                                     isPrivilegedUser ? (
                                         <button
@@ -2269,20 +2280,23 @@ const CreateIncident = () => {
                                                     )}
                                                 </div>
 
-                                                <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-white px-4 py-8 text-center transition hover:border-indigo-300 hover:bg-indigo-50/50">
-                                                    <Camera className="h-6 w-6 text-indigo-600" />
+                                                                <label className="group flex cursor-pointer flex-col items-center justify-center gap-2.5 rounded-xl border-2 border-dashed border-slate-200 bg-white px-4 py-7 text-center transition-all duration-200 hover:border-indigo-400 hover:bg-indigo-50/60 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-200">
+                                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-50 transition-colors group-hover:bg-indigo-100">
+                                                        <Camera className="h-5 w-5 text-indigo-500" />
+                                                    </div>
                                                     <div>
-                                                        <p className="text-sm font-semibold text-slate-900">
-                                                            {entry.file ? entry.file.name : 'Click to attach evidence'}
+                                                        <p className="text-sm font-semibold text-slate-800">
+                                                            {entry.file ? entry.file.name : 'Click to attach file'}
                                                         </p>
-                                                        <p className="mt-1 text-xs text-slate-500">
-                                                            Images, PDFs, Word documents, and spreadsheets are supported.
+                                                        <p className="mt-0.5 text-xs text-slate-400">
+                                                            Images, PDFs, Word, Excel, CSV — max 10 MB
                                                         </p>
                                                     </div>
                                                     <input
                                                         type="file"
                                                         accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"
-                                                        className="hidden"
+                                                        className="sr-only"
+                                                        aria-label={`Upload evidence file ${index + 1}`}
                                                         onChange={(event) => {
                                                             const nextFile = event.target.files?.[0];
                                                             if (nextFile) {
@@ -2336,39 +2350,68 @@ const CreateIncident = () => {
                                 </button>
                             </SectionCard>
 
-                            <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-md dark:border-slate-800 dark:bg-slate-900/50">
-                                <div className="flex flex-col gap-4 px-5 py-5 lg:flex-row lg:items-center lg:justify-between">
-                                    <div className="max-w-2xl">
-                                        <p className="text-lg font-semibold text-slate-900">Ready to save</p>
-                                        <p className="mt-1 text-sm text-slate-600">
-                                            When you click save, your incident is processed as usual. If an official letter needs to be created, you will see a short confirmation screen before the report is finally saved.
-                                        </p>
+                            <section aria-label="Submit incident" className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                                <div className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-indigo-50/40 px-5 py-3.5">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-xs font-black text-white shadow-sm">
+                                            5
+                                        </div>
+                                        <div>
+                                            <p className="text-base font-bold text-slate-900">Submit Incident</p>
+                                            <p className="text-xs text-slate-500">Review and confirm before submitting the report.</p>
+                                        </div>
                                     </div>
+                                </div>
 
-                                    <div className="flex flex-col gap-2 sm:items-end">
-                                        <span className="inline-flex items-center justify-center rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
-                                            Selected Count: {selectedStudents.length}
+                                <div className="flex flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="flex flex-wrap items-center gap-3 text-sm">
+                                        <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${
+                                            selectedStudents.length > 0
+                                                ? 'border-indigo-200 bg-indigo-50 text-indigo-700'
+                                                : 'border-slate-200 bg-slate-50 text-slate-500'
+                                        }`}>
+                                            <Users className="h-3.5 w-3.5" />
+                                            {selectedStudents.length} student{selectedStudents.length === 1 ? '' : 's'} selected
                                         </span>
-
-                                        <button
-                                            type="submit"
-                                            disabled={loading || submitSuccess}
-                                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
-                                        >
-                                            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                                            {loading
-                                                ? uploadProgress > 0 && uploadProgress < 100
-                                                    ? `Uploading... ${uploadProgress}%`
-                                                    : uploadProgress === 100
-                                                        ? 'Processing...'
-                                                        : selectedStudents.length > 1
-                                                            ? `Creating ${selectedStudents.length} incidents...`
-                                                            : 'Submitting incident...'
-                                                : selectedStudents.length > 1
-                                                ? `Submit ${selectedStudents.length} Incident Reports`
-                                                : 'Submit Incident Report'}
-                                        </button>
+                                        {formData.category && (
+                                            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
+                                                <Tag className="h-3.5 w-3.5" />
+                                                {formData.category}
+                                            </span>
+                                        )}
+                                        {uploadProgress > 0 && uploadProgress < 100 && (
+                                            <div className="flex w-36 items-center gap-2">
+                                                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200">
+                                                    <div
+                                                        className="h-full rounded-full bg-indigo-500 transition-all duration-200"
+                                                        style={{ width: `${uploadProgress}%` }}
+                                                    />
+                                                </div>
+                                                <span className="text-xs font-semibold tabular-nums text-slate-500">{uploadProgress}%</span>
+                                            </div>
+                                        )}
                                     </div>
+
+                                    <button
+                                        type="submit"
+                                        disabled={loading || submitSuccess}
+                                        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-sm transition-all duration-150 hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-400"
+                                    >
+                                        {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Send className="h-4 w-4" aria-hidden="true" />}
+                                        {loading
+                                            ? uploadProgress > 0 && uploadProgress < 100
+                                                ? `Uploading… ${uploadProgress}%`
+                                                : uploadProgress === 100
+                                                    ? 'Processing…'
+                                                    : selectedStudents.length > 1
+                                                        ? `Creating ${selectedStudents.length} Incidents…`
+                                                        : 'Creating Incident…'
+                                            : submitSuccess
+                                                ? 'Incident Created ✓'
+                                                : selectedStudents.length > 1
+                                                    ? `Submit ${selectedStudents.length} Reports`
+                                                    : 'Submit Incident Report'}
+                                    </button>
                                 </div>
                             </section>
                         </form>

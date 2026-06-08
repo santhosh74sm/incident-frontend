@@ -13,8 +13,8 @@ const API_BASE = (
 ).replace(/\/$/, '');
 
 if (process.env.NODE_ENV === 'development') {
-    // Visible only in local dev builds; confirms localhost vs Render before any request leaves the browser.
-    console.info('[apiClient] API base URL:', API_BASE);
+    // Visible only in local dev builds; avoid emitting request URLs in production bundles.
+    console.info('[apiClient] API base configured.');
 }
 
 const apiClient = axios.create({
@@ -42,6 +42,7 @@ const PUBLIC_AUTH_PATHS = [
     '/api/auth/csrf',
     '/api/auth/csrf-token',
     '/api/auth/register',
+    '/api/auth/workspaces',
     '/api/auth/login',
 ];
 
@@ -92,12 +93,6 @@ const cloneResponseData = (value) => {
 };
 
 const normalizeResponseIds = (value) => normalizeResponseIdsInPlace(cloneResponseData(value));
-
-export const getPublicId = (value) => {
-    if (value == null) return '';
-    if (typeof value === 'string' || typeof value === 'number') return String(value);
-    return String(value.id ?? value._id ?? '');
-};
 
 const getRequestPath = (config = {}) => {
     const rawUrl = config.url || '';
@@ -218,8 +213,7 @@ const refreshSession = async () => {
 
 apiClient.interceptors.request.use(async (config) => {
     if (process.env.NODE_ENV === 'development') {
-        const target = new URL(config.url || '', config.baseURL || API_BASE).toString();
-        console.info('[apiClient] request:', String(config.method || 'get').toUpperCase(), target);
+        console.info('[apiClient] request:', String(config.method || 'get').toUpperCase(), getRequestPath(config));
     }
 
     if (isPublicAuthRequest(config)) {

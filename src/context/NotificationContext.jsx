@@ -59,12 +59,17 @@ const NotificationProvider = memo(({ children }) => {
     const heartbeatTimer   = useRef(null);
     const reconnectDelay   = useRef(RECONNECT_BASE_MS);
     const mountedRef       = useRef(true);
+    const enabledRef       = useRef(false);
     const userId           = getRecordId(user);
 
     const enabled = useMemo(
         () => Boolean(userId && ['Super Admin', 'Admin', 'Teacher', 'super_admin', 'admin', 'teacher'].includes(user?.role)),
         [userId, user?.role]
     );
+
+    useEffect(() => {
+        enabledRef.current = enabled;
+    }, [enabled]);
 
     // ── REST fallback fetch ───────────────────────────────────────────────────
 
@@ -104,8 +109,9 @@ const NotificationProvider = memo(({ children }) => {
             // Actually force reconnect
             const delay = reconnectDelay.current;
             reconnectDelay.current = Math.min(delay * 2, RECONNECT_MAX_MS);
+            if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
             reconnectTimer.current = setTimeout(() => {
-                if (mountedRef.current && openSSERef.current) {
+                if (mountedRef.current && enabledRef.current && openSSERef.current) {
                     openSSERef.current();
                 }
             }, delay);
@@ -122,7 +128,6 @@ const NotificationProvider = memo(({ children }) => {
         // EventSource sends cookies automatically — same-origin or with CORS
         const es = new EventSource(SSE_URL, { withCredentials: true });
         esRef.current = es;
-        openSSERef.current = openSSE;
 
         es.addEventListener('open', () => {
             if (!mountedRef.current) return;
@@ -172,11 +177,16 @@ const NotificationProvider = memo(({ children }) => {
             const delay = reconnectDelay.current;
             reconnectDelay.current = Math.min(delay * 2, RECONNECT_MAX_MS);
 
+            if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
             reconnectTimer.current = setTimeout(() => {
-                if (mountedRef.current && enabled) openSSE();
+                if (mountedRef.current && enabledRef.current && openSSERef.current) openSSERef.current();
             }, delay);
         };
     }, [enabled, resetHeartbeat]); // openSSE is stable; eslint needs these deps
+
+    useEffect(() => {
+        openSSERef.current = openSSE;
+    }, [openSSE]);
 
     // ── Close SSE and timers ──────────────────────────────────────────────────
 

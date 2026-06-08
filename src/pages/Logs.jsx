@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import apiClient from '../config/apiClient';
 import dayjs from 'dayjs';
 import { formatActivityRecordLabel } from '../utils/analytics';
-import { UnifiedDateInput, UnifiedFilterBar } from '../components/UnifiedFilters';
+import { UnifiedDateInput, UnifiedFilterBar, UnifiedSearchInput } from '../components/UnifiedFilters';
 import { useAuth } from '../context/AuthContext';
 import {
     AlertTriangle,
@@ -315,16 +315,16 @@ const Logs = () => {
         <div className="flex min-h-screen bg-slate-100 dark:bg-slate-950">
             <div className="flex min-w-0 flex-1 flex-col">
                 <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-                    <div className="mx-auto max-w-7xl space-y-6">
+                    <div className="mx-auto max-w-[1600px] space-y-6">
                         <section className="overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-cyan-50 shadow-sm dark:border-slate-800 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
                             <div className="flex flex-col gap-6 p-6 lg:flex-row lg:items-center lg:justify-between lg:p-8">
                                 <div className="space-y-3">
                                     <div className="inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-700 dark:border-cyan-500/30 dark:bg-cyan-950/30 dark:text-cyan-200">
-                                        <ShieldCheck size={14} />
+                                        <ShieldCheck size={14} aria-hidden="true" />
                                         Activity history
                                     </div>
                                     <div>
-                                        <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-50">Activity history</h1>
+                                        <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-50">School Activity History</h1>
                                         <p className="mt-2 max-w-2xl text-sm text-slate-600 dark:text-slate-400">
                                             See who changed what and when, with simple search and date filters suited for school oversight.
                                         </p>
@@ -332,17 +332,19 @@ const Logs = () => {
                                 </div>
                                 <div className="flex flex-wrap gap-3">
                                     <button
+                                        type="button"
                                         onClick={fetchLogs}
-                                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
                                     >
-                                        <RefreshCw size={16} />
+                                        <RefreshCw size={16} aria-hidden="true" />
                                         Refresh
                                     </button>
                                     <button
+                                        type="button"
                                         onClick={handleClearAll}
-                                        className="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700 shadow-sm transition hover:bg-rose-100 dark:border-rose-500/30 dark:bg-rose-950/30 dark:text-rose-200 dark:hover:bg-rose-950/50"
+                                        className="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700 shadow-sm transition hover:bg-rose-100 dark:border-rose-500/30 dark:bg-rose-950/30 dark:text-rose-200 dark:hover:bg-rose-950/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
                                     >
-                                        <Trash2 size={16} />
+                                        <Trash2 size={16} aria-hidden="true" />
                                         Clear History
                                     </button>
                                 </div>
@@ -379,19 +381,12 @@ const Logs = () => {
                         <UnifiedFilterBar hasActiveFilters={activeFilterCount > 0} onReset={resetFilters} title="Find & filter">
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
                                 <div className="md:col-span-2">
-                                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                                        Search
-                                    </label>
-                                    <div className="relative">
-                                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                                        <input
-                                            type="text"
-                                            value={searchInput}
-                                            onChange={(event) => setSearchInput(event.target.value)}
-                                            placeholder="Action, admin name, or admission number..."
-                                            className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 transition-all outline-none hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:hover:border-slate-600"
-                                        />
-                                    </div>
+                                    <UnifiedSearchInput
+                                        label="Search"
+                                        value={searchInput}
+                                        onChange={setSearchInput}
+                                        placeholder="Action, staff name, or admission number…"
+                                    />
                                 </div>
                                 <div>
                                     <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -403,7 +398,7 @@ const Logs = () => {
                                             setFilters((current) => ({ ...current, entityType: event.target.value }));
                                             setPage(1);
                                         }}
-                                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 transition-all outline-none hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-600"
+                                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 transition-all outline-none hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-600 focus-visible:outline-none"
                                     >
                                         <option value="">All record types</option>
                                         {entityTypes.map((entityType) => (
@@ -423,7 +418,7 @@ const Logs = () => {
                                             setPageSize(Number(event.target.value));
                                             setPage(1);
                                         }}
-                                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 transition-all outline-none hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-600"
+                                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 transition-all outline-none hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-600 focus-visible:outline-none"
                                     >
                                         {PAGE_SIZE_OPTIONS.map((size) => (
                                             <option key={size} value={size}>
@@ -456,15 +451,15 @@ const Logs = () => {
                         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
                             <div className="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 dark:border-slate-800 md:flex-row md:items-center md:justify-between">
                                 <div>
-                                    <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Activity overview</h2>
+                                    <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Activity Records</h2>
                                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                                        Showing {showingFrom}-{showingTo} of {pagination.total} activity entries
+                                        Showing {showingFrom}–{showingTo} of {pagination.total} activity entries
                                     </p>
                                 </div>
                                 {loading && (
                                     <div className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
-                                        <RefreshCw size={15} className="animate-spin" />
-                                        Loading...
+                                        <RefreshCw size={15} className="animate-spin" aria-hidden="true" />
+                                        Loading…
                                     </div>
                                 )}
                             </div>
@@ -484,16 +479,17 @@ const Logs = () => {
                                         No entries match these filters.
                                     </p>
                                     <button
+                                        type="button"
                                         onClick={resetFilters}
-                                        className="mt-6 inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                                        className="mt-6 inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
                                     >
-                                        <RefreshCw size={16} />
-                                        Reset Filters
+                                        <RefreshCw size={16} aria-hidden="true" />
+                                        Clear Filters
                                     </button>
                                 </div>
                             ) : (
                                 <div className="overflow-x-auto">
-                                    <table className="min-w-[980px]">
+                                    <table className="min-w-[980px] w-full">
                                         <thead className="bg-slate-50 dark:bg-slate-950/70">
                                             <tr className="border-b border-slate-200 dark:border-slate-800">
                                                 <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Action</th>
@@ -572,12 +568,15 @@ const Logs = () => {
                                                                             : 'Open details for full information.'}
                                                                     </p>
                                                                     <button
+                                                                        type="button"
                                                                         onClick={() => setExpandedRowId(isExpanded ? null : log._id)}
-                                                                        className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                                                                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                                                                        aria-expanded={isExpanded}
+                                                                        aria-label={isExpanded ? `Hide details for ${formatLabel(log.actionName)}` : `View details for ${formatLabel(log.actionName)}`}
                                                                     >
-                                                                        <Eye size={14} />
+                                                                        <Eye size={14} aria-hidden="true" />
                                                                         {isExpanded ? 'Hide Details' : 'View Details'}
-                                                                        <ChevronDown size={14} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                                                        <ChevronDown size={14} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} aria-hidden="true" />
                                                                     </button>
                                                                 </div>
                                                             </td>
@@ -657,28 +656,30 @@ const Logs = () => {
                             <div className="flex flex-col gap-3 border-t border-slate-200 px-5 py-4 dark:border-slate-800 md:flex-row md:items-center md:justify-between">
                                 <p className="text-sm text-slate-500 dark:text-slate-400">
                                     {pagination.total > 0
-                                        ? `Showing ${showingFrom}-${showingTo} of ${pagination.total} entries`
+                                        ? `Showing ${showingFrom}–${showingTo} of ${pagination.total} entries`
                                         : 'No entries to display'}
                                 </p>
                                 <div className="flex items-center gap-2">
                                     <button
+                                        type="button"
                                         onClick={() => setPage((current) => Math.max(1, current - 1))}
                                         disabled={!pagination.hasPrevPage || loading}
-                                        className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
                                     >
-                                        <ChevronLeft size={16} />
+                                        <ChevronLeft size={16} aria-hidden="true" />
                                         Previous
                                     </button>
-                                    <div className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                                    <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
                                         Page {pagination.page} / {pagination.totalPages}
                                     </div>
                                     <button
+                                        type="button"
                                         onClick={() => setPage((current) => current + 1)}
                                         disabled={!pagination.hasNextPage || loading}
-                                        className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
                                     >
                                         Next
-                                        <ChevronRight size={16} />
+                                        <ChevronRight size={16} aria-hidden="true" />
                                     </button>
                                 </div>
                             </div>

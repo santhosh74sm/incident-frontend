@@ -34,11 +34,9 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
     useEffect(() => {
         const handleClickOutside = (event) => {
             const target = event.target;
-            // Guard: clicks inside the bell wrapper, the trigger attr, or the panel itself
             const inNotificationBell    = notificationRef.current?.contains(target);
             const inNotificationTrigger = typeof target.closest === 'function' && target.closest('[data-notification-trigger]');
             const inNotificationPortal  = typeof target.closest === 'function' && target.closest('[data-notification-panel]');
-            // Guard: clicks on the backdrop div close the panel — let those through
             const isBackdrop = target?.getAttribute?.('aria-hidden') === 'true' &&
                 target?.classList?.contains('fixed');
 
@@ -52,7 +50,6 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
             }
         };
 
-        // pointerdown covers mouse + touch in one event
         document.addEventListener('pointerdown', handleClickOutside);
         return () => {
             document.removeEventListener('pointerdown', handleClickOutside);
@@ -84,7 +81,6 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
 
     const toggleNotificationPanel = useCallback(() => {
         if (!notificationsEnabled) return;
-
         setShowNotificationPanel((current) => !current);
         setShowDropdown(false);
     }, [notificationsEnabled]);
@@ -98,7 +94,6 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
         if (!['Super Admin', 'Admin'].includes(user?.role)) {
             return [];
         }
-
         return [
             { label: 'Activity history', icon: ListFilter, action: () => navigate('/logs') },
             { label: 'Staff & students', icon: Settings, action: () => navigate('/user-management') },
@@ -111,8 +106,8 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
 
     return (
         <nav
-            className={`fixed right-0 top-0 z-[60] h-14 bg-white/80 px-3 py-2 backdrop-blur-xl transition-all duration-200 dark:bg-slate-950/80 sm:px-4 lg:px-5 ${
-                isSidebarCollapsed ? 'left-0 lg:left-[72px]' : 'left-0 lg:left-[280px]'
+            className={`fixed right-0 top-0 z-[60] h-14 bg-white/80 px-3 py-2 backdrop-blur-xl transition-all duration-300 dark:bg-slate-950/80 sm:px-4 lg:px-5 ${
+                isSidebarCollapsed ? 'left-0 lg:left-[68px]' : 'left-0 lg:left-[268px]'
             }`}
         >
             <div className="pl-14 sm:pl-16 lg:pl-0">
@@ -178,6 +173,9 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                                             : iconButtonBase
                                     } ${showNotificationPanel || hasUnread ? 'dark:bg-indigo-950/70 dark:text-indigo-200 dark:shadow-none' : ''} ${!notificationsEnabled ? 'cursor-not-allowed opacity-60' : ''}`}
                                     aria-label={hasUnread ? `${unreadCount} unread notifications` : 'Notifications'}
+                                    aria-disabled={!notificationsEnabled}
+                                    aria-expanded={showNotificationPanel}
+                                    aria-haspopup="dialog"
                                 >
                                     <Bell size={18} />
                                     {hasUnread ? (
@@ -202,6 +200,8 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                                             ? 'bg-indigo-50 shadow-sm shadow-indigo-100/70 dark:bg-indigo-950/70 dark:shadow-none'
                                             : 'bg-white/80 hover:bg-white hover:shadow-sm dark:bg-slate-900/80 dark:hover:bg-slate-800'
                                     }`}
+                                    aria-expanded={showDropdown}
+                                    aria-haspopup="menu"
                                 >
                                     <div className="hidden text-right sm:block">
                                         <p className="text-sm font-semibold leading-tight text-slate-900 dark:text-slate-100">
@@ -215,11 +215,10 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-blue-600 text-sm font-bold text-white shadow-lg shadow-indigo-500/20">
                                         {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                                     </div>
-
                                 </button>
 
                                 {showDropdown ? (
-                                    <div className="absolute right-0 z-[60] mt-3 max-h-[calc(100vh-5rem)] w-[min(19rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-[22px] border border-slate-200/80 bg-white/95 shadow-[0_30px_60px_rgba(15,23,42,0.16)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/95 sm:rounded-[26px]">
+                                    <div role="menu" aria-label="Account menu" className="absolute right-0 z-[60] mt-3 max-h-[calc(100vh-5rem)] w-[min(19rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-[22px] border border-slate-200/80 bg-white/95 shadow-[0_30px_60px_rgba(15,23,42,0.16)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/95 sm:rounded-[26px]">
                                         <div className="border-b border-slate-100 px-5 py-4 dark:border-slate-800">
                                             <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
                                                 Account
@@ -260,7 +259,6 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                                         <div className="px-3 py-3">
                                             {profileMenuItems.map((item) => {
                                                 const Icon = item.icon;
-
                                                 return (
                                                     <button
                                                         key={item.label}
@@ -269,6 +267,7 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                                                             item.action();
                                                             setShowDropdown(false);
                                                         }}
+                                                        role="menuitem"
                                                         className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-sm font-medium text-slate-600 transition-all duration-200 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
                                                     >
                                                         <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
@@ -285,6 +284,7 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                                                     logout();
                                                     navigate('/login');
                                                 }}
+                                                role="menuitem"
                                                 className="mt-1 flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-sm font-medium text-rose-600 transition-all duration-200 hover:bg-rose-50"
                                             >
                                                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 text-rose-600">

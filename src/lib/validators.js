@@ -14,6 +14,33 @@ import { z } from 'zod';
 export const PASSWORD_MIN_LENGTH = 8;
 export const PASSWORD_POLICY_TEXT = 'Use at least 8 characters with uppercase, lowercase, number, and symbol.';
 
+export const getPasswordStrengthScore = (password = '') => [
+    password.length >= PASSWORD_MIN_LENGTH,
+    /[a-z]/.test(password),
+    /[A-Z]/.test(password),
+    /\d/.test(password),
+    /[^A-Za-z0-9]/.test(password),
+].filter(Boolean).length;
+
+export const getPasswordStrengthLevel = (password = '') => {
+    if (!password) return 0;
+    let score = 0;
+    if (password.length >= PASSWORD_MIN_LENGTH) score += 1;
+    if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score += 1;
+    if (/\d/.test(password)) score += 1;
+    if (/[^A-Za-z0-9]/.test(password)) score += 1;
+    return score;
+};
+
+export const getPasswordStrength = (password = '') => {
+    const score = getPasswordStrengthScore(password);
+
+    if (!password) return { label: 'Not started', score: 0, bar: 'w-0 bg-slate-200', text: 'text-slate-500' };
+    if (score <= 2) return { label: 'Weak', score, bar: 'w-1/3 bg-red-500', text: 'text-red-600' };
+    if (score <= 4) return { label: 'Good', score, bar: 'w-2/3 bg-amber-500', text: 'text-amber-600' };
+    return { label: 'Strong', score, bar: 'w-full bg-emerald-500', text: 'text-emerald-600' };
+};
+
 // ─── Auth schemas ─────────────────────────────────────────────────────────────
 
 export const loginSchema = z.object({

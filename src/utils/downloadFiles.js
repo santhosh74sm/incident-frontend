@@ -1,19 +1,50 @@
-import { Capacitor, registerPlugin } from '@capacitor/core';
-import { Directory, Filesystem } from '@capacitor/filesystem';
+import { Capacitor } from '@capacitor/core';
 
 const DOWNLOAD_SUBDIRECTORY = 'Incident Tracking System';
 const OPEN_DIR = 'open-cache';
-const NATIVE_OPEN_DIRECTORY = Directory.Cache;
-const NativeFileOpener = registerPlugin('NativeFileOpener');
-const NativeDownloadManager = registerPlugin('NativeDownloadManager');
+const NATIVE_OPEN_DIRECTORY = 'CACHE';
+
+let nativePluginPromise = null;
+let filesystemPromise = null;
 
 const logDownloadStep = (step, details = {}) => {
-    // Visible in browser DevTools and Android Logcat/Chrome remote debugging.
+    if (process.env.NODE_ENV !== 'development') return;
+    // Keep diagnostics metadata-only so URLs and native filesystem paths are not exposed.
     console.info(`[download] ${step}`, details);
 };
 
 export const isNativeDownloadPlatform = () =>
     typeof Capacitor?.isNativePlatform === 'function' && Capacitor.isNativePlatform();
+
+const ensureNativeDownloadPlugins = async () => {
+    if (!isNativeDownloadPlatform()) {
+        throw new Error('Native download plugins are only available on native platforms.');
+    }
+
+    if (!nativePluginPromise) {
+        nativePluginPromise = import('@capacitor/core').then(({ registerPlugin }) => ({
+            NativeFileOpener: registerPlugin('NativeFileOpener'),
+            NativeDownloadManager: registerPlugin('NativeDownloadManager'),
+        }));
+    }
+
+    return nativePluginPromise;
+};
+
+const ensureFilesystem = async () => {
+    if (!isNativeDownloadPlatform()) {
+        throw new Error('Filesystem is only available on native platforms.');
+    }
+
+    if (!filesystemPromise) {
+        filesystemPromise = import('@capacitor/filesystem').then(({ Directory, Filesystem }) => ({
+            Directory,
+            Filesystem,
+        }));
+    }
+
+    return filesystemPromise;
+};
 
 export const sanitizeDownloadFilename = (filename = 'download') => {
     const withoutControlChars = Array.from(String(filename || 'download'))
@@ -79,6 +110,7 @@ const inferMimeType = (filename, explicitType = '') => {
 };
 
 export const saveBlobToPublicDownloads = async (blob, filename, options = {}) => {
+    const { NativeDownloadManager } = await ensureNativeDownloadPlugins();
     const safeFilename = sanitizeDownloadFilename(filename);
     const mimeType = inferMimeType(safeFilename, options.mimeType || blob.type);
 
@@ -86,7 +118,7 @@ export const saveBlobToPublicDownloads = async (blob, filename, options = {}) =>
         filename: safeFilename,
         mimeType,
         size: blob?.size,
-        targetFolder: `Downloads/${options.subdirectory || DOWNLOAD_SUBDIRECTORY}`,
+        subdirectory: options.subdirectory || DOWNLOAD_SUBDIRECTORY,
     });
 
     try {
@@ -105,9 +137,8 @@ export const saveBlobToPublicDownloads = async (blob, filename, options = {}) =>
 
         logDownloadStep('native-public-download-complete', {
             filename: safeFilename,
-            uri: result?.uri,
-            path: result?.path,
-            displayPath: result?.displayPath,
+            hasUri: Boolean(result?.uri),
+            hasPath: Boolean(result?.path),
         });
 
         return {
@@ -129,16 +160,15 @@ export const saveBlobToPublicDownloads = async (blob, filename, options = {}) =>
 };
 
 export const saveBlobForNativeOpen = async (blob, filename, options = {}) => {
+    const { Directory, Filesystem } = await ensureFilesystem();
     const safeFilename = sanitizeDownloadFilename(filename);
     const base64Data = await blobToBase64(blob);
     const path = `${options.directoryName || OPEN_DIR}/${safeFilename}`;
-    const directory = options.directory || NATIVE_OPEN_DIRECTORY;
+    const directory = options.directory || Directory.Cache || NATIVE_OPEN_DIRECTORY;
     const mimeType = inferMimeType(safeFilename, options.mimeType || blob.type);
 
     logDownloadStep('native-open-cache-write-start', {
         filename: safeFilename,
-        path,
-        directory,
         mimeType,
         size: blob?.size,
     });
@@ -153,9 +183,7 @@ export const saveBlobForNativeOpen = async (blob, filename, options = {}) => {
 
         logDownloadStep('native-open-cache-write-complete', {
             filename: safeFilename,
-            writeResult,
-            path,
-            directory,
+            hasUri: Boolean(writeResult?.uri),
         });
 
         const uriResult = await Filesystem.getUri({
@@ -165,8 +193,7 @@ export const saveBlobForNativeOpen = async (blob, filename, options = {}) => {
 
         logDownloadStep('native-open-cache-get-uri-complete', {
             filename: safeFilename,
-            uriResult,
-            finalPath: path,
+            hasUri: Boolean(uriResult?.uri),
         });
 
         return {
@@ -182,20 +209,17 @@ export const saveBlobForNativeOpen = async (blob, filename, options = {}) => {
     } catch (error) {
         logDownloadStep('native-open-cache-error', {
             filename: safeFilename,
-            path,
-            directory,
             message: error?.message,
-            error,
         });
         throw error;
     }
 };
 
 export const openNativeFile = async (savedFile) => {
+    const { NativeFileOpener } = await ensureNativeDownloadPlugins();
     logDownloadStep('native-open-viewer-start', {
-        uri: savedFile?.uri,
-        path: savedFile?.path,
         mimeType: savedFile?.mimeType,
+        hasUri: Boolean(savedFile?.uri),
     });
 
     await NativeFileOpener.open({
@@ -204,8 +228,7 @@ export const openNativeFile = async (savedFile) => {
     });
 
     logDownloadStep('native-open-viewer-complete', {
-        uri: savedFile?.uri,
-        path: savedFile?.path,
+        hasUri: Boolean(savedFile?.uri),
     });
 
     return savedFile;
@@ -229,14 +252,13 @@ export const downloadBlob = async (blob, filename, options = {}) => {
 };
 
 export const downloadRemoteFile = async (url, filename, options = {}) => {
-    logDownloadStep('remote-download-fetch-start', { url, filename });
+    logDownloadStep('remote-download-fetch-start', { filename });
     const response = await fetch(url, {
         credentials: 'include',
         ...(options.fetchOptions || {}),
     });
 
     logDownloadStep('remote-download-fetch-complete', {
-        url,
         filename,
         ok: response.ok,
         status: response.status,
@@ -273,14 +295,13 @@ export const openBlob = async (blob, filename, options = {}) => {
 };
 
 export const openRemoteFile = async (url, filename, options = {}) => {
-    logDownloadStep('remote-open-fetch-start', { url, filename });
+    logDownloadStep('remote-open-fetch-start', { filename });
     const response = await fetch(url, {
         credentials: 'include',
         ...(options.fetchOptions || {}),
     });
 
     logDownloadStep('remote-open-fetch-complete', {
-        url,
         filename,
         ok: response.ok,
         status: response.status,

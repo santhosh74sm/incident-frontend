@@ -12,6 +12,7 @@ const AuthContext = createContext({
 });
 
 const PRIVATE_TENANT_FIELD = ['school', 'Id'].join('');
+const AUTH_RESTORE_TIMEOUT_MS = 15000;
 let restoreAuthRequest = null;
 
 const sanitizeUser = (value) => {
@@ -21,11 +22,12 @@ const sanitizeUser = (value) => {
     return user;
 };
 
-const fetchCurrentUser = () => {
+const fetchCurrentUser = (signal) => {
     if (!restoreAuthRequest) {
         restoreAuthRequest = apiClient
             .get('/api/auth/me', {
                 __skipAuthLogout: true,
+                signal,
                 headers: {
                     'Cache-Control': 'no-store',
                 },
@@ -51,9 +53,13 @@ export const AuthProvider = memo(({ children }) => {
 
     const restoreAuth = useCallback(async ({ silent = false } = {}) => {
         if (!silent) setLoading(true);
+        const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        const timeout = window.setTimeout(() => {
+            controller?.abort();
+        }, AUTH_RESTORE_TIMEOUT_MS);
 
         try {
-            const { data } = await fetchCurrentUser();
+            const { data } = await fetchCurrentUser(controller?.signal);
             resetAuthEventGuard();
             setAuthRestoreError(null);
             const safeUser = sanitizeUser(data);
@@ -70,6 +76,7 @@ export const AuthProvider = memo(({ children }) => {
             setAuthRestoreError(error);
             return userRef.current;
         } finally {
+            window.clearTimeout(timeout);
             setAuthReady(true);
             if (!silent) setLoading(false);
         }

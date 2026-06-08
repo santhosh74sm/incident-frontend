@@ -2,12 +2,15 @@ import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     AlertTriangle,
+    BookOpen,
     CheckCircle,
     Clock,
     Eye,
     FileText,
+    MapPin,
     ShieldCheck,
     User as UserIcon,
+    Users,
     Zap,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -22,7 +25,7 @@ import {
     DashboardStatCard,
     EmptyStatePanel,
 } from '../components/analytics/DashboardPrimitives';
-import { buildIncidentFilterParams, getIncidentTimestamp, resolveHandlerLabel } from '../utils/analytics';
+import { buildIncidentFilterParams, formatShortDate, getIncidentTimestamp, resolveHandlerLabel, STATUS_OPTIONS } from '../utils/analytics';
 import apiClient from '../config/apiClient';
 import {
     migrateIncidentStorageForUser,
@@ -31,38 +34,26 @@ import {
     writeUserList,
 } from '../utils/userStorage';
 import { getRecordId } from '../utils/ids';
+import { normalizeRole } from '../utils/roles';
 
-const STATUS_OPTIONS = ['Open', 'In Progress', 'Closed'];
 const READ_STATUS_OPTIONS = ['All', 'Unread', 'Read'];
-const normalizeRole = (role) => {
-    const roleMap = {
-        admin: 'Admin',
-        teacher: 'Teacher',
-        super_admin: 'Super Admin',
-        'super admin': 'Super Admin',
-    };
-    return roleMap[String(role || '').trim().toLowerCase()] || role;
-};
-
-const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    try {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-        });
-    } catch {
-        return 'N/A';
-    }
-};
+const formatDate = formatShortDate;
 
 const statusPill = (status, overrides = {}) => {
-    if (overrides.pending) return 'border-red-200 bg-red-50 text-red-700';
-    if (overrides.closureRequested) return 'border-emerald-200 bg-emerald-50 text-emerald-700';
-    if (status === 'Closed') return 'border-emerald-200 bg-emerald-50 text-emerald-700';
-    if (status === 'In Progress') return 'border-blue-200 bg-blue-50 text-blue-700';
-    return 'border-orange-200 bg-orange-50 text-orange-700';
+    if (overrides.pending) return 'border-red-200 bg-red-50 text-red-700 dark:border-red-500/40 dark:bg-red-950/30 dark:text-red-300';
+    if (overrides.closureRequested) return 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-950/30 dark:text-emerald-300';
+    if (status === 'Closed') return 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-950/30 dark:text-emerald-300';
+    if (status === 'In Progress') return 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-500/40 dark:bg-blue-950/30 dark:text-blue-300';
+    return 'border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-500/40 dark:bg-orange-950/30 dark:text-orange-300';
+};
+
+// Icon map for category quick-scan
+const categoryIcon = (category = '') => {
+    const c = category.toLowerCase();
+    if (c.includes('fight') || c.includes('bully') || c.includes('violence')) return AlertTriangle;
+    if (c.includes('attend') || c.includes('absent')) return Clock;
+    if (c.includes('academ') || c.includes('exam') || c.includes('cheat')) return BookOpen;
+    return FileText;
 };
 
 const IncidentList = () => {
@@ -325,9 +316,9 @@ const IncidentList = () => {
 
     if (loading && incidents.length === 0) {
         return (
-            <div className="flex min-h-screen bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-100">
-                <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-                    <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+            <div className="flex bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-100">
+                <div className="flex min-w-0 flex-1 flex-col">
+                    <main className="flex-1 p-4 lg:p-6">
                         <div className="mx-auto max-w-[1600px]">
                             <DashboardPageSkeleton />
                         </div>
@@ -338,74 +329,122 @@ const IncidentList = () => {
     }
 
     return (
-        <div className="flex min-h-screen bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-100">
-            <div className="flex min-w-0 flex-1 flex-col min-w-0">
-                <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+        <div className="flex bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-100">
+            <div className="flex min-w-0 flex-1 flex-col">
+                <main className="flex-1 p-4 lg:p-6">
                     <div className="mx-auto max-w-[1600px] space-y-6">
                         <DashboardHero
-                            eyebrow="Incidents"
-                            title="All incidents"
-                            description="Find students by name or admission number, narrow the list with simple filters, and open any case in full detail."
+                            eyebrow="Incident Management"
+                            title="All Incidents"
+                            description="Search by student name or admission number, apply filters to narrow results, and open any case for full details."
                             icon={ShieldCheck}
                             meta={(
-                                <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
-                                    <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800">
-                                        {summary.total} result{summary.total === 1 ? '' : 's'} in current view
+                                <div className="flex flex-wrap items-center gap-2 text-sm">
+                                    <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                                        <FileText size={13} className="text-slate-400" />
+                                        {summary.total} {summary.total === 1 ? 'result' : 'results'}
                                     </span>
-                                    <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800">
-                                        {summary.highPriority} high-priority item{summary.highPriority === 1 ? '' : 's'}
-                                    </span>
-                                    <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800">
-                                        {unreadCount} unread incident{unreadCount === 1 ? '' : 's'}
-                                    </span>
+                                    {summary.highPriority > 0 ? (
+                                        <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 font-medium text-amber-800 dark:border-amber-500/30 dark:bg-amber-950/30 dark:text-amber-300">
+                                            <Zap size={13} />
+                                            {summary.highPriority} high-priority
+                                        </span>
+                                    ) : null}
+                                    {unreadCount > 0 ? (
+                                        <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 font-medium text-blue-800 dark:border-blue-500/30 dark:bg-blue-950/30 dark:text-blue-300">
+                                            <Eye size={13} />
+                                            {unreadCount} unread
+                                        </span>
+                                    ) : null}
+                                    {hasActiveFilters ? (
+                                        <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 font-medium text-violet-800 dark:border-violet-500/30 dark:bg-violet-950/30 dark:text-violet-300">
+                                            Filtered view
+                                        </span>
+                                    ) : null}
                                 </div>
                             )}
                         />
 
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                            <DashboardStatCard title="Results" value={summary.total} icon={FileText} tone="slate" helper="Matches your search and filters" />
-                            <DashboardStatCard title="Open" value={summary.open} icon={AlertTriangle} tone="amber" helper="Waiting for first action" />
-                            <DashboardStatCard title="In Progress" value={summary.inProgress} icon={Clock} tone="blue" helper="Currently being handled" />
-                            <DashboardStatCard title="Closed" value={summary.closed} icon={CheckCircle} tone="emerald" helper="Resolved within scope" />
+                        <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+                            <DashboardStatCard
+                                title="Total"
+                                value={summary.total}
+                                icon={FileText}
+                                tone="slate"
+                                helper={hasActiveFilters ? 'Filtered results' : 'All incidents'}
+                            />
+                            <DashboardStatCard
+                                title="Open"
+                                value={summary.open}
+                                icon={AlertTriangle}
+                                tone="amber"
+                                helper="Awaiting action"
+                            />
+                            <DashboardStatCard
+                                title="In Progress"
+                                value={summary.inProgress}
+                                icon={Clock}
+                                tone="blue"
+                                helper="Being handled"
+                            />
+                            <DashboardStatCard
+                                title="Closed"
+                                value={summary.closed}
+                                icon={CheckCircle}
+                                tone="emerald"
+                                helper="Resolved"
+                            />
                         </div>
 
-                        <DashboardPanel bodyClassName="p-0">
-                            <div className="flex flex-col gap-2 md:flex-row">
+                        <div className="overflow-hidden rounded-[20px] border border-white/70 bg-white/90 shadow-md shadow-slate-200/70 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-slate-950/40 sm:rounded-[26px]">
+                            <div className="flex" role="tablist" aria-label="Incident view">
                                 <button
                                     type="button"
+                                    role="tab"
+                                    aria-selected={activeTab === 'all'}
                                     onClick={() => setActiveTab('all')}
-                                    className={`flex-1 border-b px-5 py-4 text-sm font-semibold transition ${
+                                    className={`flex flex-1 items-center justify-center gap-2.5 border-b-2 px-4 py-3.5 text-sm font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset sm:px-6 sm:py-4 ${
                                         activeTab === 'all'
-                                            ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-200'
-                                            : 'border-slate-100 text-slate-600 hover:bg-slate-50 hover:text-slate-800 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100'
+                                            ? 'border-blue-500 bg-blue-50/80 text-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
+                                            : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200'
                                     }`}
                                 >
-                                    <span className="inline-flex items-center gap-2">
-                                        All Incidents
-                                        <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${activeTab === 'all' ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-200'}`}>
-                                            {incidents.length}
-                                        </span>
+                                    <FileText size={15} />
+                                    <span>All Incidents</span>
+                                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold tabular-nums ${
+                                        activeTab === 'all'
+                                            ? 'bg-blue-600 text-white'
+                                            : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
+                                    }`}>
+                                        {incidents.length}
                                     </span>
                                 </button>
+                                <div className="w-px self-stretch bg-slate-100 dark:bg-slate-800" aria-hidden="true" />
                                 <button
                                     type="button"
+                                    role="tab"
+                                    aria-selected={activeTab === 'highPriority'}
                                     onClick={() => setActiveTab('highPriority')}
-                                    className={`flex-1 border-b px-5 py-4 text-sm font-semibold transition ${
+                                    className={`flex flex-1 items-center justify-center gap-2.5 border-b-2 px-4 py-3.5 text-sm font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-inset sm:px-6 sm:py-4 ${
                                         activeTab === 'highPriority'
-                                            ? 'border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-200'
-                                            : 'border-slate-100 text-slate-600 hover:bg-slate-50 hover:text-slate-800 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100'
+                                            ? 'border-amber-500 bg-amber-50/80 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300'
+                                            : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200'
                                     }`}
                                 >
-                                    <span className="inline-flex items-center gap-2">
-                                        <AlertTriangle size={16} />
-                                        High Priority
-                                        <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${activeTab === 'highPriority' ? 'bg-amber-500 text-white' : summary.highPriority > 0 ? 'bg-red-500 text-white' : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-200'}`}>
-                                            {summary.highPriority}
-                                        </span>
+                                    <Zap size={15} />
+                                    <span>High Priority</span>
+                                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold tabular-nums ${
+                                        activeTab === 'highPriority'
+                                            ? 'bg-amber-500 text-white'
+                                            : summary.highPriority > 0
+                                                ? 'bg-red-500 text-white'
+                                                : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
+                                    }`}>
+                                        {summary.highPriority}
                                     </span>
                                 </button>
                             </div>
-                        </DashboardPanel>
+                        </div>
 
                         <UnifiedFilterBar
                             title="Find records"
@@ -548,7 +587,7 @@ const IncidentList = () => {
                         {!error && filteredIncidents.length > 0 ? (
                             <DashboardPanel
                                 title="Incident Results"
-                                description={`${filteredIncidents.length} incident${filteredIncidents.length === 1 ? '' : 's'} in the current view.`}
+                                description={`Showing ${filteredIncidents.length} incident${filteredIncidents.length === 1 ? '' : 's'}${hasActiveFilters ? ' — filtered view' : ''}.`}
                                 icon={FileText}
                                 actions={isSuperAdmin ? (
                                     <BulkDeleteControls
@@ -561,7 +600,7 @@ const IncidentList = () => {
                                     />
                                 ) : null}
                             >
-                                <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
                                     {filteredIncidents.map((incident) => {
                                         const isPendingApproval = ['Super Admin', 'Admin'].includes(user?.role) && incident.approvalStatus === 'Pending';
                                         const isClosureRequest = ['Super Admin', 'Admin'].includes(user?.role) && incident.closureRequested && incident.status !== 'Closed';
@@ -577,89 +616,128 @@ const IncidentList = () => {
                                                     : 'N/A';
                                         const incidentDate = getIncidentTimestamp(incident);
                                         const badgeLabel = isPendingApproval ? 'Pending Approval' : isClosureRequest ? 'Seal Ready' : (incident.status === 'In Progress' ? 'In Progress' : incident.status);
+                                        const CatIcon = categoryIcon(incident.category);
+                                        const incidentId = getRecordId(incident);
 
                                         return (
-                                            <div
-                                                key={getRecordId(incident)}
-                                                className={`rounded-[26px] border bg-white/95 p-5 shadow-md shadow-slate-200/60 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg dark:bg-slate-900/95 dark:shadow-slate-950/30 ${
-                                                    priority ? 'border-amber-200 ring-1 ring-amber-200/70 dark:border-amber-500/40 dark:ring-amber-500/20' : unread ? 'border-blue-200 ring-1 ring-blue-200/70 dark:border-blue-500/40 dark:ring-blue-500/20' : 'border-white/70 dark:border-slate-800'
+                                            <article
+                                                key={incidentId}
+                                                aria-label={`Incident: ${incident.title || 'Untitled'}`}
+                                                className={`group flex flex-col rounded-[22px] border bg-white/95 shadow-md shadow-slate-200/60 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg dark:bg-slate-900/95 dark:shadow-slate-950/30 ${
+                                                    priority
+                                                        ? 'border-amber-200 ring-1 ring-amber-200/70 dark:border-amber-500/40 dark:ring-amber-500/20'
+                                                        : unread
+                                                            ? 'border-blue-200 ring-1 ring-blue-200/70 dark:border-blue-500/40 dark:ring-blue-500/20'
+                                                            : 'border-slate-200/80 dark:border-slate-800'
                                                 }`}
                                             >
-                                                <div className="flex flex-col gap-4">
-                                                    <div className="flex flex-wrap items-start justify-between gap-3">
-                                                        <div className="flex flex-wrap items-center gap-2">
-                                                            <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${statusPill(incident.status, { pending: isPendingApproval, closureRequested: isClosureRequest })}`}>
+                                                {/* Card top accent stripe */}
+                                                <div className={`h-1 w-full rounded-t-[22px] ${
+                                                    isPendingApproval ? 'bg-red-400' :
+                                                    isClosureRequest ? 'bg-emerald-400' :
+                                                    incident.status === 'Closed' ? 'bg-emerald-400' :
+                                                    incident.status === 'In Progress' ? 'bg-blue-400' :
+                                                    isHighPriority ? 'bg-amber-400' :
+                                                    'bg-orange-300'
+                                                }`} aria-hidden="true" />
+
+                                                <div className="flex flex-1 flex-col gap-0 p-4 sm:p-5">
+                                                    {/* Row 1 — badges + date */}
+                                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                                        <div className="flex flex-wrap items-center gap-1.5">
+                                                            <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.14em] ${statusPill(incident.status, { pending: isPendingApproval, closureRequested: isClosureRequest })}`}>
                                                                 {badgeLabel}
                                                             </span>
                                                             {isHighPriority ? (
-                                                                <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-100 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-amber-800 dark:border-amber-500/30 dark:bg-amber-950/30 dark:text-amber-200">
-                                                                    <Zap size={11} />
-                                                                    High Priority
+                                                                <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-100 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.14em] text-amber-800 dark:border-amber-500/30 dark:bg-amber-950/30 dark:text-amber-300">
+                                                                    <Zap size={10} aria-hidden="true" />
+                                                                    Priority
                                                                 </span>
                                                             ) : null}
                                                             {unread ? (
-                                                                <span className="inline-flex rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-blue-700 dark:border-blue-500/30 dark:bg-blue-950/30 dark:text-blue-200">
+                                                                <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.14em] text-blue-700 dark:border-blue-500/30 dark:bg-blue-950/30 dark:text-blue-300">
                                                                     New
                                                                 </span>
                                                             ) : null}
                                                         </div>
-                                                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{formatDate(incidentDate)}</span>
+                                                        <time
+                                                            dateTime={incidentDate}
+                                                            className="shrink-0 text-[11px] font-medium tabular-nums text-slate-400 dark:text-slate-500"
+                                                        >
+                                                            {formatDate(incidentDate)}
+                                                        </time>
                                                     </div>
 
-                                                    <div>
-                                                        <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-50">{incident.title || 'Untitled Incident'}</h3>
-                                                        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                                                            Admission No: <span className="font-semibold text-slate-700 dark:text-slate-200">{incident.admissionNo || 'N/A'}</span>
+                                                    {/* Row 2 — title + admission */}
+                                                    <div className="mt-3">
+                                                        <h3 className="line-clamp-2 text-base font-bold leading-snug tracking-tight text-slate-900 dark:text-slate-50">
+                                                            {incident.title || 'Untitled Incident'}
+                                                        </h3>
+                                                        <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                                                            Adm. No: <span className="font-semibold text-slate-600 dark:text-slate-300">{incident.admissionNo || 'N/A'}</span>
                                                         </p>
                                                     </div>
 
-                                                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                                        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3.5 dark:border-slate-800 dark:bg-slate-950/70">
-                                                            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Student</p>
-                                                            <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">{studentsDisplay}</p>
+                                                    {/* Row 3 — key facts grid */}
+                                                    <dl className="mt-3.5 grid grid-cols-2 gap-2">
+                                                        <div className="flex items-start gap-2 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-slate-800 dark:bg-slate-950/60">
+                                                            <Users size={13} className="mt-0.5 shrink-0 text-slate-400" aria-hidden="true" />
+                                                            <div className="min-w-0">
+                                                                <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">Student</dt>
+                                                                <dd className="mt-0.5 truncate text-xs font-semibold text-slate-800 dark:text-slate-100" title={studentsDisplay}>{studentsDisplay}</dd>
+                                                            </div>
                                                         </div>
-                                                        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3.5 dark:border-slate-800 dark:bg-slate-950/70">
-                                                            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Assigned To</p>
-                                                            <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">{resolveHandlerLabel(incident)}</p>
+                                                        <div className="flex items-start gap-2 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-slate-800 dark:bg-slate-950/60">
+                                                            <UserIcon size={13} className="mt-0.5 shrink-0 text-slate-400" aria-hidden="true" />
+                                                            <div className="min-w-0">
+                                                                <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">Assigned To</dt>
+                                                                <dd className="mt-0.5 truncate text-xs font-semibold text-slate-800 dark:text-slate-100" title={resolveHandlerLabel(incident)}>{resolveHandlerLabel(incident)}</dd>
+                                                            </div>
                                                         </div>
-                                                        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3.5 dark:border-slate-800 dark:bg-slate-950/70">
-                                                            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Category</p>
-                                                            <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">{incident.category || 'Uncategorized'}</p>
+                                                        <div className="flex items-start gap-2 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-slate-800 dark:bg-slate-950/60">
+                                                            <CatIcon size={13} className="mt-0.5 shrink-0 text-slate-400" aria-hidden="true" />
+                                                            <div className="min-w-0">
+                                                                <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">Category</dt>
+                                                                <dd className="mt-0.5 truncate text-xs font-semibold text-slate-800 dark:text-slate-100" title={incident.category || 'Uncategorized'}>{incident.category || 'Uncategorized'}</dd>
+                                                            </div>
                                                         </div>
-                                                        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3.5 dark:border-slate-800 dark:bg-slate-950/70">
-                                                            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Location</p>
-                                                            <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">{incident.location || 'Not specified'}</p>
+                                                        <div className="flex items-start gap-2 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-slate-800 dark:bg-slate-950/60">
+                                                            <MapPin size={13} className="mt-0.5 shrink-0 text-slate-400" aria-hidden="true" />
+                                                            <div className="min-w-0">
+                                                                <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">Location</dt>
+                                                                <dd className="mt-0.5 truncate text-xs font-semibold text-slate-800 dark:text-slate-100" title={incident.location || 'Not specified'}>{incident.location || 'Not specified'}</dd>
+                                                            </div>
                                                         </div>
-                                                    </div>
+                                                    </dl>
 
+                                                    {/* Rejection notice */}
                                                     {incident.rejectionReason ? (
-                                                        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-950/30 dark:text-red-200">
-                                                            <span className="font-semibold">Review note:</span> {incident.rejectionReason}
+                                                        <div role="alert" className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-xs text-red-700 dark:border-red-500/30 dark:bg-red-950/30 dark:text-red-300">
+                                                            <span className="font-semibold">Review note: </span>{incident.rejectionReason}
                                                         </div>
                                                     ) : null}
 
-                                                    <div className="flex flex-col gap-3 border-t border-slate-100 pt-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
-                                                        <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                                                            <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 dark:border-slate-700 dark:bg-slate-800">
-                                                                <UserIcon size={14} />
-                                                                Class {incident.class || 'N/A'} - Section {incident.section || 'N/A'}
-                                                            </span>
-                                                        </div>
+                                                    {/* Card footer */}
+                                                    <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3.5 dark:border-slate-800 mt-4">
+                                                        <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+                                                            <BookOpen size={11} aria-hidden="true" />
+                                                            Class {incident.class || '—'} · {incident.section || '—'}
+                                                        </span>
                                                         <button
                                                             type="button"
+                                                            aria-label={`View details for ${incident.title || 'this incident'}`}
                                                             onClick={() => {
-                                                                const incidentId = getRecordId(incident);
                                                                 markAsRead(incidentId);
                                                                 navigate(`/incidents/${incidentId}`);
                                                             }}
-                                                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+                                                            className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-3.5 py-2 text-xs font-bold text-white transition-all duration-150 hover:bg-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:bg-slate-700 dark:hover:bg-blue-600"
                                                         >
-                                                            <Eye size={15} />
-                                                            View Incident
+                                                            <Eye size={13} aria-hidden="true" />
+                                                            View
                                                         </button>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            </article>
                                         );
                                     })}
                                 </div>

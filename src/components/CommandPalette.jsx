@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import apiClient from '../config/apiClient';
-import { AnimatePresence, motion } from 'framer-motion';
 import {
     AlertTriangle,
     ArrowRight,
@@ -9,6 +8,7 @@ import {
     FileText,
     LayoutDashboard,
     List,
+    Loader2,
     Mail,
     PlusCircle,
     Search,
@@ -19,84 +19,88 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getRecordId } from '../utils/ids';
 
+// ─── Static maps ──────────────────────────────────────────────────────────────
 
 const typeIconMap = {
-    student: User,
+    student : User,
     incident: AlertTriangle,
-    letter: FileText,
-    command: Command,
+    letter  : FileText,
+    command : Command,
 };
 
 const commandIconByTitle = {
-    'Go to Dashboard': LayoutDashboard,
-    'Report New Incident': PlusCircle,
-    'View Incident List': List,
-    'School reports & summary': BarChart3,
-    'Student summaries': User,
-    'View Issued Letters': Mail,
+    'Go to Dashboard'          : LayoutDashboard,
+    'Report New Incident'      : PlusCircle,
+    'View Incident List'       : List,
+    'School reports & summary' : BarChart3,
+    'Student summaries'        : User,
+    'View Issued Letters'      : Mail,
 };
 
 const commandSections = [
-    { key: 'student', label: 'Students' },
+    { key: 'student',  label: 'Students' },
     { key: 'incident', label: 'Incidents' },
-    { key: 'letter', label: 'Letters' },
-    { key: 'command', label: 'Quick Actions' },
+    { key: 'letter',   label: 'Letters' },
+    { key: 'command',  label: 'Quick Actions' },
 ];
 
 const quickActionItems = [
     {
         title: 'Go to Dashboard',
-        sub: 'Open the school overview.',
-        link: '/dashboard',
-        type: 'command',
+        sub  : 'Open the school overview.',
+        link : '/dashboard',
+        type : 'command',
         roles: ['Super Admin', 'Admin', 'Teacher'],
     },
     {
         title: 'Report New Incident',
-        sub: 'Start a new incident report.',
-        link: '/create-incident',
-        type: 'command',
+        sub  : 'Start a new incident report.',
+        link : '/create-incident',
+        type : 'command',
         roles: ['Admin', 'Teacher'],
     },
     {
         title: 'View Incident List',
-        sub: 'Review active and past incidents.',
-        link: '/incidents',
-        type: 'command',
+        sub  : 'Review active and past incidents.',
+        link : '/incidents',
+        type : 'command',
         roles: ['Super Admin', 'Admin', 'Teacher'],
     },
     {
         title: 'School reports & summary',
-        sub: 'Open charts and summaries for the whole school.',
-        link: '/analytics',
-        type: 'command',
+        sub  : 'Open charts and summaries for the whole school.',
+        link : '/analytics',
+        type : 'command',
         roles: ['Super Admin', 'Admin', 'Teacher'],
     },
     {
         title: 'Student summaries',
-        sub: 'Look up one student\'s involvement and history.',
-        link: '/student-analytics',
-        type: 'command',
+        sub  : 'Look up one student\'s involvement and history.',
+        link : '/student-analytics',
+        type : 'command',
         roles: ['Super Admin', 'Admin', 'Teacher'],
     },
     {
         title: 'View Issued Letters',
-        sub: 'See letters produced from incidents.',
-        link: '/issued-letters',
-        type: 'command',
+        sub  : 'See letters produced from incidents.',
+        link : '/issued-letters',
+        type : 'command',
         roles: ['Super Admin', 'Admin'],
     },
 ];
 
+// ─── CommandPalette ───────────────────────────────────────────────────────────
+
 const CommandPalette = () => {
-    const { user } = useAuth();
-    const navigate = useNavigate();
-    const [isOpen, setIsOpen] = useState(false);
-    const [query, setQuery] = useState('');
-    const [results, setResults] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const { user }   = useAuth();
+    const navigate   = useNavigate();
+    const [isOpen, setIsOpen]       = useState(false);
+    const [query, setQuery]         = useState('');
+    const [results, setResults]     = useState([]);
+    const [loading, setLoading]     = useState(false);
     const [activeIndex, setActiveIndex] = useState(0);
-    const inputRef = useRef(null);
+    const inputRef  = useRef(null);
+    const listboxId = 'command-palette-results';
 
     const closePalette = () => {
         setIsOpen(false);
@@ -105,10 +109,10 @@ const CommandPalette = () => {
         setActiveIndex(0);
     };
 
+    // ── Global keyboard toggle ─────────────────────────────────────────────────
     useEffect(() => {
         const handleKeyboardToggle = (event) => {
             const isK = event.key?.toLowerCase() === 'k';
-
             if ((event.ctrlKey || event.metaKey) && isK) {
                 event.preventDefault();
                 setIsOpen((current) => !current);
@@ -126,13 +130,14 @@ const CommandPalette = () => {
         };
     }, []);
 
+    // ── Auto-focus input when opened ───────────────────────────────────────────
     useEffect(() => {
         if (!isOpen) return undefined;
-
         const timer = setTimeout(() => inputRef.current?.focus(), 50);
         return () => clearTimeout(timer);
     }, [isOpen]);
 
+    // ── Search (logic unchanged) ───────────────────────────────────────────────
     useEffect(() => {
         if (!isOpen || !getRecordId(user)) return undefined;
 
@@ -148,14 +153,12 @@ const CommandPalette = () => {
         const controller = new AbortController();
         const timeout = setTimeout(async () => {
             setLoading(true);
-
             try {
                 const response = await apiClient.get('/api/search/global', {
                     params: { query: trimmedQuery },
                     headers: {},
                     signal: controller.signal,
                 });
-
                 setResults(response.data?.results || []);
                 setActiveIndex(0);
             } catch {
@@ -171,6 +174,7 @@ const CommandPalette = () => {
         };
     }, [isOpen, query, user]);
 
+    // ── Quick actions (filtered by role) ──────────────────────────────────────
     const quickActions = useMemo(
         () => quickActionItems.filter((item) => item.roles.includes(user?.role)),
         [user?.role]
@@ -178,15 +182,10 @@ const CommandPalette = () => {
 
     const groupedResults = useMemo(() => {
         const buckets = { student: [], incident: [], letter: [], command: [] };
-
         (results || []).forEach((item) => {
             const key = item?.type || 'command';
-
-            if (buckets[key]) {
-                buckets[key].push(item);
-            }
+            if (buckets[key]) buckets[key].push(item);
         });
-
         return buckets;
     }, [results]);
 
@@ -196,12 +195,8 @@ const CommandPalette = () => {
                 ? [{ key: 'quick-actions', label: 'Quick Actions', items: quickActions }]
                 : [];
         }
-
         return commandSections
-            .map((section) => ({
-                ...section,
-                items: groupedResults?.[section.key] || [],
-            }))
+            .map((section) => ({ ...section, items: groupedResults?.[section.key] || [] }))
             .filter((section) => section.items.length > 0);
     }, [groupedResults, query, quickActions]);
 
@@ -210,6 +205,7 @@ const CommandPalette = () => {
         [visibleSections]
     );
 
+    // ── Arrow / Enter / Escape navigation ─────────────────────────────────────
     useEffect(() => {
         if (!isOpen) return undefined;
 
@@ -219,7 +215,6 @@ const CommandPalette = () => {
                 closePalette();
                 return;
             }
-
             if (!visibleItems.length) return;
 
             if (event.key === 'ArrowDown') {
@@ -231,7 +226,6 @@ const CommandPalette = () => {
             } else if (event.key === 'Enter') {
                 event.preventDefault();
                 const selected = visibleItems[activeIndex];
-
                 if (selected?.link) {
                     navigate(selected.link);
                     closePalette();
@@ -243,41 +237,56 @@ const CommandPalette = () => {
         return () => window.removeEventListener('keydown', handlePaletteKeys);
     }, [activeIndex, isOpen, navigate, visibleItems]);
 
+    if (!isOpen) return null;
+
     return (
-        <AnimatePresence>
-            {isOpen ? (
-                <motion.div
+                <div
                     className="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto bg-slate-950/48 p-3 backdrop-blur-sm sm:p-4"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
+                    style={{ animation: 'commandPaletteFade 150ms ease-out' }}
                     onClick={closePalette}
+                    aria-label="Command palette backdrop"
                 >
-                    <motion.div
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label="Command palette"
                         className="my-4 w-full max-w-3xl overflow-hidden rounded-[22px] border border-slate-200/80 bg-white/95 shadow-[0_36px_80px_rgba(15,23,42,0.22)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/95 sm:my-8 sm:rounded-[30px]"
-                        initial={{ opacity: 0, scale: 0.96, y: -16 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.98, y: -10 }}
-                        transition={{ duration: 0.18, ease: 'easeOut' }}
+                        style={{ animation: 'commandPalettePanel 180ms ease-out' }}
                         onClick={(event) => event.stopPropagation()}
                     >
+                        {/* ── Search header ─────────────────────────────────── */}
                         <div className="border-b border-slate-200/80 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.12),transparent_65%)] px-5 py-4 dark:border-slate-800">
                             <div className="flex items-center gap-3">
-                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-950 text-white">
-                                    <Command size={18} />
+                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-950 text-white dark:bg-slate-800">
+                                    <Command size={18} aria-hidden />
                                 </div>
 
                                 <div className="relative min-w-0 flex-1">
-                                    <Search className="pointer-events-none absolute left-0 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                    <Search
+                                        className="pointer-events-none absolute left-0 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                                        aria-hidden
+                                    />
                                     <input
                                         ref={inputRef}
                                         value={query}
                                         onChange={(event) => setQuery(event.target.value)}
-                                        placeholder="Search students, incidents, letters, or open a shortcut…"
+                                        placeholder="Search students, incidents, letters, or jump to a page…"
                                         className="w-full border-none bg-transparent py-2 pl-7 pr-2 text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
+                                        role="combobox"
+                                        aria-expanded={isOpen}
+                                        aria-autocomplete="list"
+                                        aria-controls={listboxId}
+                                        aria-activedescendant={
+                                            visibleItems[activeIndex]
+                                                ? `cmd-item-${activeIndex}`
+                                                : undefined
+                                        }
+                                        autoComplete="off"
+                                        spellCheck={false}
                                     />
                                 </div>
 
+                                {/* ESC hint */}
                                 <div className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white/90 px-2.5 py-1.5 dark:border-slate-700 dark:bg-slate-900 sm:flex">
                                     <kbd className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
                                         Esc
@@ -290,60 +299,111 @@ const CommandPalette = () => {
                                     className="inline-flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
                                     aria-label="Close search"
                                 >
-                                    <X size={18} />
+                                    <X size={18} aria-hidden />
                                 </button>
                             </div>
 
-                            <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                            {/* Keyboard hints */}
+                            <div
+                                className="mt-3 flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400"
+                                aria-hidden
+                            >
                                 <span className="rounded-full border border-slate-200 bg-white/90 px-2.5 py-1 dark:border-slate-700 dark:bg-slate-900">
-                                    Enter to open
+                                    ↑↓ Navigate
                                 </span>
                                 <span className="rounded-full border border-slate-200 bg-white/90 px-2.5 py-1 dark:border-slate-700 dark:bg-slate-900">
-                                    Arrow keys to navigate
+                                    ↵ Open
+                                </span>
+                                <span className="rounded-full border border-slate-200 bg-white/90 px-2.5 py-1 dark:border-slate-700 dark:bg-slate-900">
+                                    Esc Close
                                 </span>
                             </div>
                         </div>
 
-                        <div className="max-h-[68vh] overflow-y-auto px-4 py-4">
+                        {/* ── Results body ───────────────────────────────────── */}
+                        <div
+                            id={listboxId}
+                            role="listbox"
+                            aria-label="Search results"
+                            className="max-h-[68vh] overflow-y-auto px-4 py-4"
+                            style={{ scrollbarWidth: 'thin', scrollbarColor: '#cbd5e1 transparent' }}
+                        >
+                            {/* Onboarding hint — shown when no query typed */}
                             {!query.trim() ? (
-                                <div className="mb-4 rounded-[24px] border border-slate-200 bg-slate-50/80 px-4 py-4 dark:border-slate-800 dark:bg-slate-950/60">
-                                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Start with a quick action</p>
+                                <div className="mb-4 rounded-[20px] border border-slate-200 bg-slate-50/80 px-4 py-4 dark:border-slate-800 dark:bg-slate-950/60">
+                                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                        Jump to anything
+                                    </p>
                                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                                        Jump to a common workflow or begin typing to search the entire workspace.
+                                        Type to search students, incidents, and letters — or pick a quick action below.
                                     </p>
                                 </div>
                             ) : null}
 
+                            {/* Loading state */}
                             {loading ? (
-                                <div className="px-2 py-8 text-center text-sm text-slate-500">Searching...</div>
+                                <div
+                                    aria-live="polite"
+                                    aria-label="Searching…"
+                                    className="flex items-center justify-center gap-2 px-2 py-10 text-sm text-slate-500"
+                                >
+                                    <Loader2 size={16} className="animate-spin text-blue-500" aria-hidden />
+                                    Searching…
+                                </div>
                             ) : visibleItems.length === 0 ? (
-                                <div className="px-2 py-10 text-center">
-                                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
-                                        <Search size={18} />
+                                /* Empty / no-result state */
+                                <div
+                                    aria-live="polite"
+                                    className="px-2 py-10 text-center"
+                                >
+                                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500">
+                                        <Search size={18} aria-hidden />
                                     </div>
-                                    <p className="mt-4 text-sm font-semibold text-slate-700">No results found</p>
-                                    <p className="mt-1 text-sm text-slate-500">
-                                        Try a different keyword or open a quick action.
-                                    </p>
+                                    {query.trim() ? (
+                                        <>
+                                            <p className="mt-4 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                                No results for "{query.trim()}"
+                                            </p>
+                                            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                                Try a different keyword, or use a quick action below.
+                                            </p>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <p className="mt-4 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                                No quick actions available
+                                            </p>
+                                            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                                Start typing to search the workspace.
+                                            </p>
+                                        </>
+                                    )}
                                 </div>
                             ) : (
+                                /* Result sections */
                                 visibleSections.map((section) => (
                                     <div key={section.key} className="mb-4 last:mb-0">
-                                        <p className="px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                                        <p
+                                            className="px-2 py-1 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400"
+                                            aria-hidden
+                                        >
                                             {section.label}
                                         </p>
 
-                                        <div className="mt-2 space-y-2">
+                                        <div className="mt-1.5 space-y-1.5">
                                             {section.items.map((item) => {
-                                                const index = visibleItems.findIndex((entry) => entry === item);
-                                                const BaseIcon = typeIconMap[item?.type] || Command;
+                                                const index      = visibleItems.findIndex((entry) => entry === item);
+                                                const BaseIcon   = typeIconMap[item?.type] || Command;
                                                 const CommandIcon = item?.type === 'command' ? commandIconByTitle[item?.title] : null;
-                                                const ResultIcon = CommandIcon || BaseIcon;
-                                                const isActive = index === activeIndex;
+                                                const ResultIcon  = CommandIcon || BaseIcon;
+                                                const isActive    = index === activeIndex;
 
                                                 return (
                                                     <button
                                                         key={`${item?.type}-${item?.title}-${item?.sub}-${index}`}
+                                                        id={`cmd-item-${index}`}
+                                                        role="option"
+                                                        aria-selected={isActive}
                                                         type="button"
                                                         onMouseEnter={() => setActiveIndex(index)}
                                                         onClick={() => {
@@ -352,20 +412,21 @@ const CommandPalette = () => {
                                                                 closePalette();
                                                             }
                                                         }}
-                                                        className={`flex w-full items-center gap-3 rounded-[22px] border px-4 py-3 text-left transition-all duration-200 ${
+                                                        className={`flex w-full items-center gap-3 rounded-[18px] border px-4 py-3 text-left transition-all duration-150 ${
                                                             isActive
                                                                 ? 'border-indigo-200 bg-indigo-50 shadow-sm dark:border-indigo-500/40 dark:bg-indigo-950/40'
                                                                 : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700 dark:hover:bg-slate-800'
                                                         }`}
                                                     >
                                                         <div
-                                                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${
+                                                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors duration-150 ${
                                                                 isActive
                                                                     ? 'bg-indigo-500 text-white'
-                                                                    : 'bg-slate-100 text-slate-600'
+                                                                    : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
                                                             }`}
+                                                            aria-hidden
                                                         >
-                                                            <ResultIcon size={16} />
+                                                            <ResultIcon size={15} />
                                                         </div>
 
                                                         <div className="min-w-0 flex-1">
@@ -378,10 +439,11 @@ const CommandPalette = () => {
                                                         </div>
 
                                                         <ArrowRight
-                                                            size={15}
-                                                            className={`shrink-0 ${
-                                                                isActive ? 'text-indigo-600' : 'text-slate-300'
+                                                            size={14}
+                                                            className={`shrink-0 transition-colors duration-150 ${
+                                                                isActive ? 'text-indigo-500' : 'text-slate-300 dark:text-slate-600'
                                                             }`}
+                                                            aria-hidden
                                                         />
                                                     </button>
                                                 );
@@ -391,10 +453,8 @@ const CommandPalette = () => {
                                 ))
                             )}
                         </div>
-                    </motion.div>
-                </motion.div>
-            ) : null}
-        </AnimatePresence>
+                    </div>
+                </div>
     );
 };
 

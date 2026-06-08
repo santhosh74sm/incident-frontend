@@ -6,12 +6,15 @@ import {
     ChevronDown,
     ChevronLeft,
     ChevronRight,
+    ClipboardList,
     FileText,
+    GraduationCap,
     LayoutDashboard,
     LogOut,
     Mail,
     Menu,
     PlusCircle,
+    ScrollText,
     ShieldCheck,
     Upload,
     Users,
@@ -19,13 +22,96 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
+// ─── Constants ───────────────────────────────────────────────────────────────
+
 const DESKTOP_COLLAPSE_KEY = 'workspaceSidebarCollapsed';
-const SIDEBAR_EXPANDED_WIDTH = 'lg:w-[280px]';
-const SIDEBAR_COLLAPSED_WIDTH = 'lg:w-[72px]';
-const navItemShell =
-    'group relative flex w-full items-center rounded-lg border text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/70';
-const navIconShell =
-    'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition-all duration-200';
+const SIDEBAR_EXPANDED_WIDTH = 'lg:w-[268px]';
+const SIDEBAR_COLLAPSED_WIDTH = 'lg:w-[68px]';
+
+// Base classes extracted to avoid rebuilding strings on every render
+const NAV_ITEM_BASE =
+    'group relative flex w-full items-center rounded-xl border text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/70';
+const NAV_ICON_BASE =
+    'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-colors duration-200';
+
+// ─── NavItem — extracted as a proper component so React can memo it ───────────
+
+const NavItem = memo(({ item, collapsed, mobile, onNavigate, isActive }) => {
+    const Icon = item.icon;
+
+    const handleClick = useCallback(
+        (event) => {
+            if (isActive) event.preventDefault();
+            if (mobile) onNavigate?.();
+        },
+        [isActive, mobile, onNavigate]
+    );
+
+    return (
+        <NavLink
+            to={item.path}
+            title={collapsed ? item.title : undefined}
+            aria-label={item.title}
+            onClick={handleClick}
+            className={`${NAV_ITEM_BASE} ${
+                collapsed ? 'min-h-[42px] justify-center px-1 py-1' : 'min-h-[44px] gap-3 px-2.5 py-2'
+            } ${
+                isActive
+                    ? 'border-indigo-400/25 bg-indigo-500/12 text-white'
+                    : 'border-transparent text-slate-300 hover:border-slate-700/80 hover:bg-slate-800/60 hover:text-white'
+            }`}
+        >
+            {/* Active indicator bar */}
+            <span
+                aria-hidden="true"
+                className={`absolute bottom-2 left-0 top-2 w-[3px] rounded-r-full transition-all duration-200 ${
+                    isActive
+                        ? 'bg-indigo-400 shadow-[0_0_18px_rgba(129,140,248,0.65)]'
+                        : 'bg-transparent group-hover:bg-slate-600/60'
+                }`}
+            />
+
+            {/* Icon */}
+            <span
+                className={`${NAV_ICON_BASE} ${
+                    isActive
+                        ? 'border-indigo-300/25 bg-indigo-500/18 text-white'
+                        : 'border-slate-700/70 bg-slate-900/60 text-slate-400 group-hover:border-slate-600/80 group-hover:bg-slate-800/70 group-hover:text-slate-200'
+                }`}
+            >
+                <Icon size={item.nested ? 16 : 17} strokeWidth={2.2} aria-hidden="true" />
+            </span>
+
+            {/* Label */}
+            {!collapsed && (
+                <div className="min-w-0 flex-1">
+                    <p
+                        className={`truncate text-[13px] leading-tight ${
+                            item.nested ? 'font-medium' : 'font-semibold'
+                        }`}
+                    >
+                        {item.title}
+                    </p>
+                    {item.description && !item.nested && (
+                        <p className="mt-0.5 truncate text-[11px] text-slate-500 group-hover:text-slate-400">
+                            {item.description}
+                        </p>
+                    )}
+                </div>
+            )}
+        </NavLink>
+    );
+});
+
+// ─── Section label ─────────────────────────────────────────────────────────
+
+const SectionLabel = memo(({ label }) => (
+    <p className="mb-1.5 px-2.5 text-[10px] font-bold uppercase tracking-[0.26em] text-slate-500">
+        {label}
+    </p>
+));
+
+// ─── Sidebar ──────────────────────────────────────────────────────────────────
 
 const Sidebar = memo(({ onDesktopCollapsedChange }) => {
     const navigate = useNavigate();
@@ -34,38 +120,139 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
     const desktopMenuRef = useRef(null);
     const mobileMenuRef = useRef(null);
     const scrollPositionsRef = useRef({ desktop: 0, mobile: 0 });
+
     const [isMobileOpen, setIsMobileOpen] = useState(false);
     const [isDesktopCollapsed, setIsDesktopCollapsed] = useState(false);
-    const [openAnalytics, setOpenAnalytics] = useState(false);
+    const [openReports, setOpenReports] = useState(false);
 
-    const menuItems = useMemo(
+    // ── Menu definitions ───────────────────────────────────────────────────
+    const mainMenuItems = useMemo(
         () => [
-            { title: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', roles: ['Super Admin', 'Admin', 'Teacher'] },
-            { title: 'All Incidents', icon: AlertCircle, path: '/incidents', roles: ['Super Admin', 'Admin', 'Teacher'] },
-            { title: 'Report Incident', icon: PlusCircle, path: '/create-incident', roles: ['Admin', 'Teacher'] },
-            { title: 'Student Upload', icon: Upload, path: '/upload-students', roles: ['Super Admin', 'Admin'] },
-            { title: 'Incident Upload', icon: Upload, path: '/upload-incidents', roles: ['Super Admin', 'Admin'] },
-            { title: 'Official letters', icon: FileText, path: '/letter-templates', roles: ['Super Admin', 'Admin'] },
-            { title: 'Issued Letters', icon: Mail, path: '/issued-letters', roles: ['Super Admin', 'Admin'] },
+            {
+                title: 'Dashboard',
+                icon: LayoutDashboard,
+                path: '/dashboard',
+                roles: ['Super Admin', 'Admin', 'Teacher'],
+            },
+            {
+                title: 'All Incidents',
+                icon: AlertCircle,
+                path: '/incidents',
+                roles: ['Super Admin', 'Admin', 'Teacher'],
+            },
+            {
+                title: 'Report Incident',
+                icon: PlusCircle,
+                path: '/create-incident',
+                roles: ['Admin', 'Teacher'],
+            },
         ],
         []
     );
 
-    const analyticsItems = useMemo(
+    const manageMenuItems = useMemo(
         () => [
-            { title: 'School reports', icon: BarChart3, path: '/analytics' },
-            { title: 'Student summaries', icon: Users, path: '/student-analytics' },
+            {
+                title: 'User Management',
+                icon: Users,
+                path: '/user-management',
+                roles: ['Super Admin', 'Admin'],
+            },
+            {
+                title: 'Student Upload',
+                icon: GraduationCap,
+                path: '/upload-students',
+                roles: ['Super Admin', 'Admin'],
+            },
+            {
+                title: 'Incident Upload',
+                icon: Upload,
+                path: '/upload-incidents',
+                roles: ['Super Admin', 'Admin'],
+            },
         ],
         []
     );
 
-    const isAnalyticsActive = location.pathname.includes('analytics');
+    const letterMenuItems = useMemo(
+        () => [
+            {
+                title: 'Letter Templates',
+                icon: FileText,
+                path: '/letter-templates',
+                roles: ['Super Admin', 'Admin'],
+            },
+            {
+                title: 'Issued Letters',
+                icon: Mail,
+                path: '/issued-letters',
+                roles: ['Super Admin', 'Admin'],
+            },
+        ],
+        []
+    );
 
+    const reportsItems = useMemo(
+        () => [
+            { title: 'School Analytics', icon: BarChart3, path: '/analytics', nested: true },
+            { title: 'Student Summaries', icon: ScrollText, path: '/student-analytics', nested: true },
+        ],
+        []
+    );
+
+    const adminOnlyItems = useMemo(
+        () => [
+            {
+                title: 'Activity Logs',
+                icon: ClipboardList,
+                path: '/logs',
+                roles: ['Super Admin', 'Admin'],
+            },
+        ],
+        []
+    );
+
+    // ── Derived ────────────────────────────────────────────────────────────
+    const isAnalyticsActive = useMemo(
+        () => location.pathname.includes('analytics'),
+        [location.pathname]
+    );
+
+    const matchesPath = useCallback(
+        (path) => {
+            if (path === '/incidents') {
+                return (
+                    location.pathname === '/incidents' ||
+                    location.pathname.startsWith('/incidents/')
+                );
+            }
+            if (path === '/student-analytics') {
+                return (
+                    location.pathname === '/student-analytics' ||
+                    location.pathname.startsWith('/student-analytics/')
+                );
+            }
+            return location.pathname === path;
+        },
+        [location.pathname]
+    );
+
+    const filterByRole = useCallback(
+        (items) => items.filter((item) => !item.roles || item.roles.includes(user?.role)),
+        [user?.role]
+    );
+
+    const visibleMain = useMemo(() => filterByRole(mainMenuItems), [filterByRole, mainMenuItems]);
+    const visibleManage = useMemo(() => filterByRole(manageMenuItems), [filterByRole, manageMenuItems]);
+    const visibleLetters = useMemo(() => filterByRole(letterMenuItems), [filterByRole, letterMenuItems]);
+    const visibleAdmin = useMemo(() => filterByRole(adminOnlyItems), [filterByRole, adminOnlyItems]);
+
+    const closeMobile = useCallback(() => setIsMobileOpen(false), []);
+
+    // ── Persistence / sync ─────────────────────────────────────────────────
     useEffect(() => {
-        const storedState = localStorage.getItem(DESKTOP_COLLAPSE_KEY);
-        if (storedState) {
-            setIsDesktopCollapsed(storedState === 'true');
-        }
+        const stored = localStorage.getItem(DESKTOP_COLLAPSE_KEY);
+        if (stored) setIsDesktopCollapsed(stored === 'true');
     }, []);
 
     useEffect(() => {
@@ -74,17 +261,15 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
     }, [isDesktopCollapsed, onDesktopCollapsedChange]);
 
     useEffect(() => {
-        if (isAnalyticsActive) {
-            setOpenAnalytics(true);
-        }
+        if (isAnalyticsActive) setOpenReports(true);
         setIsMobileOpen(false);
     }, [isAnalyticsActive, location.pathname]);
 
+    // Restore scroll positions on navigation
     useLayoutEffect(() => {
         if (desktopMenuRef.current) {
             desktopMenuRef.current.scrollTop = scrollPositionsRef.current.desktop;
         }
-
         if (mobileMenuRef.current) {
             mobileMenuRef.current.scrollTop = scrollPositionsRef.current.mobile;
         }
@@ -92,257 +277,259 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
 
     useEffect(() => {
         const handleResize = () => {
-            if (window.innerWidth >= 1024) {
-                setIsMobileOpen(false);
-            }
+            if (window.innerWidth >= 1024) setIsMobileOpen(false);
         };
-
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    const matchesPath = useCallback((path) => {
-        if (path === '/incidents') {
-            return location.pathname === '/incidents' || location.pathname.startsWith('/incidents/');
-        }
+    // ── Collapse toggle ────────────────────────────────────────────────────
+    const toggleCollapsed = useCallback(() => {
+        setIsDesktopCollapsed((prev) => !prev);
+    }, []);
 
-        if (path === '/student-analytics') {
-            return location.pathname === '/student-analytics' || location.pathname.startsWith('/student-analytics/');
-        }
-
-        return location.pathname === path;
-    }, [location.pathname]);
-
-    const visibleMenuItems = useMemo(
-        () => menuItems.filter((item) => item.roles.includes(user?.role)),
-        [menuItems, user?.role]
-    );
-
-    const handleNavItemClick = useCallback((event, path, mobile = false) => {
-        if (matchesPath(path)) {
-            event.preventDefault();
-        }
-
-        if (mobile) {
-            setIsMobileOpen(false);
-        }
-    }, [matchesPath]);
-
-    const renderNavItem = (item, nested = false, collapsed = isDesktopCollapsed, mobile = false) => {
-        const Icon = item.icon;
-        const isActive = matchesPath(item.path);
-
-        return (
-            <NavLink
-                key={item.path}
-                to={item.path}
-                title={collapsed ? item.title : undefined}
-                onClick={(event) => handleNavItemClick(event, item.path, mobile)}
-                className={`${navItemShell} ${
-                    collapsed ? 'min-h-[42px] justify-center px-1 py-1' : 'min-h-[46px] gap-3 px-2.5 py-2'
-                } ${
-                    isActive
-                        ? 'border-indigo-400/30 bg-indigo-500/15 text-white shadow-[0_16px_30px_rgba(15,23,42,0.28)]'
-                        : 'border-transparent text-slate-300 hover:border-slate-700 hover:bg-slate-800/80 hover:text-white'
-                }`}
-            >
-                <span
-                    className={`absolute bottom-2 left-0 top-2 w-1 rounded-r-full transition-all duration-200 ${
-                        isActive
-                            ? 'bg-indigo-400 shadow-[0_0_22px_rgba(129,140,248,0.72)]'
-                            : 'bg-transparent group-hover:bg-slate-600'
-                    }`}
-                />
-
-                <span
-                    className={`${navIconShell} ${
-                        isActive
-                            ? 'border-indigo-300/30 bg-indigo-500/20 text-white'
-                            : 'border-slate-700 bg-slate-900/75 text-slate-300 group-hover:border-slate-600 group-hover:bg-slate-800 group-hover:text-white'
-                    }`}
-                >
-                    <Icon size={nested ? 18 : 19} strokeWidth={2.1} />
-                </span>
-
-                {!collapsed ? (
-                    <div className="min-w-0 flex-1">
-                        <p className={`truncate ${nested ? 'text-sm font-medium' : 'text-sm font-semibold'}`}>
-                            {item.title}
-                        </p>
-                    </div>
-                ) : null}
-            </NavLink>
-        );
-    };
-
+    // ── Render sidebar body ────────────────────────────────────────────────
     const renderSidebarBody = (mobile = false) => {
         const collapsed = mobile ? false : isDesktopCollapsed;
         const menuRef = mobile ? mobileMenuRef : desktopMenuRef;
         const scrollKey = mobile ? 'mobile' : 'desktop';
 
-        return (
-            <div className="flex h-full flex-col bg-[radial-gradient(circle_at_top,rgba(79,70,229,0.18),transparent_34%),linear-gradient(180deg,rgba(2,6,23,0.98)_0%,rgba(15,23,42,0.99)_44%,rgba(2,6,23,1)_100%)]">
-                <div className={`border-b border-white/10 shadow-[0_1px_0_rgba(255,255,255,0.04)] ${collapsed ? 'px-1.5 py-3' : 'px-3 py-3.5'}`}>
-                    <div className={`flex items-center ${collapsed ? 'flex-col justify-center gap-2' : 'justify-between gap-3'}`}>
-                        <div className={`flex min-w-0 items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
-                            <div className={`${collapsed ? 'h-10 w-10' : 'h-11 w-11'} flex shrink-0 items-center justify-center rounded-xl border border-indigo-300/25 bg-gradient-to-br from-indigo-500 to-blue-600 text-white shadow-[0_18px_34px_rgba(79,70,229,0.3)]`}>
-                                <ShieldCheck size={22} />
-                            </div>
+        const renderGroup = (items, label) => {
+            if (items.length === 0) return null;
+            return (
+                <section aria-label={label}>
+                    {!collapsed && <SectionLabel label={label} />}
+                    <div className="space-y-0.5">
+                        {items.map((item) => (
+                            <NavItem
+                                key={item.path}
+                                item={item}
+                                collapsed={collapsed}
+                                mobile={mobile}
+                                onNavigate={closeMobile}
+                                isActive={matchesPath(item.path)}
+                            />
+                        ))}
+                    </div>
+                </section>
+            );
+        };
 
-                            {!collapsed ? (
+        return (
+            <div className="flex h-full flex-col bg-[radial-gradient(circle_at_top,rgba(79,70,229,0.15),transparent_30%),linear-gradient(180deg,rgba(2,6,23,0.99)_0%,rgba(15,23,42,0.995)_50%,rgba(2,6,23,1)_100%)]">
+
+                {/* ── Header ── */}
+                <div
+                    className={`border-b border-white/[0.07] ${
+                        collapsed ? 'px-1.5 py-3' : 'px-3 py-3'
+                    }`}
+                >
+                    <div
+                        className={`flex items-center ${
+                            collapsed ? 'flex-col justify-center gap-2' : 'justify-between gap-2'
+                        }`}
+                    >
+                        {/* Brand */}
+                        <div className={`flex min-w-0 items-center ${collapsed ? 'justify-center' : 'gap-2.5'}`}>
+                            <div
+                                className={`${
+                                    collapsed ? 'h-9 w-9' : 'h-9 w-9'
+                                } flex shrink-0 items-center justify-center rounded-xl border border-indigo-300/20 bg-gradient-to-br from-indigo-500 to-blue-600 text-white shadow-[0_12px_28px_rgba(79,70,229,0.28)]`}
+                            >
+                                <ShieldCheck size={18} aria-hidden="true" />
+                            </div>
+                            {!collapsed && (
                                 <div className="min-w-0">
-                                    <h1 className="truncate text-lg font-bold tracking-tight text-white">
+                                    <h1 className="truncate text-[15px] font-bold tracking-tight text-white">
                                         Incident Workspace
                                     </h1>
-                                    <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.24em] text-slate-400">
+                                    <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
                                         Staff Portal
                                     </p>
                                 </div>
-                            ) : null}
+                            )}
                         </div>
 
-                        <div className="flex items-center gap-2">
-                            {!mobile ? (
+                        {/* Controls */}
+                        <div className="flex items-center gap-1.5">
+                            {!mobile && (
                                 <button
                                     type="button"
-                                    onClick={() => setIsDesktopCollapsed((current) => !current)}
-                                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-900/75 text-slate-200 transition-all duration-200 hover:border-indigo-400/40 hover:bg-slate-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/70"
+                                    onClick={toggleCollapsed}
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-700/80 bg-slate-900/60 text-slate-400 transition-colors duration-200 hover:border-indigo-400/30 hover:bg-slate-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/70"
                                     aria-label={isDesktopCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                                 >
-                                    {isDesktopCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+                                    {isDesktopCollapsed ? (
+                                        <ChevronRight size={15} aria-hidden="true" />
+                                    ) : (
+                                        <ChevronLeft size={15} aria-hidden="true" />
+                                    )}
                                 </button>
-                            ) : null}
-
-                            {mobile ? (
+                            )}
+                            {mobile && (
                                 <button
                                     type="button"
-                                    onClick={() => setIsMobileOpen(false)}
-                                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-700 bg-slate-900/75 text-slate-200 transition-all duration-200 hover:border-indigo-400/40 hover:bg-slate-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/70"
+                                    onClick={closeMobile}
+                                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-700/80 bg-slate-900/60 text-slate-400 transition-colors duration-200 hover:border-indigo-400/30 hover:bg-slate-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/70"
                                     aria-label="Close navigation"
                                 >
-                                    <X size={18} />
+                                    <X size={16} aria-hidden="true" />
                                 </button>
-                            ) : null}
+                            )}
                         </div>
                     </div>
                 </div>
 
+                {/* ── Scrollable nav ── */}
                 <div
                     ref={menuRef}
-                    onScroll={(event) => {
-                        scrollPositionsRef.current[scrollKey] = event.currentTarget.scrollTop;
+                    onScroll={(e) => {
+                        scrollPositionsRef.current[scrollKey] = e.currentTarget.scrollTop;
                     }}
-                    className={`flex-1 overflow-y-auto [scrollbar-color:rgba(148,163,184,0.55)_transparent] [scrollbar-width:thin] ${collapsed ? 'px-1.5 py-3' : 'px-2.5 py-3'}`}
+                    className={`flex-1 overflow-y-auto [scrollbar-color:rgba(100,116,139,0.4)_transparent] [scrollbar-width:thin] ${
+                        collapsed ? 'px-1.5 py-3' : 'px-2.5 py-3'
+                    }`}
                 >
-                    <div className={collapsed ? 'space-y-3' : 'space-y-4'}>
-                        <section>
-                            {!collapsed ? (
-                                <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-[0.24em] text-slate-400">
-                                    Main Menu
-                                </p>
-                            ) : null}
+                    <nav aria-label="Sidebar navigation" className={collapsed ? 'space-y-3' : 'space-y-4'}>
 
-                            <div className={collapsed ? 'space-y-1' : 'space-y-1.5'}>
-                                {visibleMenuItems.map((item) => renderNavItem(item, false, collapsed, mobile))}
+                        {/* Incidents */}
+                        {renderGroup(visibleMain, 'Incidents')}
+
+                        {/* Reports & Analytics — accordion */}
+                        <section aria-label="Reports">
+                            {!collapsed && <SectionLabel label="Reports" />}
+                            <div className="space-y-0.5">
+                                <button
+                                    type="button"
+                                    title={collapsed ? 'Reports' : undefined}
+                                    aria-expanded={openReports}
+                                    onClick={() => setOpenReports((prev) => !prev)}
+                                    className={`${NAV_ITEM_BASE} ${
+                                        collapsed
+                                            ? 'min-h-[42px] justify-center px-1 py-1'
+                                            : 'min-h-[44px] gap-3 px-2.5 py-2'
+                                    } ${
+                                        isAnalyticsActive
+                                            ? 'border-indigo-400/25 bg-indigo-500/12 text-white'
+                                            : 'border-transparent text-slate-300 hover:border-slate-700/80 hover:bg-slate-800/60 hover:text-white'
+                                    }`}
+                                >
+                                    <span
+                                        aria-hidden="true"
+                                        className={`absolute bottom-2 left-0 top-2 w-[3px] rounded-r-full transition-all duration-200 ${
+                                            isAnalyticsActive
+                                                ? 'bg-indigo-400 shadow-[0_0_18px_rgba(129,140,248,0.65)]'
+                                                : 'bg-transparent group-hover:bg-slate-600/60'
+                                        }`}
+                                    />
+                                    <span
+                                        className={`${NAV_ICON_BASE} ${
+                                            isAnalyticsActive
+                                                ? 'border-indigo-300/25 bg-indigo-500/18 text-white'
+                                                : 'border-slate-700/70 bg-slate-900/60 text-slate-400 group-hover:border-slate-600/80 group-hover:bg-slate-800/70 group-hover:text-slate-200'
+                                        }`}
+                                    >
+                                        <BarChart3 size={17} strokeWidth={2.2} aria-hidden="true" />
+                                    </span>
+                                    {!collapsed && (
+                                        <>
+                                            <span className="min-w-0 flex-1 truncate text-[13px] font-semibold leading-tight">
+                                                Reports & Analytics
+                                            </span>
+                                            <ChevronDown
+                                                size={14}
+                                                aria-hidden="true"
+                                                className={`shrink-0 text-slate-500 transition-transform duration-200 ${
+                                                    openReports ? 'rotate-180 text-slate-300' : ''
+                                                }`}
+                                            />
+                                        </>
+                                    )}
+                                </button>
+
+                                {openReports && (
+                                    <div
+                                        className={`${
+                                            collapsed ? 'mt-1 space-y-0.5' : 'ml-2 mt-0.5 space-y-0.5 border-l border-slate-700/50 pl-2'
+                                        }`}
+                                    >
+                                        {reportsItems.map((item) => (
+                                            <NavItem
+                                                key={item.path}
+                                                item={item}
+                                                collapsed={collapsed}
+                                                mobile={mobile}
+                                                onNavigate={closeMobile}
+                                                isActive={matchesPath(item.path)}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </section>
 
-                        <section className={collapsed ? 'border-t border-white/10 pt-3' : 'border-t border-white/10 pt-4'}>
-                            {!collapsed ? (
-                                <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-[0.24em] text-slate-400">
-                                    Reports & trends
-                                </p>
-                            ) : null}
+                        {/* Manage (admin only) */}
+                        {visibleManage.length > 0 && renderGroup(visibleManage, 'Manage')}
 
-                            <button
-                                type="button"
-                                title={collapsed ? 'Reports' : undefined}
-                                onClick={() => setOpenAnalytics((current) => !current)}
-                                className={`${navItemShell} ${
-                                    collapsed ? 'min-h-[42px] justify-center px-1 py-1' : 'min-h-[46px] gap-3 px-2.5 py-2'
-                                } ${
-                                    isAnalyticsActive
-                                        ? 'border-indigo-400/30 bg-indigo-500/15 text-white'
-                                        : 'border-transparent text-slate-300 hover:border-slate-700 hover:bg-slate-800/80 hover:text-white'
-                                }`}
-                            >
-                                <span
-                                    className={`absolute bottom-2 left-0 top-2 w-1 rounded-r-full transition-all duration-200 ${
-                                        isAnalyticsActive
-                                            ? 'bg-indigo-400 shadow-[0_0_22px_rgba(129,140,248,0.72)]'
-                                            : 'bg-transparent group-hover:bg-slate-600'
-                                    }`}
-                                />
+                        {/* Letters (admin only) */}
+                        {visibleLetters.length > 0 && renderGroup(visibleLetters, 'Letters')}
 
-                                <span
-                                    className={`${navIconShell} ${
-                                        isAnalyticsActive
-                                            ? 'border-indigo-300/30 bg-indigo-500/20 text-white'
-                                            : 'border-slate-700 bg-slate-900/75 text-slate-300 group-hover:border-slate-600 group-hover:bg-slate-800 group-hover:text-white'
-                                    }`}
-                                >
-                                    <BarChart3 size={19} strokeWidth={2.1} />
-                                </span>
-
-                                {!collapsed ? (
-                                    <>
-                                        <span className="min-w-0 flex-1 truncate text-sm font-semibold">Reports & trends</span>
-                                        <ChevronDown
-                                            size={16}
-                                            className={`shrink-0 text-slate-400 transition-all duration-200 ${
-                                                openAnalytics ? 'rotate-180 text-slate-300' : ''
-                                            }`}
-                                        />
-                                    </>
-                                ) : null}
-                            </button>
-
-                            {openAnalytics ? (
-                                <div className={`${collapsed ? 'mt-1.5 space-y-1' : 'mt-2 space-y-1.5 pl-2'}`}>
-                                    {analyticsItems.map((item) => renderNavItem(item, true, collapsed, mobile))}
-                                </div>
-                            ) : null}
-                        </section>
-                    </div>
+                        {/* System (admin only) */}
+                        {visibleAdmin.length > 0 && renderGroup(visibleAdmin, 'System')}
+                    </nav>
                 </div>
 
-                <div className={`border-t border-white/10 ${collapsed ? 'p-1.5' : 'p-2.5'}`}>
+                {/* ── Footer: user + sign out ── */}
+                <div
+                    className={`border-t border-white/[0.07] ${
+                        collapsed ? 'p-1.5' : 'p-2.5'
+                    }`}
+                >
+                    {/* User chip */}
                     <div
-                        className={`rounded-xl border border-slate-700/90 bg-slate-900/75 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${
+                        className={`mb-1.5 rounded-xl border border-slate-700/70 bg-slate-900/60 p-2 ${
                             collapsed ? 'flex justify-center' : ''
                         }`}
                     >
-                        <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-blue-600 text-sm font-bold text-white shadow-[0_18px_34px_rgba(79,70,229,0.24)]">
+                        <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-2.5'}`}>
+                            <div
+                                aria-hidden="true"
+                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-blue-600 text-[13px] font-bold text-white shadow-[0_6px_20px_rgba(79,70,229,0.22)]"
+                            >
                                 {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                             </div>
-
-                            {!collapsed ? (
+                            {!collapsed && (
                                 <div className="min-w-0 flex-1">
-                                    <p className="truncate text-sm font-semibold text-white">{user?.name}</p>
-                                    <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
+                                    <p className="truncate text-[13px] font-semibold leading-tight text-white">
+                                        {user?.name}
+                                    </p>
+                                    <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
                                         {user?.role}
                                     </p>
                                 </div>
-                            ) : null}
+                            )}
                         </div>
                     </div>
 
+                    {/* Sign out */}
                     <button
                         type="button"
                         title={collapsed ? 'Sign Out' : undefined}
+                        aria-label="Sign out"
                         onClick={() => {
                             logout();
                             navigate('/login');
                         }}
-                        className={`mt-1.5 flex w-full items-center rounded-lg border border-transparent text-slate-400 transition-all duration-200 hover:border-rose-400/15 hover:bg-rose-500/12 hover:text-rose-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/70 ${
-                            collapsed ? 'justify-center' : 'gap-3'
-                        } ${collapsed ? 'min-h-[42px] px-1 py-1' : 'min-h-[46px] px-2.5 py-2'}`}
+                        className={`flex w-full items-center rounded-xl border border-transparent text-slate-400 transition-all duration-200 hover:border-rose-500/15 hover:bg-rose-500/10 hover:text-rose-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/60 ${
+                            collapsed ? 'min-h-[42px] justify-center px-1 py-1' : 'min-h-[42px] gap-3 px-2.5 py-2'
+                        }`}
                     >
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-700 bg-slate-900/75 text-slate-400 transition-all duration-200">
-                            <LogOut size={18} strokeWidth={2.1} />
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-700/70 bg-slate-900/60 text-slate-400 transition-colors duration-200">
+                            <LogOut size={15} strokeWidth={2.2} aria-hidden="true" />
                         </span>
-                        {!collapsed ? <span className="text-sm font-semibold">Sign Out</span> : null}
+                        {!collapsed && (
+                            <span className="text-[13px] font-semibold">Sign Out</span>
+                        )}
                     </button>
                 </div>
             </div>
@@ -351,40 +538,50 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
 
     return (
         <>
+            {/* Mobile hamburger */}
             <button
                 type="button"
                 onClick={() => setIsMobileOpen(true)}
-                className={`fixed left-3 top-3 z-[72] inline-flex h-11 min-h-[44px] min-w-[44px] w-11 items-center justify-center rounded-xl border border-slate-700 bg-slate-950 text-white shadow-[0_18px_40px_rgba(2,6,23,0.45)] transition-all duration-200 hover:border-indigo-400/40 hover:bg-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 sm:left-4 sm:top-4 lg:hidden ${
+                className={`fixed left-3 top-3 z-[72] inline-flex h-11 min-h-[44px] min-w-[44px] w-11 items-center justify-center rounded-xl border border-slate-700/80 bg-slate-950 text-white shadow-[0_8px_32px_rgba(2,6,23,0.4)] transition-all duration-200 hover:border-indigo-400/40 hover:bg-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 sm:left-4 sm:top-4 lg:hidden ${
                     isMobileOpen ? 'pointer-events-none opacity-0' : ''
                 }`}
                 aria-label="Open navigation menu"
+                aria-expanded={isMobileOpen}
             >
-                <Menu size={20} />
+                <Menu size={19} aria-hidden="true" />
             </button>
 
+            {/* Desktop sidebar */}
             <div
                 className={`fixed left-0 top-0 z-30 hidden h-screen lg:block ${
                     isDesktopCollapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_EXPANDED_WIDTH
-                }`}
+                } transition-all duration-300`}
             >
-                <aside className="h-full overflow-hidden border-r border-slate-700/90 bg-slate-950 text-slate-100 shadow-[10px_0_30px_rgba(2,6,23,0.28)] backdrop-blur-xl">
+                <aside
+                    className="h-full overflow-hidden border-r border-slate-700/60 bg-slate-950 text-slate-100 shadow-[8px_0_24px_rgba(2,6,23,0.22)]"
+                    aria-label="Main navigation"
+                >
                     {renderSidebarBody()}
                 </aside>
             </div>
 
-            {isMobileOpen ? (
+            {/* Mobile overlay backdrop */}
+            {isMobileOpen && (
                 <button
                     type="button"
                     aria-label="Close navigation overlay"
-                    onClick={() => setIsMobileOpen(false)}
-                    className="fixed inset-0 z-[65] bg-slate-950/78 backdrop-blur-sm lg:hidden"
+                    onClick={closeMobile}
+                    className="fixed inset-0 z-[65] bg-slate-950/75 backdrop-blur-sm lg:hidden"
                 />
-            ) : null}
+            )}
 
+            {/* Mobile drawer */}
             <aside
-                className={`fixed inset-y-0 left-0 z-[70] w-[min(294px,calc(100vw-1.25rem))] overflow-hidden rounded-r-2xl border border-slate-800/90 bg-slate-950/95 text-slate-100 shadow-[0_30px_70px_rgba(2,6,23,0.5)] backdrop-blur-xl transition-all duration-200 lg:hidden ${
+                className={`fixed inset-y-0 left-0 z-[70] w-[min(280px,calc(100vw-1rem))] overflow-hidden rounded-r-2xl border border-slate-800/80 bg-slate-950/98 text-slate-100 shadow-[0_24px_60px_rgba(2,6,23,0.5)] backdrop-blur-xl transition-transform duration-250 lg:hidden ${
                     isMobileOpen ? 'translate-x-0 pointer-events-auto' : '-translate-x-full pointer-events-none'
                 }`}
+                aria-label="Mobile navigation"
+                aria-hidden={!isMobileOpen}
             >
                 {renderSidebarBody(true)}
             </aside>

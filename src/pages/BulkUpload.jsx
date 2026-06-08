@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     AlertTriangle,
@@ -8,6 +8,7 @@ import {
     Download,
     FileSpreadsheet,
     FileText,
+    Info,
     Loader2,
     RefreshCw,
     ShieldCheck,
@@ -155,9 +156,67 @@ const UploadResultsModal = ({ results, onClose, onReset }) => {
     );
 };
 
+/* ─── Step indicator (matches StudentUpload) ─────────────────────── */
+const STEPS = [
+    { id: 1, label: 'Download sample' },
+    { id: 2, label: 'Choose file' },
+    { id: 3, label: 'Review preview' },
+    { id: 4, label: 'Confirm upload' },
+];
+
+const StepBar = ({ activeStep }) => (
+    <ol aria-label="Upload steps" className="flex items-center gap-0">
+        {STEPS.map((step, i) => {
+            const done    = step.id < activeStep;
+            const current = step.id === activeStep;
+            return (
+                <li key={step.id} className="flex flex-1 items-center">
+                    <div className="flex flex-col items-center gap-1.5">
+                        <span
+                            aria-current={current ? 'step' : undefined}
+                            className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ring-2 transition-colors ${
+                                done
+                                    ? 'bg-emerald-500 text-white ring-emerald-200'
+                                    : current
+                                    ? 'bg-indigo-600 text-white ring-indigo-200'
+                                    : 'bg-slate-100 text-slate-400 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700'
+                            }`}
+                        >
+                            {done ? <CheckCircle2 className="h-4 w-4" /> : step.id}
+                        </span>
+                        <span
+                            className={`hidden text-[10px] font-semibold uppercase tracking-[0.12em] sm:block ${
+                                current ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-400'
+                            }`}
+                        >
+                            {step.label}
+                        </span>
+                    </div>
+                    {i < STEPS.length - 1 && (
+                        <div
+                            className={`mx-1 h-0.5 flex-1 rounded-full transition-colors ${
+                                done ? 'bg-emerald-400' : 'bg-slate-200 dark:bg-slate-700'
+                            }`}
+                        />
+                    )}
+                </li>
+            );
+        })}
+    </ol>
+);
+
+/* ─── Checklist item (matches StudentUpload) ─────────────────────── */
+const CheckItem = ({ children }) => (
+    <li className="flex items-start gap-3">
+        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" aria-hidden="true" />
+        <span className="text-sm text-slate-700 dark:text-slate-300">{children}</span>
+    </li>
+);
+
 const BulkUpload = () => {
     const navigate = useNavigate();
     const fileInputRef = useRef(null);
+    const mountedRef   = useRef(true);
     const { addToast } = useToast();
 
     const [file, setFile] = useState(null);
@@ -171,10 +230,24 @@ const BulkUpload = () => {
     const [results, setResults] = useState(null);
     const [showResults, setShowResults] = useState(false);
 
+    /* Derive the active step for the step bar */
+    const activeStep = useMemo(() => {
+        if (message.type === 'success' && !file) return 4;
+        if (uploading || uploadProgress === 100) return 4;
+        if (preview && !preview.missingColumns?.length) return 3;
+        if (file) return 2;
+        return 1;
+    }, [file, message.type, preview, uploading, uploadProgress]);
+
     const canUpload = useMemo(
         () => Boolean(file) && !uploading && !parsing && !(preview?.missingColumns?.length > 0),
         [file, parsing, preview?.missingColumns, uploading]
     );
+
+    useEffect(() => {
+        mountedRef.current = true;
+        return () => { mountedRef.current = false; };
+    }, []);
 
     const resetSelection = () => {
         setFile(null);
@@ -206,32 +279,34 @@ const BulkUpload = () => {
 
         try {
             const nextPreview = await buildIncidentPreview(selectedFile);
+            if (!mountedRef.current) return;
             setPreview(nextPreview);
 
             if (nextPreview.missingColumns.length > 0) {
                 setMessage({
                     type: 'error',
-                    text: `The file columns do not match the sample. Missing: ${nextPreview.missingColumns.join(', ')}.`,
+                    text: `Some required columns are missing: ${nextPreview.missingColumns.join(', ')}. Please check the spreadsheet format.`,
                 });
             } else if (nextPreview.rowIssues.length > 0) {
                 setMessage({
                     type: 'warning',
-                    text: 'Preview loaded with row issues. Please fix them before you upload.',
+                    text: 'Preview loaded. A few rows have issues — review them below before uploading.',
                 });
             } else {
                 setMessage({
-                    type: 'info',
-                    text: `Preview ready. ${nextPreview.totalRows} incident row${nextPreview.totalRows === 1 ? '' : 's'} detected.`,
+                    type: 'success',
+                    text: `Spreadsheet looks good. ${nextPreview.totalRows} incident row${nextPreview.totalRows === 1 ? '' : 's'} ready to upload.`,
                 });
             }
         } catch (error) {
+            if (!mountedRef.current) return;
             setPreview(null);
             setMessage({
                 type: 'error',
                 text: error.message || 'We could not read this file. Please check the format and try again.',
             });
         } finally {
-            setParsing(false);
+            if (mountedRef.current) setParsing(false);
         }
     };
 
@@ -282,7 +357,7 @@ const BulkUpload = () => {
 
         setUploading(true);
         setUploadProgress(0);
-        setMessage({ type: '', text: '' });
+        setMessage({ type: 'info', text: 'Uploading your spreadsheet…' });
 
         try {
             const response = await apiClient.post('/api/incidents/upload', formData, {
@@ -373,76 +448,97 @@ const BulkUpload = () => {
 
     return (
         <>
-            <div className="flex min-h-screen bg-slate-100 dark:bg-slate-950">
-                <div className="flex min-w-0 flex-1 flex-col">
-
-                    <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-                        <div className="mx-auto max-w-6xl space-y-6">
+            <div className="min-h-screen bg-slate-100 dark:bg-slate-950">
+                    <main className="p-4 lg:p-6">
+                        <div className="mx-auto max-w-7xl space-y-6">
+                            {/* Back button */}
                             <button
+                                type="button"
                                 onClick={() => navigate('/user-management')}
                                 className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
                             >
-                                <ArrowLeft className="h-4 w-4" />
+                                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
                                 Back to Management
                             </button>
 
-                            <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-md dark:border-slate-800 dark:bg-slate-900/50">
-                                <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-900 px-6 py-7 lg:px-8">
-                                    <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+                            {/* ── Hero header ─────────────────────────────────── */}
+                            <section
+                                aria-label="Incident Upload"
+                                className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-md dark:border-slate-800 dark:bg-slate-900/50"
+                            >
+                                <div className="bg-[linear-gradient(135deg,#0f172a,#1e1b4b_55%,#312e81)] px-6 py-8 lg:px-10">
+                                    <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                                         <div className="max-w-2xl">
-                                            <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/15">
-                                                <FileSpreadsheet className="h-6 w-6 text-white" />
+                                            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-indigo-200">
+                                                <FileSpreadsheet className="h-3.5 w-3.5" aria-hidden="true" />
+                                                Incident Data Import
                                             </div>
-                                            <h1 className="text-2xl font-bold text-white">Add many incidents from a spreadsheet</h1>
-                                            <p className="mt-2 text-sm text-slate-200">
-                                                Review the spreadsheet before you upload. The on-screen preview checks column names only; the school server still checks categories, locations, evidence types, staff, and students when you save.
+                                            <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">
+                                                Upload Incident Records
+                                            </h1>
+                                            <p className="mt-2.5 max-w-xl text-sm leading-relaxed text-indigo-100/85">
+                                                Add multiple incidents at once by uploading a spreadsheet.
+                                                Preview your file before saving — nothing changes until you confirm.
                                             </p>
                                         </div>
-
-                                        <div className="grid gap-3 sm:grid-cols-3">
-                                            <UploadMetricCard icon={ShieldCheck} label="Required Fields" value="10 columns" tone="indigo" />
-                                            <UploadMetricCard icon={Users} label="Full checks" value="On save" tone="blue" />
-                                            <UploadMetricCard icon={CloudUpload} label="Preview" value="First 5 rows" tone="emerald" />
+                                        <div className="grid grid-cols-3 gap-3 sm:w-auto">
+                                            <UploadMetricCard icon={ShieldCheck} label="Required" value="10 columns" tone="indigo" />
+                                            <UploadMetricCard icon={Table2}      label="Preview"  value="Up to 5 rows" tone="blue" />
+                                            <UploadMetricCard icon={Users}       label="Formats"  value="XLSX / CSV" tone="emerald" />
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Step bar */}
+                                <div className="border-t border-slate-200 bg-white px-6 py-4 dark:border-slate-800 dark:bg-slate-900">
+                                    <StepBar activeStep={activeStep} />
+                                </div>
                             </section>
 
-                            <div className="grid gap-6 xl:grid-cols-[1.45fr_0.85fr]">
-                                <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-md dark:border-slate-800 dark:bg-slate-900/50">
-                                    <div className="flex flex-col gap-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50 dark:border-slate-800 dark:from-slate-900 dark:to-slate-900/50 px-5 py-4 md:flex-row md:items-center md:justify-between">
+                            {/* ── Main grid ───────────────────────────────────── */}
+                            <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
+
+                                {/* Upload panel */}
+                                <section
+                                    aria-label="Upload workbook"
+                                    className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/50"
+                                >
+                                    {/* Section header */}
+                                    <div className="flex flex-col gap-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-indigo-50/50 px-6 py-4 dark:border-slate-800 dark:from-slate-900 dark:to-slate-900/50 sm:flex-row sm:items-center sm:justify-between">
                                         <div>
-                                            <h2 className="text-lg font-semibold text-slate-900">Upload spreadsheet</h2>
-                                            <p className="mt-1 text-sm text-slate-600">
-                                                Click or drag your file here, review the preview, then save to add the incidents.
+                                            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Choose your spreadsheet</h2>
+                                            <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+                                                Click the area below or drag a file in. Review the preview, then upload.
                                             </p>
                                         </div>
-
                                         <button
                                             type="button"
                                             onClick={downloadTemplate}
                                             disabled={uploading || parsing || downloadingTemplate}
-                                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                            className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                                         >
-                                            {downloadingTemplate ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                                            Download sample spreadsheet
+                                            {downloadingTemplate ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Download className="h-4 w-4" aria-hidden="true" />}
+                                            Download sample
                                         </button>
                                     </div>
 
-                                    <div className="space-y-5 p-5">
+                                    <div className="space-y-5 p-6">
+                                        {/* Drop zone */}
                                         <button
                                             type="button"
-                                            onClick={() => fileInputRef.current?.click()}
+                                            aria-label="Select spreadsheet file"
+                                            onClick={() => !parsing && !uploading && fileInputRef.current?.click()}
                                             onDragEnter={handleDrag}
                                             onDragLeave={handleDrag}
                                             onDragOver={handleDrag}
                                             onDrop={handleDrop}
-                                            className={`w-full rounded-xl border-2 border-dashed px-6 py-10 text-left transition ${
+                                            disabled={parsing || uploading}
+                                            className={`w-full rounded-2xl border-2 border-dashed px-6 py-10 text-center transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:pointer-events-none ${
                                                 dragActive
                                                     ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30'
-                                                    : file
-                                                    ? 'border-emerald-300 bg-emerald-50 dark:border-emerald-500/40 dark:bg-emerald-950/30'
-                                                    : 'border-slate-300 bg-slate-50 hover:border-indigo-400 hover:bg-indigo-50/60 dark:border-slate-700 dark:bg-slate-900/70 dark:hover:border-indigo-500/60 dark:hover:bg-indigo-950/30'
+                                                    : file && !parsing
+                                                    ? 'border-emerald-400 bg-emerald-50/60 dark:border-emerald-500/50 dark:bg-emerald-950/20'
+                                                    : 'border-slate-300 bg-slate-50 hover:border-indigo-400 hover:bg-indigo-50/50 dark:border-slate-700 dark:bg-slate-900/60 dark:hover:border-indigo-500/60 dark:hover:bg-indigo-950/20'
                                             }`}
                                         >
                                             <input
@@ -451,44 +547,55 @@ const BulkUpload = () => {
                                                 accept=".xlsx,.xls,.csv"
                                                 onChange={handleFileChange}
                                                 className="hidden"
+                                                aria-hidden="true"
                                             />
 
-                                            <div className="flex flex-col items-center justify-center text-center">
-                                                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700">
-                                                    {parsing ? (
-                                                        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
-                                                    ) : file ? (
-                                                        <FileText className="h-8 w-8 text-emerald-600" />
-                                                    ) : (
-                                                        <CloudUpload className="h-8 w-8 text-indigo-600" />
-                                                    )}
-                                                </div>
-
-                                                <p className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                                                    {dragActive ? 'Drop your file to preview it' : 'Click to browse or drag your spreadsheet here'}
-                                                </p>
-                                                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                                                    Supported upload formats: <span className="font-semibold text-indigo-700">{ACCEPTED_UPLOAD_FORMATS}</span>
-                                                </p>
-
-                                                {file && (
-                                                    <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-700">
-                                                        <FileText className="h-4 w-4 text-emerald-600" />
-                                                        {file.name}
-                                                        <span className="text-slate-400">•</span>
-                                                        {formatFileSize(file.size)}
-                                                    </div>
+                                            {/* Icon */}
+                                            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
+                                                {parsing ? (
+                                                    <Loader2 className="h-8 w-8 animate-spin text-indigo-600" aria-hidden="true" />
+                                                ) : file ? (
+                                                    <FileText className="h-8 w-8 text-emerald-600" aria-hidden="true" />
+                                                ) : (
+                                                    <CloudUpload className="h-8 w-8 text-indigo-600" aria-hidden="true" />
                                                 )}
                                             </div>
+
+                                            <p className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                                                {dragActive
+                                                    ? 'Drop your spreadsheet here'
+                                                    : parsing
+                                                    ? 'Reading your spreadsheet…'
+                                                    : file
+                                                    ? file.name
+                                                    : 'Click to browse, or drag your spreadsheet here'}
+                                            </p>
+                                            <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
+                                                {file
+                                                    ? `${formatFileSize(file.size)} — ${ACCEPTED_UPLOAD_FORMATS}`
+                                                    : `Accepted formats: ${ACCEPTED_UPLOAD_FORMATS}`}
+                                            </p>
                                         </button>
 
+                                        {/* Upload progress */}
                                         {uploading && (
-                                            <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-500/30 dark:bg-blue-950/30">
-                                                <div className="mb-2 flex items-center justify-between text-sm font-semibold text-blue-900 dark:text-blue-100">
-                                                    <span>Uploading incidents from your file</span>
-                                                    <span>{uploadProgress}%</span>
+                                            <div
+                                                role="progressbar"
+                                                aria-valuenow={uploadProgress}
+                                                aria-valuemin={0}
+                                                aria-valuemax={100}
+                                                aria-label="Upload progress"
+                                                className="rounded-xl border border-blue-200 bg-blue-50 px-5 py-4 dark:border-blue-500/30 dark:bg-blue-950/30"
+                                            >
+                                                <div className="mb-2.5 flex items-center justify-between text-sm font-semibold text-blue-900 dark:text-blue-100">
+                                                    <span>
+                                                        {uploadProgress < 100
+                                                            ? 'Uploading your spreadsheet…'
+                                                            : 'Saving incident records…'}
+                                                    </span>
+                                                    <span className="tabular-nums">{uploadProgress}%</span>
                                                 </div>
-                                                <div className="h-2 overflow-hidden rounded-full bg-blue-100">
+                                                <div className="h-2 overflow-hidden rounded-full bg-blue-100 dark:bg-blue-900/40">
                                                     <div
                                                         className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-300"
                                                         style={{ width: `${uploadProgress}%` }}
@@ -499,14 +606,15 @@ const BulkUpload = () => {
 
                                         <UploadStatusBanner message={message} />
 
-                                        <div className="grid gap-3 md:grid-cols-3">
+                                        {/* Action buttons */}
+                                        <div className="grid gap-3 sm:grid-cols-3">
                                             <button
                                                 type="button"
                                                 onClick={() => fileInputRef.current?.click()}
                                                 disabled={uploading || parsing}
-                                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
                                             >
-                                                <FileText className="h-4 w-4" />
+                                                <FileText className="h-4 w-4" aria-hidden="true" />
                                                 Choose File
                                             </button>
 
@@ -514,9 +622,9 @@ const BulkUpload = () => {
                                                 type="button"
                                                 onClick={resetSelection}
                                                 disabled={uploading || parsing || (!file && !preview)}
-                                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
                                             >
-                                                <RefreshCw className="h-4 w-4" />
+                                                <RefreshCw className="h-4 w-4" aria-hidden="true" />
                                                 Reset
                                             </button>
 
@@ -524,52 +632,85 @@ const BulkUpload = () => {
                                                 type="button"
                                                 onClick={handleUpload}
                                                 disabled={!canUpload}
-                                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
+                                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                                             >
-                                                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CloudUpload className="h-4 w-4" />}
-                                                {uploading ? (uploadProgress === 100 ? `Saving ${preview?.totalRows || ''} records...` : 'Uploading...') : 'Confirm & Upload'}
+                                                {uploading
+                                                    ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                                                    : <CloudUpload className="h-4 w-4" aria-hidden="true" />}
+                                                {uploading
+                                                    ? (uploadProgress === 100 ? 'Saving records…' : 'Uploading…')
+                                                    : 'Confirm & Upload'}
                                             </button>
                                         </div>
                                     </div>
                                 </section>
 
-                                <section className="space-y-6">
-                                    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-md dark:border-slate-800 dark:bg-slate-900/50">
-                                        <h2 className="text-lg font-semibold text-slate-900">Checklist before upload</h2>
-                                        <div className="mt-4 space-y-3 text-sm text-slate-700 dark:text-slate-200">
-                                            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950/70">
-                                                Required column headings: <strong>{REQUIRED_COLUMNS.join(', ')}</strong>
-                                            </div>
-                                            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950/70">
-                                                The on-screen preview checks column names only. When you upload, the school server checks categories, locations, evidence types, staff, and students.
-                                            </div>
-                                            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950/70">
-                                                Download the sample spreadsheet so your column names match what the school expects.
-                                            </div>
+                                {/* Sidebar */}
+                                <aside className="space-y-5">
+
+                                    {/* Checklist */}
+                                    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/50">
+                                        <div className="border-b border-slate-100 bg-slate-50 px-5 py-4 dark:border-slate-800 dark:bg-slate-900">
+                                            <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-slate-700 dark:text-slate-300">
+                                                Before you upload
+                                            </h2>
+                                        </div>
+                                        <ul className="space-y-3.5 p-5">
+                                            <CheckItem>
+                                                Keep the column headings exactly as shown in the sample file:
+                                                <span className="ml-1 font-mono text-xs font-semibold text-indigo-700 dark:text-indigo-300">
+                                                    {REQUIRED_COLUMNS.join(', ')}
+                                                </span>
+                                            </CheckItem>
+                                            <CheckItem>
+                                                Each row must represent one incident. Date and time columns must be filled in.
+                                            </CheckItem>
+                                            <CheckItem>
+                                                The preview checks column names only. When you confirm, the system also checks categories, locations, evidence types, and students.
+                                            </CheckItem>
+                                            <CheckItem>
+                                                Save the file in Excel format (.xlsx) before uploading.
+                                            </CheckItem>
+                                        </ul>
+                                    </div>
+
+                                    {/* Optional columns info */}
+                                    <div className="overflow-hidden rounded-2xl border border-blue-200 bg-blue-50 dark:border-blue-500/30 dark:bg-blue-950/30">
+                                        <div className="border-b border-blue-100 px-5 py-4 dark:border-blue-500/20">
+                                            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.14em] text-blue-800 dark:text-blue-200">
+                                                <Info className="h-4 w-4" aria-hidden="true" />
+                                                Optional columns
+                                            </h2>
+                                        </div>
+                                        <ul className="space-y-3.5 p-5">
+                                            <li className="text-sm text-blue-900 dark:text-blue-200">
+                                                <span className="font-mono font-semibold">handledBy</span> — a valid staff email address.
+                                            </li>
+                                            <li className="text-sm text-blue-900 dark:text-blue-200">
+                                                <span className="font-mono font-semibold">timePeriod</span> — enter <strong>AM</strong> or <strong>PM</strong>.
+                                            </li>
+                                            <li className="text-sm text-blue-900 dark:text-blue-200">
+                                                <span className="font-mono font-semibold">highPriority</span> — enter <strong>Yes</strong> or <strong>No</strong>.
+                                            </li>
+                                        </ul>
+                                    </div>
+
+                                    {/* Info tip */}
+                                    <div className="rounded-2xl border border-blue-200 bg-blue-50 px-5 py-4 dark:border-blue-500/30 dark:bg-blue-950/30">
+                                        <div className="flex items-start gap-3">
+                                            <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+                                            <p className="text-sm text-blue-900 dark:text-blue-200">
+                                                Not sure about the format? Download the sample spreadsheet to see an example with the correct column names.
+                                            </p>
                                         </div>
                                     </div>
 
-                                    <div className="rounded-xl border border-blue-200 bg-blue-50 p-5 shadow-md dark:border-blue-500/30 dark:bg-blue-950/30">
-                                        <h2 className="text-lg font-semibold text-blue-900 dark:text-blue-100">Optional Columns</h2>
-                                        <div className="mt-4 grid gap-3 text-sm text-blue-900 dark:text-blue-100">
-                                            <div className="rounded-xl border border-blue-100 bg-white px-4 py-3 dark:border-blue-500/20 dark:bg-slate-900">
-                                                <strong>handledBy</strong> should contain a valid staff email.
-                                            </div>
-                                            <div className="rounded-xl border border-blue-100 bg-white px-4 py-3 dark:border-blue-500/20 dark:bg-slate-900">
-                                                <strong>timePeriod</strong> accepts AM or PM.
-                                            </div>
-                                            <div className="rounded-xl border border-blue-100 bg-white px-4 py-3 dark:border-blue-500/20 dark:bg-slate-900">
-                                                <strong>highPriority</strong> accepts Yes or No.
-                                            </div>
-                                        </div>
-                                    </div>
-                                </section>
+                                </aside>
                             </div>
 
                             <UploadPreviewTable preview={preview} />
                         </div>
                     </main>
-                </div>
             </div>
 
             <UploadResultsModal

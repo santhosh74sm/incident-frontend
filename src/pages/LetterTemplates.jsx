@@ -283,7 +283,8 @@ const TemplateCard = ({ template, selected, onSelect }) => (
     <button
         type="button"
         onClick={() => onSelect(template)}
-        className={`w-full rounded-3xl border p-5 text-left transition-all duration-200 ${
+        aria-pressed={selected}
+        className={`w-full rounded-3xl border p-5 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
             selected
                 ? 'border-indigo-300 bg-indigo-50 shadow-lg shadow-indigo-100/60 dark:border-indigo-500/40 dark:bg-indigo-950/30 dark:shadow-indigo-950/20'
                 : 'border-slate-200 bg-white shadow-sm hover:border-slate-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700'
@@ -291,7 +292,7 @@ const TemplateCard = ({ template, selected, onSelect }) => (
     >
         <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Letter file</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Template</p>
                 <h3 className="mt-2 truncate text-lg font-semibold text-slate-900 dark:text-slate-50">{template.title}</h3>
                 <p className="mt-1 text-sm font-medium text-blue-700 dark:text-blue-300">{template.incidentCategory}</p>
             </div>
@@ -322,18 +323,18 @@ const TemplateCard = ({ template, selected, onSelect }) => (
 
 const WorkspaceActionButton = ({ icon: Icon, children, variant = 'secondary', ...props }) => {
     const variants = {
-        primary: 'border-indigo-700 bg-indigo-600 text-white hover:bg-indigo-700',
-        secondary: 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800',
-        danger: 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 dark:border-rose-500/30 dark:bg-rose-950/30 dark:text-rose-200 dark:hover:bg-rose-950/50',
+        primary: 'border-indigo-700 bg-indigo-600 text-white hover:bg-indigo-700 focus-visible:ring-indigo-500',
+        secondary: 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 focus-visible:ring-slate-400',
+        danger: 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 dark:border-rose-500/30 dark:bg-rose-950/30 dark:text-rose-200 dark:hover:bg-rose-950/50 focus-visible:ring-rose-400',
     };
 
     return (
         <button
             type="button"
-            className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-semibold transition ${variants[variant] || variants.secondary} disabled:cursor-not-allowed disabled:opacity-60`}
+            className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 ${variants[variant] || variants.secondary} disabled:cursor-not-allowed disabled:opacity-60`}
             {...props}
         >
-            <Icon className="h-4 w-4" />
+            <Icon className="h-4 w-4" aria-hidden="true" />
             {children}
         </button>
     );
@@ -458,8 +459,8 @@ const DetailsCard = ({ template }) => {
     return (
         <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="flex items-center gap-3">
-                <div className="rounded-2xl border border-blue-200 bg-blue-50 p-2 text-blue-700">
-                    <Globe2 className="h-5 w-5" />
+                <div className="rounded-2xl border border-blue-200 bg-blue-50 p-2 text-blue-700 dark:border-blue-500/30 dark:bg-blue-950/30 dark:text-blue-300">
+                    <Globe2 className="h-5 w-5" aria-hidden="true" />
                 </div>
                 <div>
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Letter file details</h3>
@@ -501,12 +502,12 @@ const PlaceholderLibrary = ({ onCopyAll, onDownloadGuide, onCopyTag }) => (
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
                 <div className="flex items-center gap-3">
-                    <div className="rounded-2xl border border-indigo-200 bg-indigo-50 p-2 text-indigo-700">
-                        <Sparkles className="h-5 w-5" />
+                    <div className="rounded-2xl border border-indigo-200 bg-indigo-50 p-2 text-indigo-700 dark:border-indigo-500/30 dark:bg-indigo-950/30 dark:text-indigo-300">
+                        <Sparkles className="h-5 w-5" aria-hidden="true" />
                     </div>
                     <div>
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Merge field list</h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">Copy each field exactly as shown into your Word letter file.</p>
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Available Template Fields</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Copy each field exactly as shown into your Word (.docx) file. The system fills them in when a letter is generated.</p>
                     </div>
                 </div>
             </div>
@@ -564,8 +565,8 @@ const CreateTemplateModal = ({
         <div className="my-auto max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-xl overflow-y-auto rounded-[24px] border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:rounded-3xl">
             <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5 dark:border-slate-800">
                 <div>
-                    <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50">Add letter file</h2>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">This form only collects the details shown below.</p>
+                    <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50">Add new template</h2>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Enter the details below. You can upload Word files after creating the template.</p>
                 </div>
                 <button
                     type="button"
@@ -578,12 +579,12 @@ const CreateTemplateModal = ({
 
             <div className="space-y-5 px-6 py-6">
                 <label className="block">
-                    <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Title</span>
-                    <input
-                        type="text"
-                        value={formState.title}
-                        onChange={(event) => onChange('title', event.target.value)}
-                        placeholder="Parent warning letter"
+                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Template title</span>
+                <input
+                type="text"
+                value={formState.title}
+                onChange={(event) => onChange('title', event.target.value)}
+                placeholder="Parent warning letter"
                         className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-indigo-400/20"
                     />
                 </label>
@@ -631,13 +632,13 @@ const CreateTemplateModal = ({
                     Cancel
                 </button>
                 <button
-                    type="button"
-                    onClick={onSubmit}
-                    disabled={creating}
-                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-indigo-700 bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                type="button"
+                onClick={onSubmit}
+                disabled={creating}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-indigo-700 bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                 >
-                    {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                    Add letter file
+                {creating ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Plus className="h-4 w-4" aria-hidden="true" />}
+                Add template
                 </button>
             </div>
         </div>
@@ -723,13 +724,13 @@ const UploadVariantModal = ({ template, language, uploading, onClose, onUpload }
                         Cancel
                     </button>
                     <button
-                        type="button"
-                        onClick={() => onUpload(selectedFile)}
-                        disabled={!selectedFile || uploading}
-                        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-indigo-700 bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    type="button"
+                    onClick={() => onUpload(selectedFile)}
+                    disabled={!selectedFile || uploading}
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-indigo-700 bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                     >
-                        {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                        Upload Word file
+                    {uploading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Upload className="h-4 w-4" aria-hidden="true" />}
+                    Upload Word file
                     </button>
                 </div>
             </div>
@@ -1172,11 +1173,11 @@ const LetterTemplates = () => {
                                         <ShieldCheck className="h-4 w-4" />
                                         Official letters
                                     </div>
-                                    <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
-                                        Letter files for incident categories
+                                    <h1 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl">
+                                        Letter Templates
                                     </h1>
                                     <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-300 sm:text-base">
-                                        Review English and Tamil letter files, preview the Word document, and keep uploads aligned with how incidents create letters.
+                                        Manage English and Tamil Word files for each incident category. Preview the document, upload a new version, and download at any time.
                                     </p>
                                 </div>
 
@@ -1186,10 +1187,10 @@ const LetterTemplates = () => {
                                         onClick={() => fetchTemplates(false)}
                                         disabled={refreshing}
                                     >
-                                        {refreshing ? 'Refreshing...' : 'Refresh'}
+                                        {refreshing ? 'Refreshing…' : 'Refresh'}
                                     </WorkspaceActionButton>
                                     <WorkspaceActionButton icon={Download} onClick={downloadGuide}>
-                                        Merge field guide
+                                        Template fields guide
                                     </WorkspaceActionButton>
                                     <WorkspaceActionButton
                                         icon={Plus}
@@ -1204,26 +1205,26 @@ const LetterTemplates = () => {
 
                         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                             <MetricCard
-                                label="Total letter files"
+                                label="Total templates"
                                 value={templateMetrics.total}
-                                description="Letter files saved for incident categories"
+                                description="Templates saved for incident categories"
                             />
                             <MetricCard
-                                label="Dual Language Ready"
+                                label="Both languages ready"
                                 value={templateMetrics.fullyReady}
-                                description="Both English and Tamil uploaded"
+                                description="English and Tamil files both uploaded"
                                 tone="emerald"
                             />
                             <MetricCard
-                                label="English Ready"
+                                label="English uploaded"
                                 value={templateMetrics.englishReady}
-                                description="English letter files on file"
+                                description="Templates with an English Word file"
                                 tone="blue"
                             />
                             <MetricCard
-                                label="Tamil Ready"
+                                label="Tamil uploaded"
                                 value={templateMetrics.tamilReady}
-                                description="Tamil letter files on file"
+                                description="Templates with a Tamil Word file"
                                 tone="indigo"
                             />
                         </section>
@@ -1233,9 +1234,9 @@ const LetterTemplates = () => {
                                 <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                                         <div>
-                                            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">All letter files</h2>
+                                            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">All templates</h2>
                                             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                                                Cards show which languages are ready at a glance.
+                                                Each card shows which languages have a Word file uploaded.
                                             </p>
                                         </div>
                                         <div className="relative w-full max-w-md">
@@ -1261,9 +1262,9 @@ const LetterTemplates = () => {
                                 ) : filteredTemplates.length === 0 ? (
                                     <div className="rounded-3xl border border-slate-200 bg-white px-6 py-16 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
                                         <FileText className="mx-auto h-12 w-12 text-slate-300" />
-                                        <h3 className="mt-5 text-xl font-semibold text-slate-900 dark:text-slate-50">No letter files match your search</h3>
+                                        <h3 className="mt-5 text-xl font-semibold text-slate-900 dark:text-slate-50">No templates match your search</h3>
                                         <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
-                                            Try different words in the search box, or add a letter file for a category that is not covered yet.
+                                            Try different words in the search box, or add a new template for a category that is not covered yet.
                                         </p>
                                     </div>
                                 ) : (
@@ -1286,46 +1287,48 @@ const LetterTemplates = () => {
                                         <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
                                             <div>
                                                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                                                    Letter preview & actions
+                                                    Template workspace
                                                 </p>
                                                 <h2 className="mt-2 text-2xl font-semibold text-slate-900 dark:text-slate-50">
-                                                    {selectedTemplate?.title || 'Choose a letter file'}
+                                                    {selectedTemplate?.title || 'Choose a template'}
                                                 </h2>
                                                 <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
                                                     {selectedTemplate
-                                                        ? `${selectedTemplate.incidentCategory} - preview, upload, and download each language from here.`
-                                                        : 'Select a letter file on the left to open the preview and actions here.'}
+                                                        ? `${selectedTemplate.incidentCategory} — preview, upload, and download each language from here.`
+                                                        : 'Select a template on the left to preview and manage its language files here.'}
                                                 </p>
                                             </div>
 
                                             <div className="flex flex-wrap gap-2">
                                                 {Object.entries(LANGUAGE_META).map(([language, meta]) => {
                                                     const variant = getVariantMeta(selectedTemplate, language);
+                                                    const isActive = activeLanguage === language;
                                                     return (
                                                         <button
                                                             key={language}
                                                             type="button"
                                                             onClick={() => setActiveLanguage(language)}
-                                                            className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-semibold transition ${
-                                                                activeLanguage === language
+                                                            aria-pressed={isActive}
+                                                            className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+                                                                isActive
                                                                     ? 'border-indigo-600 bg-indigo-600 text-white'
                                                                     : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
                                                             }`}
                                                         >
-                                                            <Languages className="h-4 w-4" />
+                                                            <Languages className="h-4 w-4" aria-hidden="true" />
                                                             {meta.label}
                                                             <span
                                                                 className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                                                                    activeLanguage === language
+                                                                    isActive
                                                                         ? variant.hasDocx
-                                                                            ? 'bg-white/20 text-white'
-                                                                            : 'bg-white/20 text-white'
+                                                                            ? 'bg-emerald-400/30 text-emerald-100'
+                                                                            : 'bg-rose-400/30 text-rose-100'
                                                                         : variant.hasDocx
                                                                             ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200'
                                                                             : 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-200'
                                                                 }`}
                                                             >
-                                                                {variant.hasDocx ? 'UPLOADED' : 'MISSING'}
+                                                                {variant.hasDocx ? 'Uploaded' : 'Missing'}
                                                             </span>
                                                         </button>
                                                     );

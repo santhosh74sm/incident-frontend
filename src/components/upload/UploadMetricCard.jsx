@@ -1,22 +1,25 @@
 import React from 'react';
 
-const UploadMetricCard = ({ icon: Icon, label, value, tone = 'slate' }) => {
-    const tones = {
-        slate: 'bg-slate-50 text-slate-800 ring-slate-200 dark:bg-slate-900 dark:text-slate-100 dark:ring-slate-700',
-        blue: 'bg-blue-50 text-blue-800 ring-blue-200 dark:bg-blue-950/30 dark:text-blue-100 dark:ring-blue-500/30',
-        indigo: 'bg-indigo-50 text-indigo-800 ring-indigo-200 dark:bg-indigo-950/30 dark:text-indigo-100 dark:ring-indigo-500/30',
-        emerald: 'bg-emerald-50 text-emerald-800 ring-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-100 dark:ring-emerald-500/30',
-    };
-
-    return (
-        <div className={`rounded-xl px-4 py-3 ring-1 ${tones[tone] || tones.slate}`}>
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide">
-                <Icon className="h-4 w-4" />
-                {label}
-            </div>
-            <p className="mt-2 text-lg font-bold">{value}</p>
-        </div>
-    );
+const TONES = {
+    slate:   'bg-white/10 text-white ring-white/15',
+    blue:    'bg-white/10 text-white ring-white/15',
+    indigo:  'bg-white/10 text-white ring-white/15',
+    emerald: 'bg-white/10 text-white ring-white/15',
 };
+
+/**
+ * Compact stat tile used inside hero-band headers.
+ * All variants intentionally use white-on-dark so they sit naturally
+ * on the dark gradient header background.
+ */
+const UploadMetricCard = ({ icon: Icon, label, value, tone = 'slate' }) => (
+    <div className={`rounded-xl px-4 py-3 ring-1 ${TONES[tone] || TONES.slate}`}>
+        <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/70">
+            <Icon className="h-3.5 w-3.5 shrink-0" />
+            {label}
+        </div>
+        <p className="mt-1.5 text-base font-bold text-white">{value}</p>
+    </div>
+);
 
 export default UploadMetricCard;
