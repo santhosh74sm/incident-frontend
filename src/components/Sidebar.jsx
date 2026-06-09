@@ -38,6 +38,10 @@ const NAV_ICON_BASE =
 const NavItem = memo(({ item, collapsed, mobile, onNavigate, isActive }) => {
     const Icon = item.icon;
 
+    const handlePreload = useCallback(() => {
+        item.preload?.().catch?.(() => {});
+    }, [item]);
+
     const handleClick = useCallback(
         (event) => {
             if (isActive) event.preventDefault();
@@ -51,6 +55,9 @@ const NavItem = memo(({ item, collapsed, mobile, onNavigate, isActive }) => {
             to={item.path}
             title={collapsed ? item.title : undefined}
             aria-label={item.title}
+            onMouseEnter={handlePreload}
+            onFocus={handlePreload}
+            onTouchStart={handlePreload}
             onClick={handleClick}
             className={`${NAV_ITEM_BASE} ${
                 collapsed ? 'min-h-[42px] justify-center px-1 py-1' : 'min-h-[44px] gap-3 px-2.5 py-2'
@@ -130,18 +137,21 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
                 title: 'Dashboard',
                 icon: LayoutDashboard,
                 path: '/dashboard',
+                preload: () => import('../pages/Dashboard'),
                 roles: ['Super Admin', 'Admin', 'Teacher'],
             },
             {
                 title: 'All Incidents',
                 icon: AlertCircle,
                 path: '/incidents',
+                preload: () => import('../pages/IncidentList'),
                 roles: ['Super Admin', 'Admin', 'Teacher'],
             },
             {
                 title: 'Report Incident',
                 icon: PlusCircle,
                 path: '/create-incident',
+                preload: () => import('../pages/CreateIncident'),
                 roles: ['Admin', 'Teacher'],
             },
         ],
@@ -154,18 +164,21 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
                 title: 'User Management',
                 icon: Users,
                 path: '/user-management',
+                preload: () => import('../pages/UserManagement'),
                 roles: ['Super Admin', 'Admin'],
             },
             {
                 title: 'Student Upload',
                 icon: GraduationCap,
                 path: '/upload-students',
+                preload: () => import('../pages/StudentUpload'),
                 roles: ['Super Admin', 'Admin'],
             },
             {
                 title: 'Incident Upload',
                 icon: Upload,
                 path: '/upload-incidents',
+                preload: () => import('../pages/BulkUpload'),
                 roles: ['Super Admin', 'Admin'],
             },
         ],
@@ -178,12 +191,14 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
                 title: 'Letter Templates',
                 icon: FileText,
                 path: '/letter-templates',
+                preload: () => import('../pages/LetterTemplates'),
                 roles: ['Super Admin', 'Admin'],
             },
             {
                 title: 'Issued Letters',
                 icon: Mail,
                 path: '/issued-letters',
+                preload: () => import('../pages/IssuedLetters'),
                 roles: ['Super Admin', 'Admin'],
             },
         ],
@@ -192,8 +207,8 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
 
     const reportsItems = useMemo(
         () => [
-            { title: 'School Analytics', icon: BarChart3, path: '/analytics' },
-            { title: 'Student Summaries', icon: ScrollText, path: '/student-analytics' },
+            { title: 'School Analytics', icon: BarChart3, path: '/analytics', preload: () => import('../pages/ProfessionalAnalytics') },
+            { title: 'Student Summaries', icon: ScrollText, path: '/student-analytics', preload: () => import('../pages/StudentAnalytics') },
         ],
         []
     );
@@ -204,6 +219,7 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
                 title: 'Activity Logs',
                 icon: ClipboardList,
                 path: '/logs',
+                preload: () => import('../pages/Logs'),
                 roles: ['Super Admin', 'Admin'],
             },
         ],

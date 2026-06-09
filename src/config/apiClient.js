@@ -82,17 +82,7 @@ const normalizeResponseIdsInPlace = (value, seen = new WeakSet()) => {
     return value;
 };
 
-const cloneResponseData = (value) => {
-    if (value === undefined) return value;
-
-    if (typeof window !== 'undefined' && typeof window.structuredClone === 'function') {
-        return window.structuredClone(value);
-    }
-
-    return JSON.parse(JSON.stringify(value));
-};
-
-const normalizeResponseIds = (value) => normalizeResponseIdsInPlace(cloneResponseData(value));
+const normalizeResponseIds = (value) => normalizeResponseIdsInPlace(value);
 
 const getRequestPath = (config = {}) => {
     const rawUrl = config.url || '';

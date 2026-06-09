@@ -6,6 +6,17 @@ import { useAuth } from '../context/AuthContext';
 const itemBase =
     'flex min-h-[48px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1 text-[10px] font-semibold leading-tight transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500';
 
+const preloadMobileRoute = (path) => {
+    let preloadPromise = null;
+    if (path === '/dashboard') preloadPromise = import('../pages/Dashboard');
+    else if (path === '/incidents') preloadPromise = import('../pages/IncidentList');
+    else if (path === '/create-incident') preloadPromise = import('../pages/CreateIncident');
+    else if (path === '/analytics') preloadPromise = import('../pages/ProfessionalAnalytics');
+    else if (path === '/user-management') preloadPromise = import('../pages/UserManagement');
+
+    preloadPromise?.catch(() => {});
+};
+
 const MobileBottomNav = () => {
     const { user } = useAuth();
 
@@ -39,7 +50,14 @@ const MobileBottomNav = () => {
                 style={{ gridTemplateColumns: `repeat(${navItems.length}, minmax(0, 1fr))` }}
             >
                 {navItems.map(({ to, label, icon: Icon, end }) => (
-                    <NavLink key={to} to={to} className={linkClass} end={end}>
+                    <NavLink
+                        key={to}
+                        to={to}
+                        className={linkClass}
+                        end={end}
+                        onFocus={() => preloadMobileRoute(to)}
+                        onTouchStart={() => preloadMobileRoute(to)}
+                    >
                         <Icon className="h-5 w-5 shrink-0" strokeWidth={2.1} aria-hidden />
                         <span className="max-w-full truncate">{label}</span>
                     </NavLink>
