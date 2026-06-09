@@ -237,7 +237,7 @@ const ProfessionalAnalytics = () => {
                 apiClient.get('/api/students/filters', config),
                 apiClient.get('/api/incidents/categories', config),
                 apiClient.get('/api/incidents/locations', { ...config, params: { includeUnknown: true } }),
-                apiClient.get('/api/evidence-types', config),
+                apiClient.get('/api/evidence-types', { ...config, params: { includeUnknown: true } }),
             ]);
 
             setFilterOptions({

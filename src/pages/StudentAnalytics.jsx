@@ -152,7 +152,7 @@ const StudentAnalytics = () => {
                 apiClient.get('/api/students/filters', config).catch(() => ({ data: {} })),
                 apiClient.get('/api/incidents/categories', config).catch(() => ({ data: [] })),
                 apiClient.get('/api/incidents/locations', { ...config, params: { includeUnknown: true } }).catch(() => ({ data: [] })),
-                apiClient.get('/api/evidence-types', config).catch(() => ({ data: [] })),
+                apiClient.get('/api/evidence-types', { ...config, params: { includeUnknown: true } }).catch(() => ({ data: [] })),
             ]);
 
             setFilterOptions({
