@@ -406,7 +406,7 @@ const Logs = () => {
                                             setFilters((current) => ({ ...current, entityType: event.target.value }));
                                             setPage(1);
                                         }}
-                                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 transition-all outline-none hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-600 focus-visible:outline-none"
+                                        className="min-h-[44px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 transition-all outline-none hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-600 focus-visible:outline-none"
                                     >
                                         <option value="">All record types</option>
                                         {entityTypeOptions.map((option) => (
@@ -426,7 +426,7 @@ const Logs = () => {
                                             setPageSize(Number(event.target.value));
                                             setPage(1);
                                         }}
-                                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 transition-all outline-none hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-600 focus-visible:outline-none"
+                                        className="min-h-[44px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 transition-all outline-none hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-600 focus-visible:outline-none"
                                     >
                                         {PAGE_SIZE_OPTIONS.map((size) => (
                                             <option key={size} value={size}>

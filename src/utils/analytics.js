@@ -22,7 +22,7 @@ export const formatActivityRecordLabel = (type) => {
         system: 'System Activity',
         analytics: 'System Activity',
         bulkupload: 'System Activity',
-        evidencetype: 'System Activity',
+        evidencetype: 'Evidence Type',
         log: 'System Activity',
     };
     return map[key] || map[compact] || raw;
@@ -44,6 +44,13 @@ export const CHART_COLORS = {
     category: '#3b82f6',
     location: '#475569',
     evidence: '#0f766e',
+};
+
+export const UNKNOWN_FILTER_OPTION = 'Unknown';
+
+const normalizeNullableFilterValue = (value) => {
+    const normalized = String(value ?? '').trim();
+    return normalized || UNKNOWN_FILTER_OPTION;
 };
 
 export const normalizeToStartOfDay = (value) => {
@@ -210,7 +217,7 @@ export const formatShare = (value, total) => (total > 0 ? `${Math.round((value /
 export const buildDistribution = (items, resolver, keyName = 'name') => {
     const map = {};
     items.forEach((item) => {
-        const key = resolver(item) || 'Unknown';
+        const key = normalizeNullableFilterValue(resolver(item));
         map[key] = (map[key] || 0) + 1;
     });
 
@@ -219,17 +226,17 @@ export const buildDistribution = (items, resolver, keyName = 'name') => {
         .sort((a, b) => b.count - a.count);
 };
 
-export const buildEvidenceDistribution = (items, { unknownEvidenceLabel = 'Unknown Evidence' } = {}) => {
+export const buildEvidenceDistribution = (items, { unknownEvidenceLabel = UNKNOWN_FILTER_OPTION } = {}) => {
     const counts = {};
 
     items.forEach((incident) => {
         if (incident.evidence && incident.evidence.length > 0) {
             incident.evidence.forEach((entry) => {
-                const name = entry?.evidenceType || unknownEvidenceLabel;
+                const name = normalizeNullableFilterValue(entry?.evidenceType || unknownEvidenceLabel);
                 counts[name] = (counts[name] || 0) + 1;
             });
         } else {
-            counts['No Evidence'] = (counts['No Evidence'] || 0) + 1;
+            counts[unknownEvidenceLabel] = (counts[unknownEvidenceLabel] || 0) + 1;
         }
     });
 
@@ -321,7 +328,36 @@ export const normalizeOptionList = (options = []) =>
             if (typeof option === 'string') return option;
             return option?.name || option?.label || option?.title || '';
         })
+        .map((option) => String(option || '').trim())
         .filter(Boolean);
+
+export const withUnknownOption = (options = [], includeUnknown = false) => {
+    const normalized = normalizeOptionList(options);
+    const deduped = [];
+    const seen = new Set();
+
+    normalized.forEach((option) => {
+        const key = option.toLowerCase();
+        if (seen.has(key)) return;
+        seen.add(key);
+        deduped.push(option);
+    });
+
+    if (includeUnknown && !seen.has(UNKNOWN_FILTER_OPTION.toLowerCase())) {
+        deduped.push(UNKNOWN_FILTER_OPTION);
+    }
+
+    return deduped;
+};
+
+export const hasUnknownLocation = (items = []) =>
+    items.some((incident) => normalizeNullableFilterValue(incident?.location) === UNKNOWN_FILTER_OPTION);
+
+export const hasUnknownEvidenceType = (items = []) =>
+    items.some((incident) => {
+        if (!Array.isArray(incident?.evidence) || incident.evidence.length === 0) return true;
+        return incident.evidence.some((entry) => normalizeNullableFilterValue(entry?.evidenceType) === UNKNOWN_FILTER_OPTION);
+    });
 
 const formatDayBucketLabel = (value) => {
     const parsed = dayjs(value);

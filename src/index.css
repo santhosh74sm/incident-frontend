@@ -241,7 +241,7 @@
   }
 
   .analytics-heat-cell {
-    @apply flex h-14 items-center justify-center rounded-2xl border border-white/70 text-sm font-bold shadow-sm transition-transform duration-200 hover:-translate-y-0.5;
+    @apply flex h-14 items-center justify-center rounded-2xl border border-white/70 text-sm font-black text-slate-950 shadow-sm transition-transform duration-200 hover:-translate-y-0.5 dark:text-white;
   }
 
   /* ── Design system: Typography ─────────────────────────────────────────── */

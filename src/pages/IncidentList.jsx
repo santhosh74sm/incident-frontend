@@ -310,9 +310,7 @@ const IncidentList = () => {
         setDateRange({ start: '', end: '' });
         setActiveTab('all');
         setReadStatusFilter('All');
-        setLoading(true);
-        fetchIncidents({ reset: true });
-    }, [fetchIncidents]);
+    }, []);
 
     if (loading && incidents.length === 0) {
         return (

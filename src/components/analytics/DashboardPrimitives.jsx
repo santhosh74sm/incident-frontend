@@ -492,7 +492,6 @@ export const CategoryHeatmap = ({ rows = [], columns = [] }) => {
                                             className="analytics-heat-cell"
                                             style={{
                                                 backgroundColor: `rgba(${column.rgb}, ${opacity})`,
-                                                color: `rgb(${column.rgb})`,
                                             }}
                                             title={`${row.label} — ${column.label}: ${value}`}
                                         >

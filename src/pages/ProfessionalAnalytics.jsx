@@ -60,8 +60,11 @@ import {
     buildStatusTrendSeries,
     formatShortDate,
     getIncidentTimestamp,
+    hasUnknownEvidenceType,
+    hasUnknownLocation,
     normalizeOptionList,
     toneForStatus,
+    withUnknownOption,
 } from '../utils/analytics';
 import { downloadWorkbook } from '../utils/downloadFiles';
 import { withFeedback } from '../utils/notifications';
@@ -233,7 +236,7 @@ const ProfessionalAnalytics = () => {
             const [studentsRes, categoriesRes, locationsRes, evidenceRes] = await Promise.all([
                 apiClient.get('/api/students/filters', config),
                 apiClient.get('/api/incidents/categories', config),
-                apiClient.get('/api/incidents/locations', config),
+                apiClient.get('/api/incidents/locations', { ...config, params: { includeUnknown: true } }),
                 apiClient.get('/api/evidence-types', config),
             ]);
 
@@ -308,6 +311,14 @@ const ProfessionalAnalytics = () => {
     }, [incidents.length, fetchLetterStatusForIncidents]);
 
     const filteredIncidents = useMemo(() => incidents, [incidents]);
+    const locationFilterOptions = useMemo(
+        () => withUnknownOption(filterOptions.locations, hasUnknownLocation(incidents) || filters.locations.includes('Unknown')),
+        [filterOptions.locations, filters.locations, incidents]
+    );
+    const evidenceFilterOptions = useMemo(
+        () => withUnknownOption(filterOptions.evidence, hasUnknownEvidenceType(incidents) || filters.evidence.includes('Unknown')),
+        [filterOptions.evidence, filters.evidence, incidents]
+    );
 
     const analytics = useMemo(() => {
         const total = filteredIncidents.length;
@@ -346,7 +357,7 @@ const ProfessionalAnalytics = () => {
                 fallbackDays: 14,
             }),
             categoryData: buildDistribution(filteredIncidents, (incident) => incident.category || 'Uncategorized'),
-            locationData: buildDistribution(filteredIncidents, (incident) => incident.location || 'Unknown'),
+            locationData: buildDistribution(filteredIncidents, (incident) => incident.location),
             evidenceData: buildEvidenceDistribution(filteredIncidents),
             classWiseData: buildClassResolution(filteredIncidents),
             staffWorkload: buildStaffWorkload(filteredIncidents),
@@ -395,8 +406,7 @@ const ProfessionalAnalytics = () => {
         });
         setSelectedStaff(user?.role === 'Teacher' && user?.name ? [user.name] : []);
         setDateRange({ start: '', end: '' });
-        fetchIncidents({ reset: true });
-    }, [fetchIncidents, user?.name, user?.role]);
+    }, [user?.name, user?.role]);
 
     const exportIncidentDetailsToExcel = useCallback(async () => {
         try {
@@ -445,7 +455,7 @@ const ProfessionalAnalytics = () => {
         }
     }, [addToast, filteredIncidentDetails, letterStatusMap]);
 
-    if (loading) {
+    if (loading && incidents.length === 0) {
         return (
             <div className="flex min-h-screen bg-slate-100">
                 <div className="flex min-w-0 flex-1 flex-col">
@@ -630,7 +640,7 @@ const ProfessionalAnalytics = () => {
                                 <button
                                     onClick={exportIncidentDetailsToExcel}
                                     disabled={isExporting}
-                                    className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
+                                    className="btn-primary"
                                 >
                                     <Download size={14} />
                                     {isExporting ? 'Exporting...' : 'Export Excel'}
@@ -674,7 +684,7 @@ const ProfessionalAnalytics = () => {
                                 />
                                 <UnifiedMultiSelect
                                     label="Location"
-                                    options={filterOptions.locations}
+                                    options={locationFilterOptions}
                                     selected={filters.locations}
                                     onChange={(value) => setFilters((current) => ({ ...current, locations: value }))}
                                     placeholder="All Locations"
@@ -682,7 +692,7 @@ const ProfessionalAnalytics = () => {
                                 />
                                 <UnifiedMultiSelect
                                     label="Evidence Type"
-                                    options={filterOptions.evidence}
+                                    options={evidenceFilterOptions}
                                     selected={filters.evidence}
                                     onChange={(value) => setFilters((current) => ({ ...current, evidence: value }))}
                                     placeholder="All Evidence Types"
@@ -757,7 +767,7 @@ const ProfessionalAnalytics = () => {
                                     />
 
                                     <DashboardWidgetPanel
-                                        className="xl:col-span-6"
+                                        className="xl:col-span-5"
                                         title="Where incidents stand today"
                                         description="Open, in-progress, and closed incidents as parts of the whole."
                                         icon={BarChart3}
@@ -833,7 +843,7 @@ const ProfessionalAnalytics = () => {
                                     />
 
                                     <DashboardWidgetPanel
-                                        className="xl:col-span-5"
+                                        className="xl:col-span-6"
                                         title="Category summary (grid view)"
                                         description="See how often each incident type appears while open, in progress, or already closed."
                                         icon={BarChart3}
@@ -958,7 +968,7 @@ const ProfessionalAnalytics = () => {
                                     />
 
                                     <DashboardWidgetPanel
-                                        className="xl:col-span-6"
+                                        className="xl:col-span-12"
                                         title="Location Distribution"
                                         description="Most active locations in the filtered incident set."
                                         icon={ShieldCheck}

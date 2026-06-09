@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import apiClient from '../config/apiClient';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/ToastProvider';
@@ -334,6 +334,7 @@ const IssuedLetters = () => {
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [deleting, setDeleting] = useState(false);
     const [downloadingKey, setDownloadingKey] = useState('');
+    const hasLoadedLettersRef = useRef(false);
 
     const config = useMemo(() => ({ headers: {} }), []);
     const isSuperAdmin = normalizeRole(user?.role) === 'Super Admin';
@@ -355,7 +356,7 @@ const IssuedLetters = () => {
         if (!user?._id) return;
 
         try {
-            if (showLoader) {
+            if (showLoader && !hasLoadedLettersRef.current) {
                 setLoading(true);
             } else {
                 setRefreshing(true);
@@ -376,6 +377,7 @@ const IssuedLetters = () => {
         } catch (error) {
             addToast(error.response?.data?.message || 'Failed to load issued letters.', 'error');
         } finally {
+            hasLoadedLettersRef.current = true;
             setLoading(false);
             setRefreshing(false);
         }
@@ -640,7 +642,7 @@ const IssuedLetters = () => {
                                 </div>
                             </div>
 
-                            {loading ? (
+                            {loading && letters.length === 0 ? (
                                 <div className="flex min-h-[420px] items-center justify-center">
                                     <div className="text-center">
                                         <Loader2 className="mx-auto h-10 w-10 animate-spin text-indigo-500" />

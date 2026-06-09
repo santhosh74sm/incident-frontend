@@ -60,11 +60,14 @@ import {
     formatShortDate,
     getIncidentTimestamp,
     getLetterTimelineTimestamp,
+    hasUnknownEvidenceType,
+    hasUnknownLocation,
     normalizeOptionList,
     normalizeToStartOfDay,
     STATUS_COLORS,
     STATUS_OPTIONS,
     toneForStatus,
+    withUnknownOption,
 } from '../utils/analytics';
 import { downloadBlob, downloadWorkbook } from '../utils/downloadFiles';
 import { withFeedback } from '../utils/notifications';
@@ -148,7 +151,7 @@ const StudentAnalytics = () => {
             const [studentsRes, categoriesRes, locationsRes, evidenceRes] = await Promise.all([
                 apiClient.get('/api/students/filters', config).catch(() => ({ data: {} })),
                 apiClient.get('/api/incidents/categories', config).catch(() => ({ data: [] })),
-                apiClient.get('/api/incidents/locations', config).catch(() => ({ data: [] })),
+                apiClient.get('/api/incidents/locations', { ...config, params: { includeUnknown: true } }).catch(() => ({ data: [] })),
                 apiClient.get('/api/evidence-types', config).catch(() => ({ data: [] })),
             ]);
 
@@ -304,6 +307,14 @@ const StudentAnalytics = () => {
     }, [fetchLetterStatusForIncidents, studentIncidents]);
 
     const filteredIncidentSet = useMemo(() => (selectedStudent ? studentIncidents : []), [selectedStudent, studentIncidents]);
+    const locationFilterOptions = useMemo(
+        () => withUnknownOption(filterOptions.locations, hasUnknownLocation(studentIncidents) || filters.locations.includes('Unknown')),
+        [filterOptions.locations, filters.locations, studentIncidents]
+    );
+    const evidenceFilterOptions = useMemo(
+        () => withUnknownOption(filterOptions.evidence, hasUnknownEvidenceType(studentIncidents) || filters.evidence.includes('Unknown')),
+        [filterOptions.evidence, filters.evidence, studentIncidents]
+    );
 
     const studentAnalytics = useMemo(() => {
         const total = filteredIncidentSet.length;
@@ -342,7 +353,7 @@ const StudentAnalytics = () => {
             ],
             categoryData: buildDistribution(filteredIncidentSet, (incident) => incident.category || 'Uncategorized', 'category'),
             locationData: locationDistribution,
-            evidenceData: buildEvidenceDistribution(filteredIncidentSet, { unknownEvidenceLabel: 'Other' }),
+            evidenceData: buildEvidenceDistribution(filteredIncidentSet),
             statusTrendData: buildStatusTrendSeries({
                 items: filteredIncidentSet,
                 dateRange,
@@ -720,11 +731,6 @@ const StudentAnalytics = () => {
                                         setFilters({ incidentTypes: [], locations: [], evidence: [] });
                                         setStatusFilter([]);
                                         setDateRange({ start: '', end: '' });
-                                        if (selectedStudent) {
-                                            fetchStudentIncidents(selectedStudent, { reset: true });
-                                            fetchStudentLetters(selectedStudent, { reset: true });
-                                            fetchStudentLocationDistribution(selectedStudent, { reset: true });
-                                        }
                                     }}
                                     title="Student Filters"
                                 >
@@ -749,7 +755,7 @@ const StudentAnalytics = () => {
                                         />
                                         <UnifiedMultiSelect
                                             label="Location"
-                                            options={filterOptions.locations}
+                                            options={locationFilterOptions}
                                             selected={filters.locations}
                                             onChange={(value) => setFilters((current) => ({ ...current, locations: value }))}
                                             placeholder="All Locations"
@@ -757,7 +763,7 @@ const StudentAnalytics = () => {
                                         />
                                         <UnifiedMultiSelect
                                             label="Evidence Type"
-                                            options={filterOptions.evidence}
+                                            options={evidenceFilterOptions}
                                             selected={filters.evidence}
                                             onChange={(value) => setFilters((current) => ({ ...current, evidence: value }))}
                                             placeholder="All Evidence Types"
@@ -774,7 +780,7 @@ const StudentAnalytics = () => {
                                     </div>
                                 </UnifiedFilterBar>
 
-                                {loading ? (
+                                {loading && studentIncidents.length === 0 ? (
                                     <DashboardPageSkeleton showHero={false} />
                                 ) : (
                                     <>
