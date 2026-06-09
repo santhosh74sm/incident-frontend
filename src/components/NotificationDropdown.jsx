@@ -109,6 +109,8 @@ const getTargetDetails = (notification) => {
             null,
         studentName,
         classSection,
+        status: notification?.incident?.status || metadata?.status || null,
+        category: notification?.incident?.category || metadata?.category || metadata?.incidentCategory || null,
     };
 };
 
@@ -179,10 +181,13 @@ const useIsMobile = () => {
 const NotificationSection = ({ title, count, items, onItemClick }) => {
     if (!items?.length) return null;
 
+    const chipClassName =
+        'inline-flex min-h-[24px] max-w-full min-w-0 items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold leading-5';
+
     return (
         <section aria-label={`${title} notifications`}>
-            {/* Sticky section header */}
-            <div className="sticky top-0 z-[1] border-y border-slate-100 bg-white/95 px-3 py-2.5 backdrop-blur dark:border-slate-800 dark:bg-slate-900/95 sm:px-5">
+            {/* Section header */}
+            <div className="border-y border-slate-100 bg-white/95 px-3 py-2.5 backdrop-blur dark:border-slate-800 dark:bg-slate-900/95 sm:px-5">
                 <div className="flex items-center justify-between gap-3">
                     <p className="min-w-0 truncate text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500 sm:tracking-[0.22em]">
                         {title}
@@ -193,11 +198,11 @@ const NotificationSection = ({ title, count, items, onItemClick }) => {
                 </div>
             </div>
 
-            <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+            <ul className="space-y-3 p-2 dark:bg-slate-950/20 sm:p-3">
                 {items.map((notification, index) => {
                     const presentation = getNotificationPresentation(notification);
                     const Icon         = presentation.icon;
-                    const { targetLabel, admissionNumber, studentName, classSection } =
+                    const { targetLabel, admissionNumber, studentName, classSection, status, category } =
                         getTargetDetails(notification);
                     const isUnread = notification?.read !== true;
                     const notificationKey =
@@ -209,21 +214,21 @@ const NotificationSection = ({ title, count, items, onItemClick }) => {
                     return (
                         <li
                             key={notificationKey}
-                            className={`transition-colors duration-200 ${
+                            className={`overflow-hidden rounded-2xl border transition-colors duration-200 ${
                                 isUnread
-                                    ? 'bg-blue-50/45 dark:bg-blue-950/20'
-                                    : 'bg-white/80 dark:bg-slate-900/80'
+                                    ? 'border-blue-200 bg-blue-50/60 dark:border-blue-500/30 dark:bg-blue-950/20'
+                                    : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900'
                             }`}
                         >
                             <button
                                 type="button"
                                 onClick={() => onItemClick(notification)}
                                 aria-label={`${formatActionName(notification?.actionName)}${studentName ? ` — ${studentName}` : ''}${isUnread ? ' (unread)' : ''}`}
-                                className="relative z-[2] flex min-h-[56px] w-full min-w-0 touch-manipulation items-start gap-2 px-3 py-3 text-left transition-colors duration-200 hover:bg-slate-50/90 active:bg-slate-100/90 dark:hover:bg-slate-800/80 dark:active:bg-slate-800 sm:gap-3 sm:px-5 sm:py-4"
+                                className="relative z-[2] flex w-full min-w-0 touch-manipulation items-start gap-3.5 px-3 py-3.5 text-left transition-colors duration-200 hover:bg-slate-50/90 active:bg-slate-100/90 dark:hover:bg-slate-800/80 dark:active:bg-slate-800 sm:px-4 sm:py-4"
                             >
                                 {/* Icon badge */}
                                 <span
-                                    className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border sm:h-10 sm:w-10 ${presentation.toneClassName}`}
+                                    className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border ${presentation.toneClassName}`}
                                     aria-hidden
                                 >
                                     <Icon size={16} />
@@ -231,13 +236,18 @@ const NotificationSection = ({ title, count, items, onItemClick }) => {
 
                                 {/* Text content */}
                                 <div className="min-w-0 flex-1 overflow-hidden">
-                                    <div className="flex min-w-0 items-start justify-between gap-2">
-                                        <p className="min-w-0 flex-1 break-words text-sm font-semibold leading-snug text-slate-900 [overflow-wrap:anywhere] dark:text-slate-100">
-                                            {formatActionName(notification?.actionName)}
-                                        </p>
+                                    <div className="flex min-w-0 items-start gap-2">
+                                        <div className="min-w-0 flex-1">
+                                            <p className="min-w-0 break-words text-sm font-semibold leading-snug text-slate-900 [overflow-wrap:anywhere] dark:text-slate-100">
+                                                {formatActionName(notification?.actionName)}
+                                            </p>
+                                            <p className="mt-0.5 truncate text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                                                {formatActivityRecordLabel(notification.entityType || notification.type)}
+                                            </p>
+                                        </div>
                                         {isUnread ? (
                                             <span
-                                                className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.6)]"
+                                                className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.6)]"
                                                 aria-hidden
                                             />
                                         ) : (
@@ -249,47 +259,65 @@ const NotificationSection = ({ title, count, items, onItemClick }) => {
                                         )}
                                     </div>
 
-                                    {studentName ? (
-                                        <p className="mt-1 break-words text-sm font-semibold text-slate-800 [overflow-wrap:anywhere] dark:text-slate-200">
-                                            {studentName}
-                                        </p>
-                                    ) : null}
-
-                                    <p className="mt-0.5 break-words text-sm text-slate-600 [overflow-wrap:anywhere] dark:text-slate-400">
-                                        {notification?.performedByName || 'System'}
-                                        {targetLabel ? ` | ${targetLabel}` : ''}
-                                    </p>
+                                    <div className="mt-2 grid min-w-0 gap-2 text-sm">
+                                        <div className="min-w-0">
+                                            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+                                                Student
+                                            </p>
+                                            <p className="mt-0.5 truncate font-semibold text-slate-800 dark:text-slate-200" title={studentName || 'Not specified'}>
+                                                {studentName || 'Not specified'}
+                                            </p>
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+                                                Incident
+                                            </p>
+                                            <p className="mt-0.5 truncate font-medium text-slate-700 dark:text-slate-300" title={targetLabel || 'System'}>
+                                                {targetLabel || 'System'}
+                                            </p>
+                                        </div>
+                                    </div>
 
                                     {notification?.message ? (
-                                        <p className="mt-1 line-clamp-3 break-words text-xs leading-5 text-slate-500 [overflow-wrap:anywhere] dark:text-slate-400">
+                                        <p className="mt-2 line-clamp-3 break-words text-xs leading-5 text-slate-500 [overflow-wrap:anywhere] dark:text-slate-400">
                                             {notification.message}
                                         </p>
                                     ) : null}
 
                                     {/* Meta chips */}
                                     <div className="mt-2 flex min-w-0 flex-wrap items-center gap-1.5">
-                                        <span className="max-w-full rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-[11px] font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
-                                            {formatRelativeTime(notification?.createdAt)}
+                                        <span className={`${chipClassName} border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400`}>
+                                            <span className="truncate">{formatRelativeTime(notification?.createdAt)}</span>
                                         </span>
 
                                         {admissionNumber ? (
-                                            <span className="max-w-full break-words rounded-full border border-blue-100 bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold text-blue-700 dark:border-blue-500/30 dark:bg-blue-950/40 dark:text-blue-300">
-                                                AdNo: {admissionNumber}
+                                            <span className={`${chipClassName} border-blue-100 bg-blue-50 text-blue-700 dark:border-blue-500/30 dark:bg-blue-950/40 dark:text-blue-300`}>
+                                                <span className="truncate">AdNo: {admissionNumber}</span>
                                             </span>
                                         ) : null}
 
                                         {classSection ? (
-                                            <span className="max-w-full break-words rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                                                {classSection}
+                                            <span className={`${chipClassName} border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300`}>
+                                                <span className="truncate">{classSection}</span>
                                             </span>
                                         ) : null}
 
-                                        {notification?.entityType ? (
-                                            <span className="max-w-full break-words rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                                                {formatActivityRecordLabel(notification.entityType)}
+                                        {status ? (
+                                            <span className={`${chipClassName} border-emerald-100 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/30 dark:text-emerald-300`}>
+                                                <span className="truncate">{status}</span>
+                                            </span>
+                                        ) : null}
+
+                                        {category ? (
+                                            <span className={`${chipClassName} border-amber-100 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/30 dark:text-amber-300`}>
+                                                <span className="truncate">{category}</span>
                                             </span>
                                         ) : null}
                                     </div>
+
+                                    <p className="mt-2 truncate border-t border-slate-100 pt-2 text-[11px] text-slate-400 dark:border-slate-800 dark:text-slate-500" title={notification?.performedByName || 'System'}>
+                                        By {notification?.performedByName || 'System'}
+                                    </p>
                                 </div>
                             </button>
                         </li>
@@ -359,7 +387,7 @@ const NotificationDropdown = ({ onClose }) => {
                 {/* Title */}
                 <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                        <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
                             Notifications
                         </h3>
                         {unreadCount > 0 ? (
@@ -379,7 +407,7 @@ const NotificationDropdown = ({ onClose }) => {
                 </div>
 
                 {/* Action buttons */}
-                <div className="grid w-full shrink-0 grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2 sm:flex sm:w-auto">
+                <div className="grid w-full shrink-0 grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
                     <button
                         type="button"
                         onClick={() => refreshNotifications()}
@@ -420,7 +448,7 @@ const NotificationDropdown = ({ onClose }) => {
     const body = (
         <div
             className={`overflow-y-auto overscroll-contain ${
-                isMobile ? 'min-h-0 flex-1' : 'max-h-[60vh]'
+                isMobile ? 'min-h-0 flex-1' : 'max-h-[min(70vh,42rem)]'
             } overflow-x-hidden`}
             style={{ scrollbarWidth: 'thin', scrollbarColor: '#cbd5e1 transparent' }}
         >
@@ -479,7 +507,7 @@ const NotificationDropdown = ({ onClose }) => {
                     role="dialog"
                     aria-modal="true"
                     aria-label="Notifications"
-                    className="fixed inset-x-0 bottom-0 z-[90] flex max-w-full flex-col overflow-hidden rounded-t-[28px] border-t border-slate-200/80 bg-white shadow-[0_-24px_60px_rgba(15,23,42,0.18)] dark:border-slate-800 dark:bg-slate-900"
+                    className="fixed inset-x-0 bottom-0 z-[90] flex max-w-full flex-col overflow-hidden rounded-t-[24px] border-t border-slate-200/80 bg-white shadow-[0_-24px_60px_rgba(15,23,42,0.18)] dark:border-slate-800 dark:bg-slate-900 sm:rounded-t-[28px]"
                     style={{
                         top: '56px',
                         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
@@ -504,7 +532,7 @@ const NotificationDropdown = ({ onClose }) => {
             data-notification-panel
             role="complementary"
             aria-label="Notifications"
-            className="absolute right-0 z-[75] mt-3 flex w-[min(400px,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-[28px] border border-slate-200/80 bg-white/95 shadow-[0_30px_60px_rgba(15,23,42,0.16)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/95"
+            className="absolute right-0 z-[75] mt-3 flex w-[min(42rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-[24px] border border-slate-200/80 bg-white/95 shadow-[0_30px_60px_rgba(15,23,42,0.16)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/95 sm:rounded-[28px]"
         >
             {header}
             {body}
