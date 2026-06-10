@@ -255,6 +255,7 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
     const visibleManage = useMemo(() => filterByRole(manageMenuItems), [filterByRole, manageMenuItems]);
     const visibleLetters = useMemo(() => filterByRole(letterMenuItems), [filterByRole, letterMenuItems]);
     const visibleAdmin = useMemo(() => filterByRole(adminOnlyItems), [filterByRole, adminOnlyItems]);
+    const visibleReports = useMemo(() => filterByRole(reportsItems), [filterByRole, reportsItems]);
 
     const closeMobile = useCallback(() => setIsMobileOpen(false), []);
 
@@ -320,6 +321,24 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
                         ))}
                     </div>
                 </section>
+            );
+        };
+
+        const renderNavItems = (items) => {
+            if (items.length === 0) return null;
+            return (
+                <div className="space-y-0.5">
+                    {items.map((item) => (
+                        <NavItem
+                            key={item.path}
+                            item={item}
+                            collapsed={collapsed}
+                            mobile={mobile}
+                            onNavigate={closeMobile}
+                            isActive={matchesPath(item.path)}
+                        />
+                    ))}
+                </div>
             );
         };
 
@@ -402,8 +421,7 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
 
                         {/* Incidents */}
                         {renderGroup(visibleMain, 'Incidents')}
-                        {/* Reports */}
-                        {renderGroup(reportsItems, 'Reports')}
+                        {renderNavItems(visibleReports)}
 
                         {/* Manage (admin only) */}
                         {visibleManage.length > 0 && renderGroup(visibleManage, 'Manage')}

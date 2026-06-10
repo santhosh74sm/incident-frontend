@@ -114,16 +114,24 @@ const EvidenceFilePreview = ({ src, alt }) => {
     const [objectUrl, setObjectUrl] = useState('');
     const [previewType, setPreviewType] = useState('');
     const [failed, setFailed] = useState(false);
+    const activeObjectUrlRef = useRef('');
 
     useEffect(() => {
-        if (!src) return undefined;
-
         let cancelled = false;
-        let nextObjectUrl = '';
+        let createdObjectUrl = '';
 
+        const revokeActiveObjectUrl = () => {
+            if (!activeObjectUrlRef.current) return;
+            window.URL.revokeObjectURL(activeObjectUrlRef.current);
+            activeObjectUrlRef.current = '';
+        };
+
+        revokeActiveObjectUrl();
         setObjectUrl('');
         setPreviewType('');
         setFailed(false);
+
+        if (!src) return undefined;
 
         apiClient.get(src, {
             responseType: 'blob',
@@ -137,12 +145,13 @@ const EvidenceFilePreview = ({ src, alt }) => {
                 throw new Error('Preview response was not an image or PDF.');
             }
 
-            nextObjectUrl = window.URL.createObjectURL(response.data);
+            createdObjectUrl = window.URL.createObjectURL(response.data);
             if (!cancelled) {
+                activeObjectUrlRef.current = createdObjectUrl;
                 setPreviewType(canPreviewPdf ? 'pdf' : 'image');
-                setObjectUrl(nextObjectUrl);
+                setObjectUrl(createdObjectUrl);
             } else {
-                window.URL.revokeObjectURL(nextObjectUrl);
+                window.URL.revokeObjectURL(createdObjectUrl);
             }
         }).catch(() => {
             if (!cancelled) setFailed(true);
@@ -150,7 +159,9 @@ const EvidenceFilePreview = ({ src, alt }) => {
 
         return () => {
             cancelled = true;
-            if (nextObjectUrl) window.URL.revokeObjectURL(nextObjectUrl);
+            if (createdObjectUrl && activeObjectUrlRef.current === createdObjectUrl) {
+                revokeActiveObjectUrl();
+            }
         };
     }, [src]);
 

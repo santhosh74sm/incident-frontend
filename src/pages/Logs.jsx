@@ -398,7 +398,7 @@ const Logs = () => {
                                 </div>
                                 <div>
                                     <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                                        Category
+                                        Record Type
                                     </label>
                                     <select
                                         value={filters.entityType}

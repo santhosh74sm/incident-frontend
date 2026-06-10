@@ -202,7 +202,7 @@ const fetchDashboardData = (user) => {
     if (!dashboardDataRequests.has(requestKey)) {
         dashboardDataRequests.set(
             requestKey,
-            apiClient.get('/api/incidents', { params: { page: 1, limit: 20 } }).finally(() => {
+            apiClient.get('/api/incidents').finally(() => {
                 dashboardDataRequests.delete(requestKey);
             })
         );

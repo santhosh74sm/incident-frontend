@@ -166,7 +166,7 @@ const CommandPalette = () => {
             } finally {
                 setLoading(false);
             }
-        }, 180);
+        }, 300);
 
         return () => {
             controller.abort();

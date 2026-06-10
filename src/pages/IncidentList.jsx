@@ -66,6 +66,7 @@ const IncidentList = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState([]);
     const [selectedStaff, setSelectedStaff] = useState([]);
     const [categoryFilter, setCategoryFilter] = useState([]);
@@ -196,6 +197,14 @@ const IncidentList = () => {
     }, [categoryFilter, classFilter, dateRange.end, dateRange.start, fetchIncidents, sectionFilter, selectedStaff, statusFilter, userId]);
 
     useEffect(() => {
+        const timer = window.setTimeout(() => {
+            setDebouncedSearchQuery(searchQuery);
+        }, 350);
+
+        return () => window.clearTimeout(timer);
+    }, [searchQuery]);
+
+    useEffect(() => {
         if (!notifications || notifications.length === 0) return;
         
         const incidentIds = notifications
@@ -234,7 +243,7 @@ const IncidentList = () => {
     }, [readIncidents]);
 
     const filteredIncidents = useMemo(() => {
-        const query = (searchQuery || '').toLowerCase().trim();
+        const query = (debouncedSearchQuery || '').toLowerCase().trim();
         let list = [...incidents];
 
         if (query) {
@@ -273,7 +282,7 @@ const IncidentList = () => {
         });
 
         return list;
-    }, [activeTab, incidents, isPriority, isUnread, readStatusFilter, searchQuery]);
+    }, [activeTab, debouncedSearchQuery, incidents, isPriority, isUnread, readStatusFilter]);
 
     const hasActiveFilters = Boolean(
         statusFilter.length > 0 ||
