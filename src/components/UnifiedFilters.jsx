@@ -381,41 +381,65 @@ export const UnifiedFilterBar = ({
     onReset,
     children,
     actions = null,
-}) => (
-    <div className="overflow-visible rounded-[28px] border border-white/70 bg-white/90 shadow-md shadow-slate-200/70 backdrop-blur transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-slate-950/50">
-        {/* Bar header */}
-        <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-800 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-3">
-                <div className="rounded-2xl border border-blue-100 bg-blue-50 p-2.5 text-blue-600 shadow-sm dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300">
-                    <Filter className="h-4 w-4" aria-hidden />
+    collapsible = false,
+    defaultCollapsed = false,
+}) => {
+    const panelId = useId();
+    const [isCollapsed, setIsCollapsed] = useState(collapsible && defaultCollapsed);
+    const showFields = !collapsible || !isCollapsed;
+
+    return (
+        <div className="overflow-visible rounded-[28px] border border-white/70 bg-white/90 shadow-md shadow-slate-200/70 backdrop-blur transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-slate-950/50">
+            {/* Bar header */}
+            <div className={`flex flex-col gap-3 px-5 py-4 dark:border-slate-800 md:flex-row md:items-center md:justify-between ${showFields ? 'border-b border-slate-100' : ''}`}>
+                <div className="flex items-center gap-3">
+                    <div className="rounded-2xl border border-blue-100 bg-blue-50 p-2.5 text-blue-600 shadow-sm dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300">
+                        <Filter className="h-4 w-4" aria-hidden />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-700 dark:text-slate-200">
+                            {title}
+                        </h3>
+                        {hasActiveFilters ? (
+                            <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-700 dark:border-blue-500/30 dark:bg-blue-950/40 dark:text-blue-300">
+                                Active
+                            </span>
+                        ) : null}
+                    </div>
                 </div>
-                <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-700 dark:text-slate-200">
-                        {title}
-                    </h3>
-                    {hasActiveFilters ? (
-                        <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-700 dark:border-blue-500/30 dark:bg-blue-950/40 dark:text-blue-300">
-                            Active
-                        </span>
+
+                {/* Actions + Reset */}
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
+                    {actions}
+                    {collapsible ? (
+                        <button
+                            type="button"
+                            onClick={() => setIsCollapsed((current) => !current)}
+                            aria-expanded={showFields}
+                            aria-controls={panelId}
+                            className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm font-semibold text-blue-700 transition-colors duration-200 hover:border-blue-300 hover:bg-blue-100 dark:border-blue-500/30 dark:bg-blue-950/30 dark:text-blue-200 dark:hover:bg-blue-950/50 sm:w-auto"
+                        >
+                            <Filter className="h-3.5 w-3.5" aria-hidden />
+                            {showFields ? 'Hide Filters' : 'Show Filters'}
+                        </button>
                     ) : null}
+                    <button
+                        type="button"
+                        onClick={onReset}
+                        className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-600 transition-colors duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800 sm:w-auto"
+                    >
+                        <RefreshCw className="h-3.5 w-3.5" aria-hidden />
+                        Reset Filters
+                    </button>
                 </div>
             </div>
 
-            {/* Actions + Reset */}
-            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
-                {actions}
-                <button
-                    type="button"
-                    onClick={onReset}
-                    className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-600 transition-colors duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800 sm:w-auto"
-                >
-                    <RefreshCw className="h-3.5 w-3.5" aria-hidden />
-                    Reset Filters
-                </button>
-            </div>
+            {/* Filter fields */}
+            {showFields ? (
+                <div id={panelId} className="min-w-0 p-5">
+                    {children}
+                </div>
+            ) : null}
         </div>
-
-        {/* Filter fields */}
-        <div className="min-w-0 p-5">{children}</div>
-    </div>
-);
+    );
+};

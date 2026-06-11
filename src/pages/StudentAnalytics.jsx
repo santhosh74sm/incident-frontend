@@ -606,6 +606,8 @@ const StudentAnalytics = () => {
                                         setSectionFilter('');
                                     }}
                                     title="Find a student"
+                                    collapsible
+                                    defaultCollapsed
                                 >
                                     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                                         <div>
@@ -733,6 +735,8 @@ const StudentAnalytics = () => {
                                         setDateRange({ start: '', end: '' });
                                     }}
                                     title="Student Filters"
+                                    collapsible
+                                    defaultCollapsed
                                 >
                                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-6">
                                         <UnifiedDateInput

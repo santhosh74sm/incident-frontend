@@ -386,7 +386,7 @@ const Logs = () => {
                             </div>
                         </section>
 
-                        <UnifiedFilterBar hasActiveFilters={activeFilterCount > 0} onReset={resetFilters} title="Find & filter">
+                        <UnifiedFilterBar hasActiveFilters={activeFilterCount > 0} onReset={resetFilters} title="Find & filter" collapsible defaultCollapsed>
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
                                 <div className="md:col-span-2">
                                     <UnifiedSearchInput

@@ -3,13 +3,22 @@ import axios from 'axios';
 const DEFAULT_API_BASE =
     process.env.NODE_ENV === 'development'
         ? 'http://localhost:5000'
-        : 'https://incident-backend-rzmq.onrender.com';
+        : '';
 
-const API_BASE = (
+const CONFIGURED_API_BASE =
     process.env.REACT_APP_API_URL ||
     process.env.REACT_APP_API_BASE_URL ||
     process.env.REACT_APP_API_BASE ||
-    DEFAULT_API_BASE
+    '';
+
+const SHOULD_USE_CONFIGURED_API_BASE =
+    process.env.NODE_ENV !== 'production' ||
+    process.env.REACT_APP_USE_EXTERNAL_API === 'true';
+
+const API_BASE = (
+    SHOULD_USE_CONFIGURED_API_BASE && CONFIGURED_API_BASE
+        ? CONFIGURED_API_BASE
+        : DEFAULT_API_BASE
 ).replace(/\/$/, '');
 
 if (process.env.NODE_ENV === 'development') {

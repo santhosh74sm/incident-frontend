@@ -636,6 +636,8 @@ const ProfessionalAnalytics = () => {
                             hasActiveFilters={hasActiveFilters}
                             onReset={resetFilters}
                             title="Search & filters"
+                            collapsible
+                            defaultCollapsed
                             actions={
                                 <button
                                     onClick={exportIncidentDetailsToExcel}

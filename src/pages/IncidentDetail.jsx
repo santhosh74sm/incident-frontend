@@ -337,7 +337,7 @@ const IncidentDetail = () => {
 
         markedIncidentReadRef.current = markReadKey;
         apiClient
-            .put(`/api/notifications/read/${id}`, {})
+            .put(`/api/incidents/${id}/read`, {})
             .then(() => refreshNotifications({ silent: true }))
             .catch(() => {
                 markedIncidentReadRef.current = '';

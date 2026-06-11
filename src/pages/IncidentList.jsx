@@ -144,7 +144,21 @@ const IncidentList = () => {
             }
 
             const { data } = await apiClient.get('/api/incidents', requestConfig);
-            setIncidents(Array.isArray(data) ? data : []);
+            const nextIncidents = Array.isArray(data) ? data : [];
+            setIncidents(nextIncidents);
+
+            const syncedReadIds = nextIncidents
+                .filter((incident) => incident?.readByCurrentUser === true)
+                .map((incident) => getRecordId(incident))
+                .filter(Boolean);
+
+            if (syncedReadIds.length > 0) {
+                setReadIncidents((current) => {
+                    const next = [...new Set([...current, ...syncedReadIds])];
+                    writeUserList('readIncidents', userId, next);
+                    return next;
+                });
+            }
         } catch (requestError) {
             setError(requestError.response?.data?.message || 'Failed to load incidents.');
         } finally {
@@ -225,11 +239,21 @@ const IncidentList = () => {
             return next;
         });
 
+        setIncidents((current) =>
+            current.map((incident) =>
+                getRecordId(incident) === incidentId
+                    ? { ...incident, readByCurrentUser: true, readAt: incident.readAt || new Date().toISOString() }
+                    : incident
+            )
+        );
+
         setPriorityIncidents((current) => {
             const next = current.filter((id) => id !== incidentId);
             writeUserList('priorityIncidents', userId, next);
             return next;
         });
+
+        apiClient.put(`/api/incidents/${incidentId}/read`, {}).catch(() => {});
     }, [userId]);
 
     const isPriority = useCallback((incident) => {
@@ -239,7 +263,7 @@ const IncidentList = () => {
 
     const isUnread = useCallback((incident) => {
         const incidentId = getRecordId(incident);
-        return !readIncidents.includes(incidentId);
+        return incident?.readByCurrentUser !== true && !readIncidents.includes(incidentId);
     }, [readIncidents]);
 
     const filteredIncidents = useMemo(() => {
@@ -457,6 +481,8 @@ const IncidentList = () => {
                             title="Find records"
                             hasActiveFilters={hasActiveFilters}
                             onReset={resetFilters}
+                            collapsible
+                            defaultCollapsed
                             actions={loading ? (
                                 <span className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
                                     <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-blue-200 border-t-blue-600" />
