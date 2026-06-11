@@ -1,18 +1,24 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     Bell,
+    Check,
     Command,
+    Edit3,
     ListFilter,
     LogOut,
+    Loader2,
     Monitor,
     Moon,
     Settings,
     Sun,
+    X,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import apiClient from '../config/apiClient';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
 import { useTheme } from '../context/ThemeContext';
+import { useToast } from './ToastProvider';
 import NotificationDropdown from './NotificationDropdown';
 
 const themeOptions = [
@@ -22,12 +28,16 @@ const themeOptions = [
 ];
 
 const Navbar = ({ isSidebarCollapsed = false }) => {
-    const { user, logout } = useAuth();
+    const { user, logout, restoreAuth } = useAuth();
     const { unreadCount, enabled: notificationsEnabled } = useNotifications();
     const { themeMode, setThemeMode } = useTheme();
+    const { addToast } = useToast();
     const navigate = useNavigate();
     const [showDropdown, setShowDropdown] = useState(false);
     const [showNotificationPanel, setShowNotificationPanel] = useState(false);
+    const [showProfileEdit, setShowProfileEdit] = useState(false);
+    const [profileForm, setProfileForm] = useState({ name: '', email: '' });
+    const [savingProfile, setSavingProfile] = useState(false);
     const notificationRef = useRef(null);
     const profileRef = useRef(null);
 
@@ -47,6 +57,7 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
 
             if (profileRef.current && !profileRef.current.contains(target)) {
                 setShowDropdown(false);
+                setShowProfileEdit(false);
             }
         };
 
@@ -90,6 +101,36 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
         setShowNotificationPanel(false);
     }, []);
 
+    useEffect(() => {
+        setProfileForm({
+            name: user?.name || '',
+            email: user?.email || '',
+        });
+    }, [user?.email, user?.name]);
+
+    const currentUserId = user?._id || user?.id;
+
+    const handleProfileSubmit = useCallback(async (event) => {
+        event.preventDefault();
+        if (!currentUserId) return;
+
+        setSavingProfile(true);
+
+        try {
+            await apiClient.put(`/api/auth/users/${currentUserId}`, {
+                name: profileForm.name.trim(),
+                email: profileForm.email.trim(),
+            });
+            await restoreAuth({ silent: true });
+            addToast('Profile updated successfully.', 'success');
+            setShowProfileEdit(false);
+        } catch (error) {
+            addToast(error.response?.data?.message || 'Unable to update profile.', 'error');
+        } finally {
+            setSavingProfile(false);
+        }
+    }, [addToast, currentUserId, profileForm.email, profileForm.name, restoreAuth]);
+
     const profileMenuItems = useMemo(() => {
         if (!['Super Admin', 'Admin'].includes(user?.role)) {
             return [];
@@ -114,7 +155,7 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                 <div className="h-10 rounded-2xl bg-white/90 px-2 backdrop-blur-xl dark:bg-slate-900/90 sm:px-3">
                     <div className="flex h-full min-w-0 items-center justify-between gap-2">
                         <div className="hidden min-w-0 lg:block">
-                            <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{user?.role || 'Staff'} Workspace</p>
+                            <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{user?.role || 'User'} Workspace</p>
                         </div>
 
                         <button
@@ -225,7 +266,75 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                                             </p>
                                             <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">{user?.name}</p>
                                             <p className="mt-1 break-words text-xs text-slate-500 dark:text-slate-400">{user?.email}</p>
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowProfileEdit((current) => !current)}
+                                                className="mt-3 inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition-all duration-200 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                                                aria-expanded={showProfileEdit}
+                                            >
+                                                {showProfileEdit ? <X size={14} /> : <Edit3 size={14} />}
+                                                {showProfileEdit ? 'Cancel edit' : 'Edit profile'}
+                                            </button>
                                         </div>
+
+                                        {showProfileEdit ? (
+                                            <form onSubmit={handleProfileSubmit} className="border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+                                                <div className="space-y-3">
+                                                    <div>
+                                                        <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">
+                                                            Username
+                                                        </label>
+                                                        <input
+                                                            required
+                                                            type="text"
+                                                            value={profileForm.name}
+                                                            onChange={(event) => setProfileForm((current) => ({ ...current, name: event.target.value }))}
+                                                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">
+                                                            Email
+                                                        </label>
+                                                        <input
+                                                            required
+                                                            type="email"
+                                                            value={profileForm.email}
+                                                            onChange={(event) => setProfileForm((current) => ({ ...current, email: event.target.value }))}
+                                                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">
+                                                            Role
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            value={user?.role || 'User'}
+                                                            readOnly
+                                                            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="mt-4 flex justify-end gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowProfileEdit(false)}
+                                                        className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                    <button
+                                                        type="submit"
+                                                        disabled={savingProfile}
+                                                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-70"
+                                                    >
+                                                        {savingProfile ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                                                        Save
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        ) : null}
 
                                         <div className="border-b border-slate-100 px-5 py-4 dark:border-slate-800">
                                             <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">

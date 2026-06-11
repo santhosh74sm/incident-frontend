@@ -46,6 +46,8 @@ const emptyLetterPermission = {
 const getOptionId = (option) => option?._id || option?.id || option || '';
 const getOptionLabel = (option) => option?.name || option?.label || option || '';
 const hasAvailableLetterTemplate = (templates) => Boolean(templates?.en || templates?.ta);
+const OPERATIONAL_USER_ROLES = ['Teacher', 'teacher'];
+const TEACHER_USER_ROLES = ['Teacher', 'teacher'];
 
 const findOptionByValue = (options, value) =>
     options.find((option) => String(getOptionId(option)) === String(value) || getOptionLabel(option) === value);
@@ -286,7 +288,8 @@ const CreateIncident = () => {
 
     const config = useMemo(() => ({ headers: {} }), []);
     const isAdministrationUser = ['Super Admin', 'Admin', 'super_admin', 'admin'].includes(user?.role);
-    const isPrivilegedUser = isAdministrationUser || ['Teacher', 'teacher'].includes(user?.role);
+    const canUseManualTiming = isAdministrationUser || OPERATIONAL_USER_ROLES.includes(user?.role);
+    const isPrivilegedUser = isAdministrationUser || TEACHER_USER_ROLES.includes(user?.role);
     const handleHighPriorityToggle = useCallback((checked) => {
         setFormData((current) => {
             if (current.isHighPriority === checked) {
@@ -387,7 +390,7 @@ const CreateIncident = () => {
             // Only keep Teacher-role users in the handler dropdown.
             // Admins assign incidents to Teachers, not to other Admins.
             const allUsers = Array.isArray(staffResponse.data) ? staffResponse.data : [];
-            setStaffList(allUsers.filter((u) => u.role === 'Teacher' || u.role === 'teacher'));
+            setStaffList(allUsers.filter((u) => OPERATIONAL_USER_ROLES.includes(u.role)));
             setEvidenceTypes(evidenceResponse.data || []);
         } catch (error) {
             if (!isMounted()) return;
@@ -2087,37 +2090,39 @@ const CreateIncident = () => {
                                         </div>
                                     </SectionCard>
 
-                                    {isAdministrationUser && (
+                                    {canUseManualTiming && (
                                     <SectionCard
                                         icon={ShieldCheck}
-                                        title="Administrative Actions"
-                                        description="Assign a handler or configure custom dates."
+                                        title={isAdministrationUser ? 'Administrative Actions' : 'Manual Time Setup'}
+                                        description={isAdministrationUser ? 'Assign a handler or configure custom dates.' : 'Configure custom incident dates.'}
                                         step={3}
                                     >
                                         <div className="space-y-5">
-                                            <div>
-                                                <label className="mb-2 block text-sm font-semibold text-slate-800">Assigned Handler</label>
-                                                <select
-                                                    value={formData.assignedHandler}
-                                                    onChange={(event) =>
-                                                        setFormData((current) => ({
-                                                            ...current,
-                                                            assignedHandler: event.target.value,
-                                                        }))
-                                                    }
-                                                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                                                >
-                                                    <option value="">No assignment yet</option>
-                                                    {staffList.map((staff) => (
-                                                        <option key={staff._id} value={staff._id}>
-                                                            {staff.name}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                                <p className="mt-1.5 text-xs text-slate-500">
-                                                    Assign this incident to a teacher. Leave blank to keep it in the Administration pool.
-                                                </p>
-                                            </div>
+                                            {isAdministrationUser && (
+                                                <div>
+                                                    <label className="mb-2 block text-sm font-semibold text-slate-800">Assigned Handler</label>
+                                                    <select
+                                                        value={formData.assignedHandler}
+                                                        onChange={(event) =>
+                                                            setFormData((current) => ({
+                                                                ...current,
+                                                                assignedHandler: event.target.value,
+                                                            }))
+                                                        }
+                                                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                                                    >
+                                                        <option value="">No assignment yet</option>
+                                                        {staffList.map((staff) => (
+                                                            <option key={staff._id} value={staff._id}>
+                                                                {staff.name}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    <p className="mt-1.5 text-xs text-slate-500">
+                                                        Assign this incident to a teacher. Leave blank to keep it in the Administration pool.
+                                                    </p>
+                                                </div>
+                                            )}
 
                                             <div
                                                 className={`rounded-xl border-2 p-4 ${

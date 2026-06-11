@@ -56,6 +56,7 @@ const STATUS_STYLES = {
     'In Progress': { badge: 'border-blue-200 bg-blue-50 text-blue-700', tone: 'blue' },
     Closed: { badge: 'border-emerald-200 bg-emerald-50 text-emerald-700', tone: 'emerald' },
 };
+const OPERATIONAL_USER_ROLES = ['Teacher', 'teacher'];
 
 const FIELD_CARD_CLASS =
     'rounded-2xl border border-slate-200 bg-slate-50/80 p-4 shadow-sm shadow-slate-200/40';
@@ -921,7 +922,7 @@ const IncidentDetail = () => {
                                     title="Evidence Records"
                                     description="Uploaded files and supporting documents attached to this case."
                                     icon={FileImage}
-                                    actions={incident.status !== 'Closed' && ['Super Admin', 'Admin', 'Teacher'].includes(user?.role) ? (
+                                    actions={incident.status !== 'Closed' && ['Super Admin', 'Admin', ...OPERATIONAL_USER_ROLES].includes(user?.role) ? (
                                         <button type="button" onClick={handleOpenEvidenceForm}
                                             aria-label="Add evidence to this case"
                                             className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">

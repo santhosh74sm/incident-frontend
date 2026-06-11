@@ -29,7 +29,7 @@ const MobileBottomNav = () => {
         { to: '/incidents', label: 'Incidents', icon: ListFilter },
         canReport ? { to: '/create-incident', label: 'Report', icon: PlusCircle } : null,
         { to: '/analytics', label: 'Reports', icon: BarChart3 },
-        canManageStaff ? { to: '/user-management', label: 'Staff', icon: Users } : null,
+        canManageStaff ? { to: '/user-management', label: 'Users', icon: Users } : null,
     ].filter(Boolean);
 
     const linkClass = ({ isActive }) =>

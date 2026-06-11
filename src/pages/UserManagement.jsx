@@ -33,7 +33,8 @@ import { UnifiedFilterBar, UnifiedMultiSelect, UnifiedSearchInput } from '../com
 import BulkDeleteControls from '../components/BulkDeleteControls';
 import { normalizeRole } from '../utils/roles';
 
-const getCreateRoleOptions = (role) => (role === 'Super Admin' ? ['Admin', 'Teacher'] : ['Teacher']);
+const EDITABLE_ROLE_OPTIONS = ['Admin', 'Teacher'];
+const getCreateRoleOptions = (role) => (role === 'Super Admin' ? EDITABLE_ROLE_OPTIONS : ['Teacher']);
 const CLASS_OPTIONS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
 const PAGE_SIZE = 8;
 
@@ -42,7 +43,11 @@ const INPUT_CLASS_NAME =
 const READONLY_CLASS_NAME =
     'w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:shadow-none';
 
-const getRoleGroup = (role) => (['Super Admin', 'Admin'].includes(normalizeRole(role)) ? 'Administration' : 'Teacher');
+const getRoleGroup = (role) => {
+    const normalizedRole = normalizeRole(role);
+    if (['Super Admin', 'Admin'].includes(normalizedRole)) return 'Administration';
+    return 'Teacher';
+};
 const isStrongPassword = (password) =>
     typeof password === 'string' &&
     password.length >= PASSWORD_MIN_LENGTH &&
@@ -78,7 +83,7 @@ const RoleBadge = ({ role }) => {
                 role
             )}`}
         >
-            {normalizedRole || 'Staff'}
+            {normalizedRole || 'Teacher'}
         </span>
         <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400">
             {getRoleGroup(role)}
@@ -158,7 +163,7 @@ const PreviewField = ({ label, value }) => (
 );
 
 const UserManagement = () => {
-    const { user } = useAuth();
+    const { user, restoreAuth } = useAuth();
     const { addToast } = useToast();
 
     const [usersList, setUsersList] = useState([]);
@@ -185,23 +190,36 @@ const UserManagement = () => {
 
     const [newUser, setNewUser] = useState({ name: '', email: '', role: 'Teacher', password: '' });
     const [newStudent, setNewStudent] = useState({ name: '', admissionNo: '', className: '', section: '' });
+    const [editStaff, setEditStaff] = useState({ _id: '', name: '', email: '', role: '' });
     const [editStudent, setEditStudent] = useState({ _id: '', name: '', admissionNo: '', className: '', section: '' });
     const [submittingUser, setSubmittingUser] = useState(false);
     const [submittingStudent, setSubmittingStudent] = useState(false);
+    const [submittingEditStaff, setSubmittingEditStaff] = useState(false);
     const [submittingEditStudent, setSubmittingEditStudent] = useState(false);
     const [resettingPasswordId, setResettingPasswordId] = useState(null);
 
     const config = useMemo(() => ({ headers: {} }), []);
     const currentRole = useMemo(() => normalizeRole(user?.role), [user?.role]);
     const createRoleOptions = useMemo(() => getCreateRoleOptions(currentRole), [currentRole]);
-    const canManageStaffUser = useCallback(
+    const getCurrentUserId = useCallback(() => String(user?._id || user?.id || ''), [user?._id, user?.id]);
+    const isSelfRecord = useCallback(
+        (record) => {
+            const recordId = String(record?._id || record?.id || '');
+            return Boolean(recordId && recordId === getCurrentUserId());
+        },
+        [getCurrentUserId]
+    );
+    const canEditStaffUser = useCallback(
         (record) => {
             if (!record) return false;
-            const recordRole = normalizeRole(record.role);
             if (currentRole === 'Super Admin') return true;
-            return currentRole === 'Admin' && recordRole === 'Teacher';
+            return isSelfRecord(record);
         },
-        [currentRole]
+        [currentRole, isSelfRecord]
+    );
+    const canDeleteStaffUser = useCallback(
+        (record) => Boolean(record && currentRole === 'Super Admin' && !isSelfRecord(record)),
+        [currentRole, isSelfRecord]
     );
 
     const copyTemporaryPassword = useCallback(async () => {
@@ -507,6 +525,14 @@ const UserManagement = () => {
         if (type === 'staff' && temporaryPasswordResult?.user?._id !== record?._id) {
             setTemporaryPasswordResult(null);
         }
+        if (type === 'staff') {
+            setEditStaff({
+                _id: record._id || record.id,
+                name: record.name || '',
+                email: record.email || '',
+                role: normalizeRole(record.role) || 'Teacher',
+            });
+        }
         if (type === 'student') {
             setEditStudent({
                 _id: record._id,
@@ -517,6 +543,40 @@ const UserManagement = () => {
             });
         }
     }, [temporaryPasswordResult?.user?._id]);
+
+    const handleEditStaff = async (event) => {
+        event.preventDefault();
+        if (!editStaff._id) return;
+
+        const payload = {
+            name: editStaff.name.trim(),
+            email: editStaff.email.trim(),
+        };
+
+        const isSelf = isSelfRecord(detailModal.record);
+        if (currentRole === 'Super Admin' && !isSelf) {
+            payload.role = editStaff.role;
+        }
+
+        setSubmittingEditStaff(true);
+
+        try {
+            const { data } = await apiClient.put(`/api/auth/users/${editStaff._id}`, payload, config);
+            addToast('User updated successfully.', 'success');
+            setDetailModal({ open: false, type: 'staff', record: null });
+            await fetchData(false);
+            if (isSelf) {
+                await restoreAuth({ silent: true });
+            }
+            if (data?.user && temporaryPasswordResult?.user?._id === editStaff._id) {
+                setTemporaryPasswordResult((current) => current ? { ...current, user: data.user } : current);
+            }
+        } catch (requestError) {
+            addToast(requestError.response?.data?.message || 'Unable to update user.', 'error');
+        } finally {
+            setSubmittingEditStaff(false);
+        }
+    };
 
     const handleEditStudent = async (event) => {
         event.preventDefault();
@@ -568,7 +628,7 @@ const UserManagement = () => {
                             tone="blue"
                             onClick={() => openDetailModal(row, 'staff')}
                         />
-                        {canManageStaffUser(row) ? (
+                        {canDeleteStaffUser(row) ? (
                             <ActionButton
                                 icon={Trash2}
                                 label="Delete user"
@@ -580,7 +640,7 @@ const UserManagement = () => {
                 ),
             },
         ],
-        [canManageStaffUser, openDeleteDialog, openDetailModal]
+        [canDeleteStaffUser, openDeleteDialog, openDetailModal]
     );
 
     const studentColumns = useMemo(
@@ -1179,15 +1239,53 @@ const UserManagement = () => {
                         </div>
 
                         {detailModal.type === 'staff' ? (
-                            <div className="space-y-6 p-8">
+                            <form onSubmit={handleEditStaff} className="space-y-6 p-8">
                                 <div className="grid gap-5 md:grid-cols-2">
-                                    <PreviewField label="Full Name" value={detailModal.record.name} />
-                                    <PreviewField label="Email Address" value={detailModal.record.email} />
-                                    <PreviewField label="Role" value={detailModal.record.role} />
+                                    <div>
+                                        <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Username</label>
+                                        <input
+                                            required
+                                            type="text"
+                                            value={editStaff.name}
+                                            onChange={(event) => setEditStaff((current) => ({ ...current, name: event.target.value }))}
+                                            disabled={!canEditStaffUser(detailModal.record)}
+                                            className={canEditStaffUser(detailModal.record) ? INPUT_CLASS_NAME : READONLY_CLASS_NAME}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Email Address</label>
+                                        <input
+                                            required
+                                            type="email"
+                                            value={editStaff.email}
+                                            onChange={(event) => setEditStaff((current) => ({ ...current, email: event.target.value }))}
+                                            disabled={!canEditStaffUser(detailModal.record)}
+                                            className={canEditStaffUser(detailModal.record) ? INPUT_CLASS_NAME : READONLY_CLASS_NAME}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Role</label>
+                                        {currentRole === 'Super Admin' && !isSelfRecord(detailModal.record) ? (
+                                            <div className="relative">
+                                                <select
+                                                    value={editStaff.role}
+                                                    onChange={(event) => setEditStaff((current) => ({ ...current, role: event.target.value }))}
+                                                    className={`${INPUT_CLASS_NAME} appearance-none pr-10`}
+                                                >
+                                                    {EDITABLE_ROLE_OPTIONS.map((role) => (
+                                                        <option key={role} value={role}>{role}</option>
+                                                    ))}
+                                                </select>
+                                                <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                            </div>
+                                        ) : (
+                                            <input type="text" value={normalizeRole(editStaff.role) || 'Teacher'} readOnly className={READONLY_CLASS_NAME} />
+                                        )}
+                                    </div>
                                     <PreviewField label="Joined" value={formatDate(detailModal.record.createdAt)} />
                                 </div>
                                 <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-                                    Super Admins can reset staff passwords here. Admins can manage Teacher accounts only.
+                                    Users can update their own username and email. Only Super Admin can edit other users and change roles.
                                 </div>
                                 <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                                     <button
@@ -1214,7 +1312,7 @@ const UserManagement = () => {
                                                 : 'Generate Temporary Password'}
                                         </button>
                                     ) : null}
-                                    {canManageStaffUser(detailModal.record) ? (
+                                    {canDeleteStaffUser(detailModal.record) ? (
                                         <button
                                             type="button"
                                             onClick={() => openDeleteDialog(detailModal.record, detailModal.type)}
@@ -1224,8 +1322,18 @@ const UserManagement = () => {
                                             Delete User
                                         </button>
                                     ) : null}
+                                    {canEditStaffUser(detailModal.record) ? (
+                                        <button
+                                            type="submit"
+                                            disabled={submittingEditStaff}
+                                            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70"
+                                        >
+                                            {submittingEditStaff ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                                            Save Changes
+                                        </button>
+                                    ) : null}
                                 </div>
-                            </div>
+                            </form>
                         ) : (
                             <form onSubmit={handleEditStudent} className="space-y-6 p-8">
                                 <div className="grid gap-5 md:grid-cols-2">

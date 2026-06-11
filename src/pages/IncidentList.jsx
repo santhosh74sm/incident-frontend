@@ -520,7 +520,7 @@ const IncidentList = () => {
                             </div>
 
                             <div className="mt-4 grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
-                                {user?.role !== 'Teacher' ? (
+                                {!['Teacher', 'teacher'].includes(user?.role) ? (
                                     <UnifiedMultiSelect
                                         label="Staff Members"
                                         options={allStaffOptions}

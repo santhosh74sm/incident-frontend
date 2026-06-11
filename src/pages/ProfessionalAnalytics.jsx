@@ -69,6 +69,7 @@ import {
 import { downloadWorkbook } from '../utils/downloadFiles';
 import { withFeedback } from '../utils/notifications';
 
+const OPERATIONAL_USER_ROLES = ['Teacher', 'teacher'];
 
 const buildClassResolution = (items) => {
     const grouped = {};
@@ -136,6 +137,7 @@ const buildCategoryHeatmap = (items) => {
 const ProfessionalAnalytics = () => {
     const { user } = useAuth();
     const { addToast } = useToast();
+    const isOperationalUser = OPERATIONAL_USER_ROLES.includes(user?.role);
     const navigate = useNavigate();
     const compactChart = useCompactChart();
     const [incidents, setIncidents] = useState([]);
@@ -297,10 +299,10 @@ const ProfessionalAnalytics = () => {
     }, [fetchFilterOptions, fetchStaff]);
 
     useEffect(() => {
-        if (user?.role === 'Teacher' && user?.name) {
+        if (isOperationalUser && user?.name) {
             setSelectedStaff([user.name]);
         }
-    }, [user?.name, user?.role]);
+    }, [isOperationalUser, user?.name]);
 
     useEffect(() => {
         if (incidents.length > 0) {
@@ -404,9 +406,9 @@ const ProfessionalAnalytics = () => {
             evidence: [],
             statuses: [],
         });
-        setSelectedStaff(user?.role === 'Teacher' && user?.name ? [user.name] : []);
+        setSelectedStaff(isOperationalUser && user?.name ? [user.name] : []);
         setDateRange({ start: '', end: '' });
-    }, [user?.name, user?.role]);
+    }, [isOperationalUser, user?.name]);
 
     const exportIncidentDetailsToExcel = useCallback(async () => {
         try {
@@ -708,7 +710,7 @@ const ProfessionalAnalytics = () => {
                                     placeholder="All Status"
                                     searchPlaceholder="Search status..."
                                 />
-                                {user?.role !== 'Teacher' ? (
+                                {!isOperationalUser ? (
                                     <UnifiedMultiSelect
                                         label="Staff Members"
                                         options={allStaffOptions}
