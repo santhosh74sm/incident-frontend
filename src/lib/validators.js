@@ -72,6 +72,10 @@ export const registerSchema = z
             .trim()
             .email('Enter a valid email address')
             .max(254, 'Email is too long'),
+        academicYear: z
+            .string()
+            .trim()
+            .regex(/^\d{4}-\d{2}$/, 'Use YYYY-YY format, for example 2026-27'),
         password: z
             .string()
             .min(PASSWORD_MIN_LENGTH, 'Password must be at least 8 characters')

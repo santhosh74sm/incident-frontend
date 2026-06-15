@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
     AlertTriangle,
     BookOpen,
+    Calendar,
     CheckCircle,
     Clock,
     Eye,
@@ -77,6 +78,9 @@ const IncidentList = () => {
     const [classList, setClassList] = useState([]);
     const [sectionList, setSectionList] = useState([]);
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
+    const [academicYear, setAcademicYear] = useState('');
+    const [currentAcademicYear, setCurrentAcademicYear] = useState('');
+    const [academicYears, setAcademicYears] = useState([]);
     const [readIncidents, setReadIncidents] = useState([]);
     const [priorityIncidents, setPriorityIncidents] = useState([]);
     const [activeTab, setActiveTab] = useState('all');
@@ -108,6 +112,7 @@ const IncidentList = () => {
 
     const fetchIncidents = useCallback(async (options = { reset: false }) => {
         if (!userId) return;
+        if (!academicYear) return;
 
         try {
             setLoading(true);
@@ -141,6 +146,10 @@ const IncidentList = () => {
                 if (params.toString()) {
                     requestConfig.params = params;
                 }
+                if (academicYear) {
+                    requestConfig.params = requestConfig.params || new URLSearchParams();
+                    requestConfig.params.set('academicYear', academicYear);
+                }
             }
 
             const { data } = await apiClient.get('/api/incidents', requestConfig);
@@ -164,16 +173,17 @@ const IncidentList = () => {
         } finally {
             setLoading(false);
         }
-    }, [allStaffOptions, categoryFilter, classFilter, config, dateRange.end, dateRange.start, sectionFilter, selectedStaff, staffList, statusFilter, userId]);
+    }, [academicYear, allStaffOptions, categoryFilter, classFilter, config, dateRange.end, dateRange.start, sectionFilter, selectedStaff, staffList, statusFilter, userId]);
 
     const fetchFilterData = useCallback(async () => {
         if (!userId) return;
         try {
-            const [staffRes, categoriesRes, classesRes, sectionsRes] = await Promise.all([
+            const [staffRes, categoriesRes, classesRes, sectionsRes, yearRes] = await Promise.all([
                 apiClient.get('/api/auth/users', config).catch(() => ({ data: [] })),
                 apiClient.get('/api/incidents/categories', config).catch(() => ({ data: [] })),
                 apiClient.get('/api/incidents/classes', config).catch(() => ({ data: [] })),
                 apiClient.get('/api/incidents/sections', config).catch(() => ({ data: [] })),
+                apiClient.get('/api/auth/academic-years', config).catch(() => ({ data: {} })),
             ]);
 
             const categories = Array.isArray(categoriesRes.data)
@@ -194,6 +204,9 @@ const IncidentList = () => {
             setCategoryList(categories);
             setClassList(sortedClasses);
             setSectionList(sections.length > 0 ? sections : ['A', 'B', 'C', 'D', 'E']);
+            setAcademicYears(yearRes.data?.academicYears || []);
+            setCurrentAcademicYear(yearRes.data?.currentAcademicYear || '');
+            setAcademicYear((current) => current || yearRes.data?.currentAcademicYear || yearRes.data?.academicYears?.[yearRes.data.academicYears.length - 1] || '');
         } catch {
             setStaffList([]);
             setCategoryList([]);
@@ -208,7 +221,7 @@ const IncidentList = () => {
 
     useEffect(() => {
         fetchIncidents();
-    }, [categoryFilter, classFilter, dateRange.end, dateRange.start, fetchIncidents, sectionFilter, selectedStaff, statusFilter, userId]);
+    }, [academicYear, categoryFilter, classFilter, dateRange.end, dateRange.start, fetchIncidents, sectionFilter, selectedStaff, statusFilter, userId]);
 
     useEffect(() => {
         const timer = window.setTimeout(() => {
@@ -318,6 +331,7 @@ const IncidentList = () => {
         dateRange.end ||
         searchQuery ||
         readStatusFilter !== 'All'
+        || academicYear !== currentAcademicYear
     );
 
     const unreadCount = useMemo(
@@ -341,9 +355,10 @@ const IncidentList = () => {
         setSectionFilter([]);
         setSearchQuery('');
         setDateRange({ start: '', end: '' });
+        setAcademicYear(currentAcademicYear);
         setActiveTab('all');
         setReadStatusFilter('All');
-    }, []);
+    }, [currentAcademicYear]);
 
     if (loading && incidents.length === 0) {
         return (
@@ -520,6 +535,18 @@ const IncidentList = () => {
                             </div>
 
                             <div className="mt-4 grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+                                <label className="min-w-0">
+                                    <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Academic Year</span>
+                                    <select
+                                        value={academicYear}
+                                        onChange={(event) => setAcademicYear(event.target.value)}
+                                        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                                    >
+                                        {academicYears.map((year) => (
+                                            <option key={year} value={year}>{year}</option>
+                                        ))}
+                                    </select>
+                                </label>
                                 {!['Teacher', 'teacher'].includes(user?.role) ? (
                                     <UnifiedMultiSelect
                                         label="Staff Members"
@@ -709,6 +736,9 @@ const IncidentList = () => {
                                                         <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
                                                             Adm. No: <span className="font-semibold text-slate-600 dark:text-slate-300">{incident.admissionNo || 'N/A'}</span>
                                                         </p>
+                                                        <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                                                            Incident ID: <span className="font-semibold text-slate-600 dark:text-slate-300">{incidentId || 'N/A'}</span>
+                                                        </p>
                                                     </div>
 
                                                     {/* Row 3 — key facts grid */}
@@ -739,6 +769,13 @@ const IncidentList = () => {
                                                             <div className="min-w-0">
                                                                 <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">Location</dt>
                                                                 <dd className="mt-0.5 truncate text-xs font-semibold text-slate-800 dark:text-slate-100" title={incident.location || 'Not specified'}>{incident.location || 'Not specified'}</dd>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-start gap-2 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-slate-800 dark:bg-slate-950/60">
+                                                            <Calendar size={13} className="mt-0.5 shrink-0 text-slate-400" aria-hidden="true" />
+                                                            <div className="min-w-0">
+                                                                <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">Academic Year</dt>
+                                                                <dd className="mt-0.5 truncate text-xs font-semibold text-slate-800 dark:text-slate-100">{incident.academicYear || 'N/A'}</dd>
                                                             </div>
                                                         </div>
                                                     </dl>

@@ -869,6 +869,7 @@ const IncidentDetail = () => {
                                     <DetailField icon={FileText} label="Admission Number" value={incident.admissionNo || 'N/A'} />
                                     <DetailField icon={Calendar} label="Class and Section"
                                         value={incident.class && incident.section ? `${incident.class} / ${incident.section}` : 'N/A'} />
+                                    <DetailField icon={Calendar} label="Academic Year" value={incident.academicYear || 'N/A'} />
                                 </div>
                             </DashboardPanel>
 

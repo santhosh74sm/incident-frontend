@@ -31,6 +31,7 @@ const EMPTY_FILTERS = {
     start: '',
     end: '',
     entityType: '',
+    academicYear: '',
 };
 
 const isPlainObject = (value) => Object.prototype.toString.call(value) === '[object Object]';
@@ -218,6 +219,8 @@ const Logs = () => {
         hasPrevPage: false,
     });
     const [entityTypeOptions, setEntityTypeOptions] = useState([]);
+    const [academicYears, setAcademicYears] = useState([]);
+    const [currentAcademicYear, setCurrentAcademicYear] = useState('');
     const [expandedRowId, setExpandedRowId] = useState(null);
 
     useEffect(() => {
@@ -230,7 +233,7 @@ const Logs = () => {
     }, [searchInput]);
 
     const fetchLogs = useCallback(async () => {
-        if (!user?._id) return;
+        if (!user?._id || !filters.academicYear) return;
 
         setLoading(true);
 
@@ -242,6 +245,7 @@ const Logs = () => {
 
             if (debouncedSearch) params.search = debouncedSearch;
             if (filters.entityType) params.entityType = filters.entityType;
+            params.academicYear = filters.academicYear;
             if (filters.start) params.startDate = filters.start;
             if (filters.end) params.endDate = filters.end;
 
@@ -268,6 +272,10 @@ const Logs = () => {
                         label: formatActivityRecordLabel(entityType),
                     }))
             );
+            setAcademicYears((current) => {
+                const fromResponse = Array.isArray(data?.filters?.academicYears) ? data.filters.academicYears : [];
+                return fromResponse.length > 0 ? fromResponse : current;
+            });
         } catch {
             setLogs([]);
             setPagination((current) => ({
@@ -280,15 +288,50 @@ const Logs = () => {
         } finally {
             setLoading(false);
         }
-    }, [debouncedSearch, filters.end, filters.entityType, filters.start, page, pageSize, user?._id]);
+    }, [debouncedSearch, filters.academicYear, filters.end, filters.entityType, filters.start, page, pageSize, user?._id]);
 
     useEffect(() => {
         fetchLogs();
     }, [fetchLogs]);
 
     useEffect(() => {
+        if (!user?._id) return;
+
+        let isMounted = true;
+
+        const loadAcademicYears = async () => {
+            try {
+                const { data } = await apiClient.get('/api/auth/academic-years', {
+                    headers: {},
+                });
+                if (!isMounted) return;
+
+                const years = Array.isArray(data?.academicYears) ? data.academicYears : [];
+                const currentYear = data?.currentAcademicYear || years[0] || '';
+
+                setAcademicYears(years);
+                setCurrentAcademicYear(currentYear);
+                setFilters((current) => ({
+                    ...current,
+                    academicYear: current.academicYear || currentYear,
+                }));
+            } catch {
+                if (!isMounted) return;
+                setAcademicYears([]);
+                setCurrentAcademicYear('');
+            }
+        };
+
+        loadAcademicYears();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [user?._id]);
+
+    useEffect(() => {
         setExpandedRowId(null);
-    }, [page, pageSize, debouncedSearch, filters.entityType, filters.start, filters.end]);
+    }, [page, pageSize, debouncedSearch, filters.entityType, filters.academicYear, filters.start, filters.end]);
 
     const handleClearAll = async () => {
         if (!window.confirm('This will permanently delete all activity history. Are you sure you want to continue?')) return;
@@ -307,14 +350,20 @@ const Logs = () => {
     const resetFilters = () => {
         setSearchInput('');
         setDebouncedSearch('');
-        setFilters(EMPTY_FILTERS);
+        setFilters({ ...EMPTY_FILTERS, academicYear: currentAcademicYear });
         setPage(1);
         setExpandedRowId(null);
     };
 
     const activeFilterCount = useMemo(() => {
-        return [debouncedSearch, filters.entityType, filters.start, filters.end].filter(Boolean).length;
-    }, [debouncedSearch, filters.end, filters.entityType, filters.start]);
+        return [
+            debouncedSearch,
+            filters.entityType,
+            filters.academicYear && filters.academicYear !== currentAcademicYear ? filters.academicYear : '',
+            filters.start,
+            filters.end,
+        ].filter(Boolean).length;
+    }, [currentAcademicYear, debouncedSearch, filters.academicYear, filters.end, filters.entityType, filters.start]);
 
     const todayCount = useMemo(() => {
         const today = dayjs().startOf('day');
@@ -387,7 +436,7 @@ const Logs = () => {
                         </section>
 
                         <UnifiedFilterBar hasActiveFilters={activeFilterCount > 0} onReset={resetFilters} title="Find & filter" collapsible defaultCollapsed>
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
                                 <div className="md:col-span-2">
                                     <UnifiedSearchInput
                                         label="Search"
@@ -412,6 +461,25 @@ const Logs = () => {
                                         {entityTypeOptions.map((option) => (
                                             <option key={option.value} value={option.value}>
                                                 {option.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                        Academic Year
+                                    </label>
+                                    <select
+                                        value={filters.academicYear}
+                                        onChange={(event) => {
+                                            setFilters((current) => ({ ...current, academicYear: event.target.value }));
+                                            setPage(1);
+                                        }}
+                                        className="min-h-[44px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 transition-all outline-none hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-600 focus-visible:outline-none"
+                                    >
+                                        {academicYears.map((year) => (
+                                            <option key={year} value={year}>
+                                                {year}
                                             </option>
                                         ))}
                                     </select>

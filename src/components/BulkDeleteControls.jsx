@@ -10,10 +10,9 @@ const labelMap = {
 };
 
 const summaryLabelMap = {
-    students: 'Students to delete',
-    relatedIncidents: 'Related incidents',
-    relatedEvidenceFiles: 'Related evidence files',
-    relatedIssuedLetters: 'Related issued letters',
+    studentsToArchive: 'Students to archive',
+    preservedIncidents: 'Incidents preserved',
+    preservedIssuedLetters: 'Issued letters preserved',
     incidents: 'Incidents to delete',
     evidenceFiles: 'Evidence files affected',
     issuedLetters: 'Issued letters affected',
@@ -45,8 +44,10 @@ const BulkDeleteModal = ({ moduleName, mode, ids, source, onClose, onComplete, a
     const [executing, setExecuting] = useState(false);
     const [portalReady, setPortalReady] = useState(false);
     const dialogRef = useRef(null);
-    const title = `${mode === 'all' ? 'Delete All' : 'Delete Filtered'} ${labelMap[moduleName]}`;
-    const requiredPhrase = preview?.total >= 100 ? `DELETE ${preview.total}` : 'DELETE';
+    const actionLabel = moduleName === 'students' ? 'Archive' : 'Delete';
+    const title = `${mode === 'all' ? `${actionLabel} All` : `${actionLabel} Filtered`} ${labelMap[moduleName]}`;
+    const requiredAction = actionLabel.toUpperCase();
+    const requiredPhrase = preview?.total >= 100 ? `${requiredAction} ${preview.total}` : requiredAction;
 
     useEffect(() => {
         setPortalReady(typeof document !== 'undefined');
@@ -67,7 +68,7 @@ const BulkDeleteModal = ({ moduleName, mode, ids, source, onClose, onComplete, a
                 if (mounted) setPreview(data);
             })
             .catch((error) => {
-                addToast(error.response?.data?.message || 'Could not prepare bulk delete preview.', 'error');
+                addToast(error.response?.data?.message || `Could not prepare bulk ${moduleName === 'students' ? 'archive' : 'delete'} preview.`, 'error');
                 onClose();
             })
             .finally(() => {
@@ -119,18 +120,19 @@ const BulkDeleteModal = ({ moduleName, mode, ids, source, onClose, onComplete, a
                 confirmation,
             });
             setResult(data);
-            addToast(`Bulk delete complete. Deleted ${data.deleted}, failed ${data.failed}.`, data.failed ? 'warning' : 'success');
+            const completedCount = moduleName === 'students' ? data.archived : data.deleted;
+            addToast(`Bulk ${moduleName === 'students' ? 'archive' : 'delete'} complete. ${actionLabel}d ${completedCount}, failed ${data.failed}.`, data.failed ? 'warning' : 'success');
             try {
                 await onComplete?.(data);
             } catch {
-                addToast('Bulk delete completed, but the list refresh failed.', 'warning');
+                addToast(`Bulk ${moduleName === 'students' ? 'archive' : 'delete'} completed, but the list refresh failed.`, 'warning');
             }
             setConfirmation('');
             setPreview(null);
             setResult(null);
             onClose();
         } catch (error) {
-            addToast(error.response?.data?.message || 'Bulk delete failed.', 'error');
+            addToast(error.response?.data?.message || `Bulk ${moduleName === 'students' ? 'archive' : 'delete'} failed.`, 'error');
         } finally {
             setExecuting(false);
         }
@@ -183,7 +185,7 @@ const BulkDeleteModal = ({ moduleName, mode, ids, source, onClose, onComplete, a
                             <SummaryGrid summary={preview?.summary} />
 
                             <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-800 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-100">
-                                This runs the existing single-record delete flow for every record in batches of 50. Type{' '}
+                                This runs the existing single-record {moduleName === 'students' ? 'archive' : 'delete'} flow for every record in batches of 50. Type{' '}
                                 <span className="break-words font-bold">{requiredPhrase}</span> to confirm.
                             </div>
 
@@ -202,7 +204,7 @@ const BulkDeleteModal = ({ moduleName, mode, ids, source, onClose, onComplete, a
                                 </div>
                             ) : (
                                 <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">
-                                    Deleted {result.deleted}. Failed {result.failed}. Duration {Math.round((result.durationMs || 0) / 1000)}s.
+                                    {actionLabel}d {moduleName === 'students' ? result.archived : result.deleted}. Failed {result.failed}. Duration {Math.round((result.durationMs || 0) / 1000)}s.
                                 </div>
                             )}
                         </>
@@ -226,7 +228,7 @@ const BulkDeleteModal = ({ moduleName, mode, ids, source, onClose, onComplete, a
                             className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                         >
                             {executing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                            Execute Delete
+                            Execute {actionLabel}
                         </button>
                     ) : null}
                 </div>
@@ -252,7 +254,7 @@ const BulkDeleteControls = ({ moduleName, filteredIds, allCount, source, onCompl
                     className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-500/40 dark:bg-slate-900 dark:text-red-200 dark:hover:bg-red-500/10 sm:w-auto"
                 >
                     <Trash2 className="h-4 w-4" />
-                    Delete Filtered
+                    {moduleName === 'students' ? 'Archive' : 'Delete'} Filtered
                 </button>
                 <button
                     type="button"
@@ -261,7 +263,7 @@ const BulkDeleteControls = ({ moduleName, filteredIds, allCount, source, onCompl
                     className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                 >
                     <Trash2 className="h-4 w-4" />
-                    Delete All
+                    {moduleName === 'students' ? 'Archive' : 'Delete'} All
                 </button>
             </div>
             {modal ? (

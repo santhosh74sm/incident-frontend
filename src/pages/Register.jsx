@@ -6,6 +6,7 @@ import {
     AlertCircle,
     ArrowLeft,
     ArrowRight,
+    CalendarDays,
     CheckCircle2,
     Eye,
     EyeOff,
@@ -39,6 +40,7 @@ const getFriendlyRegisterError = (message) => {
 const Register = () => {
     const nameId = useId();
     const schoolNameId = useId();
+    const academicYearId = useId();
     const emailId = useId();
     const passwordId = useId();
     const confirmPasswordId = useId();
@@ -58,7 +60,7 @@ const Register = () => {
         formState: { errors, isSubmitting },
     } = useForm({
         resolver: zodResolver(registerSchema),
-        defaultValues: { schoolName: '', superAdminName: '', email: '', password: '', confirmPassword: '' },
+        defaultValues: { schoolName: '', superAdminName: '', email: '', academicYear: '', password: '', confirmPassword: '' },
     });
 
     const passwordValue = watch('password');
@@ -206,6 +208,27 @@ const Register = () => {
                                                 </div>
                                                 {errors.email && (
                                                     <p id={`${emailId}-error`} className="mt-1.5 text-xs font-medium text-red-600">{errors.email.message}</p>
+                                                )}
+                                            </div>
+                                            <div className="md:col-span-2">
+                                                <label htmlFor={academicYearId} className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                                    Academic Year
+                                                </label>
+                                                <div className="relative">
+                                                    <CalendarDays className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                                    <input
+                                                        type="text"
+                                                        id={academicYearId}
+                                                        placeholder="2026-27"
+                                                        aria-invalid={Boolean(errors.academicYear)}
+                                                        aria-describedby={errors.academicYear ? `${academicYearId}-error` : undefined}
+                                                        className={errors.academicYear ? INPUT_ERROR_CLASS_NAME : INPUT_CLASS_NAME}
+                                                        disabled={submitting}
+                                                        {...register('academicYear')}
+                                                    />
+                                                </div>
+                                                {errors.academicYear && (
+                                                    <p id={`${academicYearId}-error`} className="mt-1.5 text-xs font-medium text-red-600">{errors.academicYear.message}</p>
                                                 )}
                                             </div>
                                             </div>

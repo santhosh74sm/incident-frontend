@@ -48,6 +48,7 @@ const StudentAnalytics = lazyWithChunkRetry(() => import('./pages/StudentAnalyti
 const Logs = lazyWithChunkRetry(() => import('./pages/Logs'));
 const LetterTemplates = lazyWithChunkRetry(() => import('./pages/LetterTemplates'));
 const IssuedLetters = lazyWithChunkRetry(() => import('./pages/IssuedLetters'));
+const AcademicYearManagement = lazyWithChunkRetry(() => import('./pages/AcademicYearManagement'));
 const CommandPalette = lazyWithChunkRetry(() => import('./components/CommandPalette'));
 
 const PageLoader = () => (
@@ -110,6 +111,11 @@ const AdminRoute = ({ children }) => {
   return user && ['Super Admin', 'Admin'].includes(normalizeRole(user.role)) ? children : <Navigate to="/dashboard" />;
 };
 
+const SuperAdminRoute = ({ children }) => {
+  const { user } = useAuth();
+  return user && normalizeRole(user.role) === 'Super Admin' ? children : <Navigate to="/dashboard" />;
+};
+
 function App() {
   return (
     <AppErrorBoundary>
@@ -156,6 +162,14 @@ function App() {
                       <AdminRoute>
                         <UserManagement />
                       </AdminRoute>
+                    )}
+                  />
+                  <Route
+                    path="/settings/academic-year"
+                    element={loadPage(
+                      <SuperAdminRoute>
+                        <AcademicYearManagement />
+                      </SuperAdminRoute>
                     )}
                   />
                   <Route

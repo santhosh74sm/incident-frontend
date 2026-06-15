@@ -28,7 +28,7 @@ import {
     isSupportedFile,
 } from '../utils/uploadHelpers';
 
-const REQUIRED_COLUMNS = ['admissionNumber', 'category', 'location', 'description', 'evidenceType', 'day', 'month', 'year', 'hour', 'minute'];
+const REQUIRED_COLUMNS = ['admissionNumber', 'category', 'day', 'month', 'year', 'hour', 'minute'];
 
 const HEADER_ALIASES = {
     admissionnumber: 'admissionNumber',
@@ -225,6 +225,9 @@ const BulkUpload = () => {
     const [uploadProgress, setUploadProgress] = useState(0);
     const [results, setResults] = useState(null);
     const [showResults, setShowResults] = useState(false);
+    const [academicYears, setAcademicYears] = useState([]);
+    const [academicYear, setAcademicYear] = useState('');
+    const [currentAcademicYear, setCurrentAcademicYear] = useState('');
 
     /* Derive the active step for the step bar */
     const activeStep = useMemo(() => {
@@ -243,6 +246,26 @@ const BulkUpload = () => {
     useEffect(() => {
         mountedRef.current = true;
         return () => { mountedRef.current = false; };
+    }, []);
+
+    useEffect(() => {
+        let mounted = true;
+        apiClient.get('/api/auth/academic-years')
+            .then(({ data }) => {
+                if (!mounted) return;
+                const years = Array.isArray(data?.academicYears) ? data.academicYears : [];
+                setAcademicYears(years);
+                const currentYear = data?.currentAcademicYear || years[years.length - 1] || '';
+                setCurrentAcademicYear(currentYear);
+                setAcademicYear(currentYear);
+            })
+            .catch(() => {
+                if (mounted) {
+                    setAcademicYears([]);
+                    setCurrentAcademicYear('');
+                }
+            });
+        return () => { mounted = false; };
     }, []);
 
     const resetSelection = () => {
@@ -350,6 +373,7 @@ const BulkUpload = () => {
 
         const formData = new FormData();
         formData.append('file', file);
+        if (academicYear) formData.append('academicYear', academicYear);
 
         setUploading(true);
         setUploadProgress(0);
@@ -467,7 +491,7 @@ const BulkUpload = () => {
                                             </p>
                                         </div>
                                         <div className="grid w-full grid-cols-1 gap-3 sm:w-auto sm:grid-cols-3">
-                                            <UploadMetricCard icon={ShieldCheck} label="Required" value="10 columns" tone="indigo" />
+                                            <UploadMetricCard icon={ShieldCheck} label="Required" value="7 columns" tone="indigo" />
                                             <UploadMetricCard icon={Table2}      label="Preview"  value="Up to 5 rows" tone="blue" />
                                             <UploadMetricCard icon={Users}       label="Formats"  value="XLSX / CSV" tone="emerald" />
                                         </div>
@@ -591,6 +615,25 @@ const BulkUpload = () => {
 
                                         <UploadStatusBanner message={message} />
 
+                                        <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-900 dark:border-blue-500/30 dark:bg-blue-950/30 dark:text-blue-100">
+                                            Current Academic Year: {currentAcademicYear || 'Loading...'}
+                                        </div>
+
+                                        <label className="block">
+                                            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                                Academic Year
+                                            </span>
+                                            <select
+                                                value={academicYear}
+                                                onChange={(event) => setAcademicYear(event.target.value)}
+                                                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                                            >
+                                                {academicYears.map((year) => (
+                                                    <option key={year} value={year}>{year}</option>
+                                                ))}
+                                            </select>
+                                        </label>
+
                                         {/* Action buttons */}
                                         <div className="grid gap-3 sm:grid-cols-3">
                                             <button
@@ -651,7 +694,7 @@ const BulkUpload = () => {
                                                 Each row must represent one incident. Date and time columns must be filled in.
                                             </CheckItem>
                                             <CheckItem>
-                                                The preview checks column names only. When you confirm, the system also checks categories, locations, evidence types, and students.
+                                                The preview checks column names only. When you confirm, the system also checks category, student, and any optional location or evidence type values you include.
                                             </CheckItem>
                                             <CheckItem>
                                                 Save the file in Excel format (.xlsx) before uploading.
@@ -668,6 +711,15 @@ const BulkUpload = () => {
                                             </h2>
                                         </div>
                                         <ul className="space-y-3.5 p-5">
+                                            <li className="text-sm text-blue-900 dark:text-blue-200">
+                                                <span className="font-mono font-semibold">location</span> — optional; if used, it must match an existing location.
+                                            </li>
+                                            <li className="text-sm text-blue-900 dark:text-blue-200">
+                                                <span className="font-mono font-semibold">description</span> — optional incident notes.
+                                            </li>
+                                            <li className="text-sm text-blue-900 dark:text-blue-200">
+                                                <span className="font-mono font-semibold">evidenceType</span> — optional; comma-separate multiple existing evidence types.
+                                            </li>
                                             <li className="text-sm text-blue-900 dark:text-blue-200">
                                                 <span className="font-mono font-semibold">handledBy</span> — a valid staff email address.
                                             </li>

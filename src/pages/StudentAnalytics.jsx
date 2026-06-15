@@ -109,6 +109,9 @@ const StudentAnalytics = () => {
     const [downloadingLetterId, setDownloadingLetterId] = useState(null);
     const [letterStatusMap, setLetterStatusMap] = useState({});
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
+    const [academicYear, setAcademicYear] = useState('');
+    const [currentAcademicYear, setCurrentAcademicYear] = useState('');
+    const [academicYears, setAcademicYears] = useState([]);
     const [locationDistribution, setLocationDistribution] = useState([]);
     const compactXAxisProps = useMemo(
         () => compactChart
@@ -148,13 +151,18 @@ const StudentAnalytics = () => {
         if (!user?._id) return;
         try {
             const config = {};
-            const [studentsRes, categoriesRes, locationsRes, evidenceRes] = await Promise.all([
+            const [studentsRes, categoriesRes, locationsRes, evidenceRes, yearsRes] = await Promise.all([
                 apiClient.get('/api/students/filters', config).catch(() => ({ data: {} })),
                 apiClient.get('/api/incidents/categories', config).catch(() => ({ data: [] })),
                 apiClient.get('/api/incidents/locations', { ...config, params: { includeUnknown: true } }).catch(() => ({ data: [] })),
                 apiClient.get('/api/evidence-types', { ...config, params: { includeUnknown: true } }).catch(() => ({ data: [] })),
+                apiClient.get('/api/auth/academic-years', config).catch(() => ({ data: {} })),
             ]);
 
+            const nextYears = yearsRes.data?.academicYears || [];
+            setAcademicYears(nextYears);
+            setCurrentAcademicYear(yearsRes.data?.currentAcademicYear || '');
+            setAcademicYear((current) => current || yearsRes.data?.currentAcademicYear || nextYears[nextYears.length - 1] || '');
             setFilterOptions({
                 classes: studentsRes.data?.classes || [],
                 sections: studentsRes.data?.sections || [],
@@ -197,6 +205,7 @@ const StudentAnalytics = () => {
 
     const fetchStudentIncidents = useCallback(async (student, options = { reset: false }) => {
         if (!user?._id || !student) return;
+        if (!academicYear) return;
         try {
             setLoading(true);
             const config = {};
@@ -209,6 +218,7 @@ const StudentAnalytics = () => {
                 students: student?.admissionNo ? [] : student?.name ? [student.name] : [],
                 admissionNos: student?.admissionNo ? [student.admissionNo] : [],
             });
+            if (!options?.reset && academicYear) params.set('academicYear', academicYear);
 
             const requestConfig = params.toString() ? { ...config, params } : config;
             const { data } = await apiClient.get('/api/incidents', requestConfig);
@@ -218,13 +228,14 @@ const StudentAnalytics = () => {
         } finally {
             setLoading(false);
         }
-    }, [dateRange, filters.evidence, filters.incidentTypes, filters.locations, statusFilter, user?._id]);
+    }, [academicYear, dateRange, filters.evidence, filters.incidentTypes, filters.locations, statusFilter, user?._id]);
 
     const fetchStudentLocationDistribution = useCallback(async (student, options = { reset: false }) => {
         if (!user?._id || !student) {
             setLocationDistribution([]);
             return;
         }
+        if (!academicYear) return;
 
         try {
             const config = {};
@@ -237,6 +248,7 @@ const StudentAnalytics = () => {
                 students: student?.admissionNo ? [] : student?.name ? [student.name] : [],
                 admissionNos: student?.admissionNo ? [student.admissionNo] : [],
             });
+            if (!options?.reset && academicYear) params.set('academicYear', academicYear);
 
             const requestConfig = params.toString() ? { ...config, params } : config;
             const { data } = await apiClient.get('/api/incidents/location-distribution', requestConfig);
@@ -244,16 +256,18 @@ const StudentAnalytics = () => {
         } catch {
             setLocationDistribution([]);
         }
-    }, [dateRange.end, dateRange.start, filters.evidence, filters.incidentTypes, filters.locations, statusFilter, user?._id]);
+    }, [academicYear, dateRange.end, dateRange.start, filters.evidence, filters.incidentTypes, filters.locations, statusFilter, user?._id]);
 
     const fetchStudentLetters = useCallback(async (student, options = { reset: false }) => {
         if (!user?._id || !student?.admissionNo) return;
+        if (!academicYear) return;
         try {
             setLettersLoading(true);
             const config = {};
             const params = buildIssuedLetterFilterParams({
                 dateRange: options?.reset ? { start: '', end: '' } : { start: dateRange.start, end: dateRange.end },
             });
+            if (!options?.reset && academicYear) params.set('academicYear', academicYear);
             const requestConfig = params.toString() ? { ...config, params } : config;
             const { data } = await apiClient.get(`/api/issued-letters/student/${student.admissionNo}`, requestConfig);
             setStudentLetters(Array.isArray(data) ? data : []);
@@ -262,7 +276,7 @@ const StudentAnalytics = () => {
         } finally {
             setLettersLoading(false);
         }
-    }, [dateRange, user?._id]);
+    }, [academicYear, dateRange, user?._id]);
 
     const fetchLetterStatusForIncidents = useCallback(async (incidents) => {
         if (!user?._id || !incidents || incidents.length === 0) return;
@@ -290,7 +304,7 @@ const StudentAnalytics = () => {
             fetchStudentIncidents(selectedStudent);
             fetchStudentLetters(selectedStudent);
         }
-    }, [dateRange.end, dateRange.start, fetchStudentIncidents, fetchStudentLetters, filters.evidence, filters.incidentTypes, filters.locations, selectedStudent, statusFilter, user?._id]);
+    }, [academicYear, dateRange.end, dateRange.start, fetchStudentIncidents, fetchStudentLetters, filters.evidence, filters.incidentTypes, filters.locations, selectedStudent, statusFilter, user?._id]);
 
     useEffect(() => {
         if (selectedStudent) {
@@ -298,7 +312,7 @@ const StudentAnalytics = () => {
         } else {
             setLocationDistribution([]);
         }
-    }, [dateRange.end, dateRange.start, fetchStudentLocationDistribution, filters.evidence, filters.incidentTypes, filters.locations, selectedStudent, statusFilter, user?._id]);
+    }, [academicYear, dateRange.end, dateRange.start, fetchStudentLocationDistribution, filters.evidence, filters.incidentTypes, filters.locations, selectedStudent, statusFilter, user?._id]);
 
     useEffect(() => {
         if (studentIncidents.length > 0) {
@@ -726,6 +740,7 @@ const StudentAnalytics = () => {
                                         filters.locations.length > 0 ||
                                         filters.evidence.length > 0 ||
                                         statusFilter.length > 0 ||
+                                        academicYear !== currentAcademicYear ||
                                         Boolean(dateRange.start) ||
                                         Boolean(dateRange.end)
                                     }
@@ -733,12 +748,25 @@ const StudentAnalytics = () => {
                                         setFilters({ incidentTypes: [], locations: [], evidence: [] });
                                         setStatusFilter([]);
                                         setDateRange({ start: '', end: '' });
+                                        setAcademicYear(currentAcademicYear);
                                     }}
                                     title="Student Filters"
                                     collapsible
                                     defaultCollapsed
                                 >
                                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-6">
+                                        <label className="min-w-0">
+                                            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Academic Year</span>
+                                            <select
+                                                value={academicYear}
+                                                onChange={(event) => setAcademicYear(event.target.value)}
+                                                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10"
+                                            >
+                                                {academicYears.map((year) => (
+                                                    <option key={year} value={year}>{year}</option>
+                                                ))}
+                                            </select>
+                                        </label>
                                         <UnifiedDateInput
                                             label="From Date"
                                             value={dateRange.start}

@@ -162,6 +162,9 @@ const ProfessionalAnalytics = () => {
         evidence: [],
     });
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
+    const [academicYear, setAcademicYear] = useState('');
+    const [currentAcademicYear, setCurrentAcademicYear] = useState('');
+    const [academicYears, setAcademicYears] = useState([]);
     const [letterStatusMap, setLetterStatusMap] = useState({});
 
     const config = useMemo(() => ({ headers: {} }), []);
@@ -192,6 +195,7 @@ const ProfessionalAnalytics = () => {
 
     const fetchIncidents = useCallback(async (options = { reset: false }) => {
         if (!user?._id) return;
+        if (!academicYear) return;
 
         try {
             setLoading(true);
@@ -219,6 +223,9 @@ const ProfessionalAnalytics = () => {
                     includeAdminRole: selectedStaff.length > 0 && !allSelected && administrationSelected,
                     includeUnassigned: false,
                 });
+            if (!options?.reset && academicYear) {
+                params.set('academicYear', academicYear);
+            }
 
             const requestConfig = params.toString() ? { ...config, params } : config;
 
@@ -229,19 +236,24 @@ const ProfessionalAnalytics = () => {
         } finally {
             setLoading(false);
         }
-    }, [allStaffOptions, config, dateRange, filters.classes, filters.evidence, filters.incidentTypes, filters.locations, filters.sections, filters.statuses, selectedStaff, staffList, user?._id]);
+    }, [academicYear, allStaffOptions, config, dateRange, filters.classes, filters.evidence, filters.incidentTypes, filters.locations, filters.sections, filters.statuses, selectedStaff, staffList, user?._id]);
 
     const fetchFilterOptions = useCallback(async () => {
         if (!user?._id) return;
 
         try {
-            const [studentsRes, categoriesRes, locationsRes, evidenceRes] = await Promise.all([
+            const [studentsRes, categoriesRes, locationsRes, evidenceRes, yearsRes] = await Promise.all([
                 apiClient.get('/api/students/filters', config),
                 apiClient.get('/api/incidents/categories', config),
                 apiClient.get('/api/incidents/locations', { ...config, params: { includeUnknown: true } }),
                 apiClient.get('/api/evidence-types', { ...config, params: { includeUnknown: true } }),
+                apiClient.get('/api/auth/academic-years', config),
             ]);
 
+            const nextYears = yearsRes.data?.academicYears || [];
+            setAcademicYears(nextYears);
+            setCurrentAcademicYear(yearsRes.data?.currentAcademicYear || '');
+            setAcademicYear((current) => current || yearsRes.data?.currentAcademicYear || nextYears[nextYears.length - 1] || '');
             setFilterOptions({
                 classes: studentsRes.data?.classes || [],
                 sections: studentsRes.data?.sections || [],
@@ -291,7 +303,7 @@ const ProfessionalAnalytics = () => {
 
     useEffect(() => {
         fetchIncidents();
-    }, [dateRange.end, dateRange.start, fetchIncidents, filters.classes, filters.evidence, filters.incidentTypes, filters.locations, filters.sections, filters.statuses, selectedStaff, user?._id]);
+    }, [academicYear, dateRange.end, dateRange.start, fetchIncidents, filters.classes, filters.evidence, filters.incidentTypes, filters.locations, filters.sections, filters.statuses, selectedStaff, user?._id]);
 
     useEffect(() => {
         fetchFilterOptions();
@@ -364,6 +376,7 @@ const ProfessionalAnalytics = () => {
             classWiseData: buildClassResolution(filteredIncidents),
             staffWorkload: buildStaffWorkload(filteredIncidents),
             categoryHeatmap: buildCategoryHeatmap(filteredIncidents),
+            academicYearData: buildDistribution(filteredIncidents, (incident) => incident.academicYear || 'Unassigned Year', 'academicYear'),
         };
     }, [dateRange, filteredIncidents, letterStatusMap]);
 
@@ -383,19 +396,17 @@ const ProfessionalAnalytics = () => {
         [filteredIncidents]
     );
 
-    const hasActiveFilters = useMemo(
-        () =>
-            filters.classes.length > 0 ||
-            filters.sections.length > 0 ||
-            filters.incidentTypes.length > 0 ||
-            filters.locations.length > 0 ||
-            filters.evidence.length > 0 ||
-            filters.statuses.length > 0 ||
-            selectedStaff.length > 0 ||
-            Boolean(dateRange.start) ||
-            Boolean(dateRange.end),
-        [dateRange.end, dateRange.start, filters, selectedStaff.length]
-    );
+    const hasActiveFilters =
+        filters.classes.length > 0 ||
+        filters.sections.length > 0 ||
+        filters.incidentTypes.length > 0 ||
+        filters.locations.length > 0 ||
+        filters.evidence.length > 0 ||
+        filters.statuses.length > 0 ||
+        selectedStaff.length > 0 ||
+        academicYear !== currentAcademicYear ||
+        Boolean(dateRange.start) ||
+        Boolean(dateRange.end);
 
     const resetFilters = useCallback(() => {
         setFilters({
@@ -408,7 +419,8 @@ const ProfessionalAnalytics = () => {
         });
         setSelectedStaff(isOperationalUser && user?.name ? [user.name] : []);
         setDateRange({ start: '', end: '' });
-    }, [isOperationalUser, user?.name]);
+        setAcademicYear(currentAcademicYear);
+    }, [currentAcademicYear, isOperationalUser, user?.name]);
 
     const exportIncidentDetailsToExcel = useCallback(async () => {
         try {
@@ -652,6 +664,18 @@ const ProfessionalAnalytics = () => {
                             }
                         >
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-8">
+                                <label className="min-w-0">
+                                    <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Academic Year</span>
+                                    <select
+                                        value={academicYear}
+                                        onChange={(event) => setAcademicYear(event.target.value)}
+                                        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10"
+                                    >
+                                        {academicYears.map((year) => (
+                                            <option key={year} value={year}>{year}</option>
+                                        ))}
+                                    </select>
+                                </label>
                                 <UnifiedDateInput
                                     label="From Date"
                                     value={dateRange.start}
@@ -768,6 +792,31 @@ const ProfessionalAnalytics = () => {
                                         tableColumns={creationTrendColumns}
                                         tableRows={analytics.creationTrendData}
                                         emptyMessage="No creation trend data is available for the current filters."
+                                    />
+
+                                    <DashboardWidgetPanel
+                                        className="xl:col-span-12"
+                                        title="Incidents by academic year"
+                                        description="Compares incident volume across available academic years."
+                                        icon={BarChart3}
+                                        chart={
+                                            <ChartSurface height={260}>
+                                                <ResponsiveContainer width="100%" height="100%" minWidth={1}>
+                                                    <BarChart data={analytics.academicYearData} margin={horizontalBarMargin}>
+                                                        <CartesianGrid strokeDasharray="3 3" stroke={CHART_THEME.grid} />
+                                                        <XAxis dataKey="name" {...compactXAxisProps} />
+                                                        <YAxis allowDecimals={false} {...compactYAxisProps} />
+                                                        <ChartTooltip />
+                                                        <Bar dataKey="value" fill={CHART_COLORS[0]} radius={[6, 6, 0, 0]}>
+                                                            <LabelList dataKey="value" position="top" className="fill-slate-600 text-xs font-semibold" />
+                                                        </Bar>
+                                                    </BarChart>
+                                                </ResponsiveContainer>
+                                            </ChartSurface>
+                                        }
+                                        tableColumns={[{ key: 'name', label: 'Academic Year' }, { key: 'value', label: 'Incident Count' }]}
+                                        tableRows={analytics.academicYearData}
+                                        emptyMessage="No academic year data is available for the current filters."
                                     />
 
                                     <DashboardWidgetPanel

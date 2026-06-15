@@ -3,6 +3,7 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
     AlertCircle,
     BarChart3,
+    CalendarDays,
     ChevronLeft,
     ChevronRight,
     ClipboardList,
@@ -221,6 +222,13 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
                 path: '/logs',
                 preload: () => import('../pages/Logs'),
                 roles: ['Super Admin', 'Admin'],
+            },
+            {
+                title: 'Academic Year',
+                icon: CalendarDays,
+                path: '/settings/academic-year',
+                preload: () => import('../pages/AcademicYearManagement'),
+                roles: ['Super Admin'],
             },
         ],
         []

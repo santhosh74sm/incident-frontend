@@ -157,6 +157,10 @@ const DetailModal = ({
                                 <p className="mt-2 text-sm font-semibold text-slate-900">{formatShortDateTime(letter.generatedAt)}</p>
                                 <p className="mt-1 text-sm text-slate-500">Language: {letter.language === 'ta' ? 'Tamil' : 'English'}</p>
                             </div>
+                            <div className="rounded-2xl bg-slate-50 p-4">
+                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Academic Year</p>
+                                <p className="mt-2 text-sm font-semibold text-slate-900">{letter.academicYear || 'N/A'}</p>
+                            </div>
                         </div>
 
                         <div className="rounded-3xl border border-slate-200 bg-white p-5">
@@ -306,6 +310,10 @@ const MobileLetterCard = ({ letter, timelineValue, downloading, onView, onDownlo
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Issued</p>
                     <p className="mt-1 font-semibold text-slate-900 dark:text-slate-100">{formatShortDateTime(letter?.generatedAt)}</p>
                 </div>
+                <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Academic Year</p>
+                    <p className="mt-1 font-semibold text-slate-900 dark:text-slate-100">{letter?.academicYear || 'N/A'}</p>
+                </div>
             </div>
         </div>
 
@@ -324,11 +332,13 @@ const IssuedLetters = () => {
     const [availableCategories, setAvailableCategories] = useState([]);
     const [availableClasses, setAvailableClasses] = useState([]);
     const [availableSections, setAvailableSections] = useState([]);
+    const [availableAcademicYears, setAvailableAcademicYears] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
-    const [filters, setFilters] = useState({ categories: [], classes: [], sections: [] });
+    const [filters, setFilters] = useState({ categories: [], classes: [], sections: [], academicYear: '' });
+    const [currentAcademicYear, setCurrentAcademicYear] = useState('');
     const [page, setPage] = useState(1);
     const [selectedLetter, setSelectedLetter] = useState(null);
     const [deleteTarget, setDeleteTarget] = useState(null);
@@ -343,10 +353,22 @@ const IssuedLetters = () => {
         if (!user?._id) return;
 
         try {
-            const response = await apiClient.get('/api/issued-letters/filters', config);
+            const [response, yearResponse] = await Promise.all([
+                apiClient.get('/api/issued-letters/filters', config),
+                apiClient.get('/api/auth/academic-years', config),
+            ]);
             setAvailableCategories(response.data?.categories || []);
             setAvailableClasses(response.data?.classes || []);
             setAvailableSections(response.data?.sections || []);
+            setAvailableAcademicYears([...new Set([
+                ...(yearResponse.data?.academicYears || []),
+                ...(response.data?.academicYears || []),
+            ])].sort());
+            setCurrentAcademicYear(yearResponse.data?.currentAcademicYear || '');
+            setFilters((current) => ({
+                ...current,
+                academicYear: current.academicYear || yearResponse.data?.currentAcademicYear || response.data?.academicYears?.[response.data.academicYears.length - 1] || '',
+            }));
         } catch (error) {
             addToast('Failed to load issued letter filters.', 'error');
         }
@@ -354,6 +376,7 @@ const IssuedLetters = () => {
 
     const fetchLetters = useCallback(async (showLoader = true) => {
         if (!user?._id) return;
+        if (!filters.academicYear) return;
 
         try {
             if (showLoader && !hasLoadedLettersRef.current) {
@@ -369,6 +392,7 @@ const IssuedLetters = () => {
 
             if (filters.classes?.length > 0) params.append('class', filters.classes.join(','));
             if (filters.sections?.length > 0) params.append('section', filters.sections.join(','));
+            if (filters.academicYear) params.set('academicYear', filters.academicYear);
 
             const requestConfig = params.toString() ? { ...config, params } : config;
             const response = await apiClient.get('/api/issued-letters', requestConfig);
@@ -381,7 +405,7 @@ const IssuedLetters = () => {
             setLoading(false);
             setRefreshing(false);
         }
-    }, [addToast, config, dateRange, filters.categories, filters.classes, filters.sections, user?._id]);
+    }, [addToast, config, dateRange, filters.academicYear, filters.categories, filters.classes, filters.sections, user?._id]);
 
     useEffect(() => {
         fetchFilters();
@@ -393,7 +417,7 @@ const IssuedLetters = () => {
 
     useEffect(() => {
         setPage(1);
-    }, [dateRange.end, dateRange.start, filters.categories, filters.classes, filters.sections, searchTerm]);
+    }, [dateRange.end, dateRange.start, filters.academicYear, filters.categories, filters.classes, filters.sections, searchTerm]);
 
     const filteredLetters = useMemo(() => {
         const query = searchTerm.trim().toLowerCase();
@@ -434,11 +458,11 @@ const IssuedLetters = () => {
     const clearFilters = () => {
         setSearchTerm('');
         setDateRange({ start: '', end: '' });
-        setFilters({ categories: [], classes: [], sections: [] });
+        setFilters({ categories: [], classes: [], sections: [], academicYear: currentAcademicYear });
     };
 
     const activeFilterCount =
-        filters.categories.length + filters.classes.length + filters.sections.length + (dateRange.start ? 1 : 0) + (dateRange.end ? 1 : 0) + (searchTerm ? 1 : 0);
+        filters.categories.length + filters.classes.length + filters.sections.length + (filters.academicYear !== currentAcademicYear ? 1 : 0) + (dateRange.start ? 1 : 0) + (dateRange.end ? 1 : 0) + (searchTerm ? 1 : 0);
 
     const downloadLetter = async (letter) => {
         const loadingStateKey = `${letter?._id}-docx`;
@@ -567,6 +591,19 @@ const IssuedLetters = () => {
                                         onChange={setSearchTerm}
                                         placeholder="Search student name, admission no, letter ref, or category..."
                                     />
+
+                                    <label className="min-w-0">
+                                        <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Academic Year</span>
+                                        <select
+                                            value={filters.academicYear}
+                                            onChange={(event) => setFilters((current) => ({ ...current, academicYear: event.target.value }))}
+                                            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10"
+                                        >
+                                            {availableAcademicYears.map((year) => (
+                                                <option key={year} value={year}>{year}</option>
+                                            ))}
+                                        </select>
+                                    </label>
 
                                     <UnifiedMultiSelect
                                         label="Class"

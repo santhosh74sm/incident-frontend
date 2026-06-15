@@ -180,6 +180,9 @@ const UserManagement = () => {
     const [roleFilter, setRoleFilter] = useState([]);
     const [classFilter, setClassFilter] = useState([]);
     const [sectionFilter, setSectionFilter] = useState([]);
+    const [academicYearFilter, setAcademicYearFilter] = useState('');
+    const [currentAcademicYear, setCurrentAcademicYear] = useState('');
+    const [academicYears, setAcademicYears] = useState([]);
     const [staffPage, setStaffPage] = useState(1);
     const [studentPage, setStudentPage] = useState(1);
 
@@ -191,7 +194,7 @@ const UserManagement = () => {
     const [newUser, setNewUser] = useState({ name: '', email: '', role: 'Teacher', password: '' });
     const [newStudent, setNewStudent] = useState({ name: '', admissionNo: '', className: '', section: '' });
     const [editStaff, setEditStaff] = useState({ _id: '', name: '', email: '', role: '' });
-    const [editStudent, setEditStudent] = useState({ _id: '', name: '', admissionNo: '', className: '', section: '' });
+    const [editStudent, setEditStudent] = useState({ _id: '', name: '', admissionNo: '', className: '', section: '', academicYear: '' });
     const [submittingUser, setSubmittingUser] = useState(false);
     const [submittingStudent, setSubmittingStudent] = useState(false);
     const [submittingEditStaff, setSubmittingEditStaff] = useState(false);
@@ -245,9 +248,21 @@ const UserManagement = () => {
         return Array.isArray(data) ? [...data].sort((a, b) => a.name.localeCompare(b.name)) : [];
     }, [config]);
 
-    const loadStudents = useCallback(async () => {
-        const { data } = await apiClient.get('/api/students/all', config);
+    const loadStudents = useCallback(async (selectedAcademicYear = academicYearFilter) => {
+        const shouldRequestYearProjection = Boolean(selectedAcademicYear);
+        const requestConfig = shouldRequestYearProjection
+            ? { ...config, params: { academicYear: selectedAcademicYear } }
+            : config;
+        const { data } = await apiClient.get('/api/students/all', requestConfig);
         return Array.isArray(data) ? [...data].sort((a, b) => a.name.localeCompare(b.name)) : [];
+    }, [academicYearFilter, config]);
+
+    const loadAcademicYears = useCallback(async () => {
+        const { data } = await apiClient.get('/api/auth/academic-years', config);
+        return {
+            currentAcademicYear: data?.currentAcademicYear || '',
+            academicYears: Array.isArray(data?.academicYears) ? data.academicYears : [],
+        };
     }, [config]);
 
     const fetchData = useCallback(
@@ -264,7 +279,21 @@ const UserManagement = () => {
             setError(null);
 
             try {
-                const [userResult, studentResult] = await Promise.allSettled([loadUsers(), loadStudents()]);
+                const yearResult = await Promise.allSettled([loadAcademicYears()]).then(([result]) => result);
+                if (!isMounted()) return;
+
+                let effectiveAcademicYear = academicYearFilter || currentAcademicYear;
+                if (yearResult.status === 'fulfilled') {
+                    setAcademicYears(yearResult.value.academicYears);
+                    setCurrentAcademicYear(yearResult.value.currentAcademicYear);
+                    effectiveAcademicYear = effectiveAcademicYear || yearResult.value.currentAcademicYear || yearResult.value.academicYears[yearResult.value.academicYears.length - 1] || '';
+                    setAcademicYearFilter((current) => current || effectiveAcademicYear);
+                }
+
+                const [userResult, studentResult] = await Promise.allSettled([
+                    loadUsers(),
+                    loadStudents(effectiveAcademicYear),
+                ]);
                 if (!isMounted()) return;
 
                 if (userResult.status === 'fulfilled') {
@@ -299,7 +328,7 @@ const UserManagement = () => {
                 }
             }
         },
-        [loadStudents, loadUsers, user?._id]
+        [academicYearFilter, currentAcademicYear, loadAcademicYears, loadStudents, loadUsers, user?._id]
     );
 
     useEffect(() => {
@@ -414,7 +443,7 @@ const UserManagement = () => {
 
     const hasActiveStaffFilters = Boolean(staffSearchQuery.trim()) || roleFilter.length > 0;
     const hasActiveStudentFilters =
-        Boolean(studentSearchQuery.trim()) || classFilter.length > 0 || sectionFilter.length > 0;
+        Boolean(studentSearchQuery.trim()) || classFilter.length > 0 || sectionFilter.length > 0 || academicYearFilter !== currentAcademicYear;
 
     const clearStaffFilters = useCallback(() => {
         setStaffSearchQuery('');
@@ -425,6 +454,26 @@ const UserManagement = () => {
         setStudentSearchQuery('');
         setClassFilter([]);
         setSectionFilter([]);
+        setAcademicYearFilter(currentAcademicYear);
+    }, [currentAcademicYear]);
+
+    const applyUpdatedStudentRecord = useCallback((updatedStudent) => {
+        const studentId = String(updatedStudent?._id || updatedStudent?.id || '');
+        if (!studentId) return;
+
+        setStudentRegistry((current) =>
+            current.map((student) => {
+                const currentId = String(student?._id || student?.id || '');
+                if (currentId !== studentId) return student;
+
+                return {
+                    ...student,
+                    ...updatedStudent,
+                    _id: updatedStudent._id || student._id,
+                    id: updatedStudent.id || student.id,
+                };
+            })
+        );
     }, []);
 
     const handleAddUser = async (event) => {
@@ -510,8 +559,11 @@ const UserManagement = () => {
                     ? `/api/auth/users/${deleteDialog.id}`
                     : `/api/students/${deleteDialog.id}`;
 
-            await apiClient.delete(endpoint, config);
-            addToast(`${deleteDialog.type === 'staff' ? 'User' : 'Student'} deleted successfully.`, 'success');
+            const { data } = await apiClient.delete(endpoint, config);
+            addToast(
+                data?.message || `${deleteDialog.type === 'staff' ? 'User' : 'Student'} deleted successfully.`,
+                'success'
+            );
             setDeleteDialog({ open: false, id: null, type: 'staff', label: '' });
             setDetailModal({ open: false, type: 'staff', record: null });
             fetchData(false);
@@ -539,10 +591,11 @@ const UserManagement = () => {
                 name: record.name,
                 admissionNo: record.admissionNo,
                 className: record.className,
-                section: record.section
+                section: record.section,
+                academicYear: academicYearFilter || record.academicYear || ''
             });
         }
-    }, [temporaryPasswordResult?.user?._id]);
+    }, [academicYearFilter, temporaryPasswordResult?.user?._id]);
 
     const handleEditStaff = async (event) => {
         event.preventDefault();
@@ -583,10 +636,15 @@ const UserManagement = () => {
         setSubmittingEditStudent(true);
 
         try {
-            await apiClient.put(`/api/students/${editStudent._id}`, editStudent, config);
+            const selectedEditAcademicYear = editStudent.academicYear || academicYearFilter || currentAcademicYear;
+            const payload = {
+                ...editStudent,
+                academicYear: selectedEditAcademicYear || undefined,
+            };
+            const { data } = await apiClient.put(`/api/students/${editStudent._id}`, payload, config);
+            applyUpdatedStudentRecord(data);
             addToast('Student updated successfully.', 'success');
-            setDetailModal({ open: false, type: 'staff', record: null });
-            fetchData(false);
+            setDetailModal({ open: false, type: 'student', record: null });
         } catch (requestError) {
             addToast(requestError.response?.data?.message || 'Unable to update student.', 'error');
         } finally {
@@ -668,6 +726,11 @@ const UserManagement = () => {
                         Section {row.section}
                     </span>
                 ),
+            },
+            {
+                key: 'academicYear',
+                label: 'Academic Year',
+                render: (row) => <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{row.academicYear || 'N/A'}</span>,
             },
             {
                 key: 'createdAt',
@@ -933,13 +996,27 @@ const UserManagement = () => {
                                         />
                                     ) : null}
                                 >
-                                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
                                         <UnifiedSearchInput
                                             label="Search"
                                             value={studentSearchQuery}
                                             onChange={setStudentSearchQuery}
                                             placeholder="Search by name, admission no, class, or section"
                                         />
+                                        <label className="min-w-0">
+                                            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                                Academic Year
+                                            </span>
+                                            <select
+                                                value={academicYearFilter}
+                                                onChange={(event) => setAcademicYearFilter(event.target.value)}
+                                                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                                            >
+                                                {academicYears.map((year) => (
+                                                    <option key={year} value={year}>{year}</option>
+                                                ))}
+                                            </select>
+                                        </label>
                                         <UnifiedMultiSelect
                                             label="Class"
                                             options={classFilterOptions}
@@ -1358,6 +1435,19 @@ const UserManagement = () => {
                                         />
                                     </div>
                                     <div>
+                                        <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Academic Year</label>
+                                        <select
+                                            value={editStudent.academicYear || ''}
+                                            onChange={(event) => setEditStudent((current) => ({ ...current, academicYear: event.target.value }))}
+                                            className={`${INPUT_CLASS_NAME} appearance-none`}
+                                        >
+                                            <option value="">Current Academic Year</option>
+                                            {academicYears.map((year) => (
+                                                <option key={year} value={year}>{year}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
                                         <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Class</label>
                                         <div className="relative">
                                             <select
@@ -1509,8 +1599,8 @@ const UserManagement = () => {
                             </div>
                             <h3 className="mt-5 text-xl font-semibold text-slate-900 dark:text-slate-100">Confirm deletion</h3>
                             <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
-                                You are about to delete <span className="font-semibold text-slate-700 dark:text-slate-200">{deleteDialog.label}</span>.
-                                This action cannot be undone.
+                                You are about to {deleteDialog.type === 'student' ? 'archive' : 'delete'} <span className="font-semibold text-slate-700 dark:text-slate-200">{deleteDialog.label}</span>.
+                                {deleteDialog.type === 'student' ? ' History and incidents will be preserved.' : ' This action cannot be undone.'}
                             </p>
 
                             <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-center">

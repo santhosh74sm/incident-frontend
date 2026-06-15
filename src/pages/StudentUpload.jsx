@@ -66,9 +66,10 @@ const downloadStudentTemplate = async (addToast) => {
     const instructionSheet = XLSX.utils.aoa_to_sheet([
         ['Student Upload Guide'],
         ['1. Keep the first-row headers unchanged.'],
-        ['2. Admission numbers should be unique for each student.'],
-        ['3. Use the exact class and section values you want stored.'],
-        ['4. Save the file as Excel (.xlsx) before uploading.'],
+        ['2. Admission numbers identify one student master record.'],
+        ['3. Select the Academic Year on the Student Upload page before uploading.'],
+        ['4. Use the exact class and section values you want stored.'],
+        ['5. Save the file as Excel (.xlsx) before uploading.'],
     ]);
 
     instructionSheet['!cols'] = [{ wch: 72 }];
@@ -161,6 +162,9 @@ const StudentUpload = () => {
     const [dragActive,     setDragActive]     = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
     const [lastUpload,     setLastUpload]     = useState(null);
+    const [currentAcademicYear, setCurrentAcademicYear] = useState('');
+    const [academicYears, setAcademicYears] = useState([]);
+    const [selectedAcademicYear, setSelectedAcademicYear] = useState('');
 
     /* Derive the active step for the step bar */
     const activeStep = useMemo(() => {
@@ -172,13 +176,47 @@ const StudentUpload = () => {
     }, [file, message.type, preview, uploading, uploadProgress]);
 
     const canUpload = useMemo(
-        () => Boolean(file) && !uploading && !parsing && !(preview?.missingColumns?.length > 0),
-        [file, parsing, preview?.missingColumns, uploading]
+        () => Boolean(file) && Boolean(selectedAcademicYear) && !uploading && !parsing && !(preview?.missingColumns?.length > 0),
+        [file, parsing, preview?.missingColumns, selectedAcademicYear, uploading]
     );
+
+    const previewWithAcademicYear = useMemo(() => {
+        if (!preview) return null;
+        const academicYear = selectedAcademicYear || currentAcademicYear;
+        const headers = [...(preview.headers || []).filter((header) => header !== 'academicYear'), 'academicYear'];
+        return {
+            ...preview,
+            headers,
+            rows: (preview.rows || []).map((row) => ({
+                ...row,
+                academicYear,
+            })),
+        };
+    }, [currentAcademicYear, preview, selectedAcademicYear]);
 
     useEffect(() => {
         mountedRef.current = true;
         return () => { mountedRef.current = false; };
+    }, []);
+
+    useEffect(() => {
+        let mounted = true;
+        apiClient.get('/api/auth/academic-years')
+            .then(({ data }) => {
+                if (!mounted) return;
+                const years = Array.isArray(data?.academicYears) ? data.academicYears : [];
+                const currentYear = data?.currentAcademicYear || years[years.length - 1] || '';
+                setAcademicYears(years);
+                setCurrentAcademicYear(currentYear);
+                setSelectedAcademicYear(currentYear);
+            })
+            .catch(() => {
+                if (!mounted) return;
+                setAcademicYears([]);
+                setCurrentAcademicYear('');
+                setSelectedAcademicYear('');
+            });
+        return () => { mounted = false; };
     }, []);
 
     const resetSelection = () => {
@@ -274,6 +312,7 @@ const StudentUpload = () => {
 
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('academicYear', selectedAcademicYear);
 
         setUploading(true);
         setUploadProgress(0);
@@ -382,6 +421,21 @@ const StudentUpload = () => {
                             </div>
 
                             <div className="space-y-5 p-4 sm:p-6">
+                                <label className="block">
+                                    <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                        Academic Year
+                                    </span>
+                                    <select
+                                        value={selectedAcademicYear}
+                                        onChange={(event) => setSelectedAcademicYear(event.target.value)}
+                                        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                                    >
+                                        {academicYears.map((year) => (
+                                            <option key={year} value={year}>{year}</option>
+                                        ))}
+                                    </select>
+                                </label>
+
                                 {/* Drop zone */}
                                 <button
                                     type="button"
@@ -456,9 +510,13 @@ const StudentUpload = () => {
                                 )}
 
                                 {/* Status message */}
-                                <UploadStatusBanner message={message} />
+                            <UploadStatusBanner message={message} />
 
-                                {/* Action buttons */}
+                            <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-900 dark:border-blue-500/30 dark:bg-blue-950/30 dark:text-blue-100">
+                                Current Academic Year: {currentAcademicYear || 'Loading...'}
+                            </div>
+
+                            {/* Action buttons */}
                                 <div className="grid gap-3 sm:grid-cols-3">
                                     <button
                                         type="button"
@@ -555,7 +613,7 @@ const StudentUpload = () => {
                     </div>
 
                     {/* Preview table */}
-                    <UploadPreviewTable preview={preview} />
+                    <UploadPreviewTable preview={previewWithAcademicYear} />
 
                 </div>
             </main>
