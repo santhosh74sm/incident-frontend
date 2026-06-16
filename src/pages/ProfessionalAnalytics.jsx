@@ -10,6 +10,7 @@ import {
     Pie,
     PieChart,
     ResponsiveContainer,
+    Tooltip,
     XAxis,
     YAxis,
 } from 'recharts';
@@ -57,6 +58,7 @@ import {
     STATUS_COLORS,
     STATUS_OPTIONS,
     buildCreationTrendSeries,
+    buildAcademicYearOptions,
     buildStatusTrendSeries,
     formatShortDate,
     getIncidentTimestamp,
@@ -134,6 +136,74 @@ const buildCategoryHeatmap = (items) => {
     return Object.values(grouped).sort((a, b) => (b.open + b.inProgress + b.closed) - (a.open + a.inProgress + a.closed));
 };
 
+const sortAcademicYearLabels = (first, second) => {
+    const firstYear = Number(String(first).slice(0, 4));
+    const secondYear = Number(String(second).slice(0, 4));
+    if (!Number.isNaN(firstYear) && !Number.isNaN(secondYear)) return firstYear - secondYear;
+    return String(first).localeCompare(String(second));
+};
+
+const buildAcademicYearStatusData = (items) => {
+    const grouped = {};
+
+    items.forEach((incident) => {
+        const academicYear = incident.academicYear || 'Unassigned Year';
+        if (!grouped[academicYear]) {
+            grouped[academicYear] = {
+                name: academicYear,
+                academicYear,
+                total: 0,
+                open: 0,
+                inProgress: 0,
+                closed: 0,
+            };
+        }
+
+        grouped[academicYear].total += 1;
+        if (incident.status === 'Open') grouped[academicYear].open += 1;
+        if (incident.status === 'In Progress') grouped[academicYear].inProgress += 1;
+        if (incident.status === 'Closed') grouped[academicYear].closed += 1;
+    });
+
+    return Object.values(grouped)
+        .map((entry) => ({
+            ...entry,
+            unresolved: entry.open + entry.inProgress,
+        }))
+        .sort((a, b) => sortAcademicYearLabels(a.academicYear, b.academicYear));
+};
+
+const AcademicYearStatusTooltip = ({ active, payload, label }) => {
+    if (!active || !payload || payload.length === 0) return null;
+    const row = payload[0]?.payload || {};
+
+    return (
+        <div className="rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-xl backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                {row.academicYear || label || 'Academic Year'}
+            </p>
+            <div className="space-y-1.5">
+                {[
+                    { label: 'Total Incidents', value: row.total, color: CHART_COLORS.neutralPrimary },
+                    { label: 'Open', value: row.open, color: STATUS_COLORS.Open },
+                    { label: 'In Progress', value: row.inProgress, color: STATUS_COLORS['In Progress'] },
+                    { label: 'Closed', value: row.closed, color: STATUS_COLORS.Closed },
+                ].map((entry) => (
+                    <div key={entry.label} className="flex items-center justify-between gap-4 text-sm">
+                        <div className="flex items-center gap-2">
+                            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
+                            <span className="text-slate-600 dark:text-slate-300">{entry.label}</span>
+                        </div>
+                        <span className="font-semibold text-slate-900 dark:text-slate-100">
+                            {Number(entry.value || 0).toLocaleString('en-US')}
+                        </span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
 const ProfessionalAnalytics = () => {
     const { user } = useAuth();
     const { addToast } = useToast();
@@ -185,6 +255,10 @@ const ProfessionalAnalytics = () => {
             ? { top: 24, right: 12, left: -12, bottom: 36 }
             : { top: 20, right: 10, left: -20, bottom: 0 },
         [compactChart]
+    );
+    const academicYearOptions = useMemo(
+        () => buildAcademicYearOptions(academicYears, currentAcademicYear),
+        [academicYears, currentAcademicYear]
     );
 
     const allStaffOptions = useMemo(
@@ -242,8 +316,9 @@ const ProfessionalAnalytics = () => {
         if (!user?._id) return;
 
         try {
+            const studentFilterConfig = academicYear ? { ...config, params: { academicYear } } : config;
             const [studentsRes, categoriesRes, locationsRes, evidenceRes, yearsRes] = await Promise.all([
-                apiClient.get('/api/students/filters', config),
+                apiClient.get('/api/students/filters', studentFilterConfig),
                 apiClient.get('/api/incidents/categories', config),
                 apiClient.get('/api/incidents/locations', { ...config, params: { includeUnknown: true } }),
                 apiClient.get('/api/evidence-types', { ...config, params: { includeUnknown: true } }),
@@ -270,7 +345,7 @@ const ProfessionalAnalytics = () => {
                 evidence: [],
             });
         }
-    }, [config, user?._id]);
+    }, [academicYear, config, user?._id]);
 
     const fetchStaff = useCallback(async () => {
         if (!user?._id) return;
@@ -376,7 +451,7 @@ const ProfessionalAnalytics = () => {
             classWiseData: buildClassResolution(filteredIncidents),
             staffWorkload: buildStaffWorkload(filteredIncidents),
             categoryHeatmap: buildCategoryHeatmap(filteredIncidents),
-            academicYearData: buildDistribution(filteredIncidents, (incident) => incident.academicYear || 'Unassigned Year', 'academicYear'),
+            academicYearData: buildAcademicYearStatusData(filteredIncidents),
         };
     }, [dateRange, filteredIncidents, letterStatusMap]);
 
@@ -450,6 +525,16 @@ const ProfessionalAnalytics = () => {
             const ws = XLSX.utils.json_to_sheet(excelData);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Incident Details');
+            const academicYearSheetData = analytics.academicYearData.map((entry) => ({
+                'Academic Year': entry.academicYear,
+                'Total Incidents': entry.total,
+                Open: entry.open,
+                'In Progress': entry.inProgress,
+                Closed: entry.closed,
+                Unresolved: entry.unresolved,
+            }));
+            const academicYearWs = XLSX.utils.json_to_sheet(academicYearSheetData);
+            XLSX.utils.book_append_sheet(wb, academicYearWs, 'Academic Year Status');
             await withFeedback(
                 addToast,
                 () => downloadWorkbook(
@@ -467,7 +552,7 @@ const ProfessionalAnalytics = () => {
         } finally {
             setIsExporting(false);
         }
-    }, [addToast, filteredIncidentDetails, letterStatusMap]);
+    }, [addToast, analytics.academicYearData, filteredIncidentDetails, letterStatusMap]);
 
     if (loading && incidents.length === 0) {
         return (
@@ -671,8 +756,8 @@ const ProfessionalAnalytics = () => {
                                         onChange={(event) => setAcademicYear(event.target.value)}
                                         className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10"
                                     >
-                                        {academicYears.map((year) => (
-                                            <option key={year} value={year}>{year}</option>
+                                        {academicYearOptions.map((option) => (
+                                            <option key={option.value} value={option.value}>{option.label}</option>
                                         ))}
                                     </select>
                                 </label>
@@ -797,24 +882,42 @@ const ProfessionalAnalytics = () => {
                                     <DashboardWidgetPanel
                                         className="xl:col-span-12"
                                         title="Incidents by academic year"
-                                        description="Compares incident volume across available academic years."
+                                        description="Compares yearly incident volume and resolution status."
                                         icon={BarChart3}
                                         chart={
-                                            <ChartSurface height={260}>
+                                            <ChartSurface height={300}>
                                                 <ResponsiveContainer width="100%" height="100%" minWidth={1}>
                                                     <BarChart data={analytics.academicYearData} margin={horizontalBarMargin}>
                                                         <CartesianGrid strokeDasharray="3 3" stroke={CHART_THEME.grid} />
                                                         <XAxis dataKey="name" {...compactXAxisProps} />
                                                         <YAxis allowDecimals={false} {...compactYAxisProps} />
-                                                        <ChartTooltip />
-                                                        <Bar dataKey="value" fill={CHART_COLORS[0]} radius={[6, 6, 0, 0]}>
-                                                            <LabelList dataKey="value" position="top" className="fill-slate-600 text-xs font-semibold" />
+                                                        <Tooltip cursor={false} content={<AcademicYearStatusTooltip />} />
+                                                        <Bar dataKey="open" stackId="academic-year-status" fill={STATUS_COLORS.Open} name="Open" radius={[0, 0, 0, 0]} />
+                                                        <Bar dataKey="inProgress" stackId="academic-year-status" fill={STATUS_COLORS['In Progress']} name="In Progress" radius={[0, 0, 0, 0]} />
+                                                        <Bar dataKey="closed" stackId="academic-year-status" fill={STATUS_COLORS.Closed} name="Closed" radius={[6, 6, 0, 0]}>
+                                                            <LabelList dataKey="total" position="top" className="fill-slate-600 text-xs font-semibold" />
                                                         </Bar>
                                                     </BarChart>
                                                 </ResponsiveContainer>
                                             </ChartSurface>
                                         }
-                                        tableColumns={[{ key: 'name', label: 'Academic Year' }, { key: 'value', label: 'Incident Count' }]}
+                                        footer={
+                                            <LegendList
+                                                items={[
+                                                    { label: 'Open', color: STATUS_COLORS.Open },
+                                                    { label: 'In Progress', color: STATUS_COLORS['In Progress'] },
+                                                    { label: 'Closed', color: STATUS_COLORS.Closed },
+                                                ]}
+                                            />
+                                        }
+                                        tableColumns={[
+                                            { key: 'academicYear', label: 'Academic Year' },
+                                            { key: 'total', label: 'Total' },
+                                            { key: 'open', label: 'Open' },
+                                            { key: 'inProgress', label: 'In Progress' },
+                                            { key: 'closed', label: 'Closed' },
+                                            { key: 'unresolved', label: 'Unresolved' },
+                                        ]}
                                         tableRows={analytics.academicYearData}
                                         emptyMessage="No academic year data is available for the current filters."
                                     />

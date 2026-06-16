@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import apiClient from '../config/apiClient';
 import dayjs from 'dayjs';
-import { formatActivityRecordLabel } from '../utils/analytics';
+import { buildAcademicYearOptions, formatActivityRecordLabel } from '../utils/analytics';
 import { UnifiedDateInput, UnifiedFilterBar, UnifiedSearchInput } from '../components/UnifiedFilters';
 import { DashboardHero } from '../components/analytics/DashboardPrimitives';
 import { useAuth } from '../context/AuthContext';
@@ -369,6 +369,10 @@ const Logs = () => {
         const today = dayjs().startOf('day');
         return logs.filter((log) => dayjs(log.createdAt).isAfter(today)).length;
     }, [logs]);
+    const academicYearOptions = useMemo(
+        () => buildAcademicYearOptions(academicYears, currentAcademicYear),
+        [academicYears, currentAcademicYear]
+    );
 
     const entitySummary = filters.entityType
         ? entityTypeOptions.find((option) => option.value === filters.entityType)?.label || formatActivityRecordLabel(filters.entityType)
@@ -477,9 +481,9 @@ const Logs = () => {
                                         }}
                                         className="min-h-[44px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 transition-all outline-none hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-600 focus-visible:outline-none"
                                     >
-                                        {academicYears.map((year) => (
-                                            <option key={year} value={year}>
-                                                {year}
+                                        {academicYearOptions.map((option) => (
+                                            <option key={option.value} value={option.value}>
+                                                {option.label}
                                             </option>
                                         ))}
                                     </select>

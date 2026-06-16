@@ -51,6 +51,7 @@ import { DailyCreationTrendChart, IncidentStatusTrendChart } from '../components
 import {
     buildCreationTrendSeries,
     buildDistribution,
+    buildAcademicYearOptions,
     buildEvidenceDistribution,
     buildIncidentFilterParams,
     buildIssuedLetterFilterParams,
@@ -131,6 +132,10 @@ const StudentAnalytics = () => {
             : { top: 20, right: 10, left: -20, bottom: 0 },
         [compactChart]
     );
+    const academicYearOptions = useMemo(
+        () => buildAcademicYearOptions(academicYears, currentAcademicYear),
+        [academicYears, currentAcademicYear]
+    );
 
     const filteredStudents = useMemo(
         () =>
@@ -150,13 +155,14 @@ const StudentAnalytics = () => {
     const fetchFilterOptions = useCallback(async () => {
         if (!user?._id) return;
         try {
-            const config = {};
+            const config = academicYear ? { params: { academicYear } } : {};
+            const staticConfig = {};
             const [studentsRes, categoriesRes, locationsRes, evidenceRes, yearsRes] = await Promise.all([
                 apiClient.get('/api/students/filters', config).catch(() => ({ data: {} })),
-                apiClient.get('/api/incidents/categories', config).catch(() => ({ data: [] })),
-                apiClient.get('/api/incidents/locations', { ...config, params: { includeUnknown: true } }).catch(() => ({ data: [] })),
-                apiClient.get('/api/evidence-types', { ...config, params: { includeUnknown: true } }).catch(() => ({ data: [] })),
-                apiClient.get('/api/auth/academic-years', config).catch(() => ({ data: {} })),
+                apiClient.get('/api/incidents/categories', staticConfig).catch(() => ({ data: [] })),
+                apiClient.get('/api/incidents/locations', { ...staticConfig, params: { includeUnknown: true } }).catch(() => ({ data: [] })),
+                apiClient.get('/api/evidence-types', { ...staticConfig, params: { includeUnknown: true } }).catch(() => ({ data: [] })),
+                apiClient.get('/api/auth/academic-years', staticConfig).catch(() => ({ data: {} })),
             ]);
 
             const nextYears = yearsRes.data?.academicYears || [];
@@ -179,13 +185,14 @@ const StudentAnalytics = () => {
                 evidence: [],
             });
         }
-    }, [user?._id]);
+    }, [academicYear, user?._id]);
 
     const fetchStudents = useCallback(async () => {
         if (!user?._id) return;
         try {
             setLoading(true);
-            const config = {};
+            if (!academicYear) return;
+            const config = { params: { academicYear } };
             const { data } = await apiClient.get('/api/students/all', config);
             const studentsData = Array.isArray(data) ? data : [];
             setStudents(studentsData);
@@ -195,13 +202,19 @@ const StudentAnalytics = () => {
                 if (targetStudent) {
                     setSelectedStudent(targetStudent);
                 }
+            } else {
+                setSelectedStudent((current) => (
+                    current
+                        ? studentsData.find((student) => String(student.admissionNo) === String(current.admissionNo)) || current
+                        : current
+                ));
             }
         } catch {
             setStudents([]);
         } finally {
             setLoading(false);
         }
-    }, [params?.admissionNo, user?._id]);
+    }, [academicYear, params?.admissionNo, user?._id]);
 
     const fetchStudentIncidents = useCallback(async (student, options = { reset: false }) => {
         if (!user?._id || !student) return;
@@ -762,8 +775,8 @@ const StudentAnalytics = () => {
                                                 onChange={(event) => setAcademicYear(event.target.value)}
                                                 className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10"
                                             >
-                                                {academicYears.map((year) => (
-                                                    <option key={year} value={year}>{year}</option>
+                                                {academicYearOptions.map((option) => (
+                                                    <option key={option.value} value={option.value}>{option.label}</option>
                                                 ))}
                                             </select>
                                         </label>

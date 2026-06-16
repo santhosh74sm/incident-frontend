@@ -136,7 +136,9 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
             return [];
         }
         return [
-            { label: 'Activity history', icon: ListFilter, action: () => navigate('/logs') },
+            ...(user?.role === 'Super Admin'
+                ? [{ label: 'Activity history', icon: ListFilter, action: () => navigate('/logs') }]
+                : []),
             { label: 'Staff & students', icon: Settings, action: () => navigate('/user-management') },
         ];
     }, [navigate, user?.role]);

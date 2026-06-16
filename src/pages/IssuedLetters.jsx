@@ -25,6 +25,7 @@ import {
 } from '../components/UnifiedFilters';
 import {
     buildIssuedLetterFilterParams,
+    buildAcademicYearOptions,
     formatShortDateTime,
     getLetterTimelineTimestamp,
 } from '../utils/analytics';
@@ -348,6 +349,10 @@ const IssuedLetters = () => {
 
     const config = useMemo(() => ({ headers: {} }), []);
     const isSuperAdmin = normalizeRole(user?.role) === 'Super Admin';
+    const academicYearOptions = useMemo(
+        () => buildAcademicYearOptions(availableAcademicYears, currentAcademicYear),
+        [availableAcademicYears, currentAcademicYear]
+    );
 
     const fetchFilters = useCallback(async () => {
         if (!user?._id) return;
@@ -599,8 +604,8 @@ const IssuedLetters = () => {
                                             onChange={(event) => setFilters((current) => ({ ...current, academicYear: event.target.value }))}
                                             className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10"
                                         >
-                                            {availableAcademicYears.map((year) => (
-                                                <option key={year} value={year}>{year}</option>
+                                            {academicYearOptions.map((option) => (
+                                                <option key={option.value} value={option.value}>{option.label}</option>
                                             ))}
                                         </select>
                                     </label>

@@ -221,7 +221,7 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
                 icon: ClipboardList,
                 path: '/logs',
                 preload: () => import('../pages/Logs'),
-                roles: ['Super Admin', 'Admin'],
+                roles: ['Super Admin'],
             },
             {
                 title: 'Academic Year',

@@ -32,6 +32,7 @@ import {
 import { UnifiedFilterBar, UnifiedMultiSelect, UnifiedSearchInput } from '../components/UnifiedFilters';
 import BulkDeleteControls from '../components/BulkDeleteControls';
 import { normalizeRole } from '../utils/roles';
+import { buildAcademicYearOptions } from '../utils/analytics';
 
 const EDITABLE_ROLE_OPTIONS = ['Admin', 'Teacher'];
 const getCreateRoleOptions = (role) => (role === 'Super Admin' ? EDITABLE_ROLE_OPTIONS : ['Teacher']);
@@ -379,6 +380,10 @@ const UserManagement = () => {
     const sectionFilterOptions = useMemo(
         () => Array.from(new Set(studentRegistry.map((entry) => entry.section).filter(Boolean))).sort(),
         [studentRegistry]
+    );
+    const academicYearOptions = useMemo(
+        () => buildAcademicYearOptions(academicYears, currentAcademicYear),
+        [academicYears, currentAcademicYear]
     );
 
     const filteredUsers = useMemo(() => {
@@ -1097,9 +1102,8 @@ const UserManagement = () => {
                                                 onChange={(event) => setAcademicYearFilter(event.target.value)}
                                                 className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                                             >
-                                                <option value="all">All Years</option>
-                                                {academicYears.map((year) => (
-                                                    <option key={year} value={year}>{year === currentAcademicYear ? `${year} (Current)` : year}</option>
+                                                {academicYearOptions.map((option) => (
+                                                    <option key={option.value} value={option.value}>{option.label}</option>
                                                 ))}
                                             </select>
                                         </label>

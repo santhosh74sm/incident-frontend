@@ -116,6 +116,20 @@ const SuperAdminRoute = ({ children }) => {
   return user && normalizeRole(user.role) === 'Super Admin' ? children : <Navigate to="/dashboard" />;
 };
 
+const AuditLogRoute = ({ children }) => {
+  const { user } = useAuth();
+  if (user && normalizeRole(user.role) === 'Super Admin') return children;
+  return (
+    <div className="flex min-h-[70vh] items-center justify-center px-4 text-center">
+      <div>
+        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">403</p>
+        <h1 className="mt-3 text-2xl font-bold text-slate-900 dark:text-slate-100">Audit logs are restricted</h1>
+        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Only Super Admin users can access audit logs.</p>
+      </div>
+    </div>
+  );
+};
+
 function App() {
   return (
     <AppErrorBoundary>
@@ -151,9 +165,9 @@ function App() {
                   <Route
                     path="/logs"
                     element={loadPage(
-                      <AdminRoute>
+                      <AuditLogRoute>
                         <Logs />
-                      </AdminRoute>
+                      </AuditLogRoute>
                     )}
                   />
                   <Route

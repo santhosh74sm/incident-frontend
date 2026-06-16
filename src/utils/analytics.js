@@ -29,6 +29,31 @@ export const formatActivityRecordLabel = (type) => {
 };
 
 export const STATUS_OPTIONS = ['Open', 'In Progress', 'Closed'];
+export const ALL_ACADEMIC_YEARS_VALUE = 'all';
+
+export const buildAcademicYearOptions = (academicYears = [], currentAcademicYear = '') => {
+    const sortAcademicYearsDesc = (first, second) => {
+        const firstYear = Number(String(first).slice(0, 4));
+        const secondYear = Number(String(second).slice(0, 4));
+        if (!Number.isNaN(firstYear) && !Number.isNaN(secondYear)) return secondYear - firstYear;
+        return String(second).localeCompare(String(first));
+    };
+    const orderedYears = [
+        currentAcademicYear,
+        ...academicYears
+            .filter((year) => year !== currentAcademicYear)
+            .sort(sortAcademicYearsDesc),
+    ].filter(Boolean);
+    const uniqueYears = Array.from(new Set(orderedYears));
+
+    return [
+        { value: ALL_ACADEMIC_YEARS_VALUE, label: 'All Years' },
+        ...uniqueYears.map((year) => ({
+            value: year,
+            label: year === currentAcademicYear ? `${year} (Current)` : year,
+        })),
+    ];
+};
 
 export const STATUS_COLORS = {
     Open: '#f97316',

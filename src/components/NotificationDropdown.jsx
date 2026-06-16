@@ -116,6 +116,9 @@ const getTargetDetails = (notification) => {
 
 const resolveNotificationPath = (notification, role) => {
     const metadata = notification?.metadata || {};
+    if (notification?.routePath === '/logs' && role !== 'Super Admin') {
+        return '/dashboard';
+    }
 
     if (
         notification?.routePath &&
@@ -152,7 +155,7 @@ const resolveNotificationPath = (notification, role) => {
         return admissionNumber ? `/student-analytics/${admissionNumber}` : '/user-management';
     }
     if (notification?.entityType === 'Bulk Upload') return '/upload-incidents';
-    return ['Super Admin', 'Admin'].includes(role) ? '/logs' : '/dashboard';
+    return role === 'Super Admin' ? '/logs' : '/dashboard';
 };
 
 // ─── Hook: detect mobile breakpoint (< 768 px) ───────────────────────────────

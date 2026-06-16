@@ -26,7 +26,7 @@ import {
     DashboardStatCard,
     EmptyStatePanel,
 } from '../components/analytics/DashboardPrimitives';
-import { buildIncidentFilterParams, formatShortDate, getIncidentTimestamp, resolveHandlerLabel, STATUS_OPTIONS } from '../utils/analytics';
+import { buildAcademicYearOptions, buildIncidentFilterParams, formatShortDate, getIncidentTimestamp, resolveHandlerLabel, STATUS_OPTIONS } from '../utils/analytics';
 import apiClient from '../config/apiClient';
 import {
     migrateIncidentStorageForUser,
@@ -108,6 +108,10 @@ const IncidentList = () => {
         // teachers are listed individually by name.
         () => ['Administration', ...staffList.filter((staff) => !['Super Admin', 'Admin', 'super_admin', 'admin'].includes(staff.role)).map((staff) => staff.name)],
         [staffList]
+    );
+    const academicYearOptions = useMemo(
+        () => buildAcademicYearOptions(academicYears, currentAcademicYear),
+        [academicYears, currentAcademicYear]
     );
 
     const fetchIncidents = useCallback(async (options = { reset: false }) => {
@@ -542,8 +546,8 @@ const IncidentList = () => {
                                         onChange={(event) => setAcademicYear(event.target.value)}
                                         className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                                     >
-                                        {academicYears.map((year) => (
-                                            <option key={year} value={year}>{year}</option>
+                                        {academicYearOptions.map((option) => (
+                                            <option key={option.value} value={option.value}>{option.label}</option>
                                         ))}
                                     </select>
                                 </label>
