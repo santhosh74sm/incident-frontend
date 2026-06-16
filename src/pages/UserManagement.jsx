@@ -66,6 +66,12 @@ const formatDate = (value) => {
     });
 };
 
+const getPassedOutYear = (student) => {
+    const history = Array.isArray(student?.history) ? student.history : [];
+    const passedOutEntry = [...history].reverse().find((entry) => entry?.status === 'Passed Out');
+    return passedOutEntry?.academicYear || (student?.status === 'Passed Out' ? student?.academicYear : '') || 'N/A';
+};
+
 const getRoleBadgeTone = (role) => {
     const normalizedRole = normalizeRole(role);
     if (normalizedRole === 'Super Admin') return 'border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-400/30 dark:bg-purple-500/10 dark:text-purple-200';
@@ -189,12 +195,12 @@ const UserManagement = () => {
     const [showAddUserModal, setShowAddUserModal] = useState(false);
     const [showAddStudentModal, setShowAddStudentModal] = useState(false);
     const [detailModal, setDetailModal] = useState({ open: false, type: 'staff', record: null });
-    const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null, type: 'staff', label: '' });
+    const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null, type: 'staff', label: '', record: null, preview: null, loadingPreview: false });
 
     const [newUser, setNewUser] = useState({ name: '', email: '', role: 'Teacher', password: '' });
     const [newStudent, setNewStudent] = useState({ name: '', admissionNo: '', className: '', section: '' });
     const [editStaff, setEditStaff] = useState({ _id: '', name: '', email: '', role: '' });
-    const [editStudent, setEditStudent] = useState({ _id: '', name: '', admissionNo: '', className: '', section: '', academicYear: '' });
+    const [editStudent, setEditStudent] = useState({ _id: '', name: '', admissionNo: '', className: '', section: '', academicYear: '', status: 'Active' });
     const [submittingUser, setSubmittingUser] = useState(false);
     const [submittingStudent, setSubmittingStudent] = useState(false);
     const [submittingEditStaff, setSubmittingEditStaff] = useState(false);
@@ -248,14 +254,18 @@ const UserManagement = () => {
         return Array.isArray(data) ? [...data].sort((a, b) => a.name.localeCompare(b.name)) : [];
     }, [config]);
 
-    const loadStudents = useCallback(async (selectedAcademicYear = academicYearFilter) => {
+    const currentStudentStatus = activeTab === 'passedOut' ? 'Passed Out' : 'Active';
+
+    const loadStudents = useCallback(async (selectedAcademicYear = academicYearFilter, status = currentStudentStatus) => {
         const shouldRequestYearProjection = Boolean(selectedAcademicYear);
-        const requestConfig = shouldRequestYearProjection
-            ? { ...config, params: { academicYear: selectedAcademicYear } }
-            : config;
+        const params = {
+            ...(shouldRequestYearProjection ? { academicYear: selectedAcademicYear } : {}),
+            status,
+        };
+        const requestConfig = { ...config, params };
         const { data } = await apiClient.get('/api/students/all', requestConfig);
         return Array.isArray(data) ? [...data].sort((a, b) => a.name.localeCompare(b.name)) : [];
-    }, [academicYearFilter, config]);
+    }, [academicYearFilter, config, currentStudentStatus]);
 
     const loadAcademicYears = useCallback(async () => {
         const { data } = await apiClient.get('/api/auth/academic-years', config);
@@ -292,7 +302,7 @@ const UserManagement = () => {
 
                 const [userResult, studentResult] = await Promise.allSettled([
                     loadUsers(),
-                    loadStudents(effectiveAcademicYear),
+                    loadStudents(effectiveAcademicYear, currentStudentStatus),
                 ]);
                 if (!isMounted()) return;
 
@@ -328,7 +338,7 @@ const UserManagement = () => {
                 }
             }
         },
-        [academicYearFilter, currentAcademicYear, loadAcademicYears, loadStudents, loadUsers, user?._id]
+        [academicYearFilter, currentAcademicYear, currentStudentStatus, loadAcademicYears, loadStudents, loadUsers, user?._id]
     );
 
     useEffect(() => {
@@ -343,6 +353,7 @@ const UserManagement = () => {
         const administrationCount = usersList.filter((entry) => getRoleGroup(entry.role) === 'Administration').length;
         const teacherCount = usersList.filter((entry) => normalizeRole(entry.role) === 'Teacher').length;
         const staffCount = usersList.filter((entry) => getRoleGroup(entry.role) !== 'Administration').length;
+        const passedOutCount = studentRegistry.filter((entry) => entry.status === 'Passed Out').length;
 
         return {
             totalUsers: usersList.length,
@@ -350,8 +361,9 @@ const UserManagement = () => {
             teacherCount,
             staffCount,
             totalStudents: studentRegistry.length,
+            passedOutCount,
         };
-    }, [studentRegistry.length, usersList]);
+    }, [studentRegistry, usersList]);
 
     // Convert role filter options to {id, label} shape for the dropdown
     const roleFilterOptionObjects = useMemo(
@@ -549,8 +561,29 @@ const UserManagement = () => {
             id: record._id,
             type,
             label: type === 'staff' ? record.name : `${record.name} (${record.admissionNo})`,
+            record,
+            preview: null,
+            loadingPreview: type === 'student',
         });
-    }, []);
+        if (type === 'student') {
+            apiClient.get(`/api/students/${record._id}/delete-preview`, config)
+                .then(({ data }) => {
+                    setDeleteDialog((current) =>
+                        current.open && current.id === record._id
+                            ? { ...current, preview: data, loadingPreview: false }
+                            : current
+                    );
+                })
+                .catch((requestError) => {
+                    addToast(requestError.response?.data?.message || 'Unable to prepare delete confirmation.', 'error');
+                    setDeleteDialog((current) =>
+                        current.open && current.id === record._id
+                            ? { ...current, loadingPreview: false }
+                            : current
+                    );
+                });
+        }
+    }, [addToast, config]);
 
     const confirmDelete = useCallback(async () => {
         try {
@@ -564,7 +597,7 @@ const UserManagement = () => {
                 data?.message || `${deleteDialog.type === 'staff' ? 'User' : 'Student'} deleted successfully.`,
                 'success'
             );
-            setDeleteDialog({ open: false, id: null, type: 'staff', label: '' });
+            setDeleteDialog({ open: false, id: null, type: 'staff', label: '', record: null, preview: null, loadingPreview: false });
             setDetailModal({ open: false, type: 'staff', record: null });
             fetchData(false);
         } catch (requestError) {
@@ -592,7 +625,8 @@ const UserManagement = () => {
                 admissionNo: record.admissionNo,
                 className: record.className,
                 section: record.section,
-                academicYear: academicYearFilter || record.academicYear || ''
+                academicYear: academicYearFilter || record.academicYear || '',
+                status: record.status || 'Active'
             });
         }
     }, [academicYearFilter, temporaryPasswordResult?.user?._id]);
@@ -640,6 +674,7 @@ const UserManagement = () => {
             const payload = {
                 ...editStudent,
                 academicYear: selectedEditAcademicYear || undefined,
+                status: editStudent.status || undefined,
             };
             const { data } = await apiClient.put(`/api/students/${editStudent._id}`, payload, config);
             applyUpdatedStudentRecord(data);
@@ -732,6 +767,22 @@ const UserManagement = () => {
                 label: 'Academic Year',
                 render: (row) => <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{row.academicYear || 'N/A'}</span>,
             },
+            ...(activeTab === 'passedOut' ? [
+                {
+                    key: 'passedOutYear',
+                    label: 'Passed Out Year',
+                    render: (row) => <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{getPassedOutYear(row)}</span>,
+                },
+                {
+                    key: 'status',
+                    label: 'Status',
+                    render: (row) => (
+                        <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-200">
+                            {row.status || 'Passed Out'}
+                        </span>
+                    ),
+                },
+            ] : []),
             {
                 key: 'createdAt',
                 label: 'Added',
@@ -759,7 +810,7 @@ const UserManagement = () => {
                 ),
             },
         ],
-        [openDeleteDialog, openDetailModal]
+        [activeTab, openDeleteDialog, openDetailModal]
     );
 
     if (loading) {
@@ -848,7 +899,7 @@ const UserManagement = () => {
                         ) : null}
 
                         <section className="rounded-[28px] border border-white/80 bg-white/85 p-2 shadow-lg shadow-slate-200/70 backdrop-blur transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/85 dark:shadow-slate-950/50">
-                            <div className="grid gap-2 md:grid-cols-2">
+                            <div className="grid gap-2 md:grid-cols-3">
                                 <button
                                     type="button"
                                     onClick={() => setActiveTab('staff')}
@@ -880,18 +931,18 @@ const UserManagement = () => {
                                             </p>
                                         </div>
                                     </div>
-                                </button>
+                                 </button>
 
-                                <button
-                                    type="button"
-                                    onClick={() => setActiveTab('students')}
+                                 <button
+                                     type="button"
+                                     onClick={() => setActiveTab('students')}
                                     aria-pressed={activeTab === 'students'}
                                     className={`rounded-[22px] px-5 py-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400 ${
                                         activeTab === 'students'
                                             ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_18px_34px_rgba(59,130,246,0.22)]'
                                             : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'
                                     }`}
-                                >
+                                 >
                                     <div className="flex items-center gap-3">
                                         <div
                                             className={`flex h-11 w-11 items-center justify-center rounded-2xl ${
@@ -913,9 +964,42 @@ const UserManagement = () => {
                                             </p>
                                         </div>
                                     </div>
+                                 </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveTab('passedOut')}
+                                    aria-pressed={activeTab === 'passedOut'}
+                                    className={`rounded-[22px] px-5 py-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-400 ${
+                                        activeTab === 'passedOut'
+                                            ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-[0_18px_34px_rgba(245,158,11,0.2)]'
+                                            : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div
+                                            className={`flex h-11 w-11 items-center justify-center rounded-2xl ${
+                                                activeTab === 'passedOut'
+                                                    ? 'bg-white/10 text-white'
+                                                    : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200'
+                                            }`}
+                                        >
+                                            <UserCheck size={18} />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-semibold">Passed Out Students</p>
+                                            <p
+                                                className={`mt-1 text-xs ${
+                                                    activeTab === 'passedOut' ? 'text-amber-100' : 'text-slate-500 dark:text-slate-400'
+                                                }`}
+                                            >
+                                                Completed students with preserved history
+                                            </p>
+                                        </div>
+                                    </div>
                                 </button>
-                            </div>
-                        </section>
+                             </div>
+                         </section>
 
                         {activeTab === 'staff' ? (
                             <DashboardPanel
@@ -976,7 +1060,7 @@ const UserManagement = () => {
                             </DashboardPanel>
                         ) : (
                             <DashboardPanel
-                                title="Student Registry"
+                                title={activeTab === 'passedOut' ? 'Passed Out Students' : 'Student Registry'}
                                 description={`${filteredStudents.length} student record${filteredStudents.length === 1 ? '' : 's'} in scope`}
                                 icon={UserCheck}
                                 bodyClassName="space-y-5"
@@ -990,7 +1074,8 @@ const UserManagement = () => {
                                             moduleName="students"
                                             filteredIds={filteredStudents.map((student) => student._id).filter(Boolean)}
                                             allCount={studentRegistry.length}
-                                            source={{ page: 'UserManagement', tab: 'students', filteredCount: filteredStudents.length }}
+                                            source={{ page: 'UserManagement', tab: activeTab, filteredCount: filteredStudents.length }}
+                                            status={currentStudentStatus}
                                             addToast={addToast}
                                             onComplete={() => fetchData(false)}
                                         />
@@ -1012,8 +1097,9 @@ const UserManagement = () => {
                                                 onChange={(event) => setAcademicYearFilter(event.target.value)}
                                                 className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                                             >
+                                                <option value="all">All Years</option>
                                                 {academicYears.map((year) => (
-                                                    <option key={year} value={year}>{year}</option>
+                                                    <option key={year} value={year}>{year === currentAcademicYear ? `${year} (Current)` : year}</option>
                                                 ))}
                                             </select>
                                         </label>
@@ -1036,7 +1122,9 @@ const UserManagement = () => {
                                                 Coverage
                                             </p>
                                             <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                                {summary.totalStudents} registered student{summary.totalStudents === 1 ? '' : 's'}
+                                                 {activeTab === 'passedOut'
+                                                    ? `${filteredStudents.length} passed out student${filteredStudents.length === 1 ? '' : 's'}`
+                                                    : `${summary.totalStudents} active student${summary.totalStudents === 1 ? '' : 's'}`}
                                             </p>
                                             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                                                 Filter by class, section, or student identity for fast lookup.
@@ -1448,6 +1536,17 @@ const UserManagement = () => {
                                         </select>
                                     </div>
                                     <div>
+                                        <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Status</label>
+                                        <select
+                                            value={editStudent.status || 'Active'}
+                                            onChange={(event) => setEditStudent((current) => ({ ...current, status: event.target.value }))}
+                                            className={`${INPUT_CLASS_NAME} appearance-none`}
+                                        >
+                                            <option value="Active">Active</option>
+                                            <option value="Passed Out">Passed Out</option>
+                                        </select>
+                                    </div>
+                                    <div>
                                         <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Class</label>
                                         <div className="relative">
                                             <select
@@ -1598,15 +1697,47 @@ const UserManagement = () => {
                                 <Trash2 size={22} />
                             </div>
                             <h3 className="mt-5 text-xl font-semibold text-slate-900 dark:text-slate-100">Confirm deletion</h3>
-                            <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
-                                You are about to {deleteDialog.type === 'student' ? 'archive' : 'delete'} <span className="font-semibold text-slate-700 dark:text-slate-200">{deleteDialog.label}</span>.
-                                {deleteDialog.type === 'student' ? ' History and incidents will be preserved.' : ' This action cannot be undone.'}
-                            </p>
+                            {deleteDialog.type === 'student' ? (
+                                <div className="mt-4 space-y-4 text-left">
+                                    <p className="text-sm leading-6 text-slate-500 dark:text-slate-400">
+                                        Permanently delete <span className="font-semibold text-slate-700 dark:text-slate-200">{deleteDialog.label}</span>. This removes the student record, academic history, incidents, letters, notifications, and directly related logs.
+                                    </p>
+                                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-950">
+                                        <div className="grid gap-3 sm:grid-cols-2">
+                                            <PreviewField label="Student Name" value={deleteDialog.preview?.student?.name || deleteDialog.record?.name} />
+                                            <PreviewField label="Admission Number" value={deleteDialog.preview?.student?.admissionNo || deleteDialog.record?.admissionNo} />
+                                            <PreviewField label="Academic Year" value={deleteDialog.preview?.student?.academicYear || deleteDialog.record?.academicYear} />
+                                            <PreviewField label="Status" value={deleteDialog.preview?.student?.status || deleteDialog.record?.status} />
+                                        </div>
+                                    </div>
+                                    <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100">
+                                        {deleteDialog.loadingPreview ? (
+                                            <div className="flex items-center gap-2">
+                                                <Loader2 size={16} className="animate-spin" />
+                                                Calculating affected records...
+                                            </div>
+                                        ) : (
+                                            <div className="grid gap-2 sm:grid-cols-2">
+                                                {Object.entries(deleteDialog.preview?.affectedRecords || {}).map(([key, value]) => (
+                                                    <div key={key} className="flex items-center justify-between gap-3">
+                                                        <span className="font-medium capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
+                                                        <span className="font-bold">{value}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ) : (
+                                <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                                    You are about to delete <span className="font-semibold text-slate-700 dark:text-slate-200">{deleteDialog.label}</span>. This action cannot be undone.
+                                </p>
+                            )}
 
                             <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-center">
                                 <button
                                     type="button"
-                                    onClick={() => setDeleteDialog({ open: false, id: null, type: 'staff', label: '' })}
+                                    onClick={() => setDeleteDialog({ open: false, id: null, type: 'staff', label: '', record: null, preview: null, loadingPreview: false })}
                                     className="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition-all duration-300 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                                 >
                                     Cancel
@@ -1614,7 +1745,8 @@ const UserManagement = () => {
                                 <button
                                     type="button"
                                     onClick={confirmDelete}
-                                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-5 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-rose-700"
+                                    disabled={deleteDialog.type === 'student' && deleteDialog.loadingPreview}
+                                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-5 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
                                     <Trash2 size={16} />
                                     Delete Record
