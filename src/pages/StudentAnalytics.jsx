@@ -86,9 +86,12 @@ const StudentAnalytics = () => {
     const compactChart = useCompactChart();
 
     const [loading, setLoading] = useState(true);
+    const [activeSummaryTab, setActiveSummaryTab] = useState('active');
     const [searchTerm, setSearchTerm] = useState('');
     const [classFilter, setClassFilter] = useState('');
     const [sectionFilter, setSectionFilter] = useState('');
+    const [studentSummaryPage, setStudentSummaryPage] = useState(1);
+    const [studentSummarySort, setStudentSummarySort] = useState({ key: 'name', direction: 'asc' });
     const [statusFilter, setStatusFilter] = useState([]);
     const [students, setStudents] = useState([]);
     const [selectedStudent, setSelectedStudent] = useState(null);
@@ -136,6 +139,8 @@ const StudentAnalytics = () => {
         () => buildAcademicYearOptions(academicYears, currentAcademicYear),
         [academicYears, currentAcademicYear]
     );
+    const studentStatus = activeSummaryTab === 'passedOut' ? 'Passed Out' : 'Active';
+    const isPassedOutSummary = activeSummaryTab === 'passedOut';
 
     const filteredStudents = useMemo(
         () =>
@@ -151,11 +156,33 @@ const StudentAnalytics = () => {
             }),
         [classFilter, searchTerm, sectionFilter, students]
     );
+    const studentSummaryPageSize = 12;
+    const sortedStudents = useMemo(() => {
+        const direction = studentSummarySort.direction === 'desc' ? -1 : 1;
+        const getValue = (student) => {
+            if (studentSummarySort.key === 'incidentCount' || studentSummarySort.key === 'letterCount') {
+                return Number(student?.[studentSummarySort.key] || 0);
+            }
+            return String(student?.[studentSummarySort.key] || '').toLowerCase();
+        };
+        return [...filteredStudents].sort((first, second) => {
+            const firstValue = getValue(first);
+            const secondValue = getValue(second);
+            if (firstValue < secondValue) return -1 * direction;
+            if (firstValue > secondValue) return 1 * direction;
+            return String(first?.name || '').localeCompare(String(second?.name || ''));
+        });
+    }, [filteredStudents, studentSummarySort]);
+    const studentSummaryTotalPages = Math.max(1, Math.ceil(sortedStudents.length / studentSummaryPageSize));
+    const paginatedStudents = useMemo(() => {
+        const start = (studentSummaryPage - 1) * studentSummaryPageSize;
+        return sortedStudents.slice(start, start + studentSummaryPageSize);
+    }, [sortedStudents, studentSummaryPage]);
 
     const fetchFilterOptions = useCallback(async () => {
         if (!user?._id) return;
         try {
-            const config = academicYear ? { params: { academicYear } } : {};
+            const config = academicYear ? { params: { academicYear, status: studentStatus } } : { params: { status: studentStatus } };
             const staticConfig = {};
             const [studentsRes, categoriesRes, locationsRes, evidenceRes, yearsRes] = await Promise.all([
                 apiClient.get('/api/students/filters', config).catch(() => ({ data: {} })),
@@ -185,17 +212,20 @@ const StudentAnalytics = () => {
                 evidence: [],
             });
         }
-    }, [academicYear, user?._id]);
+    }, [academicYear, studentStatus, user?._id]);
 
     const fetchStudents = useCallback(async () => {
         if (!user?._id) return;
         try {
             setLoading(true);
             if (!academicYear) return;
-            const config = { params: { academicYear } };
+            const config = { params: { academicYear, status: studentStatus, includeSummaryCounts: true } };
             const { data } = await apiClient.get('/api/students/all', config);
             const studentsData = Array.isArray(data) ? data : [];
-            setStudents(studentsData);
+            setStudents(studentsData.map((student) => ({
+                ...student,
+                id: `${student._id || student.admissionNo}-${student.academicYear || academicYear}`,
+            })));
 
             if (params?.admissionNo) {
                 const targetStudent = studentsData.find((student) => String(student.admissionNo) === String(params.admissionNo));
@@ -214,7 +244,11 @@ const StudentAnalytics = () => {
         } finally {
             setLoading(false);
         }
-    }, [academicYear, params?.admissionNo, user?._id]);
+    }, [academicYear, params?.admissionNo, studentStatus, user?._id]);
+
+    useEffect(() => {
+        setStudentSummaryPage(1);
+    }, [academicYear, activeSummaryTab, classFilter, searchTerm, sectionFilter, students.length]);
 
     const fetchStudentIncidents = useCallback(async (student, options = { reset: false }) => {
         if (!user?._id || !student) return;
@@ -478,6 +512,48 @@ const StudentAnalytics = () => {
         }
     };
 
+    const buildStudentSummaryRows = () =>
+        filteredStudents.map((student) => ({
+            'Admission Number': student?.admissionNo || 'N/A',
+            'Student Name': student?.name || 'N/A',
+            Class: student?.className || 'N/A',
+            Section: student?.section || 'N/A',
+            'Academic Year': student?.academicYear || academicYear || 'N/A',
+            Status: student?.status || studentStatus,
+            'Incident Count': student?.incidentCount || 0,
+            'Letter Count': student?.letterCount || 0,
+        }));
+
+    const toggleStudentSummarySort = (key) => {
+        setStudentSummarySort((current) => ({
+            key,
+            direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc',
+        }));
+    };
+
+    const renderSortLabel = (key, label) => (
+        <button
+            type="button"
+            onClick={() => toggleStudentSummarySort(key)}
+            className="inline-flex items-center gap-1 font-semibold text-slate-600 hover:text-blue-700 dark:text-slate-300 dark:hover:text-blue-300"
+        >
+            {label}
+            <span className="text-[10px]">{studentSummarySort.key === key ? (studentSummarySort.direction === 'asc' ? '^' : 'v') : '-'}</span>
+        </button>
+    );
+
+    const exportStudentSummaryToExcel = async () => {
+        const ws = XLSX.utils.json_to_sheet(buildStudentSummaryRows());
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Student Summary');
+        await downloadWorkbook(
+            XLSX,
+            wb,
+            `${slugify(isPassedOutSummary ? 'Passed_Out_Student_Summary' : 'Student_Summary')}_${new Date().toISOString().split('T')[0]}.xlsx`,
+            { title: 'Student summary' }
+        );
+    };
+
     if (loading && !selectedStudent) {
         return (
             <div className="flex min-h-screen bg-slate-100 dark:bg-slate-950">
@@ -491,6 +567,32 @@ const StudentAnalytics = () => {
             </div>
         );
     }
+
+    const studentSummaryColumns = [
+        { key: 'admissionNo', label: renderSortLabel('admissionNo', 'Admission Number'), render: (row) => row.admissionNo || 'N/A' },
+        {
+            key: 'name',
+            label: renderSortLabel('name', 'Student Name'),
+            render: (row) => (
+                <button
+                    type="button"
+                    onClick={() => {
+                        if (row.academicYear) setAcademicYear(row.academicYear);
+                        setSelectedStudent(row);
+                    }}
+                    className="font-semibold text-blue-700 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
+                >
+                    {row.name || 'Unknown Student'}
+                </button>
+            ),
+        },
+        { key: 'className', label: renderSortLabel('className', 'Class'), render: (row) => row.className || 'N/A' },
+        { key: 'section', label: renderSortLabel('section', 'Section'), render: (row) => row.section || 'N/A' },
+        { key: 'academicYear', label: renderSortLabel('academicYear', 'Academic Year'), render: (row) => row.academicYear || academicYear || 'N/A' },
+        { key: 'status', label: renderSortLabel('status', 'Status'), render: (row) => row.status || studentStatus },
+        { key: 'incidentCount', label: renderSortLabel('incidentCount', 'Incident Count'), render: (row) => row.incidentCount || 0 },
+        { key: 'letterCount', label: renderSortLabel('letterCount', 'Letter Count'), render: (row) => row.letterCount || 0 },
+    ];
 
     const incidentColumns = [
         { key: 'category', label: 'Type', render: (row) => row.category || 'N/A' },
@@ -610,9 +712,20 @@ const StudentAnalytics = () => {
                             <>
                                 <DashboardHero
                                     eyebrow="Student summaries"
-                                    title="Student directory"
-                                    description="View student records and incident history."
+                                    title="Student Summaries"
+                                    description={isPassedOutSummary ? 'View passed out student records with historical class and section snapshots.' : 'View student records and incident history.'}
                                     icon={Users}
+                                    actions={(
+                                        <div className="flex flex-wrap gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={exportStudentSummaryToExcel}
+                                                className="rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
+                                            >
+                                                Excel
+                                            </button>
+                                        </div>
+                                    )}
                                     meta={
                                         <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
                                             <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5">
@@ -625,18 +738,56 @@ const StudentAnalytics = () => {
                                     }
                                 />
 
+                                <div className="inline-flex rounded-2xl border border-slate-200 bg-white p-1 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                                    {[
+                                        { key: 'active', label: 'Active Students' },
+                                        { key: 'passedOut', label: 'Passed Out Students' },
+                                    ].map((tab) => (
+                                        <button
+                                            key={tab.key}
+                                            type="button"
+                                            onClick={() => {
+                                                setActiveSummaryTab(tab.key);
+                                                setSelectedStudent(null);
+                                                setStudentIncidents([]);
+                                                setStudentLetters([]);
+                                            }}
+                                            className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                                                activeSummaryTab === tab.key
+                                                    ? 'bg-blue-600 text-white shadow-sm'
+                                                    : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'
+                                            }`}
+                                        >
+                                            {tab.label}
+                                        </button>
+                                    ))}
+                                </div>
+
                                 <UnifiedFilterBar
-                                    hasActiveFilters={Boolean(searchTerm) || Boolean(classFilter) || Boolean(sectionFilter)}
+                                    hasActiveFilters={Boolean(searchTerm) || Boolean(classFilter) || Boolean(sectionFilter) || Boolean(academicYear && academicYear !== currentAcademicYear)}
                                     onReset={() => {
                                         setSearchTerm('');
                                         setClassFilter('');
                                         setSectionFilter('');
+                                        setAcademicYear(currentAcademicYear);
                                     }}
                                     title="Find a student"
                                     collapsible
                                     defaultCollapsed
                                 >
-                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+                                        <div>
+                                            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Academic Year</label>
+                                            <select
+                                                value={academicYear}
+                                                onChange={(event) => setAcademicYear(event.target.value)}
+                                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-600 focus-visible:outline-none"
+                                            >
+                                                {academicYearOptions.map((option) => (
+                                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                                ))}
+                                            </select>
+                                        </div>
                                         <div>
                                             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Search</label>
                                             <div className="relative">
@@ -683,12 +834,12 @@ const StudentAnalytics = () => {
                                     </div>
                                 </UnifiedFilterBar>
 
-                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-                                    <DashboardStatCard title="Total Students" value={students.length} icon={Users} tone="blue" helper="Directory population" />
-                                    <DashboardStatCard title="Showing now" value={filteredStudents.length} icon={Search} tone="cyan" helper="Matching your filters" />
-                                    <DashboardStatCard title="Classes" value={filterOptions.classes.length} icon={TrendingUp} tone="slate" helper="Available class groups" />
-                                    <DashboardStatCard title="Sections" value={filterOptions.sections.length} icon={ShieldCheck} tone="slate" helper="Available section groups" />
-                                </div>
+                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+                                        <DashboardStatCard title={isPassedOutSummary ? 'Passed Out Students' : 'Total Students'} value={students.length} icon={Users} tone="blue" helper={isPassedOutSummary ? 'Status filtered dataset' : 'Directory population'} />
+                                        <DashboardStatCard title="Showing now" value={filteredStudents.length} icon={Search} tone="cyan" helper="Matching your filters" />
+                                        <DashboardStatCard title="Incidents" value={filteredStudents.reduce((total, student) => total + Number(student.incidentCount || 0), 0)} icon={FileText} tone="slate" helper="In current result" />
+                                        <DashboardStatCard title="Letters" value={filteredStudents.reduce((total, student) => total + Number(student.letterCount || 0), 0)} icon={Mail} tone="slate" helper="In current result" />
+                                    </div>
 
                                 {filteredStudents.length === 0 ? (
                                     <EmptyStatePanel
@@ -697,11 +848,14 @@ const StudentAnalytics = () => {
                                     />
                                 ) : (
                                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                                        {filteredStudents.map((student) => (
+                                        {paginatedStudents.map((student) => (
                                             <button
-                                                key={student._id}
+                                                key={student.id || `${student._id}-${student.academicYear}`}
                                                 type="button"
-                                                onClick={() => setSelectedStudent(student)}
+                                                onClick={() => {
+                                                    if (student.academicYear) setAcademicYear(student.academicYear);
+                                                    setSelectedStudent(student);
+                                                }}
                                                 className="rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                                             >
                                                 <div className="flex items-center gap-3">
@@ -716,6 +870,10 @@ const StudentAnalytics = () => {
                                                 <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-600">
                                                     <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1">Class {student?.className || 'N/A'}</span>
                                                     <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1">Section {student?.section || 'N/A'}</span>
+                                                    <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1">{student?.academicYear || academicYear || 'N/A'}</span>
+                                                    <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-emerald-700">{student?.status || studentStatus}</span>
+                                                    <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1">{student?.incidentCount || 0} incidents</span>
+                                                    <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1">{student?.letterCount || 0} letters</span>
                                                 </div>
                                                 <div className="mt-4 border-t border-slate-100 pt-4 text-sm font-semibold text-blue-700">
                                                     View summary & history
@@ -724,12 +882,48 @@ const StudentAnalytics = () => {
                                         ))}
                                     </div>
                                 )}
+                                {filteredStudents.length > 0 ? (
+                                    <DashboardPanel
+                                        title={isPassedOutSummary ? 'Passed Out Students' : 'Student Summary'}
+                                        description={`${filteredStudents.length} record${filteredStudents.length === 1 ? '' : 's'} across the selected filters.`}
+                                        icon={Users}
+                                    >
+                                        <AnalyticsDataTable
+                                            columns={studentSummaryColumns}
+                                            rows={paginatedStudents}
+                                            emptyMessage="No students match the current filters."
+                                        />
+                                        <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 text-sm text-slate-600 dark:border-slate-800 dark:text-slate-300 sm:flex-row sm:items-center sm:justify-between">
+                                            <span>
+                                                Page {studentSummaryPage} of {studentSummaryTotalPages}
+                                            </span>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setStudentSummaryPage((page) => Math.max(1, page - 1))}
+                                                    disabled={studentSummaryPage <= 1}
+                                                    className="rounded-xl border border-slate-200 px-3 py-2 font-semibold transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:hover:bg-slate-800"
+                                                >
+                                                    Previous
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setStudentSummaryPage((page) => Math.min(studentSummaryTotalPages, page + 1))}
+                                                    disabled={studentSummaryPage >= studentSummaryTotalPages}
+                                                    className="rounded-xl border border-slate-200 px-3 py-2 font-semibold transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:hover:bg-slate-800"
+                                                >
+                                                    Next
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </DashboardPanel>
+                                ) : null}
                             </>
                         ) : (
                             <>
                                 <DashboardHero
-                                    eyebrow="Student summary"
-                                    title={selectedStudent?.name || 'Student summary'}
+                                    eyebrow={isPassedOutSummary ? 'Passed out student summary' : 'Student summary'}
+                                    title={selectedStudent?.name || (isPassedOutSummary ? 'Passed out student summary' : 'Student summary')}
                                     description="View student incidents and letters."
                                     icon={TrendingUp}
                                     actions={

@@ -21,6 +21,7 @@ import {
     FileText,
     Loader2,
     Lock,
+    Mail,
     MapPin,
     MessageSquare,
     Plus,
@@ -278,9 +279,16 @@ const IncidentDetail = () => {
     const [evidenceTypes, setEvidenceTypes] = useState([]);
     const [evidenceEntries, setEvidenceEntries] = useState([{ evidenceType: '', file: null, preview: null }]);
     const [evidenceLoading, setEvidenceLoading] = useState(false);
+    const [deletingEvidenceId, setDeletingEvidenceId] = useState('');
     const [dragActiveIndex, setDragActiveIndex] = useState(null);
     const [evidenceUploadDone, setEvidenceUploadDone] = useState(false);
     const [showUploadForm, setShowUploadForm] = useState(false);
+    const [descriptionDraft, setDescriptionDraft] = useState('');
+    const [descriptionEditing, setDescriptionEditing] = useState(false);
+    const [descriptionSaving, setDescriptionSaving] = useState(false);
+    const [letterGenerating, setLetterGenerating] = useState(false);
+    const [letterLanguage, setLetterLanguage] = useState('en');
+    const [letterPermission, setLetterPermission] = useState({ open: false, templates: null, categoryName: '', loading: false });
     const exportInFlightRef = useRef(false);
     const deleteInFlightRef = useRef(false);
     const markedIncidentReadRef = useRef('');
@@ -384,6 +392,7 @@ const IncidentDetail = () => {
             setError(null);
             const { data } = await apiClient.get(`/api/incidents/${id}`);
             setIncident(data);
+            setDescriptionDraft(data?.description || '');
         } catch (err) {
             const status = err.response?.status;
             setIncident(null);
@@ -570,6 +579,99 @@ const IncidentDetail = () => {
         }
     };
 
+    const handleDeleteEvidence = async (entry) => {
+        const evidenceId = getRecordId(entry);
+        if (!evidenceId) { addToast('Evidence record not found.', 'error'); return; }
+        if (!window.confirm('Delete this evidence file? This removes the record and the stored file.')) return;
+        setDeletingEvidenceId(evidenceId);
+        try {
+            await apiClient.delete(`/api/incidents/${id}/evidence/${evidenceId}`);
+            setIncident((current) => current ? {
+                ...current,
+                evidence: (current.evidence || []).filter((item) => getRecordId(item) !== evidenceId),
+            } : current);
+            addToast('Evidence deleted successfully.', 'success');
+            await fetchIncident();
+        } catch (err) {
+            addToast(err.response?.data?.message || 'Failed to delete evidence.', 'error');
+        } finally {
+            setDeletingEvidenceId('');
+        }
+    };
+
+    const handleSaveDescription = async () => {
+        setDescriptionSaving(true);
+        try {
+            await apiClient.put(`/api/incidents/${id}/description`, { description: descriptionDraft });
+            addToast('Description updated successfully.', 'success');
+            setDescriptionEditing(false);
+            await fetchIncident();
+        } catch (err) {
+            addToast(err.response?.data?.message || 'Failed to update description.', 'error');
+        } finally {
+            setDescriptionSaving(false);
+        }
+    };
+
+    const checkLetterTemplate = useCallback(async () => {
+        const categoryName = incident?.incidentCategory || incident?.category;
+        if (!categoryName) {
+            return { en: null, ta: null, message: 'No category is available for this incident.' };
+        }
+
+        try {
+            const response = await apiClient.get(`/api/letter-templates/category/${encodeURIComponent(categoryName)}`);
+            const template = response.data;
+            if (!template) {
+                return { en: null, ta: null, message: 'No official letter file is set up for this category yet.' };
+            }
+            return {
+                en: template.hasEnglishDocx ? template : null,
+                ta: template.hasTamilDocx ? template : null,
+                message: template.message || 'Official letter file ready',
+            };
+        } catch (err) {
+            if (err.response?.status === 404) {
+                return { en: null, ta: null, message: 'No official letter file is set up for this category yet.' };
+            }
+            return { en: null, ta: null, error: 'Could not check letter templates right now.' };
+        }
+    }, [incident?.category, incident?.incidentCategory]);
+
+    const handleOpenLetterPermission = async () => {
+        if (letterPermission.loading) return;
+        setLetterPermission({ open: false, templates: null, categoryName: incident?.category || '', loading: true });
+        const templates = await checkLetterTemplate();
+        const hasTemplate = Boolean(templates?.en || templates?.ta);
+        if (!hasTemplate) {
+            setLetterPermission({ open: false, templates: null, categoryName: incident?.category || '', loading: false });
+            addToast(templates?.error || templates?.message || 'No matching letter template is available.', templates?.error ? 'error' : 'warning');
+            return;
+        }
+        setLetterLanguage(templates.en ? 'en' : 'ta');
+        setLetterPermission({
+            open: true,
+            templates,
+            categoryName: incident?.category || '',
+            loading: false,
+        });
+    };
+
+    const handleGenerateLetter = async () => {
+        if (letterGenerating) return;
+        setLetterGenerating(true);
+        try {
+            const { data } = await apiClient.post('/api/issued-letters', { incidentId: id, language: letterLanguage });
+            addToast(data?.message || 'Letter generated successfully.', 'success');
+            setLetterPermission({ open: false, templates: null, categoryName: '', loading: false });
+            await fetchGeneratedLetter();
+        } catch (err) {
+            addToast(err.response?.data?.message || 'Letter generation failed.', 'error');
+        } finally {
+            setLetterGenerating(false);
+        }
+    };
+
     const handleDelete = useCallback(async () => {
         if (deleteInFlightRef.current) return;
         if (!window.confirm('Permanently delete this incident? This cannot be undone.')) return;
@@ -616,10 +718,14 @@ const IncidentDetail = () => {
 
     // All workflow transitions use PUT — matching backend route definitions
     const handleAction = useCallback(async (path, payload = {}) => {
+        if (path === 'request-closure' && !String(payload.actionTaken || '').trim()) {
+            addToast('Action taken is required before requesting case closure.', 'error');
+            return;
+        }
         const messages = {
             approve: 'Authorize and assign this case?',
             progress: 'Add this progress note?',
-            'request-closure': 'Request case closure?',
+            'request-closure': 'Close this case?',
             'finalize-closure': 'Finalize and close this case?',
             'reject-closure': 'Reject closure and return to handler?',
         };
@@ -635,7 +741,7 @@ const IncidentDetail = () => {
         } finally {
             setActionLoading(false);
         }
-    }, [fetchIncident, id]);
+    }, [addToast, fetchIncident, id]);
 
     const handleGeneratedLetterDownload = useCallback(async () => {
         const letterId = getRecordId(generatedLetter) || getRecordId(incident?.letterGenerated);
@@ -882,10 +988,44 @@ const IncidentDetail = () => {
                                         <div className="flex items-start gap-3">
                                             <div className="rounded-2xl bg-white p-2.5 text-slate-600 shadow-sm shadow-slate-200/70"><MessageSquare size={18} /></div>
                                             <div className="min-w-0 flex-1">
-                                                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Description</p>
-                                                <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
-                                                    {incident.description || 'No description provided.'}
-                                                </p>
+                                                <div className="flex items-center justify-between gap-3">
+                                                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Description</p>
+                                                    {incident.status !== 'Closed' && ['Super Admin', 'Admin', ...OPERATIONAL_USER_ROLES].includes(user?.role) ? (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setDescriptionDraft(incident.description || '');
+                                                                setDescriptionEditing((value) => !value);
+                                                            }}
+                                                            className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+                                                        >
+                                                            {descriptionEditing ? 'Cancel' : 'Edit'}
+                                                        </button>
+                                                    ) : null}
+                                                </div>
+                                                {descriptionEditing ? (
+                                                    <div className="mt-3 space-y-3">
+                                                        <textarea
+                                                            className="min-h-[130px] w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                                                            value={descriptionDraft}
+                                                            maxLength={3000}
+                                                            onChange={(event) => setDescriptionDraft(event.target.value)}
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={handleSaveDescription}
+                                                            disabled={descriptionSaving}
+                                                            className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
+                                                        >
+                                                            {descriptionSaving ? <Loader2 size={16} className="mr-2 inline animate-spin" /> : <Check size={16} className="mr-2 inline" />}
+                                                            Save Description
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                                                        {incident.description || 'No description provided.'}
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -973,6 +1113,17 @@ const IncidentDetail = () => {
                                                                         <Download size={15} className="mr-2" />Download
                                                                     </button>
                                                                 </>
+                                                            ) : null}
+                                                            {incident.status !== 'Closed' && ['Super Admin', 'Admin', ...OPERATIONAL_USER_ROLES].includes(user?.role) ? (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleDeleteEvidence(entry)}
+                                                                    disabled={deletingEvidenceId === getRecordId(entry)}
+                                                                    className="inline-flex items-center rounded-xl border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-60"
+                                                                >
+                                                                    {deletingEvidenceId === getRecordId(entry) ? <Loader2 size={15} className="mr-2 animate-spin" /> : <Trash2 size={15} className="mr-2" />}
+                                                                    Delete
+                                                                </button>
                                                             ) : null}
                                                         </div>
                                                     </div>
@@ -1115,22 +1266,40 @@ const IncidentDetail = () => {
                             </div>
 
                             <div className="space-y-6 xl:col-span-4">
-                                {(incident.letterGenerated || generatedLetter) && ['Super Admin', 'Admin'].includes(user?.role) ? (
+                                {['Super Admin', 'Admin', ...OPERATIONAL_USER_ROLES].includes(user?.role) ? (
                                     <DashboardPanel title="Generated Letter" description="Official letter linked to this case." icon={FileText}>
-                                        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
-                                            <p className="text-sm font-semibold text-emerald-800">
-                                                {generatedLetter?.letterNumber || incident.letterGenerated?.letterNumber || 'Letter Generated'}
-                                            </p>
-                                            <p className="mt-1 text-sm text-emerald-700">
-                                                Letter layout: {generatedLetter?.templateName || incident.letterGenerated?.templateName || 'School standard'}
-                                            </p>
-                                            <div className="mt-4 flex flex-wrap gap-2">
-                                                <button type="button" onClick={handleGeneratedLetterDownload}
-                                                    className="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
-                                                    <Download size={16} className="mr-2 inline" />Download Word file
+                                        {incident.letterGenerated || generatedLetter ? (
+                                            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
+                                                <p className="text-sm font-semibold text-emerald-800">
+                                                    {generatedLetter?.letterNumber || incident.letterGenerated?.letterNumber || 'Letter Generated'}
+                                                </p>
+                                                <p className="mt-1 text-sm text-emerald-700">
+                                                    Letter layout: {generatedLetter?.templateName || incident.letterGenerated?.templateName || 'School standard'}
+                                                </p>
+                                                {['Super Admin', 'Admin'].includes(user?.role) ? (
+                                                    <div className="mt-4 flex flex-wrap gap-2">
+                                                        <button type="button" onClick={handleGeneratedLetterDownload}
+                                                            className="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
+                                                            <Download size={16} className="mr-2 inline" />Download Word file
+                                                        </button>
+                                                    </div>
+                                                ) : null}
+                                            </div>
+                                        ) : (
+                                            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
+                                                <p className="text-sm font-semibold text-slate-900">No letter generated yet</p>
+                                                <p className="mt-1 text-sm text-slate-500">Generate from the matching template when one is available.</p>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleOpenLetterPermission}
+                                                    disabled={letterGenerating || letterPermission.loading}
+                                                    className="mt-4 rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
+                                                >
+                                                    {letterGenerating || letterPermission.loading ? <Loader2 size={16} className="mr-2 inline animate-spin" /> : <FileText size={16} className="mr-2 inline" />}
+                                                    Generate Letter
                                                 </button>
                                             </div>
-                                        </div>
+                                        )}
                                     </DashboardPanel>
                                 ) : null}
 
@@ -1261,9 +1430,9 @@ const IncidentDetail = () => {
                                                     </button>
                                                     {!['Super Admin', 'Admin'].includes(user?.role) ? (
                                                         <button type="button" onClick={() => handleAction('request-closure', { actionTaken: note })}
-                                                            disabled={actionLoading}
+                                                            disabled={actionLoading || !note.trim()}
                                                             className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60">
-                                                            Request Case Closure
+                                                            Close Case
                                                         </button>
                                                     ) : null}
                                                 </div>
@@ -1274,6 +1443,97 @@ const IncidentDetail = () => {
                             </div>
                         </div>
             </div>
+            {letterPermission.open ? (
+                <div className="fixed inset-0 z-[100] flex min-h-[100dvh] items-center justify-center overflow-y-auto bg-slate-950/50 p-3 backdrop-blur-sm sm:p-4">
+                    <div className="my-auto max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-lg overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-2xl">
+                        <div className="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50 px-6 py-4">
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
+                                    <Mail className="h-5 w-5 text-indigo-600" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-semibold text-slate-900">Create official letter?</h3>
+                                    <p className="mt-1 text-sm text-slate-600">
+                                        A letter file is available for {letterPermission.categoryName || 'this category'}.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-5 p-6">
+                            <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
+                                Generate the official letter for <strong>{studentNames || 'the selected student'}</strong> in the <strong>{letterPermission.categoryName}</strong> category?
+                            </div>
+
+                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                                <p className="text-sm font-semibold text-slate-800">Available languages</p>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    {letterPermission.templates?.en ? (
+                                        <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">English ready</span>
+                                    ) : null}
+                                    {letterPermission.templates?.ta ? (
+                                        <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">Tamil ready</span>
+                                    ) : null}
+                                </div>
+
+                                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setLetterLanguage('en')}
+                                        className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${
+                                            letterLanguage === 'en'
+                                                ? 'border-indigo-300 bg-indigo-50 text-indigo-700'
+                                                : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                                        }`}
+                                    >
+                                        English
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setLetterLanguage('ta')}
+                                        className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${
+                                            letterLanguage === 'ta'
+                                                ? 'border-indigo-300 bg-indigo-50 text-indigo-700'
+                                                : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                                        }`}
+                                    >
+                                        Tamil
+                                    </button>
+                                </div>
+
+                                {!letterPermission.templates?.[letterLanguage] ? (
+                                    <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
+                                        {letterLanguage === 'ta'
+                                            ? 'Tamil letter file is not available for this category.'
+                                            : 'English letter file is not available for this category.'}
+                                    </div>
+                                ) : null}
+                            </div>
+
+                            <div className="grid gap-3">
+                                <button
+                                    type="button"
+                                    disabled={!letterPermission.templates?.[letterLanguage] || letterGenerating}
+                                    onClick={handleGenerateLetter}
+                                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
+                                >
+                                    {letterGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                                    Yes, create letter
+                                </button>
+
+                                <button
+                                    type="button"
+                                    disabled={letterGenerating}
+                                    onClick={() => setLetterPermission({ open: false, templates: null, categoryName: '', loading: false })}
+                                    className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    No, keep incident without letter
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
         </div>
     );
 };
