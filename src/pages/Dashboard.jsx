@@ -27,6 +27,7 @@ import {
     getIncidentTimestamp,
     resolveHandlerLabel,
 } from '../utils/analytics';
+import { isAdminRole, isIncidentReporterRole } from '../utils/roles';
 
 // ─── Error Boundary ───────────────────────────────────────────────────────────
 
@@ -118,7 +119,7 @@ const QuickActionsPanel = memo(({ canReportIncident }) => (
                     to="/create-incident"
                     tone="blue"
                     icon={FileText}
-                    title="Report Incident"
+                    title="Create Incident"
                     description="Start a new incident record."
                 />
             )}
@@ -133,7 +134,7 @@ const QuickActionsPanel = memo(({ canReportIncident }) => (
                 to="/analytics"
                 tone="orange"
                 icon={TrendingUp}
-                title="School Reports"
+                    title="School Analytics"
                 description="School-wide summaries and charts."
             />
             <QuickActionCard
@@ -307,13 +308,12 @@ const DashboardContent = memo(() => {
         const inProgress = incidents.filter((i) => i.status === 'In Progress').length;
         const closed     = incidents.filter((i) => i.status === 'Closed').length;
         const unassigned = incidents.filter(
-            (i) => !i?.assignedHandler ||
-                ['Super Admin', 'Admin', 'super_admin', 'admin'].includes(i?.assignedHandler?.role)
+            (i) => !i?.assignedHandler || isAdminRole(i?.assignedHandler?.role)
         ).length;
         return { total, open, inProgress, closed, unassigned, active: open + inProgress };
     }, [incidents]);
 
-    const canReportIncident = ['Admin', 'Teacher'].includes(user?.role);
+    const canReportIncident = isIncidentReporterRole(user?.role);
 
     const recentIncidentRows = useMemo(
         () =>

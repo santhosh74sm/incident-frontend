@@ -494,13 +494,28 @@ const StudentAnalytics = () => {
 
         const ws = XLSX.utils.json_to_sheet(excelData);
         const wb = XLSX.utils.book_new();
+        const exportDate = new Date().toISOString().split('T')[0];
+        const reportInfoWs = XLSX.utils.json_to_sheet([
+            { Field: 'Report', Value: 'Student Incident Timeline' },
+            { Field: 'Generated On', Value: exportDate },
+            { Field: 'Student', Value: selectedStudent?.name || 'N/A' },
+            { Field: 'Admission Number', Value: selectedStudent?.admissionNo || 'N/A' },
+            { Field: 'Academic Year', Value: academicYear || currentAcademicYear || 'All Years' },
+            { Field: 'Date Range', Value: dateRange.start || dateRange.end ? `${dateRange.start || 'Any'} to ${dateRange.end || 'Any'}` : 'All dates' },
+            { Field: 'Categories', Value: filters.incidentTypes.length ? filters.incidentTypes.join(', ') : 'All categories' },
+            { Field: 'Locations', Value: filters.locations.length ? filters.locations.join(', ') : 'All locations' },
+            { Field: 'Evidence Types', Value: filters.evidence.length ? filters.evidence.join(', ') : 'All evidence types' },
+            { Field: 'Statuses', Value: statusFilter.length ? statusFilter.join(', ') : 'All statuses' },
+            { Field: 'Record Count', Value: studentAnalytics.incidentDetails.length },
+        ]);
+        XLSX.utils.book_append_sheet(wb, reportInfoWs, 'Report Info');
         XLSX.utils.book_append_sheet(wb, ws, 'Incident Timeline');
         await withFeedback(
             addToast,
             () => downloadWorkbook(
                 XLSX,
                 wb,
-                `Incident_Report_${slugify(selectedStudent?.name || 'Student')}_${new Date().toISOString().split('T')[0]}.xlsx`,
+                `Student_Incident_Timeline_${slugify(selectedStudent?.name || 'Student')}_${slugify(academicYear || currentAcademicYear || 'All_Years')}_${exportDate}.xlsx`,
                 { title: 'Incident report' }
             ),
             {
@@ -545,12 +560,31 @@ const StudentAnalytics = () => {
     const exportStudentSummaryToExcel = async () => {
         const ws = XLSX.utils.json_to_sheet(buildStudentSummaryRows());
         const wb = XLSX.utils.book_new();
+        const exportDate = new Date().toISOString().split('T')[0];
+        const reportInfoWs = XLSX.utils.json_to_sheet([
+            { Field: 'Report', Value: isPassedOutSummary ? 'Passed Out Student Summary' : 'Student Summary' },
+            { Field: 'Generated On', Value: exportDate },
+            { Field: 'Academic Year', Value: academicYear || currentAcademicYear || 'All Years' },
+            { Field: 'Student Status', Value: studentStatus },
+            { Field: 'Search', Value: searchTerm || 'None' },
+            { Field: 'Class', Value: classFilter || 'All classes' },
+            { Field: 'Section', Value: sectionFilter || 'All sections' },
+            { Field: 'Record Count', Value: filteredStudents.length },
+        ]);
+        XLSX.utils.book_append_sheet(wb, reportInfoWs, 'Report Info');
         XLSX.utils.book_append_sheet(wb, ws, 'Student Summary');
-        await downloadWorkbook(
-            XLSX,
-            wb,
-            `${slugify(isPassedOutSummary ? 'Passed_Out_Student_Summary' : 'Student_Summary')}_${new Date().toISOString().split('T')[0]}.xlsx`,
-            { title: 'Student summary' }
+        await withFeedback(
+            addToast,
+            () => downloadWorkbook(
+                XLSX,
+                wb,
+                `${slugify(isPassedOutSummary ? 'Passed_Out_Student_Summary' : 'Student_Summary')}_${slugify(academicYear || currentAcademicYear || 'All_Years')}_${exportDate}.xlsx`,
+                { title: 'Student summary' }
+            ),
+            {
+                successMessage: 'Excel exported successfully.',
+                errorMessage: 'Export failed.',
+            }
         );
     };
 
@@ -703,6 +737,22 @@ const StudentAnalytics = () => {
         share: formatShare(entry.value, studentAnalytics.total),
     }));
 
+    const directoryFilterLabels = [
+        academicYear && academicYear !== currentAcademicYear ? `Year: ${academicYear}` : null,
+        searchTerm ? `Search: ${searchTerm}` : null,
+        classFilter ? `Class: ${classFilter}` : null,
+        sectionFilter ? `Section: ${sectionFilter}` : null,
+    ].filter(Boolean);
+
+    const studentFilterLabels = [
+        academicYear && academicYear !== currentAcademicYear ? `Year: ${academicYear}` : null,
+        dateRange.start || dateRange.end ? `Dates: ${dateRange.start || 'Any'} to ${dateRange.end || 'Any'}` : null,
+        ...filters.incidentTypes.map((value) => `Category: ${value}`),
+        ...filters.locations.map((value) => `Location: ${value}`),
+        ...filters.evidence.map((value) => `Evidence: ${value}`),
+        ...statusFilter.map((value) => `Status: ${value}`),
+    ].filter(Boolean);
+
     return (
         <div className="flex min-h-screen bg-slate-100 dark:bg-slate-950">
             <div className="flex min-w-0 flex-1 flex-col">
@@ -772,6 +822,7 @@ const StudentAnalytics = () => {
                                         setAcademicYear(currentAcademicYear);
                                     }}
                                     title="Find a student"
+                                    activeFilterLabels={directoryFilterLabels}
                                     collapsible
                                     defaultCollapsed
                                 >
@@ -958,6 +1009,7 @@ const StudentAnalytics = () => {
                                         setAcademicYear(currentAcademicYear);
                                     }}
                                     title="Student Filters"
+                                    activeFilterLabels={studentFilterLabels}
                                     collapsible
                                     defaultCollapsed
                                 >

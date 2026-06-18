@@ -22,10 +22,21 @@ const TOAST_STYLES = {
     info: 'bg-blue-500',
 };
 
+const TOAST_LABELS = {
+    success: 'Success',
+    error: 'Error',
+    warning: 'Warning',
+    info: 'Information',
+};
+
 const Toast = ({ message, type, onClose }) => (
     <div
+        role={type === 'error' || type === 'warning' ? 'alert' : 'status'}
+        aria-live={type === 'error' || type === 'warning' ? 'assertive' : 'polite'}
+        aria-atomic="true"
         className={`${TOAST_STYLES[type] || TOAST_STYLES.info} flex w-[calc(100vw-2rem)] max-w-md animate-slide-in items-center gap-3 rounded-xl px-4 py-3 text-white shadow-lg sm:w-auto sm:min-w-[280px]`}
     >
+        <span className="sr-only">{TOAST_LABELS[type] || TOAST_LABELS.info}: </span>
         <span className="flex-1 text-sm font-medium">{message}</span>
         <button
             type="button"
@@ -59,7 +70,10 @@ const ToastProvider = ({ children }) => {
         <ToastContext.Provider value={{ addToast }}>
             {children}
             {createPortal(
-                <div className="fixed left-4 right-4 top-16 z-[9999] flex flex-col items-end gap-2 sm:left-auto sm:top-4">
+                <div
+                    className="fixed left-4 right-4 top-16 z-[9999] flex flex-col items-end gap-2 sm:left-auto sm:top-4"
+                    aria-label="Application notifications"
+                >
                     {toasts.map((toast) => (
                         <Toast
                             key={toast.id}

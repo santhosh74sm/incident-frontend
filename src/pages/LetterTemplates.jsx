@@ -3,6 +3,7 @@ import apiClient from '../config/apiClient';
 import mammoth from 'mammoth';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/ToastProvider';
+import { isAdminRole } from '../utils/roles';
 import { downloadBlob } from '../utils/downloadFiles';
 import { withFeedback } from '../utils/notifications';
 import {
@@ -1150,7 +1151,7 @@ const LetterTemplates = () => {
 
     const currentVariant = getVariantMeta(selectedTemplate, activeLanguage);
 
-    if (!['Super Admin', 'Admin'].includes(user?.role)) {
+    if (!isAdminRole(user?.role)) {
         return (
             <div className="flex min-h-screen items-center justify-center bg-slate-100 p-6 text-slate-700 dark:bg-slate-950 dark:text-slate-200">
                 Admin access is required to manage official letters.

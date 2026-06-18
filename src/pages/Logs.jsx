@@ -5,6 +5,8 @@ import { buildAcademicYearOptions, formatActivityRecordLabel } from '../utils/an
 import { UnifiedDateInput, UnifiedFilterBar, UnifiedSearchInput } from '../components/UnifiedFilters';
 import { DashboardHero } from '../components/analytics/DashboardPrimitives';
 import { useAuth } from '../context/AuthContext';
+import { useConfirm } from '../components/ConfirmProvider';
+import { useToast } from '../components/ToastProvider';
 import {
     AlertTriangle,
     CalendarRange,
@@ -203,6 +205,8 @@ const MetadataField = ({ label, value, depth = 0 }) => {
 
 const Logs = () => {
     const { user } = useAuth();
+    const confirm = useConfirm();
+    const { addToast } = useToast();
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchInput, setSearchInput] = useState('');
@@ -334,7 +338,13 @@ const Logs = () => {
     }, [page, pageSize, debouncedSearch, filters.entityType, filters.academicYear, filters.start, filters.end]);
 
     const handleClearAll = async () => {
-        if (!window.confirm('This will permanently delete all activity history. Are you sure you want to continue?')) return;
+        const confirmed = await confirm({
+            tone: 'danger',
+            title: 'Clear activity history?',
+            description: 'This will permanently delete all activity history for this school workspace. This action cannot be undone.',
+            confirmLabel: 'Clear history',
+        });
+        if (!confirmed) return;
 
         try {
             await apiClient.delete('/api/logs', {
@@ -342,8 +352,9 @@ const Logs = () => {
             });
             setExpandedRowId(null);
             fetchLogs();
+            addToast('Activity history cleared successfully.', 'success');
         } catch (error) {
-            window.alert('Unable to clear activity history right now.');
+            addToast('Unable to clear activity history right now.', 'error');
         }
     };
 
@@ -668,7 +679,7 @@ const Logs = () => {
                                                                         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 xl:col-span-1">
                                                                             <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Summary</h3>
                                                                             <dl className="space-y-3">
-                                                                                <MetadataField label="Action" value={log.actionName} />
+                                                                                <MetadataField label="Action" value={formatLabel(log.actionName)} />
                                                                                 <MetadataField label="Performed By" value={log.performedByName || log.performedBy} />
                                                                                 <MetadataField label="Record Information" value={log.displayEntityType || formatActivityRecordLabel(log.entityType)} />
                                                                                 <MetadataField label="Related Record" value={target.label} />

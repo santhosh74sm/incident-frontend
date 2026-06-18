@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/ToastProvider';
+import { useConfirm } from '../components/ConfirmProvider';
 import { useNotifications } from '../context/NotificationContext';
 import apiClient from '../config/apiClient';
 import { API_BASE } from '../config/apiClient';
@@ -51,14 +52,13 @@ import {
 import { getRecordId, isValidMongoObjectId } from '../utils/ids';
 import { downloadBlob, downloadRemoteFile, isNativeDownloadPlatform, openRemoteFile, parseDownloadFilename } from '../utils/downloadFiles';
 import { withFeedback } from '../utils/notifications';
+import { isAdminRole, isTeacherRole } from '../utils/roles';
 
 const STATUS_STYLES = {
     Open: { badge: 'border-orange-200 bg-orange-50 text-orange-700', tone: 'amber' },
     'In Progress': { badge: 'border-blue-200 bg-blue-50 text-blue-700', tone: 'blue' },
     Closed: { badge: 'border-emerald-200 bg-emerald-50 text-emerald-700', tone: 'emerald' },
 };
-const OPERATIONAL_USER_ROLES = ['Teacher', 'teacher'];
-
 const FIELD_CARD_CLASS =
     'rounded-2xl border border-slate-200 bg-slate-50/80 p-4 shadow-sm shadow-slate-200/40';
 
@@ -258,6 +258,7 @@ const IncidentDetail = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const { addToast } = useToast();
+    const confirm = useConfirm();
     const { markNotificationAsRead, notifications, refreshNotifications } = useNotifications();
 
     const [incident, setIncident] = useState(null);
@@ -371,7 +372,13 @@ const IncidentDetail = () => {
     };
 
     const handleDeleteOption = async (optionId) => {
-        if (!window.confirm('Delete this option?')) return;
+        const confirmed = await confirm({
+            tone: 'danger',
+            title: 'Delete saved option?',
+            description: 'Delete this preset option from the field update list? Existing progress notes will not be changed.',
+            confirmLabel: 'Delete option',
+        });
+        if (!confirmed) return;
         try {
             await apiClient.delete(`/api/field-operation-options/${optionId}`);
             fetchFieldOptions();
@@ -407,7 +414,7 @@ const IncidentDetail = () => {
     }, [id, userId]);
 
     const fetchStaff = useCallback(async () => {
-        if (!['Super Admin', 'Admin'].includes(user?.role) || !userId) return;
+        if (!isAdminRole(user?.role) || !userId) return;
         try {
             const { data } = await apiClient.get('/api/auth/users');
             setStaffList(Array.isArray(data) ? data : []);
@@ -582,7 +589,13 @@ const IncidentDetail = () => {
     const handleDeleteEvidence = async (entry) => {
         const evidenceId = getRecordId(entry);
         if (!evidenceId) { addToast('Evidence record not found.', 'error'); return; }
-        if (!window.confirm('Delete this evidence file? This removes the record and the stored file.')) return;
+        const confirmed = await confirm({
+            tone: 'danger',
+            title: 'Delete evidence file?',
+            description: `Delete "${entry?.originalName || entry?.filename || 'this evidence file'}"? This removes the evidence record and the stored file from this incident.`,
+            confirmLabel: 'Delete evidence',
+        });
+        if (!confirmed) return;
         setDeletingEvidenceId(evidenceId);
         try {
             await apiClient.delete(`/api/incidents/${id}/evidence/${evidenceId}`);
@@ -674,19 +687,25 @@ const IncidentDetail = () => {
 
     const handleDelete = useCallback(async () => {
         if (deleteInFlightRef.current) return;
-        if (!window.confirm('Permanently delete this incident? This cannot be undone.')) return;
+        const confirmed = await confirm({
+            tone: 'danger',
+            title: 'Permanently delete incident?',
+            description: 'This will delete the incident record and related incident files. This action cannot be undone.',
+            confirmLabel: 'Delete incident',
+        });
+        if (!confirmed) return;
         deleteInFlightRef.current = true;
         setIsDeleting(true);
         try {
             await apiClient.delete(`/api/incidents/${id}`);
             navigate('/incidents');
         } catch (err) {
-            alert(err.response?.data?.message || err.message || 'Delete failed.');
+            addToast(err.response?.data?.message || err.message || 'Unable to delete incident.', 'error');
         } finally {
             deleteInFlightRef.current = false;
             setIsDeleting(false);
         }
-    }, [id, navigate]);
+    }, [addToast, confirm, id, navigate]);
 
     const handleExportReport = useCallback(async () => {
         if (exportInFlightRef.current) return;
@@ -729,7 +748,13 @@ const IncidentDetail = () => {
             'finalize-closure': 'Finalize and close this case?',
             'reject-closure': 'Reject closure and return to handler?',
         };
-        if (!window.confirm(messages[path] || `Proceed with ${path}?`)) return;
+        const confirmed = await confirm({
+            tone: path === 'reject-closure' ? 'warning' : 'info',
+            title: 'Confirm case action',
+            description: messages[path] || `Proceed with ${path}?`,
+            confirmLabel: path === 'progress' ? 'Save update' : 'Confirm action',
+        });
+        if (!confirmed) return;
         try {
             setActionLoading(true);
             await apiClient.put(`/api/incidents/${id}/${path}`, payload);
@@ -737,11 +762,11 @@ const IncidentDetail = () => {
             setNote('');
             await fetchIncident();
         } catch (err) {
-            alert(err.response?.data?.message || 'Action failed.');
+            addToast(err.response?.data?.message || 'Action failed. Please try again.', 'error');
         } finally {
             setActionLoading(false);
         }
-    }, [addToast, fetchIncident, id]);
+    }, [addToast, confirm, fetchIncident, id]);
 
     const handleGeneratedLetterDownload = useCallback(async () => {
         const letterId = getRecordId(generatedLetter) || getRecordId(incident?.letterGenerated);
@@ -773,7 +798,7 @@ const IncidentDetail = () => {
 
     const isHandler = useMemo(() => {
         if (!incident || !user) return false;
-        if (['Super Admin', 'Admin'].includes(user.role)) return true;
+        if (isAdminRole(user.role)) return true;
         return Boolean(incident.assignedHandler && getRecordId(incident.assignedHandler) === userId);
     }, [incident, user, userId]);
 
@@ -834,8 +859,10 @@ const IncidentDetail = () => {
 
     const showRejectionAlert = Boolean(incident?.rejectionReason && !incident?.closureRequested && incident?.status !== 'Closed');
     const showClosureRequestedAlert = Boolean(incident?.closureRequested && incident?.status !== 'Closed');
-    const showCaseAllocation = Boolean(['Super Admin', 'Admin'].includes(user?.role) && incident?.approvalStatus === 'Pending');
-    const showAdminCommand = Boolean(['Super Admin', 'Admin'].includes(user?.role) && incident?.status !== 'Closed' && incident?.approvalStatus === 'Approved');
+    const isAdminUser = isAdminRole(user?.role);
+    const canManageIncident = isAdminUser || isTeacherRole(user?.role);
+    const showCaseAllocation = Boolean(isAdminUser && incident?.approvalStatus === 'Pending');
+    const showAdminCommand = Boolean(isAdminUser && incident?.status !== 'Closed' && incident?.approvalStatus === 'Approved');
     const showFieldUpdates = Boolean(isHandler && incident?.status !== 'Closed' && incident?.approvalStatus === 'Approved');
 
     if (loading && !incident) {
@@ -887,7 +914,7 @@ const IncidentDetail = () => {
                                         {isExporting ? <Loader2 size={16} className="mr-2 inline animate-spin" /> : <Download size={16} className="mr-2 inline" />}
                                         Export Report
                                     </button>
-                                    {['Super Admin', 'Admin'].includes(user?.role) ? (
+                                    {isAdminUser ? (
                                         <button type="button" onClick={handleDelete} disabled={isDeleting}
                                             className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60">
                                             {isDeleting ? <Loader2 size={16} className="mr-2 inline animate-spin" /> : <Trash2 size={16} className="mr-2 inline" />}
@@ -955,7 +982,7 @@ const IncidentDetail = () => {
                                 title="Assigned To"
                                 value={resolveHandlerLabel(incident)}
                                 icon={UserCheck} tone={incident.assignedHandler ? 'blue' : 'amber'}
-                                helper={['Super Admin', 'Admin', 'super_admin', 'admin'].includes(incident.assignedHandler?.role) ? 'Administration' : (incident.assignedHandler?.role || 'Awaiting ownership')}
+                                helper={isAdminRole(incident.assignedHandler?.role) ? 'Administration' : (incident.assignedHandler?.role || 'Awaiting ownership')}
                             />
                             <DashboardStatCard title="Evidence Files" value={evidenceAssets.length} icon={FileImage} tone="slate" helper="Supporting files currently attached" />
                             <DashboardStatCard title="Progress Entries" value={progressLogs.length} icon={Activity} tone="blue" helper="Operational notes on the case" />
@@ -990,7 +1017,7 @@ const IncidentDetail = () => {
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex items-center justify-between gap-3">
                                                     <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Description</p>
-                                                    {incident.status !== 'Closed' && ['Super Admin', 'Admin', ...OPERATIONAL_USER_ROLES].includes(user?.role) ? (
+                                                    {incident.status !== 'Closed' && canManageIncident ? (
                                                         <button
                                                             type="button"
                                                             onClick={() => {
@@ -1037,7 +1064,7 @@ const IncidentDetail = () => {
                                     <DetailField icon={ShieldCheck} label="Reported By" value={incident.reportedBy?.name || 'N/A'} helper={incident.reportedBy?.role || 'Reporter'} />
                                     <DetailField icon={UserCheck} label="Assigned Handler"
                                         value={resolveHandlerLabel(incident)}
-                                        helper={['Super Admin', 'Admin', 'super_admin', 'admin'].includes(incident.assignedHandler?.role) ? 'Administration' : (incident.assignedHandler?.role || 'Waiting for assignment')}
+                                        helper={isAdminRole(incident.assignedHandler?.role) ? 'Administration' : (incident.assignedHandler?.role || 'Waiting for assignment')}
                                     />
                                     <DetailField icon={Calendar} label="Opened" value={formatShortDateTime(getIncidentTimestamp(incident))} />
                                     <DetailField icon={Activity} label="Last Updated" value={formatShortDateTime(incident.updatedAt || incident.closedAt || getIncidentTimestamp(incident))} />
@@ -1063,7 +1090,7 @@ const IncidentDetail = () => {
                                     title="Evidence Records"
                                     description="Uploaded files and supporting documents attached to this case."
                                     icon={FileImage}
-                                    actions={incident.status !== 'Closed' && ['Super Admin', 'Admin', ...OPERATIONAL_USER_ROLES].includes(user?.role) ? (
+                                    actions={incident.status !== 'Closed' && canManageIncident ? (
                                         <button type="button" onClick={handleOpenEvidenceForm}
                                             aria-label="Add evidence to this case"
                                             className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
@@ -1114,7 +1141,7 @@ const IncidentDetail = () => {
                                                                     </button>
                                                                 </>
                                                             ) : null}
-                                                            {incident.status !== 'Closed' && ['Super Admin', 'Admin', ...OPERATIONAL_USER_ROLES].includes(user?.role) ? (
+                                                            {incident.status !== 'Closed' && canManageIncident ? (
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => handleDeleteEvidence(entry)}
@@ -1266,7 +1293,7 @@ const IncidentDetail = () => {
                             </div>
 
                             <div className="space-y-6 xl:col-span-4">
-                                {['Super Admin', 'Admin', ...OPERATIONAL_USER_ROLES].includes(user?.role) ? (
+                                {canManageIncident ? (
                                     <DashboardPanel title="Generated Letter" description="Official letter linked to this case." icon={FileText}>
                                         {incident.letterGenerated || generatedLetter ? (
                                             <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
@@ -1276,7 +1303,7 @@ const IncidentDetail = () => {
                                                 <p className="mt-1 text-sm text-emerald-700">
                                                     Letter layout: {generatedLetter?.templateName || incident.letterGenerated?.templateName || 'School standard'}
                                                 </p>
-                                                {['Super Admin', 'Admin'].includes(user?.role) ? (
+                                                {isAdminUser ? (
                                                     <div className="mt-4 flex flex-wrap gap-2">
                                                         <button type="button" onClick={handleGeneratedLetterDownload}
                                                             className="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
@@ -1372,7 +1399,7 @@ const IncidentDetail = () => {
                                                     className={`rounded-xl px-4 py-3 text-sm font-semibold transition ${activeFieldTab === 'handler' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:bg-white/70 hover:text-slate-800'}`}>
                                                     Handler Updates
                                                 </button>
-                                                {['Super Admin', 'Admin'].includes(user?.role) ? (
+                                                {isAdminUser ? (
                                                     <button type="button" onClick={() => { setActiveFieldTab('assigner'); setEditMode(false); }}
                                                         className={`rounded-xl px-4 py-3 text-sm font-semibold transition ${activeFieldTab === 'assigner' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:bg-white/70 hover:text-slate-800'}`}>
                                                         Assigner Actions
@@ -1418,7 +1445,7 @@ const IncidentDetail = () => {
                                                     placeholder="Add additional notes or details..."
                                                     value={note}
                                                     onChange={(e) => setNote(e.target.value)}
-                                                    disabled={incident.closureRequested && !['Super Admin', 'Admin'].includes(user?.role)}
+                                                    disabled={incident.closureRequested && !isAdminUser}
                                                 />
                                             </div>
                                             {!incident.closureRequested ? (
@@ -1428,7 +1455,7 @@ const IncidentDetail = () => {
                                                         {progressLoading ? <Loader2 size={16} className="mr-2 inline animate-spin" /> : <Activity size={16} className="mr-2 inline" />}
                                                         {progressLoading ? 'Saving...' : 'Save Progress'}
                                                     </button>
-                                                    {!['Super Admin', 'Admin'].includes(user?.role) ? (
+                                                    {!isAdminUser ? (
                                                         <button type="button" onClick={() => handleAction('request-closure', { actionTaken: note })}
                                                             disabled={actionLoading || !note.trim()}
                                                             className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60">

@@ -18,6 +18,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getRecordId } from '../utils/ids';
+import { normalizeRole } from '../utils/roles';
 
 // ─── Static maps ──────────────────────────────────────────────────────────────
 
@@ -30,9 +31,9 @@ const typeIconMap = {
 
 const commandIconByTitle = {
     'Go to Dashboard'          : LayoutDashboard,
-    'Report New Incident'      : PlusCircle,
+    'Create Incident'          : PlusCircle,
     'View Incident List'       : List,
-    'School reports & summary' : BarChart3,
+    'School Analytics'         : BarChart3,
     'Student summaries'        : User,
     'View Issued Letters'      : Mail,
 };
@@ -53,8 +54,8 @@ const quickActionItems = [
         roles: ['Super Admin', 'Admin', 'Teacher'],
     },
     {
-        title: 'Report New Incident',
-        sub  : 'Start a new incident report.',
+        title: 'Create Incident',
+        sub  : 'Start a new incident record.',
         link : '/create-incident',
         type : 'command',
         roles: ['Admin', 'Teacher'],
@@ -67,7 +68,7 @@ const quickActionItems = [
         roles: ['Super Admin', 'Admin', 'Teacher'],
     },
     {
-        title: 'School reports & summary',
+        title: 'School Analytics',
         sub  : 'Open charts and summaries for the whole school.',
         link : '/analytics',
         type : 'command',
@@ -175,9 +176,10 @@ const CommandPalette = () => {
     }, [isOpen, query, user]);
 
     // ── Quick actions (filtered by role) ──────────────────────────────────────
+    const normalizedRole = normalizeRole(user?.role);
     const quickActions = useMemo(
-        () => quickActionItems.filter((item) => item.roles.includes(user?.role)),
-        [user?.role]
+        () => quickActionItems.filter((item) => item.roles.includes(normalizedRole)),
+        [normalizedRole]
     );
 
     const groupedResults = useMemo(() => {

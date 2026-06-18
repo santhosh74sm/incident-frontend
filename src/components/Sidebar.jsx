@@ -21,6 +21,7 @@ import {
     X,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { normalizeRole } from '../utils/roles';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -149,7 +150,7 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
                 roles: ['Super Admin', 'Admin', 'Teacher'],
             },
             {
-                title: 'Report Incident',
+                title: 'Create Incident',
                 icon: PlusCircle,
                 path: '/create-incident',
                 preload: () => import('../pages/CreateIncident'),
@@ -254,9 +255,10 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
         [location.pathname]
     );
 
+    const normalizedRole = normalizeRole(user?.role);
     const filterByRole = useCallback(
-        (items) => items.filter((item) => !item.roles || item.roles.includes(user?.role)),
-        [user?.role]
+        (items) => items.filter((item) => !item.roles || item.roles.includes(normalizedRole)),
+        [normalizedRole]
     );
 
     const visibleMain = useMemo(() => filterByRole(mainMenuItems), [filterByRole, mainMenuItems]);
@@ -467,7 +469,7 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
                                         {user?.name}
                                     </p>
                                     <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
-                                        {user?.role}
+                                        {normalizedRole || user?.role}
                                     </p>
                                 </div>
                             )}

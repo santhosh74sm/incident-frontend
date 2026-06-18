@@ -32,7 +32,7 @@ import {
 import { downloadBlob } from '../utils/downloadFiles';
 import { withFeedback } from '../utils/notifications';
 import BulkDeleteControls from '../components/BulkDeleteControls';
-import { normalizeRole } from '../utils/roles';
+import { isAdminRole, isSuperAdminRole } from '../utils/roles';
 
 const PAGE_SIZE = 10;
 
@@ -348,7 +348,7 @@ const IssuedLetters = () => {
     const hasLoadedLettersRef = useRef(false);
 
     const config = useMemo(() => ({ headers: {} }), []);
-    const isSuperAdmin = normalizeRole(user?.role) === 'Super Admin';
+    const isSuperAdmin = isSuperAdminRole(user?.role);
     const academicYearOptions = useMemo(
         () => buildAcademicYearOptions(availableAcademicYears, currentAcademicYear),
         [availableAcademicYears, currentAcademicYear]
@@ -515,7 +515,7 @@ const IssuedLetters = () => {
         }
     };
 
-    if (!['Super Admin', 'Admin'].includes(user?.role)) {
+    if (!isAdminRole(user?.role)) {
         return (
             <div className="flex min-h-screen items-center justify-center bg-slate-100 p-6 text-slate-700">
                 Admin access is required to manage issued letters.

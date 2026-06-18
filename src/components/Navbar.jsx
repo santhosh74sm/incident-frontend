@@ -20,6 +20,7 @@ import { useNotifications } from '../context/NotificationContext';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from './ToastProvider';
 import NotificationDropdown from './NotificationDropdown';
+import { isAdminRole, isSuperAdminRole, normalizeRole } from '../utils/roles';
 
 const themeOptions = [
     { value: 'light', label: 'Light', icon: Sun },
@@ -132,16 +133,17 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
     }, [addToast, currentUserId, profileForm.email, profileForm.name, restoreAuth]);
 
     const profileMenuItems = useMemo(() => {
-        if (!['Super Admin', 'Admin'].includes(user?.role)) {
+        if (!isAdminRole(user?.role)) {
             return [];
         }
         return [
-            ...(user?.role === 'Super Admin'
+            ...(isSuperAdminRole(user?.role)
                 ? [{ label: 'Activity history', icon: ListFilter, action: () => navigate('/logs') }]
                 : []),
             { label: 'Staff & students', icon: Settings, action: () => navigate('/user-management') },
         ];
     }, [navigate, user?.role]);
+    const normalizedRole = normalizeRole(user?.role);
 
     const hasUnread = unreadCount > 0;
     const iconButtonBase =
@@ -157,7 +159,7 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                 <div className="h-10 rounded-2xl bg-white/90 px-2 backdrop-blur-xl dark:bg-slate-900/90 sm:px-3">
                     <div className="flex h-full min-w-0 items-center justify-between gap-2">
                         <div className="hidden min-w-0 lg:block">
-                            <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{user?.role || 'User'} Workspace</p>
+                            <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{normalizedRole || 'User'} Workspace</p>
                         </div>
 
                         <button
@@ -191,7 +193,7 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                         </button>
 
                         <div className="flex shrink-0 items-center justify-end gap-1.5 sm:gap-2">
-                            {['Super Admin', 'Admin'].includes(user?.role) ? (
+                            {isAdminRole(user?.role) ? (
                                 <button
                                     type="button"
                                     title="Settings"
@@ -251,7 +253,7 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                                             {user?.name}
                                         </p>
                                         <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-600">
-                                            {user?.role}
+                                            {normalizedRole}
                                         </p>
                                     </div>
 
@@ -312,7 +314,7 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                                                         </label>
                                                         <input
                                                             type="text"
-                                                            value={user?.role || 'User'}
+                                                            value={normalizedRole || 'User'}
                                                             readOnly
                                                             className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300"
                                                         />

@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
 import ToastProvider from './components/ToastProvider';
+import ConfirmProvider from './components/ConfirmProvider';
 import DashboardLayout from './components/DashboardLayout';
 import AppErrorBoundary from './components/AppErrorBoundary';
 import { ThemeProvider } from './context/ThemeContext';
@@ -137,6 +138,7 @@ function App() {
       <AuthProvider>
         <NotificationProvider>
           <ToastProvider>
+            <ConfirmProvider>
             <Router>
               <div className="min-h-screen bg-gray-50 font-sans text-slate-900 transition-colors duration-200 dark:bg-slate-950 dark:text-slate-100">
               <Suspense fallback={null}>
@@ -225,6 +227,7 @@ function App() {
               </Routes>
               </div>
             </Router>
+            </ConfirmProvider>
           </ToastProvider>
         </NotificationProvider>
       </AuthProvider>

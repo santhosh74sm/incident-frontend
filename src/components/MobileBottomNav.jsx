@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { BarChart3, LayoutDashboard, ListFilter, PlusCircle, Users } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { isAdminRole, isIncidentReporterRole } from '../utils/roles';
 
 const itemBase =
     'flex min-h-[48px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1 text-[10px] font-semibold leading-tight transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500';
@@ -22,13 +23,13 @@ const MobileBottomNav = () => {
 
     if (!user) return null;
 
-    const canReport = ['Admin', 'Teacher'].includes(user.role);
-    const canManageStaff = ['Super Admin', 'Admin'].includes(user.role);
+    const canReport = isIncidentReporterRole(user.role);
+    const canManageStaff = isAdminRole(user.role);
     const navItems = [
         { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, end: true },
         { to: '/incidents', label: 'Incidents', icon: ListFilter },
-        canReport ? { to: '/create-incident', label: 'Report', icon: PlusCircle } : null,
-        { to: '/analytics', label: 'Reports', icon: BarChart3 },
+        canReport ? { to: '/create-incident', label: 'Create', icon: PlusCircle } : null,
+        { to: '/analytics', label: 'Analytics', icon: BarChart3 },
         canManageStaff ? { to: '/user-management', label: 'Users', icon: Users } : null,
     ].filter(Boolean);
 

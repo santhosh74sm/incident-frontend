@@ -3,13 +3,14 @@ import { CalendarDays, CheckCircle, Loader2 } from 'lucide-react';
 import apiClient from '../config/apiClient';
 import { DashboardHero, DashboardPanel } from '../components/analytics/DashboardPrimitives';
 import { useToast } from '../components/ToastProvider';
+import { useConfirm } from '../components/ConfirmProvider';
 
 const AcademicYearManagement = () => {
     const { addToast } = useToast();
+    const confirm = useConfirm();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [currentAcademicYear, setCurrentAcademicYear] = useState('');
-    const [confirming, setConfirming] = useState(false);
 
     const getNextAcademicYear = (year) => {
         const match = String(year || '').match(/^(\d{4})-\d{2}$/);
@@ -37,7 +38,6 @@ const AcademicYearManagement = () => {
         try {
             const { data } = await apiClient.put('/api/auth/academic-year', {});
             setCurrentAcademicYear(data.currentAcademicYear);
-            setConfirming(false);
             const promotion = data?.promotion || {};
             addToast(
                 `Academic Year updated. Promoted ${promotion.promoted || 0} student(s), marked ${promotion.passedOut || 0} as Passed Out.`,
@@ -47,6 +47,26 @@ const AcademicYearManagement = () => {
             addToast(error.response?.data?.message || 'Could not update Academic Year.', 'error');
         } finally {
             setSaving(false);
+        }
+    };
+
+    const confirmAcademicYearChange = async () => {
+        const confirmed = await confirm({
+            tone: 'warning',
+            title: 'Change academic year?',
+            description: `Move the workspace from ${currentAcademicYear} to ${nextAcademicYear}. This is a school-wide administrative action.`,
+            details: (
+                <ul className="list-disc space-y-2 pl-5">
+                    <li>Eligible students may be promoted according to the existing promotion rules.</li>
+                    <li>Final-year students may be marked as Passed Out according to the existing pass-out rules.</li>
+                    <li>Historical academic-year records are preserved and should not be edited manually.</li>
+                    <li>Reports, uploads, analytics, and new incidents will use the updated current academic year.</li>
+                </ul>
+            ),
+            confirmLabel: 'Change academic year',
+        });
+        if (confirmed) {
+            await submitChange();
         }
     };
 
@@ -80,8 +100,8 @@ const AcademicYearManagement = () => {
                             </div>
                             <button
                                 type="button"
-                                onClick={() => setConfirming(true)}
-                                disabled={!nextAcademicYear}
+                                onClick={confirmAcademicYearChange}
+                                disabled={!nextAcademicYear || saving}
                                 className="btn-primary h-12 justify-center disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 <CheckCircle size={16} />
@@ -92,25 +112,6 @@ const AcademicYearManagement = () => {
                 </DashboardPanel>
             </div>
 
-            {confirming ? (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4">
-                    <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900">
-                        <h2 className="text-lg font-semibold">Confirm Academic Year Change</h2>
-                        <div className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
-                            <p>Current Academic Year: <span className="font-semibold text-slate-900 dark:text-slate-100">{currentAcademicYear}</span></p>
-                            <p>Next Academic Year: <span className="font-semibold text-slate-900 dark:text-slate-100">{nextAcademicYear}</span></p>
-                            <p>Continue?</p>
-                        </div>
-                        <div className="mt-6 flex justify-end gap-3">
-                            <button type="button" className="btn-secondary" onClick={() => setConfirming(false)} disabled={saving}>Cancel</button>
-                            <button type="button" className="btn-primary" onClick={submitChange} disabled={saving}>
-                                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle size={16} />}
-                                Confirm
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            ) : null}
         </div>
     );
 };

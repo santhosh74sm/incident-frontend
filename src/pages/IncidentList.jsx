@@ -35,7 +35,7 @@ import {
     writeUserList,
 } from '../utils/userStorage';
 import { getRecordId } from '../utils/ids';
-import { normalizeRole } from '../utils/roles';
+import { isAdminRole, isSuperAdminRole, isTeacherRole } from '../utils/roles';
 
 const READ_STATUS_OPTIONS = ['All', 'Unread', 'Read'];
 const formatDate = formatShortDate;
@@ -88,7 +88,7 @@ const IncidentList = () => {
 
     const config = useMemo(() => ({ headers: {} }), []);
     const userId = getRecordId(user);
-    const isSuperAdmin = normalizeRole(user?.role) === 'Super Admin';
+    const isSuperAdmin = isSuperAdminRole(user?.role);
 
     useEffect(() => {
         if (!userId) {
@@ -106,7 +106,7 @@ const IncidentList = () => {
     const allStaffOptions = useMemo(
         // Show a single unified "Administration" entry for all admin accounts;
         // teachers are listed individually by name.
-        () => ['Administration', ...staffList.filter((staff) => !['Super Admin', 'Admin', 'super_admin', 'admin'].includes(staff.role)).map((staff) => staff.name)],
+        () => ['Administration', ...staffList.filter((staff) => !isAdminRole(staff.role)).map((staff) => staff.name)],
         [staffList]
     );
     const academicYearOptions = useMemo(
@@ -129,7 +129,7 @@ const IncidentList = () => {
                 const selectedTeacherIds =
                     selectedStaff.length > 0 && !allSelected
                         ? staffList
-                            .filter((staff) => !['Super Admin', 'Admin', 'super_admin', 'admin'].includes(staff.role))
+                        .filter((staff) => !isAdminRole(staff.role))
                             .filter((staff) => selectedStaff.includes(staff.name))
                             .map((staff) => getRecordId(staff))
                         : [];
@@ -551,7 +551,7 @@ const IncidentList = () => {
                                         ))}
                                     </select>
                                 </label>
-                                {!['Teacher', 'teacher'].includes(user?.role) ? (
+                                {!isTeacherRole(user?.role) ? (
                                     <UnifiedMultiSelect
                                         label="Staff Members"
                                         options={allStaffOptions}
@@ -666,8 +666,8 @@ const IncidentList = () => {
                             >
                                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
                                     {filteredIncidents.map((incident) => {
-                                        const isPendingApproval = ['Super Admin', 'Admin'].includes(user?.role) && incident.approvalStatus === 'Pending';
-                                        const isClosureRequest = ['Super Admin', 'Admin'].includes(user?.role) && incident.closureRequested && incident.status !== 'Closed';
+                                        const isPendingApproval = isAdminRole(user?.role) && incident.approvalStatus === 'Pending';
+                                        const isClosureRequest = isAdminRole(user?.role) && incident.closureRequested && incident.status !== 'Closed';
                                         const isHighPriority = incident.isHighPriority === true;
                                         const priority = isPriority(incident) || isHighPriority;
                                         const unread = isUnread(incident);

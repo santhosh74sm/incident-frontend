@@ -83,7 +83,7 @@ const downloadStudentTemplate = async (addToast) => {
                 title: 'Student upload template',
             }),
             {
-                successMessage: 'Sample spreadsheet downloaded.',
+                successMessage: 'Template downloaded successfully.',
                 errorMessage: 'Download failed. Please try again.',
             }
         );
@@ -326,7 +326,7 @@ const StudentUpload = () => {
                 },
             });
 
-            const successText = response.data.message || 'Student records updated successfully.';
+            const successText = response.data.message || 'Student upload processed successfully.';
             setMessage({ type: 'success', text: successText });
             setLastUpload({ fileName: file.name, totalRows: preview?.totalRows || 0 });
             setUploadProgress(100);

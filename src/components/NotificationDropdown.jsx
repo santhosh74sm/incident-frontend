@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useNotifications } from '../context/NotificationContext';
 import { useAuth } from '../context/AuthContext';
+import { isAdminRole } from '../utils/roles';
 import { getRecordId, isValidMongoObjectId } from '../utils/ids';
 import { formatActivityRecordLabel } from '../utils/analytics';
 
@@ -143,7 +144,7 @@ const resolveNotificationPath = (notification, role) => {
         const letterIncidentId = metadata?.incidentId || metadata?.incident || null;
         return isValidMongoObjectId(letterIncidentId)
             ? `/incidents/${letterIncidentId}`
-            : ['Super Admin', 'Admin'].includes(role) ? '/issued-letters' : '/dashboard';
+            : isAdminRole(role) ? '/issued-letters' : '/dashboard';
     }
     if (notification?.entityType === 'Template') return '/letter-templates';
     if (notification?.entityType === 'Student') {

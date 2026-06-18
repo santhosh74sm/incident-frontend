@@ -70,8 +70,12 @@ import {
 } from '../utils/analytics';
 import { downloadWorkbook } from '../utils/downloadFiles';
 import { withFeedback } from '../utils/notifications';
+import { isAdminRole, isTeacherRole } from '../utils/roles';
 
-const OPERATIONAL_USER_ROLES = ['Teacher', 'teacher'];
+const slugifyExportPart = (value, fallback = 'all') => {
+    const clean = String(value || fallback).trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 80);
+    return clean || fallback;
+};
 
 const buildClassResolution = (items) => {
     const grouped = {};
@@ -207,7 +211,7 @@ const AcademicYearStatusTooltip = ({ active, payload, label }) => {
 const ProfessionalAnalytics = () => {
     const { user } = useAuth();
     const { addToast } = useToast();
-    const isOperationalUser = OPERATIONAL_USER_ROLES.includes(user?.role);
+    const isOperationalUser = isTeacherRole(user?.role);
     const navigate = useNavigate();
     const compactChart = useCompactChart();
     const [incidents, setIncidents] = useState([]);
@@ -263,7 +267,7 @@ const ProfessionalAnalytics = () => {
 
     const allStaffOptions = useMemo(
         // Single unified "Administration" entry for all admin accounts; teachers listed individually.
-        () => ['Administration', ...staffList.filter((staff) => !['Super Admin', 'Admin', 'super_admin', 'admin'].includes(staff.role)).map((staff) => staff.name)],
+        () => ['Administration', ...staffList.filter((staff) => !isAdminRole(staff.role)).map((staff) => staff.name)],
         [staffList]
     );
 
@@ -278,7 +282,7 @@ const ProfessionalAnalytics = () => {
             const staffIds =
                 !options?.reset && selectedStaff.length > 0 && !allSelected
                     ? staffList
-                        .filter((staff) => !['Super Admin', 'Admin', 'super_admin', 'admin'].includes(staff.role))
+                        .filter((staff) => !isAdminRole(staff.role))
                         .filter((staff) => selectedStaff.includes(staff.name))
                         .map((staff) => staff._id)
                     : [];
@@ -432,7 +436,7 @@ const ProfessionalAnalytics = () => {
             closed,
             lettersIssued,
             active: open + inProgress,
-            unassigned: filteredIncidents.filter((incident) => !incident?.assignedHandler || ['Super Admin', 'Admin', 'super_admin', 'admin'].includes(incident?.assignedHandler?.role)).length,
+            unassigned: filteredIncidents.filter((incident) => !incident?.assignedHandler || isAdminRole(incident?.assignedHandler?.role)).length,
             resolutionRate: total > 0 ? `${Math.round((closed / total) * 100)}%` : '0%',
             statusData,
             statusTrendData: buildStatusTrendSeries({
@@ -483,6 +487,18 @@ const ProfessionalAnalytics = () => {
         Boolean(dateRange.start) ||
         Boolean(dateRange.end);
 
+    const activeFilterLabels = useMemo(() => [
+        academicYear && academicYear !== currentAcademicYear ? `Year: ${academicYear}` : null,
+        dateRange.start || dateRange.end ? `Dates: ${dateRange.start || 'Any'} to ${dateRange.end || 'Any'}` : null,
+        ...filters.classes.map((value) => `Class: ${value}`),
+        ...filters.sections.map((value) => `Section: ${value}`),
+        ...filters.incidentTypes.map((value) => `Category: ${value}`),
+        ...filters.locations.map((value) => `Location: ${value}`),
+        ...filters.evidence.map((value) => `Evidence: ${value}`),
+        ...filters.statuses.map((value) => `Status: ${value}`),
+        ...selectedStaff.map((value) => `Staff: ${value}`),
+    ].filter(Boolean), [academicYear, currentAcademicYear, dateRange.end, dateRange.start, filters.classes, filters.evidence, filters.incidentTypes, filters.locations, filters.sections, filters.statuses, selectedStaff]);
+
     const resetFilters = useCallback(() => {
         setFilters({
             classes: [],
@@ -524,6 +540,22 @@ const ProfessionalAnalytics = () => {
 
             const ws = XLSX.utils.json_to_sheet(excelData);
             const wb = XLSX.utils.book_new();
+            const exportDate = new Date().toISOString().split('T')[0];
+            const reportInfoWs = XLSX.utils.json_to_sheet([
+                { Field: 'Report', Value: 'Incident Details' },
+                { Field: 'Generated On', Value: exportDate },
+                { Field: 'Academic Year', Value: academicYear || currentAcademicYear || 'All Years' },
+                { Field: 'Date Range', Value: dateRange.start || dateRange.end ? `${dateRange.start || 'Any'} to ${dateRange.end || 'Any'}` : 'All dates' },
+                { Field: 'Classes', Value: filters.classes.length ? filters.classes.join(', ') : 'All classes' },
+                { Field: 'Sections', Value: filters.sections.length ? filters.sections.join(', ') : 'All sections' },
+                { Field: 'Categories', Value: filters.incidentTypes.length ? filters.incidentTypes.join(', ') : 'All categories' },
+                { Field: 'Locations', Value: filters.locations.length ? filters.locations.join(', ') : 'All locations' },
+                { Field: 'Evidence Types', Value: filters.evidence.length ? filters.evidence.join(', ') : 'All evidence types' },
+                { Field: 'Statuses', Value: filters.statuses.length ? filters.statuses.join(', ') : 'All statuses' },
+                { Field: 'Staff', Value: selectedStaff.length ? selectedStaff.join(', ') : 'All staff' },
+                { Field: 'Record Count', Value: filteredIncidentDetails.length },
+            ]);
+            XLSX.utils.book_append_sheet(wb, reportInfoWs, 'Report Info');
             XLSX.utils.book_append_sheet(wb, ws, 'Incident Details');
             const academicYearSheetData = analytics.academicYearData.map((entry) => ({
                 'Academic Year': entry.academicYear,
@@ -540,19 +572,19 @@ const ProfessionalAnalytics = () => {
                 () => downloadWorkbook(
                     XLSX,
                     wb,
-                    `incident_details_${new Date().toISOString().split('T')[0]}.xlsx`,
+                    `Incident_Details_${slugifyExportPart(academicYear || currentAcademicYear || 'All_Years')}_${exportDate}.xlsx`,
                     { title: 'Incident details export' }
                 ),
                 {
                     successMessage: 'Excel exported successfully.',
-                    errorMessage: 'Export failed.',
+                    errorMessage: 'Export failed. Please try again.',
                 }
             );
         } catch {
         } finally {
             setIsExporting(false);
         }
-    }, [addToast, analytics.academicYearData, filteredIncidentDetails, letterStatusMap]);
+    }, [academicYear, addToast, analytics.academicYearData, currentAcademicYear, dateRange.end, dateRange.start, filteredIncidentDetails, filters.classes, filters.evidence, filters.incidentTypes, filters.locations, filters.sections, filters.statuses, letterStatusMap, selectedStaff]);
 
     if (loading && incidents.length === 0) {
         return (
@@ -735,6 +767,7 @@ const ProfessionalAnalytics = () => {
                             hasActiveFilters={hasActiveFilters}
                             onReset={resetFilters}
                             title="Search & filters"
+                            activeFilterLabels={activeFilterLabels}
                             collapsible
                             defaultCollapsed
                             actions={

@@ -381,6 +381,7 @@ export const UnifiedFilterBar = ({
     onReset,
     children,
     actions = null,
+    activeFilterLabels = [],
     collapsible = false,
     defaultCollapsed = false,
 }) => {
@@ -437,6 +438,23 @@ export const UnifiedFilterBar = ({
             {/* Filter fields */}
             {showFields ? (
                 <div id={panelId} className="min-w-0 p-5">
+                    {activeFilterLabels.length > 0 ? (
+                        <div className="mb-4 flex flex-wrap gap-2" aria-label="Active filters">
+                            {activeFilterLabels.slice(0, 10).map((label) => (
+                                <span
+                                    key={label}
+                                    className="inline-flex min-h-[32px] items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:border-blue-500/30 dark:bg-blue-950/40 dark:text-blue-200"
+                                >
+                                    {label}
+                                </span>
+                            ))}
+                            {activeFilterLabels.length > 10 ? (
+                                <span className="inline-flex min-h-[32px] items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                    +{activeFilterLabels.length - 10} more
+                                </span>
+                            ) : null}
+                        </div>
+                    ) : null}
                     {children}
                 </div>
             ) : null}

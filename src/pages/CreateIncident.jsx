@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/ToastProvider';
+import { useConfirm } from '../components/ConfirmProvider';
 import {
     AlertCircle,
     AlertTriangle,
@@ -30,6 +31,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../config/apiClient';
+import { isAdminRole, isTeacherRole } from '../utils/roles';
 
 dayjs.extend(customParseFormat);
 
@@ -46,9 +48,6 @@ const emptyLetterPermission = {
 const getOptionId = (option) => option?._id || option?.id || option || '';
 const getOptionLabel = (option) => option?.name || option?.label || option || '';
 const hasAvailableLetterTemplate = (templates) => Boolean(templates?.en || templates?.ta);
-const OPERATIONAL_USER_ROLES = ['Teacher', 'teacher'];
-const TEACHER_USER_ROLES = ['Teacher', 'teacher'];
-
 const findOptionByValue = (options, value) =>
     options.find((option) => String(getOptionId(option)) === String(value) || getOptionLabel(option) === value);
 
@@ -234,6 +233,7 @@ const ManualDateTimeField = ({ label, description, required, value, onChange }) 
 const CreateIncident = () => {
     const { user } = useAuth();
     const { addToast } = useToast();
+    const confirm = useConfirm();
     const navigate = useNavigate();
     const shownInsightsRef = useRef(new Set());
 
@@ -287,9 +287,9 @@ const CreateIncident = () => {
     const [uploadProgress, setUploadProgress] = useState(0);
 
     const config = useMemo(() => ({ headers: {} }), []);
-    const isAdministrationUser = ['Super Admin', 'Admin', 'super_admin', 'admin'].includes(user?.role);
-    const canUseManualTiming = isAdministrationUser || OPERATIONAL_USER_ROLES.includes(user?.role);
-    const isPrivilegedUser = isAdministrationUser || TEACHER_USER_ROLES.includes(user?.role);
+    const isAdministrationUser = isAdminRole(user?.role);
+    const canUseManualTiming = isAdministrationUser || isTeacherRole(user?.role);
+    const isPrivilegedUser = isAdministrationUser || isTeacherRole(user?.role);
     const handleHighPriorityToggle = useCallback((checked) => {
         setFormData((current) => {
             if (current.isHighPriority === checked) {
@@ -390,7 +390,7 @@ const CreateIncident = () => {
             // Only keep Teacher-role users in the handler dropdown.
             // Admins assign incidents to Teachers, not to other Admins.
             const allUsers = Array.isArray(staffResponse.data) ? staffResponse.data : [];
-            setStaffList(allUsers.filter((u) => OPERATIONAL_USER_ROLES.includes(u.role)));
+            setStaffList(allUsers.filter((u) => isTeacherRole(u.role)));
             setEvidenceTypes(evidenceResponse.data || []);
         } catch (error) {
             if (!isMounted()) return;
@@ -713,7 +713,13 @@ const CreateIncident = () => {
             return;
         }
 
-        if (!window.confirm(`Delete "${name}" from the master list?`)) return;
+        const confirmed = await confirm({
+            tone: 'danger',
+            title: 'Delete master-list option?',
+            description: `Delete "${name}" from the master list? Existing records keep their saved values, but this option will no longer be available for new selections.`,
+            confirmLabel: 'Delete option',
+        });
+        if (!confirmed) return;
 
         try {
             if (type === 'category') {
@@ -1019,20 +1025,22 @@ const CreateIncident = () => {
             if (shouldGenerateLetter) {
                 addToast('Incident saved, but the letter could not be created. Please try again or contact ICT support.', 'error');
             } else {
-                addToast('Incident reported successfully.', 'success');
+                addToast('Incident created successfully.', 'success');
             }
             setTimeout(() => navigate('/incidents'), 1200);
         }
     };
 
     const submitIncident = async (shouldGenerateLetter, manualTimingPayload = null) => {
-        if (
-            !window.confirm(
-                `Submit incident report for ${selectedStudents.length} student${
-                    selectedStudents.length === 1 ? '' : 's'
-                }? You can add progress notes later from the incident detail page.`
-            )
-        ) {
+        const confirmed = await confirm({
+            tone: 'info',
+            title: 'Submit incident report?',
+            description: `Create incident record for ${selectedStudents.length} student${
+                selectedStudents.length === 1 ? '' : 's'
+            }? You can add progress notes later from the incident detail page.`,
+            confirmLabel: 'Create incident',
+        });
+        if (!confirmed) {
             return;
         }
 
@@ -2415,7 +2423,7 @@ const CreateIncident = () => {
                                                 ? 'Incident Created ✓'
                                                 : selectedStudents.length > 1
                                                     ? `Submit ${selectedStudents.length} Reports`
-                                                    : 'Submit Incident Report'}
+                                                    : 'Create Incident'}
                                     </button>
                                 </div>
                             </section>
