@@ -21,6 +21,8 @@ import { isAdminRole } from '../utils/roles';
 import { getRecordId, isValidMongoObjectId } from '../utils/ids';
 import { formatActivityRecordLabel } from '../utils/analytics';
 
+const DISPLAYED_NOTIFICATION_LIMIT = 12;
+
 // ─── Pure helpers (no hooks, no side-effects) ─────────────────────────────────
 
 const formatActionName = (actionName = '') => {
@@ -363,13 +365,18 @@ const NotificationDropdown = ({ onClose }) => {
         return () => { document.body.style.overflow = prev; };
     }, [isMobile]);
 
-    const unreadNotifications = useMemo(
-        () => notifications.filter((n) => n?.read !== true),
+    const visibleNotifications = useMemo(
+        () => notifications.slice(0, DISPLAYED_NOTIFICATION_LIMIT),
         [notifications]
     );
+
+    const unreadNotifications = useMemo(
+        () => visibleNotifications.filter((n) => n?.read !== true),
+        [visibleNotifications]
+    );
     const readNotifications = useMemo(
-        () => notifications.filter((n) => n?.read === true),
-        [notifications]
+        () => visibleNotifications.filter((n) => n?.read === true),
+        [visibleNotifications]
     );
 
     const handleNotificationClick = async (notification) => {
@@ -406,7 +413,7 @@ const NotificationDropdown = ({ onClose }) => {
                     <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
                         {unreadCount > 0
                             ? `You have ${unreadCount} unread item${unreadCount === 1 ? '' : 's'}.`
-                            : 'All notifications are shown below.'}
+                            : 'Latest notifications are shown below.'}
                     </p>
                 </div>
 
@@ -456,12 +463,12 @@ const NotificationDropdown = ({ onClose }) => {
             } overflow-x-hidden`}
             style={{ scrollbarWidth: 'thin', scrollbarColor: '#cbd5e1 transparent' }}
         >
-            {loading && notifications.length === 0 ? (
+            {loading && visibleNotifications.length === 0 ? (
                 <div className="flex items-center justify-center gap-2 px-5 py-12 text-sm text-slate-500">
                     <Loader2 size={16} className="animate-spin text-blue-600" aria-hidden />
                     Loading notifications…
                 </div>
-            ) : notifications.length === 0 ? (
+            ) : visibleNotifications.length === 0 ? (
                 <div className="px-5 py-12 text-center">
                     <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500">
                         <Bell size={20} aria-hidden />
@@ -544,9 +551,9 @@ const NotificationDropdown = ({ onClose }) => {
             {/* Footer */}
             <div className="shrink-0 border-t border-slate-100 px-5 py-3 dark:border-slate-800">
                 <p className="text-center text-[11px] text-slate-400 dark:text-slate-500">
-                    {notifications.length === 0
+                    {visibleNotifications.length === 0
                         ? 'No activity to display'
-                        : `${notifications.length} notification${notifications.length !== 1 ? 's' : ''} loaded`}
+                        : `${visibleNotifications.length} latest notification${visibleNotifications.length !== 1 ? 's' : ''} loaded`}
                 </p>
             </div>
         </div>
