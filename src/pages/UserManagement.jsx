@@ -8,6 +8,8 @@ import {
     ChevronRight,
     Copy,
     Edit3,
+    Eye,
+    EyeOff,
     Loader2,
     Plus,
     RefreshCw,
@@ -51,11 +53,7 @@ const getRoleGroup = (role) => {
 };
 const isStrongPassword = (password) =>
     typeof password === 'string' &&
-    password.length >= PASSWORD_MIN_LENGTH &&
-    /[a-z]/.test(password) &&
-    /[A-Z]/.test(password) &&
-    /\d/.test(password) &&
-    /[^A-Za-z0-9]/.test(password);
+    password.length >= PASSWORD_MIN_LENGTH;
 
 const formatDate = (value) => {
     if (!value) return 'Not available';
@@ -199,6 +197,7 @@ const UserManagement = () => {
     const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null, type: 'staff', label: '', record: null, preview: null, loadingPreview: false });
 
     const [newUser, setNewUser] = useState({ name: '', email: '', role: 'Teacher', password: '' });
+    const [showPassword, setShowPassword] = useState(false);
     const [newStudent, setNewStudent] = useState({ name: '', admissionNo: '', className: '', section: '' });
     const [editStaff, setEditStaff] = useState({ _id: '', name: '', email: '', role: '' });
     const [editStudent, setEditStudent] = useState({ _id: '', name: '', admissionNo: '', className: '', section: '', academicYear: '', status: 'Active' });
@@ -497,7 +496,7 @@ const UserManagement = () => {
         event.preventDefault();
 
         if (!isStrongPassword(newUser.password)) {
-            addToast('Password must be at least 8 characters and include uppercase, lowercase, number, and symbol.', 'error');
+            addToast('Password must be at least 8 characters.', 'error');
             return;
         }
 
@@ -508,6 +507,7 @@ const UserManagement = () => {
             addToast('User created successfully.', 'success');
             setShowAddUserModal(false);
             setNewUser({ name: '', email: '', role: 'Teacher', password: '' });
+            setShowPassword(false);
             fetchData(false);
         } catch (requestError) {
             addToast(requestError.response?.data?.message || 'Unable to create user.', 'error');
@@ -1171,7 +1171,7 @@ const UserManagement = () => {
                             </div>
                             <button
                                 type="button"
-                                onClick={() => setShowAddUserModal(false)}
+                                onClick={() => { setShowAddUserModal(false); setShowPassword(false); }}
                                 className="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-slate-400 transition-all duration-300 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-100"
                             >
                                 <X size={18} />
@@ -1225,15 +1225,25 @@ const UserManagement = () => {
 
                                 <div>
                                     <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Temporary Password</label>
-                                    <input
-                                        required
-                                        type="password"
-                                        value={newUser.password}
-                                        onChange={(event) => setNewUser((current) => ({ ...current, password: event.target.value }))}
-                                        placeholder="Create a temporary password"
-                                        minLength={PASSWORD_MIN_LENGTH}
-                                        className={INPUT_CLASS_NAME}
-                                    />
+                                    <div className="relative">
+                                        <input
+                                            required
+                                            type={showPassword ? 'text' : 'password'}
+                                            value={newUser.password}
+                                            onChange={(event) => setNewUser((current) => ({ ...current, password: event.target.value }))}
+                                            placeholder="Create a temporary password"
+                                            minLength={PASSWORD_MIN_LENGTH}
+                                            className={INPUT_CLASS_NAME}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword((v) => !v)}
+                                            className="absolute right-3 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl text-slate-400 transition-all duration-200 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                                            aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                        >
+                                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        </button>
+                                    </div>
                                     <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">{PASSWORD_POLICY_TEXT}</p>
                                 </div>
                             </div>
@@ -1254,7 +1264,7 @@ const UserManagement = () => {
                             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                                 <button
                                     type="button"
-                                    onClick={() => setShowAddUserModal(false)}
+                                    onClick={() => { setShowAddUserModal(false); setShowPassword(false); }}
                                     className="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition-all duration-300 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                                 >
                                     Cancel

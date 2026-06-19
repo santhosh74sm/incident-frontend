@@ -9,11 +9,7 @@ import { getPasswordStrengthLevel, PASSWORD_MIN_LENGTH, PASSWORD_POLICY_TEXT } f
 
 const isStrongPassword = (password) =>
     typeof password === 'string' &&
-    password.length >= PASSWORD_MIN_LENGTH &&
-    /[a-z]/.test(password) &&
-    /[A-Z]/.test(password) &&
-    /\d/.test(password) &&
-    /[^A-Za-z0-9]/.test(password);
+    password.length >= PASSWORD_MIN_LENGTH;
 
 // ─── Password strength (UI only, does NOT affect validation) ──────────────────
 
@@ -76,12 +72,8 @@ const PasswordStrengthBar = ({ password }) => {
             </div>
 
             {/* Requirement checklist */}
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+            <div className="flex flex-col gap-y-1.5">
                 <Requirement met={password.length >= PASSWORD_MIN_LENGTH} label={`${PASSWORD_MIN_LENGTH}+ characters`} />
-                <Requirement met={/[A-Z]/.test(password)} label="Uppercase letter" />
-                <Requirement met={/[a-z]/.test(password)} label="Lowercase letter" />
-                <Requirement met={/\d/.test(password)} label="Number" />
-                <Requirement met={/[^A-Za-z0-9]/.test(password)} label="Special character" />
             </div>
         </div>
     );
@@ -134,10 +126,9 @@ const ForceChangePassword = () => {
     const { user, login, restoreAuth } = useAuth();
     const navigate = useNavigate();
 
-    const [currentPassword, setCurrentPassword]   = useState('');
     const [newPassword, setNewPassword]             = useState('');
     const [confirmPassword, setConfirmPassword]     = useState('');
-    const [visibleFields, setVisibleFields]         = useState({ current: false, next: false, confirm: false });
+    const [visibleFields, setVisibleFields]         = useState({ next: false, confirm: false });
     const [error, setError]                         = useState('');
     const [saving, setSaving]                       = useState(false);
 
@@ -151,20 +142,16 @@ const ForceChangePassword = () => {
         event.preventDefault();
         setError('');
 
-        if (!currentPassword.trim() || !newPassword || !confirmPassword) {
-            setError('Current password, new password, and confirmation are required.');
+        if (!newPassword || !confirmPassword) {
+            setError('New password and confirmation are required.');
             return;
         }
         if (!isStrongPassword(newPassword)) {
-            setError('New password must be at least 8 characters and include uppercase, lowercase, number, and symbol.');
+            setError('New password must be at least 8 characters.');
             return;
         }
         if (newPassword !== confirmPassword) {
             setError('Passwords do not match.');
-            return;
-        }
-        if (currentPassword === newPassword) {
-            setError('New password must be different from the temporary password.');
             return;
         }
 
@@ -174,7 +161,7 @@ const ForceChangePassword = () => {
                 user?.role === 'Student'
                     ? '/api/auth/student/change-password'
                     : '/api/auth/change-password';
-            const { data } = await apiClient.post(endpoint, { currentPassword, newPassword, confirmPassword });
+            const { data } = await apiClient.post(endpoint, { newPassword, confirmPassword });
             const freshUser = await restoreAuth({ silent: true });
             login(freshUser || data?.user || { ...user, mustChangePassword: false });
             navigate('/dashboard', { replace: true });
@@ -228,28 +215,7 @@ const ForceChangePassword = () => {
                     ) : null}
 
                     <div className="space-y-5">
-                        {/* Current password */}
-                        <PasswordField
-                            id="current-password"
-                            label="Current Password"
-                            value={currentPassword}
-                            onChange={setCurrentPassword}
-                            placeholder="Your current or temporary password"
-                            visible={visibleFields.current}
-                            onToggle={() => toggleVisibility('current')}
-                        />
 
-                        {/* Section divider */}
-                        <div className="relative">
-                            <div className="absolute inset-0 flex items-center" aria-hidden>
-                                <div className="w-full border-t border-slate-100 dark:border-slate-800" />
-                            </div>
-                            <div className="relative flex justify-center">
-                                <span className="bg-white px-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:bg-slate-900 dark:text-slate-500">
-                                    Choose New Password
-                                </span>
-                            </div>
-                        </div>
 
                         {/* New password */}
                         <PasswordField
