@@ -26,7 +26,7 @@ import {
     DashboardStatCard,
     EmptyStatePanel,
 } from '../components/analytics/DashboardPrimitives';
-import { buildAcademicYearOptions, buildIncidentFilterParams, formatShortDate, getIncidentTimestamp, resolveHandlerLabel, STATUS_OPTIONS } from '../utils/analytics';
+import { buildAcademicYearOptions, buildIncidentFilterParams, formatShortDate, getIncidentTimestamp, resolveHandlerLabel, STATUS_OPTIONS, formatDisplayValue } from '../utils/analytics';
 import apiClient from '../config/apiClient';
 import {
     migrateIncidentStorageForUser,
@@ -106,7 +106,7 @@ const IncidentList = () => {
     const allStaffOptions = useMemo(
         // Show a single unified "Administration" entry for all admin accounts;
         // teachers are listed individually by name.
-        () => ['Administration', ...staffList.filter((staff) => !isAdminRole(staff.role)).map((staff) => staff.name)],
+        () => ['Admin', ...staffList.filter((staff) => !isAdminRole(staff.role)).map((staff) => staff.name)],
         [staffList]
     );
     const academicYearOptions = useMemo(
@@ -125,7 +125,7 @@ const IncidentList = () => {
 
             if (!options?.reset) {
                 const allSelected = allStaffOptions.length > 0 && selectedStaff.length === allStaffOptions.length;
-                const administrationSelected = selectedStaff.includes('Administration');
+                const administrationSelected = selectedStaff.includes('Admin');
                 const selectedTeacherIds =
                     selectedStaff.length > 0 && !allSelected
                         ? staffList
@@ -497,7 +497,7 @@ const IncidentList = () => {
                         </div>
 
                         <UnifiedFilterBar
-                            title="Find records"
+                            title="Find Records"
                             hasActiveFilters={hasActiveFilters}
                             onReset={resetFilters}
                             collapsible
@@ -505,7 +505,7 @@ const IncidentList = () => {
                             actions={loading ? (
                                 <span className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
                                     <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-blue-200 border-t-blue-600" />
-                                    Updating
+                                    Updating…
                                 </span>
                             ) : null}
                         >
@@ -533,8 +533,8 @@ const IncidentList = () => {
                                     options={STATUS_OPTIONS}
                                     selected={statusFilter}
                                     onChange={setStatusFilter}
-                                    placeholder="All Status"
-                                    searchPlaceholder="Search status..."
+                                    placeholder="All statuses"
+                                    searchPlaceholder="Search statuses…"
                                 />
                             </div>
 
@@ -557,8 +557,8 @@ const IncidentList = () => {
                                         options={allStaffOptions}
                                         selected={selectedStaff}
                                         onChange={setSelectedStaff}
-                                        placeholder="All Staff"
-                                        searchPlaceholder="Search staff..."
+                                        placeholder="All staff"
+                                        searchPlaceholder="Search staff…"
                                     />
                                 ) : (
                                     <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
@@ -572,24 +572,24 @@ const IncidentList = () => {
                                     options={categoryList}
                                     selected={categoryFilter}
                                     onChange={setCategoryFilter}
-                                    placeholder="All Categories"
-                                    searchPlaceholder="Search category..."
+                                    placeholder="All categories"
+                                    searchPlaceholder="Search categories…"
                                 />
                                 <UnifiedMultiSelect
                                     label="Class"
                                     options={classList}
                                     selected={classFilter}
                                     onChange={setClassFilter}
-                                    placeholder="All Classes"
-                                    searchPlaceholder="Search class..."
+                                    placeholder="All classes"
+                                    searchPlaceholder="Search classes…"
                                 />
                                 <UnifiedMultiSelect
                                     label="Section"
                                     options={sectionList}
                                     selected={sectionFilter}
                                     onChange={setSectionFilter}
-                                    placeholder="All Sections"
-                                    searchPlaceholder="Search section..."
+                                    placeholder="All sections"
+                                    searchPlaceholder="Search sections…"
                                 />
                                 <div className="min-w-0">
                                     <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Read Status</p>
@@ -627,14 +627,14 @@ const IncidentList = () => {
                                     }}
                                     className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
                                 >
-                                    Retry
+                                    Try Again
                                 </button>
                             </DashboardPanel>
                         ) : null}
 
                         {!error && filteredIncidents.length === 0 ? (
                             <EmptyStatePanel
-                                title="No incidents found"
+                                title="No incidents found."
                                 description={incidents.length === 0 ? 'There are no incidents in the system yet.' : 'No incidents match your current filters.'}
                                 action={hasActiveFilters ? (
                                     <button
@@ -679,7 +679,7 @@ const IncidentList = () => {
                                                     ? String(incident.studentsInvolved)
                                                     : 'N/A';
                                         const incidentDate = getIncidentTimestamp(incident);
-                                        const badgeLabel = isPendingApproval ? 'Pending Approval' : isClosureRequest ? 'Seal Ready' : (incident.status === 'In Progress' ? 'In Progress' : incident.status);
+                                        const badgeLabel = isPendingApproval ? 'Pending approval' : isClosureRequest ? 'Seal ready' : (incident.status === 'In Progress' ? 'In progress' : incident.status);
                                         const CatIcon = categoryIcon(incident.category);
                                         const incidentId = getRecordId(incident);
 
@@ -710,7 +710,7 @@ const IncidentList = () => {
                                                     <div className="flex flex-wrap items-center justify-between gap-2">
                                                         <div className="flex flex-wrap items-center gap-1.5">
                                                             <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.14em] ${statusPill(incident.status, { pending: isPendingApproval, closureRequested: isClosureRequest })}`}>
-                                                                {badgeLabel}
+                                                                {formatDisplayValue(badgeLabel)}
                                                             </span>
                                                             {isHighPriority ? (
                                                                 <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-100 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.14em] text-amber-800 dark:border-amber-500/30 dark:bg-amber-950/30 dark:text-amber-300">
@@ -738,7 +738,7 @@ const IncidentList = () => {
                                                             {incident.title || 'Untitled Incident'}
                                                         </h3>
                                                         <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-                                                            Adm. No: <span className="font-semibold text-slate-600 dark:text-slate-300">{incident.admissionNo || 'N/A'}</span>
+                                                            Admission Number: <span className="font-semibold text-slate-600 dark:text-slate-300">{incident.admissionNo || 'N/A'}</span>
                                                         </p>
                                                         <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
                                                             Incident ID: <span className="font-semibold text-slate-600 dark:text-slate-300">{incidentId || 'N/A'}</span>
@@ -765,14 +765,14 @@ const IncidentList = () => {
                                                             <CatIcon size={13} className="mt-0.5 shrink-0 text-slate-400" aria-hidden="true" />
                                                             <div className="min-w-0">
                                                                 <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">Category</dt>
-                                                                <dd className="mt-0.5 truncate text-xs font-semibold text-slate-800 dark:text-slate-100" title={incident.category || 'Uncategorized'}>{incident.category || 'Uncategorized'}</dd>
+                                                                <dd className="mt-0.5 truncate text-xs font-semibold text-slate-800 dark:text-slate-100" title={incident.category || 'Uncategorized'}>{formatDisplayValue(incident.category || 'Uncategorized')}</dd>
                                                             </div>
                                                         </div>
                                                         <div className="flex items-start gap-2 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-slate-800 dark:bg-slate-950/60">
                                                             <MapPin size={13} className="mt-0.5 shrink-0 text-slate-400" aria-hidden="true" />
                                                             <div className="min-w-0">
                                                                 <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">Location</dt>
-                                                                <dd className="mt-0.5 truncate text-xs font-semibold text-slate-800 dark:text-slate-100" title={incident.location || 'Not specified'}>{incident.location || 'Not specified'}</dd>
+                                                                <dd className="mt-0.5 truncate text-xs font-semibold text-slate-800 dark:text-slate-100" title={incident.location || 'Not specified'}>{formatDisplayValue(incident.location || 'Not specified')}</dd>
                                                             </div>
                                                         </div>
                                                         <div className="flex items-start gap-2 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-slate-800 dark:bg-slate-950/60">
@@ -787,7 +787,7 @@ const IncidentList = () => {
                                                     {/* Rejection notice */}
                                                     {incident.rejectionReason ? (
                                                         <div role="alert" className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-xs text-red-700 dark:border-red-500/30 dark:bg-red-950/30 dark:text-red-300">
-                                                            <span className="font-semibold">Review note: </span>{incident.rejectionReason}
+                                                            <span className="font-semibold">Review Note: </span>{incident.rejectionReason}
                                                         </div>
                                                     ) : null}
 
@@ -807,7 +807,7 @@ const IncidentList = () => {
                                                             className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-3.5 py-2 text-xs font-bold text-white transition-all duration-150 hover:bg-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:bg-slate-700 dark:hover:bg-blue-600"
                                                         >
                                                             <Eye size={13} aria-hidden="true" />
-                                                            View
+                                                            View Details
                                                         </button>
                                                     </div>
                                                 </div>

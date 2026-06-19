@@ -28,7 +28,7 @@ const MobileBottomNav = () => {
     const navItems = [
         { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, end: true },
         { to: '/incidents', label: 'Incidents', icon: ListFilter },
-        canReport ? { to: '/create-incident', label: 'Create', icon: PlusCircle } : null,
+        canReport ? { to: '/create-incident', label: 'Create Incident', icon: PlusCircle } : null,
         { to: '/analytics', label: 'Analytics', icon: BarChart3 },
         canManageStaff ? { to: '/user-management', label: 'Users', icon: Users } : null,
     ].filter(Boolean);

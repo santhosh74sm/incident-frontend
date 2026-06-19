@@ -34,7 +34,7 @@ const commandIconByTitle = {
     'Create Incident'          : PlusCircle,
     'View Incident List'       : List,
     'School Analytics'         : BarChart3,
-    'Student summaries'        : User,
+    'Student Summaries'        : User,
     'View Issued Letters'      : Mail,
 };
 
@@ -75,7 +75,7 @@ const quickActionItems = [
         roles: ['Super Admin', 'Admin', 'Teacher'],
     },
     {
-        title: 'Student summaries',
+        title: 'Student Summaries',
         sub  : 'Look up one student\'s involvement and history.',
         link : '/student-analytics',
         type : 'command',
@@ -334,7 +334,7 @@ const CommandPalette = () => {
                             {!query.trim() ? (
                                 <div className="mb-4 rounded-[20px] border border-slate-200 bg-slate-50/80 px-4 py-4 dark:border-slate-800 dark:bg-slate-950/60">
                                     <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                        Jump to anything
+                                        Jump to Anything
                                     </p>
                                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                                         Type to search students, incidents, and letters — or pick a quick action below.
@@ -364,7 +364,7 @@ const CommandPalette = () => {
                                     {query.trim() ? (
                                         <>
                                             <p className="mt-4 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                                                No results for "{query.trim()}"
+                                                No results for "{query.trim()}".
                                             </p>
                                             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                                                 Try a different keyword, or use a quick action below.
@@ -373,7 +373,7 @@ const CommandPalette = () => {
                                     ) : (
                                         <>
                                             <p className="mt-4 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                                                No quick actions available
+                                                No quick actions available.
                                             </p>
                                             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                                                 Start typing to search the workspace.
@@ -436,7 +436,7 @@ const CommandPalette = () => {
                                                                 {item?.title || 'Untitled'}
                                                             </p>
                                                             <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-                                                                {item?.sub || 'Open this workspace item'}
+                                                                {item?.sub || 'Open this workspace item.'}
                                                             </p>
                                                         </div>
 

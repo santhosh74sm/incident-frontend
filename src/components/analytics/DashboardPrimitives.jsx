@@ -86,7 +86,7 @@ export const ChartTooltip = ({ labelFormatter, valueFormatter, cursor = false })
 
 export const truncateChartLabel = (value, maxLength = 14) => {
     const label = value === null || value === undefined ? '' : String(value);
-    return label.length > maxLength ? `${label.slice(0, Math.max(maxLength - 1, 1))}...` : label;
+    return label.length > maxLength ? `${label.slice(0, Math.max(maxLength - 1, 1))}…` : label;
 };
 
 export const CompactXAxisTick = ({ x, y, payload, maxLength = 14 }) => {

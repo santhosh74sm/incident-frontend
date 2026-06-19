@@ -113,7 +113,7 @@ const UploadPreviewTable = ({ preview }) => {
                         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3.5 dark:border-amber-500/30 dark:bg-amber-950/30">
                             <p className="flex items-center gap-2 text-sm font-semibold text-amber-900 dark:text-amber-200">
                                 <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
-                                Rows that need attention
+                                Rows That Need Attention
                             </p>
                             <ul className="mt-2.5 space-y-1.5 pl-1">
                                 {preview.rowIssues?.map((issue) => (

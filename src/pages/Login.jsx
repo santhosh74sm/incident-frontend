@@ -103,7 +103,7 @@ const Login = () => {
                                 </div>
                                 <div>
                                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-100">Staff Portal</p>
-                                    <h2 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">Sign in</h2>
+                                    <h2 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">Sign In</h2>
                                 </div>
                             </div>
                             <p className="mt-5 max-w-md text-sm leading-7 text-slate-300">
@@ -202,7 +202,7 @@ const Login = () => {
                                     {submitting ? (
                                         <>
                                             <Loader2 className="animate-spin" size={18} />
-                                            Signing in...
+                                            Signing in…
                                         </>
                                     ) : (
                                         <>

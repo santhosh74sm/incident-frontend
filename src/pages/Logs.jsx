@@ -54,7 +54,7 @@ const formatPrimitiveValue = (value) => {
         return value.length === 0 ? 'Not recorded' : value.map((item) => formatPrimitiveValue(item)).join(', ');
     }
     if (typeof value === 'object') return null;
-    if (isObjectIdLike(String(value))) return 'Internal reference';
+    if (isObjectIdLike(String(value))) return 'Reference unavailable';
     return String(value);
 };
 
@@ -340,9 +340,9 @@ const Logs = () => {
     const handleClearAll = async () => {
         const confirmed = await confirm({
             tone: 'danger',
-            title: 'Clear activity history?',
+            title: 'Clear Activity History',
             description: 'This will permanently delete all activity history for this school workspace. This action cannot be undone.',
-            confirmLabel: 'Clear history',
+            confirmLabel: 'Clear History',
         });
         if (!confirmed) return;
 
@@ -426,7 +426,7 @@ const Logs = () => {
                         <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
                             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                                 <div className="flex items-center justify-between">
-                                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Matching entries</p>
+                                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Matching Entries</p>
                                     <Filter size={16} className="text-cyan-500" />
                                 </div>
                                 <p className="mt-4 text-3xl font-black tracking-tight text-slate-900 dark:text-slate-50">{pagination.total}</p>
@@ -434,7 +434,7 @@ const Logs = () => {
                             </div>
                             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                                 <div className="flex items-center justify-between">
-                                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">On this page</p>
+                                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">On This Page</p>
                                     <CalendarRange size={16} className="text-blue-500" />
                                 </div>
                                 <p className="mt-4 text-3xl font-black tracking-tight text-slate-900 dark:text-slate-50">{logs.length}</p>
@@ -450,7 +450,7 @@ const Logs = () => {
                             </div>
                         </section>
 
-                        <UnifiedFilterBar hasActiveFilters={activeFilterCount > 0} onReset={resetFilters} title="Find & filter" collapsible defaultCollapsed>
+                        <UnifiedFilterBar hasActiveFilters={activeFilterCount > 0} onReset={resetFilters} title="Find & Filter" collapsible defaultCollapsed>
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
                                 <div className="md:col-span-2">
                                     <UnifiedSearchInput
@@ -565,7 +565,7 @@ const Logs = () => {
                                             <XCircle size={16} className="text-slate-300" />
                                         </div>
                                     </div>
-                                    <h3 className="text-xl font-bold text-slate-900 dark:text-slate-50">No activity found</h3>
+                                    <h3 className="text-xl font-bold text-slate-900 dark:text-slate-50">No activity found.</h3>
                                     <p className="mt-2 max-w-md text-sm text-slate-500 dark:text-slate-400">
                                         No entries match these filters.
                                     </p>
@@ -585,7 +585,7 @@ const Logs = () => {
                                             <tr className="border-b border-slate-200 dark:border-slate-800">
                                                 <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Action</th>
                                                 <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Performed By</th>
-                                                <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Related record</th>
+                                                <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Related Record</th>
                                                 <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Date & Time</th>
                                                 <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Details</th>
                                             </tr>
@@ -634,7 +634,7 @@ const Logs = () => {
                                                                     </span>
                                                                     <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{target.label}</p>
                                                                     {target.admissionNumber && (
-                                                                        <p className="text-xs text-slate-500 dark:text-slate-400">Admission No: {target.admissionNumber}</p>
+                                                                        <p className="text-xs text-slate-500 dark:text-slate-400">Admission Number: {target.admissionNumber}</p>
                                                                     )}
                                                                 </div>
                                                             </td>
@@ -718,7 +718,7 @@ const Logs = () => {
                                                                             )}
 
                                                                             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                                                                                <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Extra information</h3>
+                                                                                <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Extra Information</h3>
                                                                                 {summaryDetails.length > 0 ? (
                                                                                     <dl className="space-y-3">
                                                                                         {summaryDetails.map(([key, value]) => (
@@ -748,7 +748,7 @@ const Logs = () => {
                                 <p className="text-sm text-slate-500 dark:text-slate-400">
                                     {pagination.total > 0
                                         ? `Showing ${showingFrom}–${showingTo} of ${pagination.total} entries`
-                                        : 'No entries to display'}
+                                        : 'No entries to display.'}
                                 </p>
                                 <div className="flex items-center gap-2">
                                     <button

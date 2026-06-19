@@ -163,33 +163,33 @@ const TAG_GROUPS = [
     {
         category: 'Student',
         items: [
-            { tag: '{{studentName}}', description: 'Student full name' },
-            { tag: '{{admissionNo}}', description: 'Admission number' },
-            { tag: '{{class}}', description: 'Class or grade' },
+            { tag: '{{studentName}}', description: 'Student Full Name' },
+            { tag: '{{admissionNo}}', description: 'Admission Number' },
+            { tag: '{{class}}', description: 'Class or Grade' },
             { tag: '{{section}}', description: 'Section' },
         ],
     },
     {
         category: 'Incident',
         items: [
-            { tag: '{{incidentTitle}}', description: 'Incident title' },
-            { tag: '{{incidentDescription}}', description: 'Incident description' },
-            { tag: '{{location}}', description: 'Incident location' },
-            { tag: '{{date}}', description: 'Incident date' },
+            { tag: '{{incidentTitle}}', description: 'Incident Title' },
+            { tag: '{{incidentDescription}}', description: 'Incident Description' },
+            { tag: '{{location}}', description: 'Incident Location' },
+            { tag: '{{date}}', description: 'Incident Date' },
         ],
     },
     {
         category: 'System',
         items: [
-            { tag: '{{currentDate}}', description: 'Current date' },
-            { tag: '{{year}}', description: 'Current year' },
+            { tag: '{{currentDate}}', description: 'Current Date' },
+            { tag: '{{year}}', description: 'Current Year' },
         ],
     },
 ];
 
 const buildTagGuideText = () =>
     [
-        'OFFICIAL LETTER — MERGE FIELDS GUIDE',
+        'Official Letter — Merge Fields Guide',
         '',
         'Copy these merge fields exactly into your Word (.docx) letter file.',
         'When you save an incident, the system fills them in automatically.',
@@ -317,7 +317,7 @@ const TemplateCard = ({ template, selected, onSelect }) => (
 
         <div className="mt-5 flex items-center justify-between border-t border-slate-200 pt-4 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
             <span>Updated {formatDate(template.updatedAt || template.createdAt)}</span>
-            <span className="font-semibold text-slate-700 dark:text-slate-200">Open workspace</span>
+            <span className="font-semibold text-slate-700 dark:text-slate-200">Open Workspace</span>
         </div>
     </button>
 );
@@ -353,7 +353,7 @@ const PreviewPanel = ({
             <div className="flex min-h-[560px] items-center justify-center rounded-[28px] border border-dashed border-slate-300 bg-slate-50 p-8 text-center dark:border-slate-700 dark:bg-slate-900">
                 <div className="max-w-md">
                     <LayoutGrid className="mx-auto h-12 w-12 text-slate-300" />
-                    <h3 className="mt-5 text-xl font-semibold text-slate-900 dark:text-slate-50">Choose a letter file</h3>
+                    <h3 className="mt-5 text-xl font-semibold text-slate-900 dark:text-slate-50">Choose a Letter File</h3>
                     <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
                         Pick a card on the left to see language coverage, upload a Word file for each language, and preview the letter.
                     </p>
@@ -370,7 +370,7 @@ const PreviewPanel = ({
                 <div className="max-w-md">
                     <Languages className="mx-auto h-12 w-12 text-slate-300" />
                     <h3 className="mt-5 text-xl font-semibold text-slate-900 dark:text-slate-50">
-                        {LANGUAGE_META[language].label} letter file is missing
+                        {LANGUAGE_META[language].label} letter file is missing.
                     </h3>
                     <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
                         {variant.hasVersion
@@ -383,7 +383,7 @@ const PreviewPanel = ({
                         className="mt-6 inline-flex items-center gap-2 rounded-2xl border border-indigo-700 bg-indigo-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700"
                     >
                         <Upload className="h-4 w-4" />
-                        Upload {LANGUAGE_META[language].label} Word file
+                        Upload {LANGUAGE_META[language].label} Word File
                     </button>
                 </div>
             </div>
@@ -395,7 +395,7 @@ const PreviewPanel = ({
             <div className="flex min-h-[560px] items-center justify-center rounded-[28px] border border-slate-200 bg-white p-8 dark:border-slate-800 dark:bg-slate-900">
                 <div className="text-center">
                     <Loader2 className="mx-auto h-10 w-10 animate-spin text-indigo-500" />
-                    <p className="mt-4 text-sm font-medium text-slate-600 dark:text-slate-300">Preparing letter preview...</p>
+                    <p className="mt-4 text-sm font-medium text-slate-600 dark:text-slate-300">Preparing letter preview…</p>
                 </div>
             </div>
         );
@@ -406,14 +406,14 @@ const PreviewPanel = ({
             <div className="flex min-h-[560px] items-center justify-center rounded-[28px] border border-rose-200 bg-rose-50 p-8 text-center dark:border-rose-500/30 dark:bg-rose-950/30">
                 <div className="max-w-lg">
                     <AlertTriangle className="mx-auto h-12 w-12 text-rose-500" />
-                    <h3 className="mt-5 text-xl font-semibold text-rose-900 dark:text-rose-100">Preview unavailable</h3>
+                    <h3 className="mt-5 text-xl font-semibold text-rose-900 dark:text-rose-100">Preview Unavailable</h3>
                     <p className="mt-2 text-sm leading-6 text-rose-700 dark:text-rose-200">{previewState.error}</p>
                     <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                         <WorkspaceActionButton icon={RefreshCw} onClick={onRetry}>
-                            Retry
+                        Try Again
                         </WorkspaceActionButton>
                         <WorkspaceActionButton icon={Upload} variant="primary" onClick={onUpload}>
-                            Re-upload file
+                        Re-upload File
                         </WorkspaceActionButton>
                     </div>
                 </div>
@@ -464,14 +464,14 @@ const DetailsCard = ({ template }) => {
                     <Globe2 className="h-5 w-5" aria-hidden="true" />
                 </div>
                 <div>
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Letter file details</h3>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Letter File Details</h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400">Information shown here matches what staff see when letters are created.</p>
                 </div>
             </div>
 
             <dl className="mt-5 space-y-4">
                 <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-950/70">
-                    <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Incident category</dt>
+                    <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Incident Category</dt>
                     <dd className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">{template.incidentCategory}</dd>
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-950/70">
@@ -482,13 +482,13 @@ const DetailsCard = ({ template }) => {
                     </dd>
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-950/70">
-                    <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">English file</dt>
+                    <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">English File</dt>
                     <dd className="mt-2 text-sm text-slate-700 dark:text-slate-200">
                         {englishVariant.file?.originalName || 'Missing'}
                     </dd>
                 </div>
                 <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-950/70">
-                    <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Tamil file</dt>
+                    <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Tamil File</dt>
                     <dd className="mt-2 text-sm text-slate-700 dark:text-slate-200">
                         {tamilVariant.file?.originalName || 'Missing'}
                     </dd>
@@ -515,10 +515,10 @@ const PlaceholderLibrary = ({ onCopyAll, onDownloadGuide, onCopyTag }) => (
 
             <div className="flex flex-wrap gap-2">
                 <WorkspaceActionButton icon={Copy} onClick={onCopyAll}>
-                    Copy all
+                            Copy All
                 </WorkspaceActionButton>
                 <WorkspaceActionButton icon={Download} onClick={onDownloadGuide}>
-                    Download guide
+                            Download Guide
                 </WorkspaceActionButton>
             </div>
         </div>
@@ -566,7 +566,7 @@ const CreateTemplateModal = ({
         <div className="my-auto max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-xl overflow-y-auto rounded-[24px] border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:rounded-3xl">
             <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5 dark:border-slate-800">
                 <div>
-                    <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50">Add new template</h2>
+                    <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50">Add New Template</h2>
                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Enter the details below. You can upload Word files after creating the template.</p>
                 </div>
                 <button
@@ -580,18 +580,18 @@ const CreateTemplateModal = ({
 
             <div className="space-y-5 px-6 py-6">
                 <label className="block">
-                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Template title</span>
+                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Template Title</span>
                 <input
                 type="text"
                 value={formState.title}
                 onChange={(event) => onChange('title', event.target.value)}
-                placeholder="Parent warning letter"
+                    placeholder="Enter template title"
                         className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-indigo-400/20"
                     />
                 </label>
 
                 <label className="block">
-                    <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Incident category</span>
+                    <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Incident Category</span>
                     <select
                         value={formState.incidentCategory}
                         onChange={(event) => onChange('incidentCategory', event.target.value)}
@@ -639,7 +639,7 @@ const CreateTemplateModal = ({
                 className="inline-flex items-center justify-center gap-2 rounded-2xl border border-indigo-700 bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                 >
                 {creating ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Plus className="h-4 w-4" aria-hidden="true" />}
-                Add template
+                    Add Template
                 </button>
             </div>
         </div>
@@ -669,7 +669,7 @@ const UploadVariantModal = ({ template, language, uploading, onClose, onUpload }
                 <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5 dark:border-slate-800">
                     <div>
                         <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50">
-                            Upload {LANGUAGE_META[language].label} letter file
+                            Upload {LANGUAGE_META[language].label} Letter File
                         </h2>
                         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{template?.title}</p>
                     </div>
@@ -677,6 +677,7 @@ const UploadVariantModal = ({ template, language, uploading, onClose, onUpload }
                         type="button"
                         onClick={onClose}
                         className="rounded-2xl border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                        aria-label="Close upload dialog"
                     >
                         <X className="h-5 w-5" />
                     </button>
@@ -731,7 +732,7 @@ const UploadVariantModal = ({ template, language, uploading, onClose, onUpload }
                     className="inline-flex items-center justify-center gap-2 rounded-2xl border border-indigo-700 bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                     >
                     {uploading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Upload className="h-4 w-4" aria-hidden="true" />}
-                    Upload Word file
+                        Upload Word File
                     </button>
                 </div>
             </div>
@@ -1138,7 +1139,7 @@ const LetterTemplates = () => {
                 () => downloadBlob(
                     new Blob([buildTagGuideText()], { type: 'text/plain;charset=utf-8' }),
                     'Letter_merge_fields_guide.txt',
-                    { title: 'Letter merge fields guide' }
+                    { title: 'Letter Merge Fields Guide' }
                 ),
                 {
                     successMessage: 'Merge field guide downloaded successfully.',
@@ -1172,7 +1173,7 @@ const LetterTemplates = () => {
                                 <div>
                                     <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-blue-100">
                                         <ShieldCheck className="h-4 w-4" />
-                                        Official letters
+                                        Official Letters
                                     </div>
                                     <h1 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl">
                                         Letter Templates
@@ -1191,14 +1192,14 @@ const LetterTemplates = () => {
                                         {refreshing ? 'Refreshing…' : 'Refresh'}
                                     </WorkspaceActionButton>
                                     <WorkspaceActionButton icon={Download} onClick={downloadGuide}>
-                                        Template fields guide
+                                        Template Fields Guide
                                     </WorkspaceActionButton>
                                     <WorkspaceActionButton
                                         icon={Plus}
                                         variant="primary"
                                         onClick={() => setCreateModalOpen(true)}
                                     >
-                                        New letter file
+                                        New Letter File
                                     </WorkspaceActionButton>
                                 </div>
                             </div>
@@ -1206,26 +1207,26 @@ const LetterTemplates = () => {
 
                         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                             <MetricCard
-                                label="Total templates"
+                                label="Total Templates"
                                 value={templateMetrics.total}
-                                description="Templates saved for incident categories"
+                                description="Templates saved for incident categories."
                             />
                             <MetricCard
-                                label="Both languages ready"
+                                label="Both Languages Ready"
                                 value={templateMetrics.fullyReady}
-                                description="English and Tamil files both uploaded"
+                                description="English and Tamil files are uploaded."
                                 tone="emerald"
                             />
                             <MetricCard
-                                label="English uploaded"
+                                label="English Uploaded"
                                 value={templateMetrics.englishReady}
-                                description="Templates with an English Word file"
+                                description="Templates with an English Word file."
                                 tone="blue"
                             />
                             <MetricCard
-                                label="Tamil uploaded"
+                                label="Tamil Uploaded"
                                 value={templateMetrics.tamilReady}
-                                description="Templates with a Tamil Word file"
+                                description="Templates with a Tamil Word file."
                                 tone="indigo"
                             />
                         </section>
@@ -1235,7 +1236,7 @@ const LetterTemplates = () => {
                                 <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                                         <div>
-                                            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">All templates</h2>
+                                            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">All Templates</h2>
                                             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                                                 Each card shows which languages have a Word file uploaded.
                                             </p>
@@ -1246,7 +1247,7 @@ const LetterTemplates = () => {
                                                 type="text"
                                                 value={searchTerm}
                                                 onChange={(event) => setSearchTerm(event.target.value)}
-                                                placeholder="Search by title, category, or description..."
+                                                placeholder="Search by title, category, or description…"
                                                 className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-indigo-400/20"
                                             />
                                         </div>
@@ -1257,13 +1258,13 @@ const LetterTemplates = () => {
                                     <div className="flex min-h-[420px] items-center justify-center rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
                                         <div className="text-center">
                                             <Loader2 className="mx-auto h-10 w-10 animate-spin text-indigo-500" />
-                                            <p className="mt-4 text-sm font-medium text-slate-600 dark:text-slate-300">Loading letter files...</p>
+                                            <p className="mt-4 text-sm font-medium text-slate-600 dark:text-slate-300">Loading letter files…</p>
                                         </div>
                                     </div>
                                 ) : filteredTemplates.length === 0 ? (
                                     <div className="rounded-3xl border border-slate-200 bg-white px-6 py-16 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
                                         <FileText className="mx-auto h-12 w-12 text-slate-300" />
-                                        <h3 className="mt-5 text-xl font-semibold text-slate-900 dark:text-slate-50">No templates match your search</h3>
+                                        <h3 className="mt-5 text-xl font-semibold text-slate-900 dark:text-slate-50">No templates match your search.</h3>
                                         <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
                                             Try different words in the search box, or add a new template for a category that is not covered yet.
                                         </p>
@@ -1288,10 +1289,10 @@ const LetterTemplates = () => {
                                         <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
                                             <div>
                                                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                                                    Template workspace
+                                                    Template Workspace
                                                 </p>
                                                 <h2 className="mt-2 text-2xl font-semibold text-slate-900 dark:text-slate-50">
-                                                    {selectedTemplate?.title || 'Choose a template'}
+                                                    {selectedTemplate?.title || 'Choose a Template'}
                                                 </h2>
                                                 <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
                                                     {selectedTemplate
@@ -1354,7 +1355,7 @@ const LetterTemplates = () => {
                                                     onClick={() => downloadVariant(selectedTemplate, activeLanguage)}
                                                     disabled={!currentVariant.hasDocx || downloadingKey === `${selectedTemplate._id}-${activeLanguage}-docx`}
                                                 >
-                                                    {downloadingKey === `${selectedTemplate._id}-${activeLanguage}-docx` ? 'Downloading...' : 'Download Word file'}
+                                                    {downloadingKey === `${selectedTemplate._id}-${activeLanguage}-docx` ? 'Downloading…' : 'Download Word File'}
                                                 </WorkspaceActionButton>
 
                                                 <WorkspaceActionButton
@@ -1370,7 +1371,7 @@ const LetterTemplates = () => {
                                                     }
                                                     disabled={!currentVariant.hasVersion && !currentVariant.hasDocx}
                                                 >
-                                                    Remove this language
+                                                    Remove This Language
                                                 </WorkspaceActionButton>
 
                                                 <WorkspaceActionButton
@@ -1385,7 +1386,7 @@ const LetterTemplates = () => {
                                                         })
                                                     }
                                                 >
-                                                    Remove letter file
+                                                    Remove Letter File
                                                 </WorkspaceActionButton>
                                             </div>
                                         ) : null}
@@ -1453,13 +1454,13 @@ const LetterTemplates = () => {
 
             {confirmState.open ? (
                 <ConfirmModal
-                    title={confirmState.mode === 'template' ? 'Remove letter file' : 'Remove this language'}
+                    title={confirmState.mode === 'template' ? 'Remove Letter File' : 'Remove This Language'}
                     description={
                         confirmState.mode === 'template'
                             ? `This will remove "${confirmState.template?.title}" for both English and Tamil, including stored files.`
                             : `This will remove the ${LANGUAGE_META[confirmState.language].label.toLowerCase()} letter file from "${confirmState.template?.title}".`
                     }
-                    confirmLabel={confirmState.mode === 'template' ? 'Remove letter file' : 'Remove language'}
+                    confirmLabel={confirmState.mode === 'template' ? 'Remove Letter File' : 'Remove Language'}
                     busy={deleting}
                     onClose={() => setConfirmState({ open: false, mode: '', template: null, language: 'en' })}
                     onConfirm={handleDeleteConfirmed}

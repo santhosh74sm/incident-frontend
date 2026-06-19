@@ -225,7 +225,7 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
                 roles: ['Super Admin'],
             },
             {
-                title: 'Academic Year',
+                title: 'Academic Year Management',
                 icon: CalendarDays,
                 path: '/settings/academic-year',
                 preload: () => import('../pages/AcademicYearManagement'),

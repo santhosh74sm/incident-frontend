@@ -43,7 +43,7 @@ import {
     DashboardStatCard,
     EmptyStatePanel,
 } from '../components/analytics/DashboardPrimitives';
-import { formatShortDate, formatShortDateTime, getIncidentTimestamp, resolveHandlerLabel } from '../utils/analytics';
+import { formatShortDate, formatShortDateTime, getIncidentTimestamp, resolveHandlerLabel, formatDisplayValue } from '../utils/analytics';
 import {
     migrateIncidentStorageForUser,
     readUserList,
@@ -926,7 +926,7 @@ const IncidentDetail = () => {
                             meta={(
                                 <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
                                     <span className={`inline-flex items-center rounded-full border px-3 py-1.5 font-semibold ${statusStyle.badge}`}>
-                                        {incident.status || 'Open'}
+                                        {formatDisplayValue(incident.status || 'Open')}
                                     </span>
                                     <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 font-medium text-slate-700">
                                         {incident.approvalStatus || 'Pending'}
@@ -974,7 +974,7 @@ const IncidentDetail = () => {
 
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
                             <DashboardStatCard
-                                title="Current Status" value={incident.status || 'Open'}
+                                title="Current Status" value={formatDisplayValue(incident.status || 'Open')}
                                 icon={incident.status === 'Closed' ? CheckCircle : incident.status === 'In Progress' ? Clock : AlertTriangle}
                                 tone={statusStyle.tone} helper="Current incident status"
                             />
@@ -982,7 +982,7 @@ const IncidentDetail = () => {
                                 title="Assigned To"
                                 value={resolveHandlerLabel(incident)}
                                 icon={UserCheck} tone={incident.assignedHandler ? 'blue' : 'amber'}
-                                helper={isAdminRole(incident.assignedHandler?.role) ? 'Administration' : (incident.assignedHandler?.role || 'Awaiting ownership')}
+                                helper={isAdminRole(incident.assignedHandler?.role) ? 'Admin' : (incident.assignedHandler?.role || 'Awaiting ownership')}
                             />
                             <DashboardStatCard title="Evidence Files" value={evidenceAssets.length} icon={FileImage} tone="slate" helper="Supporting files currently attached" />
                             <DashboardStatCard title="Progress Entries" value={progressLogs.length} icon={Activity} tone="blue" helper="Operational notes on the case" />
@@ -1008,8 +1008,8 @@ const IncidentDetail = () => {
 
                             <DashboardPanel className="xl:col-span-4" title="Incident Details" description="Where the incident happened and what was reported." icon={MessageSquare}>
                                 <div className="grid gap-4">
-                                    <DetailField icon={FileText} label="Category" value={incident.category || 'N/A'} />
-                                    <DetailField icon={MapPin} label="Location" value={incident.location || 'N/A'} />
+                                    <DetailField icon={FileText} label="Category" value={formatDisplayValue(incident.category || 'N/A')} />
+                                    <DetailField icon={MapPin} label="Location" value={formatDisplayValue(incident.location || 'N/A')} />
                                     <DetailField icon={Calendar} label="Incident Date" value={formatShortDate(getIncidentTimestamp(incident))} helper="Date the incident occurred." />
                                     <div className={FIELD_CARD_CLASS}>
                                         <div className="flex items-start gap-3">
@@ -1064,7 +1064,7 @@ const IncidentDetail = () => {
                                     <DetailField icon={ShieldCheck} label="Reported By" value={incident.reportedBy?.name || 'N/A'} helper={incident.reportedBy?.role || 'Reporter'} />
                                     <DetailField icon={UserCheck} label="Assigned Handler"
                                         value={resolveHandlerLabel(incident)}
-                                        helper={isAdminRole(incident.assignedHandler?.role) ? 'Administration' : (incident.assignedHandler?.role || 'Waiting for assignment')}
+                                        helper={isAdminRole(incident.assignedHandler?.role) ? 'Admin' : (incident.assignedHandler?.role || 'Waiting for assignment')}
                                     />
                                     <DetailField icon={Calendar} label="Opened" value={formatShortDateTime(getIncidentTimestamp(incident))} />
                                     <DetailField icon={Activity} label="Last Updated" value={formatShortDateTime(incident.updatedAt || incident.closedAt || getIncidentTimestamp(incident))} />
@@ -1489,7 +1489,7 @@ const IncidentDetail = () => {
 
                         <div className="space-y-5 p-6">
                             <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
-                                Generate the official letter for <strong>{studentNames || 'the selected student'}</strong> in the <strong>{letterPermission.categoryName}</strong> category?
+                                Generate the official letter for <strong>{studentNames || 'the selected student'}</strong> in the <strong>{formatDisplayValue(letterPermission.categoryName)}</strong> category?
                             </div>
 
                             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">

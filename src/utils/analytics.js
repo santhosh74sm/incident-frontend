@@ -28,7 +28,11 @@ export const formatActivityRecordLabel = (type) => {
     return map[key] || map[compact] || raw;
 };
 
-export const STATUS_OPTIONS = ['Open', 'In Progress', 'Closed'];
+export const STATUS_OPTIONS = [
+    { id: 'Open', label: 'Open' },
+    { id: 'In Progress', label: 'In progress' },
+    { id: 'Closed', label: 'Closed' },
+];
 export const ALL_ACADEMIC_YEARS_VALUE = 'all';
 
 export const buildAcademicYearOptions = (academicYears = [], currentAcademicYear = '') => {
@@ -47,7 +51,7 @@ export const buildAcademicYearOptions = (academicYears = [], currentAcademicYear
     const uniqueYears = Array.from(new Set(orderedYears));
 
     return [
-        { value: ALL_ACADEMIC_YEARS_VALUE, label: 'All Years' },
+        { value: ALL_ACADEMIC_YEARS_VALUE, label: 'All years' },
         ...uniqueYears.map((year) => ({
             value: year,
             label: year === currentAcademicYear ? `${year} (Current)` : year,
@@ -225,10 +229,10 @@ export const getLetterTimelineTimestamp = (letter) =>
 
 export const resolveHandlerLabel = (incident) => {
     const handler = incident?.assignedHandler;
-    if (!handler) return 'Administration';
+    if (!handler) return 'Admin';
     const role = handler.role || '';
-    if (['Super Admin', 'Admin', 'super_admin', 'admin'].includes(role)) return 'Administration';
-    return handler.name || 'Administration';
+    if (['Super Admin', 'Admin', 'super_admin', 'admin'].includes(role)) return 'Admin';
+    return handler.name || 'Admin';
 };
 
 export const toneForStatus = (status) => {
@@ -283,7 +287,7 @@ export const buildDashboardActivityFeed = (incidents = [], { icons = {} } = {}) 
         .map((incident) => ({
             id: getRecordId(incident),
             title: incident.title || 'Untitled incident',
-            description: `${incident.studentsInvolved?.[0] || incident.studentDetails?.name || 'Student unavailable'} - ${incident.status || 'Unknown'}`,
+            description: `${incident.studentsInvolved?.[0] || incident.studentDetails?.name || 'Student unavailable'} — ${incident.status || 'Unknown'}`,
             timestamp: formatShortDateTime(incident.updatedAt || getIncidentTimestamp(incident)),
             icon:
                 incident.status === 'Closed'
@@ -522,3 +526,13 @@ export const buildCreationTrendSeries = ({ items = [], dateRange = { start: '', 
             created: bucketItems.length,
         }),
     });
+export const formatDisplayValue = (val) => {
+    const raw = String(val || '').trim();
+    if (!raw) return '';
+    if (raw.includes('@')) return raw;
+    if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw;
+    if (!/[a-zA-Z]/.test(raw)) return raw;
+
+    const withSpaces = raw.replace(/[_-]+/g, ' ');
+    return withSpaces.replace(/\b\w/g, (char) => char.toUpperCase());
+};

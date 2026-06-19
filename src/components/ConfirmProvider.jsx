@@ -107,7 +107,7 @@ const ConfirmDialog = ({ options, onResolve }) => {
                     </div>
                     <div className="min-w-0 flex-1">
                         <h2 id={titleId} className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                            {options.title || 'Confirm action'}
+                            {options.title || 'Confirm Action'}
                         </h2>
                         <p id={descriptionId} className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
                             {options.description || 'Please confirm that you want to continue.'}

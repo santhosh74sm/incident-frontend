@@ -19,7 +19,7 @@ import { useNotifications } from '../context/NotificationContext';
 import { useAuth } from '../context/AuthContext';
 import { isAdminRole } from '../utils/roles';
 import { getRecordId, isValidMongoObjectId } from '../utils/ids';
-import { formatActivityRecordLabel } from '../utils/analytics';
+import { formatActivityRecordLabel, formatDisplayValue } from '../utils/analytics';
 
 const DISPLAYED_NOTIFICATION_LIMIT = 12;
 
@@ -298,7 +298,7 @@ const NotificationSection = ({ title, count, items, onItemClick }) => {
 
                                         {admissionNumber ? (
                                             <span className={`${chipClassName} border-blue-100 bg-blue-50 text-blue-700 dark:border-blue-500/30 dark:bg-blue-950/40 dark:text-blue-300`}>
-                                                <span className="truncate">AdNo: {admissionNumber}</span>
+                                                <span className="truncate">Admission Number: {admissionNumber}</span>
                                             </span>
                                         ) : null}
 
@@ -310,13 +310,13 @@ const NotificationSection = ({ title, count, items, onItemClick }) => {
 
                                         {status ? (
                                             <span className={`${chipClassName} border-emerald-100 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/30 dark:text-emerald-300`}>
-                                                <span className="truncate">{status}</span>
+                                                <span className="truncate">{formatDisplayValue(status)}</span>
                                             </span>
                                         ) : null}
 
                                         {category ? (
                                             <span className={`${chipClassName} border-amber-100 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/30 dark:text-amber-300`}>
-                                                <span className="truncate">{category}</span>
+                                                <span className="truncate">{formatDisplayValue(category)}</span>
                                             </span>
                                         ) : null}
                                     </div>
@@ -436,7 +436,7 @@ const NotificationDropdown = ({ onClose }) => {
                         aria-disabled={unreadCount === 0}
                         className="min-h-[44px] min-w-0 touch-manipulation rounded-xl border border-blue-200 bg-blue-50 px-2 py-2 text-xs font-semibold text-blue-700 transition-colors duration-200 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-blue-500/30 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-950/60 sm:px-4"
                     >
-                        Mark all read
+                        Mark All as Read
                     </button>
 
                     {/* Close button — visible on mobile only */}
@@ -474,7 +474,7 @@ const NotificationDropdown = ({ onClose }) => {
                         <Bell size={20} aria-hidden />
                     </div>
                     <p className="mt-4 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                        No notifications yet
+                        No notifications available.
                     </p>
                     <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
                         When incidents are assigned, updated, or closed, you'll see them here.
@@ -552,7 +552,7 @@ const NotificationDropdown = ({ onClose }) => {
             <div className="shrink-0 border-t border-slate-100 px-5 py-3 dark:border-slate-800">
                 <p className="text-center text-[11px] text-slate-400 dark:text-slate-500">
                     {visibleNotifications.length === 0
-                        ? 'No activity to display'
+                        ? 'No activity to display.'
                         : `${visibleNotifications.length} latest notification${visibleNotifications.length !== 1 ? 's' : ''} loaded`}
                 </p>
             </div>

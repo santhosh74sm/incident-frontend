@@ -1,16 +1,17 @@
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Calendar, ChevronDown, Filter, RefreshCw, Search, X } from 'lucide-react';
+import { formatDisplayValue } from '../utils/analytics';
 
 // ─── Normalise option shapes ───────────────────────────────────────────────────
 
 const normalizeOptions = (options = []) =>
     options.map((option) =>
         typeof option === 'string'
-            ? { id: option, label: option }
+            ? { id: option, label: formatDisplayValue(option) }
             : {
                   id   : option?.id ?? option?.value ?? option?.name,
-                  label: option?.label ?? option?.name ?? String(option?.id ?? ''),
+                  label: formatDisplayValue(option?.label ?? option?.name ?? String(option?.id ?? '')),
               }
     );
 
@@ -221,7 +222,7 @@ export const FilterDropdown = ({
                         {filteredOptions.length === 0 ? (
                             <div className="px-3 py-6 text-center">
                                 <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                                    No matching options
+                                    No matching options.
                                 </p>
                                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                                     Try a different keyword.

@@ -28,7 +28,7 @@ const AcademicYearManagement = () => {
                 if (!mounted) return;
                 setCurrentAcademicYear(data?.currentAcademicYear || '');
             })
-            .catch(() => addToast('Could not load Academic Year settings.', 'error'))
+            .catch(() => addToast('Could not load academic year settings.', 'error'))
             .finally(() => mounted && setLoading(false));
         return () => { mounted = false; };
     }, [addToast]);
@@ -40,11 +40,11 @@ const AcademicYearManagement = () => {
             setCurrentAcademicYear(data.currentAcademicYear);
             const promotion = data?.promotion || {};
             addToast(
-                `Academic Year updated. Promoted ${promotion.promoted || 0} student(s), marked ${promotion.passedOut || 0} as Passed Out.`,
+                `Academic year updated successfully. Students promoted: ${promotion.promoted || 0}. Students passed out: ${promotion.passedOut || 0}.`,
                 'success'
             );
         } catch (error) {
-            addToast(error.response?.data?.message || 'Could not update Academic Year.', 'error');
+            addToast(error.response?.data?.message || 'Could not update the academic year.', 'error');
         } finally {
             setSaving(false);
         }
@@ -53,17 +53,17 @@ const AcademicYearManagement = () => {
     const confirmAcademicYearChange = async () => {
         const confirmed = await confirm({
             tone: 'warning',
-            title: 'Change academic year?',
+            title: 'Change Academic Year',
             description: `Move the workspace from ${currentAcademicYear} to ${nextAcademicYear}. This is a school-wide administrative action.`,
             details: (
                 <ul className="list-disc space-y-2 pl-5">
                     <li>Eligible students may be promoted according to the existing promotion rules.</li>
-                    <li>Final-year students may be marked as Passed Out according to the existing pass-out rules.</li>
+                    <li>Final-year students may be marked as passed out according to the existing pass-out rules.</li>
                     <li>Historical academic-year records are preserved and should not be edited manually.</li>
                     <li>Reports, uploads, analytics, and new incidents will use the updated current academic year.</li>
                 </ul>
             ),
-            confirmLabel: 'Change academic year',
+            confirmLabel: 'Change Academic Year',
         });
         if (confirmed) {
             await submitChange();

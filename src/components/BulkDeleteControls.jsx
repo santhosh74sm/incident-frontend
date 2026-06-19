@@ -10,12 +10,12 @@ const labelMap = {
 };
 
 const summaryLabelMap = {
-    studentsToDelete: 'Students to delete',
-    incidentsToDelete: 'Incidents to delete',
-    issuedLettersToDelete: 'Issued letters to delete',
-    incidents: 'Incidents to delete',
-    evidenceFiles: 'Evidence files affected',
-    issuedLetters: 'Issued letters affected',
+    studentsToDelete: 'Students to Delete',
+    incidentsToDelete: 'Incidents to Delete',
+    issuedLettersToDelete: 'Issued Letters to Delete',
+    incidents: 'Incidents to Delete',
+    evidenceFiles: 'Evidence Files Affected',
+    issuedLetters: 'Issued Letters Affected',
 };
 
 const formatLabel = (key) =>
@@ -230,7 +230,7 @@ const BulkDeleteModal = ({ moduleName, mode, ids, source, status, onClose, onCom
                             className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                         >
                             {executing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                            Execute {actionLabel}
+                            Delete {actionLabel}
                         </button>
                     ) : null}
                 </div>
@@ -256,7 +256,7 @@ const BulkDeleteControls = ({ moduleName, filteredIds, allCount, source, status,
                     className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-500/40 dark:bg-slate-900 dark:text-red-200 dark:hover:bg-red-500/10 sm:w-auto"
                 >
                     <Trash2 className="h-4 w-4" />
-                    Delete Selected
+                    Delete Selected Records
                 </button>
                 <button
                     type="button"
@@ -265,7 +265,7 @@ const BulkDeleteControls = ({ moduleName, filteredIds, allCount, source, status,
                     className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                 >
                     <Trash2 className="h-4 w-4" />
-                    Delete All Filtered
+                    Delete All Filtered Records
                 </button>
             </div>
             {modal ? (

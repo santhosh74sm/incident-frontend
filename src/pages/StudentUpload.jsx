@@ -51,9 +51,9 @@ const downloadStudentTemplate = async (addToast) => {
 
     const dataSheet = XLSX.utils.aoa_to_sheet([
         ['admissionNo', 'name', 'class', 'section'],
-        ['ADM001', 'Santhosh Kumar', '12', 'A'],
-        ['ADM002', 'Ram Prakash', '11', 'B'],
-        ['ADM003', 'Meena Devi', '10', 'C'],
+        ['ADM001', 'Example Student One', '12', 'A'],
+        ['ADM002', 'Example Student Two', '11', 'B'],
+        ['ADM003', 'Example Student Three', '10', 'C'],
     ]);
 
     dataSheet['!cols'] = [
@@ -67,7 +67,7 @@ const downloadStudentTemplate = async (addToast) => {
         ['Student Upload Guide'],
         ['1. Keep the first-row headers unchanged.'],
         ['2. Admission numbers identify one student master record.'],
-        ['3. Select the Academic Year on the Student Upload page before uploading.'],
+        ['3. Select the academic year on the Student Upload page before uploading.'],
         ['4. Use the exact class and section values you want stored.'],
         ['5. Save the file as Excel (.xlsx) before uploading.'],
     ]);
@@ -80,7 +80,7 @@ const downloadStudentTemplate = async (addToast) => {
         await withFeedback(
             addToast,
             () => downloadWorkbook(XLSX, workbook, 'student_upload_template.xlsx', {
-                title: 'Student upload template',
+                title: 'Student Upload Template',
             }),
             {
                 successMessage: 'Template downloaded successfully.',
@@ -94,10 +94,10 @@ const downloadStudentTemplate = async (addToast) => {
 
 /* ─── Step indicator ──────────────────────────────────────────────── */
 const STEPS = [
-    { id: 1, label: 'Download sample' },
-    { id: 2, label: 'Choose file' },
-    { id: 3, label: 'Review preview' },
-    { id: 4, label: 'Confirm upload' },
+    { id: 1, label: 'Download Sample' },
+    { id: 2, label: 'Choose File' },
+    { id: 3, label: 'Review Preview' },
+    { id: 4, label: 'Confirm Upload' },
 ];
 
 const StepBar = ({ activeStep }) => (
@@ -404,7 +404,7 @@ const StudentUpload = () => {
                             {/* Section header */}
                             <div className="flex flex-col gap-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-indigo-50/50 px-4 py-4 dark:border-slate-800 dark:from-slate-900 dark:to-slate-900/50 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                                 <div className="min-w-0">
-                                    <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Choose your spreadsheet</h2>
+                                    <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Choose Your Spreadsheet</h2>
                                     <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
                                         Click the area below or drag a file in. Review the preview, then upload.
                                     </p>
@@ -416,7 +416,7 @@ const StudentUpload = () => {
                                     className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 sm:w-auto"
                                 >
                                     <Download className="h-4 w-4" aria-hidden="true" />
-                                    Download sample
+                                    Download Sample
                                 </button>
                             </div>
 
@@ -513,7 +513,7 @@ const StudentUpload = () => {
                             <UploadStatusBanner message={message} />
 
                             <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-900 dark:border-blue-500/30 dark:bg-blue-950/30 dark:text-blue-100">
-                                Current Academic Year: {currentAcademicYear || 'Loading...'}
+                                Current Academic Year: {currentAcademicYear || 'Loading…'}
                             </div>
 
                             {/* Action buttons */}
@@ -549,7 +549,7 @@ const StudentUpload = () => {
                                             : <CloudUpload className="h-4 w-4" aria-hidden="true" />}
                                         {uploading
                                             ? (uploadProgress === 100 ? 'Saving records…' : 'Uploading…')
-                                            : 'Confirm & Upload'}
+                                            : 'Confirm Upload'}
                                     </button>
                                 </div>
                             </div>
@@ -562,7 +562,7 @@ const StudentUpload = () => {
                             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/50">
                                 <div className="border-b border-slate-100 bg-slate-50 px-5 py-4 dark:border-slate-800 dark:bg-slate-900">
                                     <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-slate-700 dark:text-slate-300">
-                                        Before you upload
+                                        Before You Upload
                                     </h2>
                                 </div>
                                 <ul className="space-y-3.5 p-5">
@@ -600,7 +600,7 @@ const StudentUpload = () => {
                                     <div className="border-b border-emerald-100 px-5 py-3.5 dark:border-emerald-500/20">
                                         <h2 className="flex items-center gap-2 text-sm font-bold text-emerald-900 dark:text-emerald-100">
                                             <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-                                            Last upload completed
+                                            Last Upload Completed
                                         </h2>
                                     </div>
                                     <div className="space-y-1.5 px-5 py-4 text-sm text-emerald-800 dark:text-emerald-200">

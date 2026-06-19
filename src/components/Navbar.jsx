@@ -138,9 +138,9 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
         }
         return [
             ...(isSuperAdminRole(user?.role)
-                ? [{ label: 'Activity history', icon: ListFilter, action: () => navigate('/logs') }]
+                ? [{ label: 'Activity History', icon: ListFilter, action: () => navigate('/logs') }]
                 : []),
-            { label: 'Staff & students', icon: Settings, action: () => navigate('/user-management') },
+            { label: 'Staff & Students', icon: Settings, action: () => navigate('/user-management') },
         ];
     }, [navigate, user?.role]);
     const normalizedRole = normalizeRole(user?.role);
@@ -277,7 +277,7 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                                                 aria-expanded={showProfileEdit}
                                             >
                                                 {showProfileEdit ? <X size={14} /> : <Edit3 size={14} />}
-                                                {showProfileEdit ? 'Cancel edit' : 'Edit profile'}
+                                                {showProfileEdit ? 'Cancel Edit' : 'Edit Profile'}
                                             </button>
                                         </div>
 
@@ -286,7 +286,7 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                                                 <div className="space-y-3">
                                                     <div>
                                                         <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">
-                                                            Username
+                                                            Name
                                                         </label>
                                                         <input
                                                             required
@@ -334,7 +334,7 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                                                         className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-70"
                                                     >
                                                         {savingProfile ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-                                                        Save
+                                                        Save Changes
                                                     </button>
                                                 </div>
                                             </form>

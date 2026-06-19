@@ -32,6 +32,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../config/apiClient';
 import { isAdminRole, isTeacherRole } from '../utils/roles';
+import { formatDisplayValue } from '../utils/analytics';
 
 dayjs.extend(customParseFormat);
 
@@ -46,7 +47,7 @@ const emptyLetterPermission = {
 };
 
 const getOptionId = (option) => option?._id || option?.id || option || '';
-const getOptionLabel = (option) => option?.name || option?.label || option || '';
+const getOptionLabel = (option) => formatDisplayValue(option?.name || option?.label || option || '');
 const hasAvailableLetterTemplate = (templates) => Boolean(templates?.en || templates?.ta);
 const findOptionByValue = (options, value) =>
     options.find((option) => String(getOptionId(option)) === String(value) || getOptionLabel(option) === value);
@@ -715,9 +716,9 @@ const CreateIncident = () => {
 
         const confirmed = await confirm({
             tone: 'danger',
-            title: 'Delete master-list option?',
+            title: 'Delete Master-List Option',
             description: `Delete "${name}" from the master list? Existing records keep their saved values, but this option will no longer be available for new selections.`,
-            confirmLabel: 'Delete option',
+            confirmLabel: 'Delete Option',
         });
         if (!confirmed) return;
 
@@ -1009,7 +1010,7 @@ const CreateIncident = () => {
                 if (shouldGenerateLetter) {
                     addToast('Incident saved, but the letter could not be created. Please try again or contact ICT support.', 'error');
                 } else {
-                    addToast(responseData.message || `Created ${responseData.createdCount} incident reports successfully.`, 'success');
+                    addToast(responseData.message || `${responseData.createdCount} incident reports created successfully.`, 'success');
                 }
                 setTimeout(() => navigate('/incidents'), 1600);
             }
@@ -1034,11 +1035,11 @@ const CreateIncident = () => {
     const submitIncident = async (shouldGenerateLetter, manualTimingPayload = null) => {
         const confirmed = await confirm({
             tone: 'info',
-            title: 'Submit incident report?',
+            title: 'Submit Incident Report',
             description: `Create incident record for ${selectedStudents.length} student${
                 selectedStudents.length === 1 ? '' : 's'
             }? You can add progress notes later from the incident detail page.`,
-            confirmLabel: 'Create incident',
+            confirmLabel: 'Create Incident',
         });
         if (!confirmed) {
             return;
@@ -1202,10 +1203,10 @@ const CreateIncident = () => {
                                     onChange={(event) => setModal((current) => ({ ...current, value: event.target.value }))}
                                     placeholder={
                                         modal.type === 'category'
-                                            ? 'e.g. Bullying'
+                                            ? 'e.g., Bullying'
                                             : modal.type === 'location'
-                                            ? 'e.g. Corridor'
-                                            : 'e.g. Parent Letter'
+                                            ? 'e.g., Corridor'
+                                            : 'e.g., Parent Letter'
                                     }
                                     className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
                                     autoFocus
@@ -1241,7 +1242,7 @@ const CreateIncident = () => {
                                         <Clock3 className="h-5 w-5 text-indigo-600" />
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-semibold text-slate-900">Custom date & progress</h3>
+                                        <h3 className="text-lg font-semibold text-slate-900">Custom Date & Progress</h3>
                                         <p className="mt-1 text-sm text-slate-600">
                                             Date is required; time is optional. If time is blank, midnight is used.
                                         </p>
@@ -1340,7 +1341,7 @@ const CreateIncident = () => {
                                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
                                 >
                                     <Check className="h-4 w-4" />
-                                    {modal.mode === 'submit' ? 'Continue' : 'Save dates'}
+                                    {modal.mode === 'submit' ? 'Continue' : 'Save Dates'}
                                 </button>
                             </div>
                         </div>
@@ -1356,7 +1357,7 @@ const CreateIncident = () => {
                                         <Mail className="h-5 w-5 text-indigo-600" />
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-semibold text-slate-900">Create official letter?</h3>
+                                        <h3 className="text-lg font-semibold text-slate-900">Create Official Letter?</h3>
                                         <p className="mt-1 text-sm text-slate-600">
                                             A letter file is available for {letterPermission.categoryName || 'this category'}.
                                         </p>
@@ -1381,7 +1382,7 @@ const CreateIncident = () => {
                                 </div>
 
                                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                                    <p className="text-sm font-semibold text-slate-800">Available languages</p>
+                                    <p className="text-sm font-semibold text-slate-800">Available Languages</p>
                                     <div className="mt-3 flex flex-wrap gap-2">
                                         {letterPermission.templates?.en && (
                                             <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
@@ -1442,7 +1443,7 @@ const CreateIncident = () => {
                                         className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
                                     >
                                         <Check className="h-4 w-4" />
-                                        Yes, create letter & submit
+                                        Create Letter and Submit
                                     </button>
 
                                     <button
@@ -1451,7 +1452,7 @@ const CreateIncident = () => {
                                         onClick={() => submitIncident(false, letterPermission.manualTiming)}
                                         className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
                                     >
-                                        Submit report without letter
+                                        Submit Without Letter
                                     </button>
 
                                     <button
@@ -1478,7 +1479,7 @@ const CreateIncident = () => {
                                         <History className="h-5 w-5 text-indigo-600" />
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-semibold text-slate-900">Student context</h3>
+                                        <h3 className="text-lg font-semibold text-slate-900">Student Context</h3>
                                         <p className="mt-1 text-sm text-slate-600">{behavioralInsight.studentName}</p>
                                     </div>
                                 </div>
@@ -1510,7 +1511,7 @@ const CreateIncident = () => {
                                                 : 'border-emerald-200 bg-emerald-50 text-emerald-900'
                                         }`}
                                     >
-                                        <p className="font-semibold">Attention level: {behavioralInsight.riskLevel}</p>
+                                        <p className="font-semibold">Attention Level: {behavioralInsight.riskLevel}</p>
                                         <p className="mt-1 text-xs">
                                             {behavioralInsight.riskLevel === 'Red'
                                                 ? 'High frequency of incidents recorded for this student.'
@@ -1525,11 +1526,10 @@ const CreateIncident = () => {
                                     behavioralInsight.categoryBreakdown &&
                                     behavioralInsight.categoryBreakdown[formData.category] && (
                                         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
-                                            <p className="font-semibold">Same category reminder</p>
+                                            <p className="font-semibold">Same Category Reminder</p>
                                             <p className="mt-1">
-                                                This student already has{' '}
-                                                <strong>{behavioralInsight.categoryBreakdown[formData.category]}</strong> previous{' '}
-                                                <strong>{formData.category}</strong> incident(s).
+                                                Previous <strong>{formData.category}</strong> incidents:{' '}
+                                                <strong>{behavioralInsight.categoryBreakdown[formData.category]}</strong>.
                                             </p>
                                         </div>
                                     )}
@@ -1614,7 +1614,7 @@ const CreateIncident = () => {
                             {submitSuccess && (
                                 <StatusBanner type="success">
                                     {selectedStudents.length > 1
-                                        ? `Successfully created incident reports for ${selectedStudents.length} students. Redirecting now.`
+                                        ? `${selectedStudents.length} incident reports created successfully. Redirecting now.`
                                         : 'Incident reported successfully. Redirecting now.'}
                                 </StatusBanner>
                             )}
@@ -1639,7 +1639,7 @@ const CreateIncident = () => {
                                 <SectionCard
                                     icon={Users}
                                     title="Student Selection"
-                                    description="Choose class and section, then search and select student(s)."
+                            description="Choose a class and section, then search for and select students."
                                     step={1}
                                 >
                                     <div className="space-y-5">
@@ -1725,7 +1725,7 @@ const CreateIncident = () => {
                                                     <Users className="h-5 w-5 text-indigo-500" />
                                                 </div>
                                                 <div>
-                                                    <p className="text-sm font-semibold text-slate-700">No students loaded yet</p>
+                                                    <p className="text-sm font-semibold text-slate-700">No students loaded yet.</p>
                                                     <p className="mt-1 text-xs text-slate-400">Select a class and section above to load the student list.</p>
                                                 </div>
                                             </div>
@@ -1761,12 +1761,12 @@ const CreateIncident = () => {
                                                             {allFilteredSelected ? (
                                                                 <>
                                                                     <Square className="h-4 w-4" />
-                                                                    Deselect Filtered
+                                                                    Deselect Filtered Students
                                                                 </>
                                                             ) : (
                                                                 <>
                                                                     <CheckSquare className="h-4 w-4" />
-                                                                    Select Filtered
+                                                                    Select Filtered Students
                                                                 </>
                                                             )}
                                                         </button>
@@ -1777,7 +1777,7 @@ const CreateIncident = () => {
                                                     {fetchingStudents ? (
                                                         <div className="flex h-full items-center justify-center gap-2 text-sm font-medium text-slate-500">
                                                             <Loader2 className="h-4 w-4 animate-spin" />
-                                                            Loading students...
+                                                            Loading students…
                                                         </div>
                                                     ) : filteredStudents.length === 0 ? (
                                                         <div className="flex h-full items-center justify-center text-sm text-slate-500">
@@ -1814,7 +1814,7 @@ const CreateIncident = () => {
                                                                                         isSelected ? 'text-indigo-100' : 'text-slate-500'
                                                                                     }`}
                                                                                 >
-                                                                                    Admission No: {student.admissionNo}
+                                                                                    Admission Number: {student.admissionNo}
                                                                                 </p>
                                                                             </div>
 
@@ -2119,7 +2119,7 @@ const CreateIncident = () => {
                                                         }
                                                         className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
                                                     >
-                                                        <option value="">No assignment yet</option>
+                                                        <option value="">No assignment yet.</option>
                                                         {staffList.map((staff) => (
                                                             <option key={staff._id} value={staff._id}>
                                                                 {staff.name}
@@ -2127,7 +2127,7 @@ const CreateIncident = () => {
                                                         ))}
                                                     </select>
                                                     <p className="mt-1.5 text-xs text-slate-500">
-                                                        Assign this incident to a teacher. Leave blank to keep it in the Administration pool.
+                                                        Assign this incident to a teacher. Leave blank to keep it in the Admin pool.
                                                     </p>
                                                 </div>
                                             )}
@@ -2139,7 +2139,7 @@ const CreateIncident = () => {
                                             >
                                                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                                                     <div className="max-w-xl">
-                                                        <p className="text-base font-semibold text-slate-900">Custom date & progress</p>
+                                                        <p className="text-base font-semibold text-slate-900">Custom Date & Progress</p>
                                                         <p className="mt-1 text-sm text-slate-600">
                                                             Turn this on when the incident happened on an earlier date or you need to set the status dates yourself. The date is required; time is optional.
                                                         </p>
@@ -2177,7 +2177,7 @@ const CreateIncident = () => {
                                                             className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
                                                         >
                                                             <Clock3 className="h-4 w-4" />
-                                                            {manualTiming ? 'Edit dates & progress' : 'Open date & progress'}
+                                                            {manualTiming ? 'Edit Dates & Progress' : 'Open Date & Progress'}
                                                         </button>
 
                                                         {manualTiming && (
@@ -2186,7 +2186,7 @@ const CreateIncident = () => {
                                                                 onClick={clearManualSetup}
                                                                 className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                                                             >
-                                                                Remove custom dates
+                                                                Remove Custom Dates
                                                             </button>
                                                         )}
                                                     </div>
@@ -2302,7 +2302,7 @@ const CreateIncident = () => {
                                                             {entry.file ? entry.file.name : 'Click to attach file'}
                                                         </p>
                                                         <p className="mt-0.5 text-xs text-slate-400">
-                                                            Images, PDFs, Word, Excel, CSV — max 10 MB
+                                                            Images, PDFs, Word, Excel, and CSV — maximum file size: 10 MB
                                                         </p>
                                                     </div>
                                                     <input
@@ -2326,7 +2326,7 @@ const CreateIncident = () => {
                                                             <p className="break-all text-sm font-semibold text-slate-900">
                                                                 {entry.file.name}
                                                             </p>
-                                                            <p className="text-xs text-slate-500">Selected attachment</p>
+                                                            <p className="text-xs text-slate-500">Selected Attachment</p>
                                                         </div>
                                                         <button
                                                             type="button"
@@ -2420,7 +2420,7 @@ const CreateIncident = () => {
                                                         ? `Creating ${selectedStudents.length} Incidents…`
                                                         : 'Creating Incident…'
                                             : submitSuccess
-                                                ? 'Incident Created ✓'
+                                                ? 'Incident created ✓'
                                                 : selectedStudents.length > 1
                                                     ? `Submit ${selectedStudents.length} Reports`
                                                     : 'Create Incident'}

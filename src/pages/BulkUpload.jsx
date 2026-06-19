@@ -56,12 +56,12 @@ const validateIncidentRow = (row) => {
     const messages = [];
     const timePeriod = String(row.timePeriod ?? '').trim().toUpperCase();
     if (timePeriod && !['AM', 'PM', 'A', 'P'].includes(timePeriod)) {
-        messages.push('timePeriod should be AM or PM');
+        messages.push('Time period must be AM or PM.');
     }
 
     const highPriority = String(row.highPriority ?? '').trim().toLowerCase();
     if (highPriority && !['yes', 'no', 'y', 'n', 'true', 'false', '1', '0'].includes(highPriority)) {
-        messages.push('highPriority should be Yes or No');
+        messages.push('High priority must be Yes or No.');
     }
 
     return messages;
@@ -85,7 +85,7 @@ const UploadResultsModal = ({ results, onClose, onReset }) => {
                 <div className="flex flex-col gap-3 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50 px-4 py-4 dark:border-slate-800 dark:from-slate-900 dark:to-slate-900/50 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                     <div className="min-w-0">
                         <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Upload Review</h3>
-                        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Here is what the school server found in each row of your file.</p>
+                        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Here is what the system found in each row of your file.</p>
                     </div>
                     <button
                         type="button"
@@ -106,7 +106,7 @@ const UploadResultsModal = ({ results, onClose, onReset }) => {
                     {results.errors?.length > 0 ? (
                         <div className="rounded-xl border border-red-200 bg-red-50 dark:border-red-500/30 dark:bg-red-950/30">
                             <div className="border-b border-red-100 px-4 py-3 flex justify-between items-center dark:border-red-500/30">
-                                <h4 className="text-sm font-semibold text-red-900 dark:text-red-100">Rows that need correction</h4>
+                                <h4 className="text-sm font-semibold text-red-900 dark:text-red-100">Rows That Need Correction</h4>
                                 {results.errors.length > 50 && (
                                     <span className="text-xs font-medium text-red-600 bg-red-100 px-2 py-1 rounded-full">Showing first 50</span>
                                 )}
@@ -128,7 +128,7 @@ const UploadResultsModal = ({ results, onClose, onReset }) => {
                         </div>
                     ) : (
                         <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
-                            All rows passed the school server checks.
+                            All rows passed validation.
                         </div>
                     )}
                 </div>
@@ -156,10 +156,10 @@ const UploadResultsModal = ({ results, onClose, onReset }) => {
 
 /* ─── Step indicator (matches StudentUpload) ─────────────────────── */
 const STEPS = [
-    { id: 1, label: 'Download sample' },
-    { id: 2, label: 'Choose file' },
-    { id: 3, label: 'Review preview' },
-    { id: 4, label: 'Confirm upload' },
+    { id: 1, label: 'Download Sample' },
+    { id: 2, label: 'Choose File' },
+    { id: 3, label: 'Review Preview' },
+    { id: 4, label: 'Confirm Upload' },
 ];
 
 const StepBar = ({ activeStep }) => (
@@ -443,13 +443,13 @@ const BulkUpload = () => {
 
             const blob = response.data;
             if (!blob || blob.size === 0) {
-                throw new Error('The school server returned an empty sample file.');
+                throw new Error('The system returned an empty sample file.');
             }
 
             await withFeedback(
                 addToast,
                 () => downloadBlob(blob, 'incident_upload_template.xlsx', {
-                    title: 'Incident upload template',
+                    title: 'Incident Upload Template',
                 }),
                 {
                     successMessage: 'Template downloaded successfully.',
@@ -515,7 +515,7 @@ const BulkUpload = () => {
                                     {/* Section header */}
                                     <div className="flex flex-col gap-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-indigo-50/50 px-4 py-4 dark:border-slate-800 dark:from-slate-900 dark:to-slate-900/50 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                                         <div className="min-w-0">
-                                            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Choose your spreadsheet</h2>
+                                            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Choose Your Spreadsheet</h2>
                                             <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
                                                 Click the area below or drag a file in. Review the preview, then upload.
                                             </p>
@@ -527,7 +527,7 @@ const BulkUpload = () => {
                                             className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 sm:w-auto"
                                         >
                                             {downloadingTemplate ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Download className="h-4 w-4" aria-hidden="true" />}
-                                            Download sample
+                                            Download Sample
                                         </button>
                                     </div>
 
@@ -616,7 +616,7 @@ const BulkUpload = () => {
                                         <UploadStatusBanner message={message} />
 
                                         <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-900 dark:border-blue-500/30 dark:bg-blue-950/30 dark:text-blue-100">
-                                            Current Academic Year: {currentAcademicYear || 'Loading...'}
+                                            Current Academic Year: {currentAcademicYear || 'Loading…'}
                                         </div>
 
                                         <label className="block">
@@ -667,7 +667,7 @@ const BulkUpload = () => {
                                                     : <CloudUpload className="h-4 w-4" aria-hidden="true" />}
                                                 {uploading
                                                     ? (uploadProgress === 100 ? 'Saving records…' : 'Uploading…')
-                                                    : 'Confirm & Upload'}
+                                                    : 'Confirm Upload'}
                                             </button>
                                         </div>
                                     </div>
@@ -680,7 +680,7 @@ const BulkUpload = () => {
                                     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/50">
                                         <div className="border-b border-slate-100 bg-slate-50 px-5 py-4 dark:border-slate-800 dark:bg-slate-900">
                                             <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-slate-700 dark:text-slate-300">
-                                                Before you upload
+                                                Before You Upload
                                             </h2>
                                         </div>
                                         <ul className="space-y-3.5 p-5">
@@ -707,7 +707,7 @@ const BulkUpload = () => {
                                         <div className="border-b border-blue-100 px-5 py-4 dark:border-blue-500/20">
                                             <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.14em] text-blue-800 dark:text-blue-200">
                                                 <Info className="h-4 w-4" aria-hidden="true" />
-                                                Optional columns
+                                                Optional Columns
                                             </h2>
                                         </div>
                                         <ul className="space-y-3.5 p-5">

@@ -28,6 +28,7 @@ import {
     buildAcademicYearOptions,
     formatShortDateTime,
     getLetterTimelineTimestamp,
+    formatDisplayValue,
 } from '../utils/analytics';
 import { downloadBlob } from '../utils/downloadFiles';
 import { withFeedback } from '../utils/notifications';
@@ -80,12 +81,12 @@ const StatusBadge = ({ status }) => {
         Issued: 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-500/30 dark:bg-blue-950/30 dark:text-blue-200',
         Printed: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/30 dark:text-amber-200',
         Sent: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/30 dark:text-emerald-200',
-        'Successfully Issued': 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/30 dark:text-emerald-200',
+        'Successfully issued': 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/30 dark:text-emerald-200',
     };
 
     return (
         <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${styles[status] || styles.Issued}`}>
-            {status || 'Issued'}
+            {formatDisplayValue(status || 'Issued')}
         </span>
     );
 };
@@ -118,7 +119,7 @@ const DetailModal = ({
             <div className="my-auto max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-4xl overflow-y-auto rounded-[24px] border border-slate-200 bg-white shadow-2xl sm:rounded-3xl">
                 <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5">
                     <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Issued letter</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Issued Letter</p>
                         <h2 className="mt-2 text-2xl font-semibold text-slate-900">{letter.title || 'Incident Letter'}</h2>
                         <p className="mt-2 text-sm text-slate-500">
                             Reference {letter.letterNumber || 'N/A'} - {letter.studentName || 'Student'}
@@ -139,22 +140,22 @@ const DetailModal = ({
                             <div className="rounded-2xl bg-slate-50 p-4">
                                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Student</p>
                                 <p className="mt-2 text-sm font-semibold text-slate-900">{letter.studentName || 'N/A'}</p>
-                                <p className="mt-1 text-sm text-slate-500">Admission No: {letter.admissionNo || 'N/A'}</p>
+                                <p className="mt-1 text-sm text-slate-500">Admission Number: {letter.admissionNo || 'N/A'}</p>
                             </div>
                             <div className="rounded-2xl bg-slate-50 p-4">
-                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Class details</p>
+                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Class Details</p>
                                 <p className="mt-2 text-sm font-semibold text-slate-900">
                                     Class {letter.className || 'N/A'} - {letter.section || 'N/A'}
                                 </p>
                                 <p className="mt-1 text-sm text-slate-500">{letter.incidentCategory || 'No category'}</p>
                             </div>
                             <div className="rounded-2xl bg-slate-50 p-4">
-                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Incident timeline</p>
+                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Incident Timeline</p>
                                 <p className="mt-2 text-sm font-semibold text-slate-900">{formatShortDateTime(timelineValue)}</p>
                                 <p className="mt-1 text-sm text-slate-500">{getTimelineSource(letter)}</p>
                             </div>
                             <div className="rounded-2xl bg-slate-50 p-4">
-                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Issued date</p>
+                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Issued Date</p>
                                 <p className="mt-2 text-sm font-semibold text-slate-900">{formatShortDateTime(letter.generatedAt)}</p>
                                 <p className="mt-1 text-sm text-slate-500">Language: {letter.language === 'ta' ? 'Tamil' : 'English'}</p>
                             </div>
@@ -167,7 +168,7 @@ const DetailModal = ({
                         <div className="rounded-3xl border border-slate-200 bg-white p-5">
                             <div className="flex items-center justify-between gap-3">
                                 <div>
-                                    <h3 className="text-lg font-semibold text-slate-900">Incident snapshot</h3>
+                                    <h3 className="text-lg font-semibold text-slate-900">Incident Snapshot</h3>
                                     <p className="mt-1 text-sm text-slate-500">Details from the related incident.</p>
                                 </div>
                                 <StatusBadge status={letter.status} />
@@ -175,7 +176,7 @@ const DetailModal = ({
 
                             <div className="mt-5 grid gap-4 sm:grid-cols-2">
                                 <div className="rounded-2xl bg-slate-50 p-4">
-                                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Incident title</p>
+                                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Incident Title</p>
                                     <p className="mt-2 text-sm font-medium text-slate-900">{letter.incident?.title || 'N/A'}</p>
                                 </div>
                                 <div className="rounded-2xl bg-slate-50 p-4">
@@ -193,7 +194,7 @@ const DetailModal = ({
                     <aside className="space-y-4 rounded-3xl border border-slate-200 bg-slate-50 p-5">
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Actions</p>
-                            <h3 className="mt-2 text-lg font-semibold text-slate-900">Save or remove</h3>
+                            <h3 className="mt-2 text-lg font-semibold text-slate-900">Save or Remove</h3>
                             <p className="mt-1 text-sm text-slate-500">Saving and removal only affect the saved letter record here.</p>
                         </div>
 
@@ -204,7 +205,7 @@ const DetailModal = ({
                             className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-indigo-700 bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {downloadingDocx ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
-                            Download Word file
+                                    Download Word File
                         </button>
 
                         <button
@@ -213,7 +214,7 @@ const DetailModal = ({
                             className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
                         >
                             <Trash2 className="h-4 w-4" />
-                            Delete record
+                                    Delete Letter
                         </button>
                     </aside>
                 </div>
@@ -233,7 +234,7 @@ const DeleteModal = ({ letter, deleting, onClose, onConfirm }) => {
                         <div className="rounded-2xl border border-rose-200 bg-rose-50 p-2 text-rose-700">
                             <Trash2 className="h-5 w-5" />
                         </div>
-                        <h2 className="text-xl font-semibold text-slate-900">Delete letter record</h2>
+                        <h2 className="text-xl font-semibold text-slate-900">Delete Letter Record</h2>
                     </div>
                 </div>
                 <div className="px-6 py-6">
@@ -257,7 +258,7 @@ const DeleteModal = ({ letter, deleting, onClose, onConfirm }) => {
                         className="inline-flex items-center justify-center gap-2 rounded-2xl border border-rose-700 bg-rose-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                        Delete
+                        Delete Letter
                     </button>
                 </div>
             </div>
@@ -282,7 +283,7 @@ const MobileLetterCard = ({ letter, timelineValue, downloading, onView, onDownlo
             <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Student</p>
                 <p className="mt-1 font-semibold text-slate-900 dark:text-slate-100">{letter?.studentName || 'N/A'}</p>
-                <p className="text-slate-500 dark:text-slate-400">Admission No: {letter?.admissionNo || 'N/A'}</p>
+                <p className="text-slate-500 dark:text-slate-400">Admission Number: {letter?.admissionNo || 'N/A'}</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-2xl bg-slate-50 p-3 dark:bg-slate-800/60">
@@ -299,7 +300,7 @@ const MobileLetterCard = ({ letter, timelineValue, downloading, onView, onDownlo
             <div className="rounded-2xl bg-slate-50 p-3 dark:bg-slate-800/60">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Category</p>
                 <p className="mt-1 font-semibold text-slate-900 dark:text-slate-100">{letter?.incidentCategory || 'N/A'}</p>
-                <p className="mt-1 text-slate-500 dark:text-slate-400">{letter?.incident?.title || 'No incident title on file'}</p>
+                <p className="mt-1 text-slate-500 dark:text-slate-400">{letter?.incident?.title || 'No incident title on file.'}</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -319,9 +320,9 @@ const MobileLetterCard = ({ letter, timelineValue, downloading, onView, onDownlo
         </div>
 
         <div className="mt-4 grid grid-cols-3 gap-2">
-            <ActionIconButton icon={Eye} label="View record" onClick={onView} />
-            <ActionIconButton icon={FileDown} label="Download Word file" onClick={onDownload} disabled={downloading} />
-            <ActionIconButton icon={Trash2} label="Delete record" onClick={onDelete} />
+            <ActionIconButton icon={Eye} label="View Details" onClick={onView} />
+            <ActionIconButton icon={FileDown} label="Download Word File" onClick={onDownload} disabled={downloading} />
+            <ActionIconButton icon={Trash2} label="Delete Letter" onClick={onDelete} />
         </div>
     </article>
 );
@@ -485,7 +486,7 @@ const IssuedLetters = () => {
                 () => downloadBlob(
                     new Blob([response.data]),
                     buildLetterFilename(letter, 'docx'),
-                    { title: 'Issued letter' }
+                    { title: 'Issued Letter' }
                 ),
                 {
                     successMessage: 'Letter downloaded successfully.',
@@ -535,7 +536,7 @@ const IssuedLetters = () => {
                                 <div>
                                     <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-blue-100">
                                         <Mail className="h-4 w-4" />
-                                        Issued letters
+                                        Issued Letters
                                     </div>
                                     <h1 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl">
                                         Generated Letters
@@ -561,7 +562,7 @@ const IssuedLetters = () => {
                         </section>
 
                         <section className="mb-6">
-                            <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-slate-100">Letters by category</h2>
+                            <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-slate-100">Letters by Category</h2>
                             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                                 {categorySummary.length > 0 ? (
                                     categorySummary.map((item, index) => (
@@ -575,9 +576,9 @@ const IssuedLetters = () => {
                                     ))
                                 ) : (
                                     <SummaryCard
-                                        label="No categories"
+                                        label="No Categories"
                                         value="0"
-                                        description="No issued letters match the current filters"
+                                        description="No issued letters match the current filters."
                                     />
                                 )}
                             </div>
@@ -591,10 +592,10 @@ const IssuedLetters = () => {
                             >
                                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.1fr)_minmax(0,0.9fr)_minmax(0,0.9fr)]">
                                     <UnifiedSearchInput
-                                        label="Search by Name / Ad No"
+                                        label="Search"
                                         value={searchTerm}
                                         onChange={setSearchTerm}
-                                        placeholder="Search student name, admission no, letter ref, or category..."
+                                        placeholder="Search by student name, admission number, letter reference, or category…"
                                     />
 
                                     <label className="min-w-0">
@@ -615,8 +616,8 @@ const IssuedLetters = () => {
                                         options={availableClasses}
                                         selected={filters.classes}
                                         onChange={(value) => setFilters(current => ({ ...current, classes: value }))}
-                                        placeholder="All Classes"
-                                        searchPlaceholder="Search class..."
+                                        placeholder="All classes"
+                                        searchPlaceholder="Search classes…"
                                     />
 
                                     <UnifiedMultiSelect
@@ -624,8 +625,8 @@ const IssuedLetters = () => {
                                         options={availableSections}
                                         selected={filters.sections}
                                         onChange={(value) => setFilters(current => ({ ...current, sections: value }))}
-                                        placeholder="All Sections"
-                                        searchPlaceholder="Search section..."
+                                        placeholder="All sections"
+                                        searchPlaceholder="Search sections…"
                                     />
 
                                     <UnifiedMultiSelect
@@ -633,8 +634,8 @@ const IssuedLetters = () => {
                                         options={availableCategories}
                                         selected={filters.categories}
                                         onChange={(value) => setFilters(current => ({ ...current, categories: value }))}
-                                        placeholder="All Categories"
-                                        searchPlaceholder="Search category..."
+                                        placeholder="All categories"
+                                        searchPlaceholder="Search categories…"
                                     />
 
                                     <UnifiedDateInput
@@ -659,7 +660,7 @@ const IssuedLetters = () => {
                         <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
                             <div className="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800">
                                 <div>
-                                    <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Generated letters</h2>
+                                    <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Generated Letters</h2>
                                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                                         Page {page} of {totalPages} — {filteredLetters.length} total result{filteredLetters.length === 1 ? '' : 's'}
                                     </p>
@@ -694,7 +695,7 @@ const IssuedLetters = () => {
                             ) : filteredLetters.length === 0 ? (
                                 <div className="px-6 py-16 text-center">
                                     <Mail className="mx-auto h-12 w-12 text-slate-300" />
-                                    <h3 className="mt-5 text-xl font-semibold text-slate-900 dark:text-slate-100">No letters found</h3>
+                                    <h3 className="mt-5 text-xl font-semibold text-slate-900 dark:text-slate-100">No letters found.</h3>
                                     <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
                                         Try adjusting the search or clearing active filters to see more issued letter records.
                                     </p>
@@ -723,13 +724,13 @@ const IssuedLetters = () => {
                                         <table className="min-w-[1180px] w-full table-fixed divide-y divide-slate-200 dark:divide-slate-800">
                                             <thead className="bg-slate-50 dark:bg-slate-900/80">
                                                 <tr className="text-left text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                                                    <th className="px-5 py-4">Letter Ref</th>
+                                                    <th className="px-5 py-4">Letter Reference</th>
                                                     <th className="px-5 py-4">Student</th>
                                                     <th className="px-5 py-4">Category</th>
                                                     <th className="px-5 py-4">Incident Timeline</th>
                                                     <th className="px-5 py-4">Issued Date</th>
                                                     <th className="px-5 py-4">Status</th>
-                                                    <th className="px-5 py-4 text-right">Action</th>
+                                                    <th className="px-5 py-4 text-right">Actions</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -738,7 +739,7 @@ const IssuedLetters = () => {
 
                                                     return (
                                                         <tr key={letter._id} className="align-top transition hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
-                                                            <td data-label="Letter Ref" className="px-5 py-4 break-words align-top">
+                                                            <td data-label="Letter Reference" className="px-5 py-4 break-words align-top">
                                                                 <div className="space-y-2">
                                                                     <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
                                                                         <Hash className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
@@ -753,7 +754,7 @@ const IssuedLetters = () => {
                                                                         <UserRound className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
                                                                         {letter.studentName || 'N/A'}
                                                                     </div>
-                                                                    <p className="text-sm text-slate-500 dark:text-slate-400">Admission No: {letter.admissionNo || 'N/A'}</p>
+                                                                    <p className="text-sm text-slate-500 dark:text-slate-400">Admission Number: {letter.admissionNo || 'N/A'}</p>
                                                                     <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                                                                         <Layers3 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                                                                         Class {letter.className || 'N/A'} - {letter.section || 'N/A'}
@@ -763,7 +764,7 @@ const IssuedLetters = () => {
                                                             <td data-label="Category" className="px-5 py-4 break-words align-top">
                                                                 <div className="space-y-2">
                                                                     <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{letter.incidentCategory || 'N/A'}</p>
-                                                                    <p className="text-sm text-slate-500 dark:text-slate-400">{letter.incident?.title || 'No incident title on file'}</p>
+                                                                    <p className="text-sm text-slate-500 dark:text-slate-400">{letter.incident?.title || 'No incident title on file.'}</p>
                                                                 </div>
                                                             </td>
                                                             <td data-label="Incident Timeline" className="px-5 py-4 break-words align-top">
@@ -788,18 +789,18 @@ const IssuedLetters = () => {
                                                                 <div className="flex flex-wrap items-center justify-end gap-2">
                                                                     <ActionIconButton
                                                                         icon={Eye}
-                                                                        label="View record"
+                                                                        label="View Details"
                                                                         onClick={() => setSelectedLetter(letter)}
                                                                     />
                                                                     <ActionIconButton
                                                                         icon={FileDown}
-                                                                        label="Download Word file"
+                                                                        label="Download Word File"
                                                                         onClick={() => downloadLetter(letter)}
                                                                         disabled={downloadingKey === `${letter?._id}-docx`}
                                                                     />
                                                                     <ActionIconButton
                                                                         icon={Trash2}
-                                                                        label="Delete record"
+                                                                        label="Delete Letter"
                                                                         onClick={() => setDeleteTarget(letter)}
                                                                     />
                                                                 </div>

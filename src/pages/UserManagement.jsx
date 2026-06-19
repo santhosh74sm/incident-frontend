@@ -32,7 +32,7 @@ import {
 import { UnifiedFilterBar, UnifiedMultiSelect, UnifiedSearchInput } from '../components/UnifiedFilters';
 import BulkDeleteControls from '../components/BulkDeleteControls';
 import { normalizeRole } from '../utils/roles';
-import { buildAcademicYearOptions } from '../utils/analytics';
+import { buildAcademicYearOptions, formatDisplayValue } from '../utils/analytics';
 
 const EDITABLE_ROLE_OPTIONS = ['Admin', 'Teacher'];
 const getCreateRoleOptions = (role) => (role === 'Super Admin' ? EDITABLE_ROLE_OPTIONS : ['Teacher']);
@@ -46,7 +46,7 @@ const READONLY_CLASS_NAME =
 
 const getRoleGroup = (role) => {
     const normalizedRole = normalizeRole(role);
-    if (['Super Admin', 'Admin'].includes(normalizedRole)) return 'Administration';
+    if (['Super Admin', 'Admin'].includes(normalizedRole)) return 'Admin';
     return 'Teacher';
 };
 const isStrongPassword = (password) =>
@@ -90,7 +90,7 @@ const RoleBadge = ({ role }) => {
                 role
             )}`}
         >
-            {normalizedRole || 'Teacher'}
+            {formatDisplayValue(normalizedRole || 'Teacher')}
         </span>
         <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400">
             {getRoleGroup(role)}
@@ -238,7 +238,7 @@ const UserManagement = () => {
         try {
             await navigator.clipboard.writeText(temporaryPasswordResult.temporaryPassword);
             setTemporaryPasswordCopied(true);
-            addToast('Copied successfully', 'success');
+            addToast('Copied successfully.', 'success');
         } catch {
             setTemporaryPasswordCopied(false);
             addToast('Copy failed. Select the password manually.', 'error');
@@ -351,9 +351,9 @@ const UserManagement = () => {
     }, [fetchData]);
 
     const summary = useMemo(() => {
-        const administrationCount = usersList.filter((entry) => getRoleGroup(entry.role) === 'Administration').length;
+        const administrationCount = usersList.filter((entry) => getRoleGroup(entry.role) === 'Admin').length;
         const teacherCount = usersList.filter((entry) => normalizeRole(entry.role) === 'Teacher').length;
-        const staffCount = usersList.filter((entry) => getRoleGroup(entry.role) !== 'Administration').length;
+        const staffCount = usersList.filter((entry) => getRoleGroup(entry.role) !== 'Admin').length;
         const passedOutCount = studentRegistry.filter((entry) => entry.status === 'Passed Out').length;
 
         return {
@@ -368,7 +368,7 @@ const UserManagement = () => {
 
     // Convert role filter options to {id, label} shape for the dropdown
     const roleFilterOptionObjects = useMemo(
-        () => ['Administration', 'Teacher'].map((roleGroup) => ({ id: roleGroup, label: roleGroup })),
+        () => ['Admin', 'Teacher'].map((roleGroup) => ({ id: roleGroup, label: roleGroup })),
         []
     );
 
@@ -527,7 +527,7 @@ const UserManagement = () => {
         try {
             const { data } = await apiClient.post(`/api/auth/users/${staffId}/reset-password`, {}, config);
             if (!data?.temporaryPassword) {
-                throw new Error('Temporary password missing from response.');
+                throw new Error('The temporary password could not be generated. Please try again.');
             }
             setTemporaryPasswordCopied(false);
             setTemporaryPasswordResult({
@@ -606,7 +606,7 @@ const UserManagement = () => {
             setDetailModal({ open: false, type: 'staff', record: null });
             fetchData(false);
         } catch (requestError) {
-            addToast(requestError.response?.data?.message || 'Unable to delete record.', 'error');
+            addToast(requestError.response?.data?.message || 'Unable to delete this record.', 'error');
         }
     }, [addToast, config, deleteDialog.id, deleteDialog.type, fetchData]);
 
@@ -722,14 +722,14 @@ const UserManagement = () => {
                     <div className="flex items-center gap-1">
                         <ActionButton
                             icon={Edit3}
-                            label="Edit user"
+                            label="Edit User"
                             tone="blue"
                             onClick={() => openDetailModal(row, 'staff')}
                         />
                         {canDeleteStaffUser(row) ? (
                             <ActionButton
                                 icon={Trash2}
-                                label="Delete user"
+                                label="Delete User"
                                 tone="red"
                                 onClick={() => openDeleteDialog(row, 'staff')}
                             />
@@ -749,7 +749,7 @@ const UserManagement = () => {
                 render: (row) => (
                     <div className="min-w-0">
                         <p className="truncate font-semibold text-slate-900 dark:text-slate-100">{row.name}</p>
-                        <p className="truncate text-sm text-slate-500 dark:text-slate-400">Admission No: {row.admissionNo}</p>
+                        <p className="truncate text-sm text-slate-500 dark:text-slate-400">Admission Number: {row.admissionNo}</p>
                     </div>
                 ),
             },
@@ -801,13 +801,13 @@ const UserManagement = () => {
                     <div className="flex items-center gap-1">
                         <ActionButton
                             icon={Edit3}
-                            label="View student details"
+                            label="View Student Details"
                             tone="blue"
                             onClick={() => openDetailModal(row, 'student')}
                         />
                         <ActionButton
                             icon={Trash2}
-                            label="Delete student"
+                            label="Delete Student"
                             tone="red"
                             onClick={() => openDeleteDialog(row, 'student')}
                         />
@@ -838,7 +838,7 @@ const UserManagement = () => {
                 <main className="flex-1 overflow-y-auto p-4 lg:p-6">
                     <div className="mx-auto max-w-[1600px] space-y-6">
                         <DashboardHero
-                            eyebrow="Administration"
+                            eyebrow="Admin"
                             title="User Management"
                             description="Manage users, roles, and student records."
                             icon={Users}
@@ -850,7 +850,7 @@ const UserManagement = () => {
                                         className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 transition-all duration-300 hover:bg-blue-50 dark:bg-slate-100 dark:text-slate-950"
                                     >
                                         <UserPlus size={16} />
-                                        Add New User
+                                        {currentRole === 'Super Admin' ? 'Add New Admin/Teacher' : 'Add New Teacher'}
                                     </button>
                                     <button
                                         type="button"
@@ -884,7 +884,7 @@ const UserManagement = () => {
 
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                             <DashboardStatCard title="Total Users" value={summary.totalUsers} icon={Users} tone="blue" />
-                            <DashboardStatCard title="Administration" value={summary.administrationCount} icon={Shield} tone="slate" />
+                            <DashboardStatCard title="Admin" value={summary.administrationCount} icon={Shield} tone="slate" />
                             <DashboardStatCard title="Teachers" value={summary.teacherCount} icon={UserPlus} tone="emerald" />
                             <DashboardStatCard title="Students" value={summary.totalStudents} icon={UserCheck} tone="amber" />
                         </div>
@@ -896,7 +896,7 @@ const UserManagement = () => {
                                         <AlertCircle size={18} />
                                     </div>
                                     <div>
-                                        <p className="text-sm font-semibold text-rose-700">Unable to load all records</p>
+                                        <p className="text-sm font-semibold text-rose-700">Unable to Load All Records</p>
                                         <p className="mt-1 text-sm text-rose-600">{error}</p>
                                     </div>
                                 </div>
@@ -932,7 +932,7 @@ const UserManagement = () => {
                                                     activeTab === 'staff' ? 'text-slate-300' : 'text-slate-500 dark:text-slate-400'
                                                 }`}
                                             >
-                                                Roles, access, and active account records
+                                                Manage roles, access, and active staff accounts.
                                             </p>
                                         </div>
                                     </div>
@@ -965,7 +965,7 @@ const UserManagement = () => {
                                                     activeTab === 'students' ? 'text-blue-100' : 'text-slate-500 dark:text-slate-400'
                                                 }`}
                                             >
-                                                Admission records, class, and section details
+                                                Review admission records, classes, and sections.
                                             </p>
                                         </div>
                                     </div>
@@ -998,7 +998,7 @@ const UserManagement = () => {
                                                     activeTab === 'passedOut' ? 'text-amber-100' : 'text-slate-500 dark:text-slate-400'
                                                 }`}
                                             >
-                                                Completed students with preserved history
+                                                Review passed-out students with preserved history.
                                             </p>
                                         </div>
                                     </div>
@@ -1030,7 +1030,7 @@ const UserManagement = () => {
                                             options={roleFilterOptionObjects}
                                             selected={roleFilter}
                                             onChange={setRoleFilter}
-                                            placeholder="All Roles"
+                                            placeholder="All roles"
                                         />
                                         <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 dark:border-slate-700 dark:bg-slate-950/80">
                                             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
@@ -1091,7 +1091,7 @@ const UserManagement = () => {
                                             label="Search"
                                             value={studentSearchQuery}
                                             onChange={setStudentSearchQuery}
-                                            placeholder="Search by name, admission no, class, or section"
+                                            placeholder="Search by name, admission number, class, or section"
                                         />
                                         <label className="min-w-0">
                                             <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
@@ -1112,14 +1112,14 @@ const UserManagement = () => {
                                             options={classFilterOptions}
                                             selected={classFilter}
                                             onChange={setClassFilter}
-                                            placeholder="All Classes"
+                                            placeholder="All classes"
                                         />
                                         <UnifiedMultiSelect
                                             label="Section"
                                             options={sectionFilterOptions}
                                             selected={sectionFilter}
                                             onChange={setSectionFilter}
-                                            placeholder="All Sections"
+                                            placeholder="All sections"
                                         />
                                         <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 dark:border-slate-700 dark:bg-slate-950/80">
                                             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
@@ -1127,7 +1127,7 @@ const UserManagement = () => {
                                             </p>
                                             <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
                                                  {activeTab === 'passedOut'
-                                                    ? `${filteredStudents.length} passed out student${filteredStudents.length === 1 ? '' : 's'}`
+                                                    ? `${filteredStudents.length} passed-out student${filteredStudents.length === 1 ? '' : 's'}`
                                                     : `${summary.totalStudents} active student${summary.totalStudents === 1 ? '' : 's'}`}
                                             </p>
                                             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -1164,7 +1164,7 @@ const UserManagement = () => {
                     <div className="my-auto max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-xl overflow-y-auto rounded-[24px] border border-slate-200 bg-white shadow-2xl transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900 sm:rounded-[30px]">
                         <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-8 py-6 dark:border-slate-800">
                             <div>
-                                <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Add New User</h3>
+                                <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{currentRole === 'Super Admin' ? 'Add New Admin/Teacher' : 'Add New Teacher'}</h3>
                                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                                     Add login access for staff. Super Admins can create Admins and Teachers; Admins can create Teachers only.
                                 </p>
@@ -1265,7 +1265,7 @@ const UserManagement = () => {
                                     className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-70"
                                 >
                                     {submittingUser ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
-                                    Create User
+                                    {currentRole === 'Super Admin' ? 'Create Admin/Teacher' : 'Create Teacher'}
                                 </button>
                             </div>
                         </form>
@@ -1303,7 +1303,7 @@ const UserManagement = () => {
                                         onChange={(event) =>
                                             setNewStudent((current) => ({ ...current, admissionNo: event.target.value }))
                                         }
-                                        placeholder="e.g. 2024-001"
+                                        placeholder="e.g., 2024-001"
                                         className={INPUT_CLASS_NAME}
                                     />
                                 </div>
@@ -1354,7 +1354,7 @@ const UserManagement = () => {
                                                 section: event.target.value.toUpperCase(),
                                             }))
                                         }
-                                        placeholder="e.g. A"
+                                        placeholder="e.g., A"
                                         className={INPUT_CLASS_NAME}
                                         inputMode="text"
                                         autoCapitalize="characters"
@@ -1411,7 +1411,7 @@ const UserManagement = () => {
                             <form onSubmit={handleEditStaff} className="space-y-6 p-8">
                                 <div className="grid gap-5 md:grid-cols-2">
                                     <div>
-                                        <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Username</label>
+                                        <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Full Name</label>
                                         <input
                                             required
                                             type="text"
@@ -1454,7 +1454,7 @@ const UserManagement = () => {
                                     <PreviewField label="Joined" value={formatDate(detailModal.record.createdAt)} />
                                 </div>
                                 <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-                                    Users can update their own username and email. Only Super Admin can edit other users and change roles.
+                                    Users can update their own name and email. Only the Super Admin can edit other users and change roles.
                                 </div>
                                 <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                                     <button
@@ -1477,7 +1477,7 @@ const UserManagement = () => {
                                                 <KeyRound size={16} />
                                             )}
                                             {resettingPasswordId === (detailModal.record._id || detailModal.record.id)
-                                                ? 'Generating...'
+                                                ? 'Generating…'
                                                 : 'Generate Temporary Password'}
                                         </button>
                                     ) : null}
@@ -1547,7 +1547,7 @@ const UserManagement = () => {
                                             className={`${INPUT_CLASS_NAME} appearance-none`}
                                         >
                                             <option value="Active">Active</option>
-                                            <option value="Passed Out">Passed Out</option>
+                                            <option value="Passed Out">Passed out</option>
                                         </select>
                                     </div>
                                     <div>
@@ -1579,7 +1579,7 @@ const UserManagement = () => {
                                                     section: event.target.value.toUpperCase(),
                                                 }))
                                             }
-                                            placeholder="e.g. A"
+                                            placeholder="e.g., A"
                                             className={INPUT_CLASS_NAME}
                                             inputMode="text"
                                             autoCapitalize="characters"
@@ -1594,7 +1594,7 @@ const UserManagement = () => {
                                         className="inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-50 text-rose-600 px-4 py-3 text-sm font-semibold transition-all duration-200 hover:bg-rose-100 sm:mr-auto"
                                     >
                                         <Trash2 size={16} />
-                                        Delete
+                                        Delete Student
                                     </button>
                                     <button
                                         type="button"
@@ -1674,7 +1674,7 @@ const UserManagement = () => {
                                         className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-500/20"
                                     >
                                         {temporaryPasswordCopied ? <Check size={16} /> : <Copy size={16} />}
-                                        {temporaryPasswordCopied ? 'Copied successfully' : 'Copy'}
+                                        {temporaryPasswordCopied ? 'Copied Successfully' : 'Copy'}
                                     </button>
                                 </div>
                             </div>
@@ -1700,7 +1700,7 @@ const UserManagement = () => {
                             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-rose-100 text-rose-600">
                                 <Trash2 size={22} />
                             </div>
-                            <h3 className="mt-5 text-xl font-semibold text-slate-900 dark:text-slate-100">Confirm deletion</h3>
+                            <h3 className="mt-5 text-xl font-semibold text-slate-900 dark:text-slate-100">Confirm Deletion</h3>
                             {deleteDialog.type === 'student' ? (
                                 <div className="mt-4 space-y-4 text-left">
                                     <p className="text-sm leading-6 text-slate-500 dark:text-slate-400">
@@ -1711,14 +1711,14 @@ const UserManagement = () => {
                                             <PreviewField label="Student Name" value={deleteDialog.preview?.student?.name || deleteDialog.record?.name} />
                                             <PreviewField label="Admission Number" value={deleteDialog.preview?.student?.admissionNo || deleteDialog.record?.admissionNo} />
                                             <PreviewField label="Academic Year" value={deleteDialog.preview?.student?.academicYear || deleteDialog.record?.academicYear} />
-                                            <PreviewField label="Status" value={deleteDialog.preview?.student?.status || deleteDialog.record?.status} />
+                                            <PreviewField label="Status" value={formatDisplayValue(deleteDialog.preview?.student?.status || deleteDialog.record?.status)} />
                                         </div>
                                     </div>
                                     <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100">
                                         {deleteDialog.loadingPreview ? (
                                             <div className="flex items-center gap-2">
                                                 <Loader2 size={16} className="animate-spin" />
-                                                Calculating affected records...
+                                                Calculating affected records…
                                             </div>
                                         ) : (
                                             <div className="grid gap-2 sm:grid-cols-2">
@@ -1753,7 +1753,7 @@ const UserManagement = () => {
                                     className="inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-5 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
                                     <Trash2 size={16} />
-                                    Delete Record
+                                    {deleteDialog.type === 'staff' ? 'Delete User' : 'Delete Student'}
                                 </button>
                             </div>
                         </div>

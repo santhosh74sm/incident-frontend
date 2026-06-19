@@ -45,7 +45,7 @@ export const IncidentStatusTrendChart = memo(({ data = [], height = 320, idPrefi
                         labelFormatter={(_, payload) => payload?.[0]?.payload?.fullDate || 'Timeline Date'}
                     />
                     <Area type="monotone" dataKey="open" stroke={STATUS_COLORS.Open} fill={`url(#${idPrefix}-open)`} strokeWidth={3} name="Open" activeDot={{ r: 6 }} />
-                    <Area type="monotone" dataKey="inProgress" stroke={STATUS_COLORS['In Progress']} fill={`url(#${idPrefix}-progress)`} strokeWidth={3} name="In Progress" activeDot={{ r: 6 }} />
+                    <Area type="monotone" dataKey="inProgress" stroke={STATUS_COLORS['In Progress']} fill={`url(#${idPrefix}-progress)`} strokeWidth={3} name="In progress" activeDot={{ r: 6 }} />
                     <Area type="monotone" dataKey="closed" stroke={STATUS_COLORS.Closed} fill={`url(#${idPrefix}-closed)`} strokeWidth={3} name="Closed" activeDot={{ r: 6 }} />
                 </AreaChart>
             </ResponsiveContainer>

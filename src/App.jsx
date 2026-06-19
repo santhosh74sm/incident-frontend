@@ -62,7 +62,7 @@ const NotFoundPage = () => (
   <div className="flex min-h-[70vh] items-center justify-center px-4 text-center">
     <div>
       <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">404</p>
-      <h1 className="mt-3 text-2xl font-bold text-slate-900 dark:text-slate-100">Page not found</h1>
+      <h1 className="mt-3 text-2xl font-bold text-slate-900 dark:text-slate-100">Page Not Found</h1>
       <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">This workspace page does not exist or is no longer available.</p>
     </div>
   </div>
@@ -124,8 +124,8 @@ const AuditLogRoute = ({ children }) => {
     <div className="flex min-h-[70vh] items-center justify-center px-4 text-center">
       <div>
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">403</p>
-        <h1 className="mt-3 text-2xl font-bold text-slate-900 dark:text-slate-100">Audit logs are restricted</h1>
-        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Only Super Admin users can access audit logs.</p>
+        <h1 className="mt-3 text-2xl font-bold text-slate-900 dark:text-slate-100">Audit Logs Are Restricted</h1>
+        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Only Super Admins can access audit logs.</p>
       </div>
     </div>
   );

@@ -126,7 +126,7 @@ const Register = () => {
                                 </div>
                                 <div>
                                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-100">Create Workspace</p>
-                                    <h2 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">Add your school</h2>
+                                    <h2 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">Add Your School</h2>
                                 </div>
                             </div>
                             <p className="mt-5 max-w-md text-sm leading-7 text-slate-300">
@@ -153,7 +153,7 @@ const Register = () => {
                                                     <AlertCircle size={18} />
                                                 </div>
                                                 <div>
-                                                    <p className="text-sm font-semibold text-red-800 dark:text-red-100">Registration issue</p>
+                                                    <p className="text-sm font-semibold text-red-800 dark:text-red-100">Registration Issue</p>
                                                     <p className="mt-1 text-sm leading-6 text-red-700 dark:text-red-200">{serverError}</p>
                                                 </div>
                                             </div>
@@ -344,7 +344,7 @@ const Register = () => {
                                             {submitting ? (
                                                 <>
                                                     <Loader2 className="animate-spin" size={18} />
-                                                    Creating Workspace...
+                                                    Creating workspace…
                                                 </>
                                             ) : (
                                                 <>
@@ -367,7 +367,7 @@ const Register = () => {
                                             to="/login"
                                             className="inline-flex items-center gap-2 rounded-lg text-sm font-semibold text-blue-700 transition-all duration-200 hover:text-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-blue-300 dark:hover:text-blue-200"
                                         >
-                                            Already have an account
+                                            Already have an account?
                                             <ArrowRight size={16} />
                                         </Link>
                                     </div>
@@ -377,13 +377,13 @@ const Register = () => {
                                     <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 shadow-inner">
                                         <CheckCircle2 size={40} />
                                     </div>
-                                    <h3 className="mt-6 text-2xl font-semibold text-slate-900 dark:text-slate-100">School Workspace Created Successfully</h3>
+                                    <h3 className="mt-6 text-2xl font-semibold text-slate-900 dark:text-slate-100">School Workspace Created</h3>
                                     <p className="mt-3 text-sm leading-7 text-slate-600 dark:text-slate-300">
                                         Your school workspace is ready. You can now start using the system.
                                     </p>
                                     <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/30 dark:text-emerald-100">
                                         <Loader2 className="animate-spin" size={16} />
-                                        Redirecting...
+                                        Redirecting…
                                     </div>
                                 </div>
                             )}

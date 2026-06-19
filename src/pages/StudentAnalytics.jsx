@@ -69,6 +69,7 @@ import {
     STATUS_OPTIONS,
     toneForStatus,
     withUnknownOption,
+    formatDisplayValue,
 } from '../utils/analytics';
 import { downloadBlob, downloadWorkbook } from '../utils/downloadFiles';
 import { withFeedback } from '../utils/notifications';
@@ -405,7 +406,7 @@ const StudentAnalytics = () => {
             incidentDetails,
             statusData: [
                 { name: 'Open', value: open, color: STATUS_COLORS.Open },
-                { name: 'In Progress', value: inProgress, color: STATUS_COLORS['In Progress'] },
+                { name: 'In progress', value: inProgress, color: STATUS_COLORS['In Progress'] },
                 { name: 'Closed', value: closed, color: STATUS_COLORS.Closed },
             ],
             letterSummaryData: [
@@ -459,7 +460,7 @@ const StudentAnalytics = () => {
                         type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                     }),
                     `LET_${slugify(letter.className || 'Class')}_${slugify(letter.section || 'S')}_${slugify(letter.studentName || 'Student')}_${slugify(letter.admissionNo || '00000')}.docx`,
-                    { title: 'Issued letter' }
+                    { title: 'Issued Letter' }
                 ),
                 {
                     successMessage: 'Letter downloaded successfully.',
@@ -488,7 +489,7 @@ const StudentAnalytics = () => {
                 Status: incident.status || 'N/A',
                 Opened: formatShortDate(getIncidentTimestamp(incident)),
                 Closed: formatShortDate(incident.closedAt),
-                Letter: letterInfo.hasLetter ? 'Issued' : 'Not Issued',
+                Letter: letterInfo.hasLetter ? 'Issued' : 'Not issued',
             };
         });
 
@@ -500,7 +501,7 @@ const StudentAnalytics = () => {
             { Field: 'Generated On', Value: exportDate },
             { Field: 'Student', Value: selectedStudent?.name || 'N/A' },
             { Field: 'Admission Number', Value: selectedStudent?.admissionNo || 'N/A' },
-            { Field: 'Academic Year', Value: academicYear || currentAcademicYear || 'All Years' },
+            { Field: 'Academic Year', Value: academicYear || currentAcademicYear || 'All years' },
             { Field: 'Date Range', Value: dateRange.start || dateRange.end ? `${dateRange.start || 'Any'} to ${dateRange.end || 'Any'}` : 'All dates' },
             { Field: 'Categories', Value: filters.incidentTypes.length ? filters.incidentTypes.join(', ') : 'All categories' },
             { Field: 'Locations', Value: filters.locations.length ? filters.locations.join(', ') : 'All locations' },
@@ -516,7 +517,7 @@ const StudentAnalytics = () => {
                 XLSX,
                 wb,
                 `Student_Incident_Timeline_${slugify(selectedStudent?.name || 'Student')}_${slugify(academicYear || currentAcademicYear || 'All_Years')}_${exportDate}.xlsx`,
-                { title: 'Incident report' }
+                { title: 'Incident Report' }
             ),
             {
                 successMessage: 'Excel exported successfully.',
@@ -564,7 +565,7 @@ const StudentAnalytics = () => {
         const reportInfoWs = XLSX.utils.json_to_sheet([
             { Field: 'Report', Value: isPassedOutSummary ? 'Passed Out Student Summary' : 'Student Summary' },
             { Field: 'Generated On', Value: exportDate },
-            { Field: 'Academic Year', Value: academicYear || currentAcademicYear || 'All Years' },
+            { Field: 'Academic Year', Value: academicYear || currentAcademicYear || 'All years' },
             { Field: 'Student Status', Value: studentStatus },
             { Field: 'Search', Value: searchTerm || 'None' },
             { Field: 'Class', Value: classFilter || 'All classes' },
@@ -579,7 +580,7 @@ const StudentAnalytics = () => {
                 XLSX,
                 wb,
                 `${slugify(isPassedOutSummary ? 'Passed_Out_Student_Summary' : 'Student_Summary')}_${slugify(academicYear || currentAcademicYear || 'All_Years')}_${exportDate}.xlsx`,
-                { title: 'Student summary' }
+                { title: 'Student Summary' }
             ),
             {
                 successMessage: 'Excel exported successfully.',
@@ -623,14 +624,14 @@ const StudentAnalytics = () => {
         { key: 'className', label: renderSortLabel('className', 'Class'), render: (row) => row.className || 'N/A' },
         { key: 'section', label: renderSortLabel('section', 'Section'), render: (row) => row.section || 'N/A' },
         { key: 'academicYear', label: renderSortLabel('academicYear', 'Academic Year'), render: (row) => row.academicYear || academicYear || 'N/A' },
-        { key: 'status', label: renderSortLabel('status', 'Status'), render: (row) => row.status || studentStatus },
+        { key: 'status', label: renderSortLabel('status', 'Status'), render: (row) => formatDisplayValue(row.status || studentStatus) },
         { key: 'incidentCount', label: renderSortLabel('incidentCount', 'Incident Count'), render: (row) => row.incidentCount || 0 },
         { key: 'letterCount', label: renderSortLabel('letterCount', 'Letter Count'), render: (row) => row.letterCount || 0 },
     ];
 
     const incidentColumns = [
-        { key: 'category', label: 'Type', render: (row) => row.category || 'N/A' },
-        { key: 'location', label: 'Location', render: (row) => row.location || 'N/A' },
+        { key: 'category', label: 'Type', render: (row) => formatDisplayValue(row.category) || 'N/A' },
+        { key: 'location', label: 'Location', render: (row) => formatDisplayValue(row.location) || 'N/A' },
         {
             key: 'evidence',
             label: 'Evidence',
@@ -654,7 +655,7 @@ const StudentAnalytics = () => {
             label: 'Status',
             render: (row) => (
                 <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${toneForStatus(row.status)}`}>
-                    {row.status}
+                    {formatDisplayValue(row.status)}
                 </span>
             ),
         },
@@ -673,12 +674,12 @@ const StudentAnalytics = () => {
                 );
             },
         },
-        { key: 'actions', label: 'Actions', render: (row) => (<button type="button" onClick={() => navigate(`/incidents/${row._id || row.id}`)} className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800">View</button>), },
+        { key: 'actions', label: 'Actions', render: (row) => (<button type="button" onClick={() => navigate(`/incidents/${row._id || row.id}`)} className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800">View Details</button>), },
     ];
 
     const letterColumns = [
-        { key: 'letterNumber', label: 'Letter #', render: (row) => <span className="font-mono text-xs text-slate-600">{row.letterNumber}</span> },
-        { key: 'templateName', label: 'Letter name', render: (row) => row.templateName || row.title || 'Official letter' },
+        { key: 'letterNumber', label: 'Letter Number', render: (row) => <span className="font-mono text-xs text-slate-600">{row.letterNumber}</span> },
+        { key: 'templateName', label: 'Letter Name', render: (row) => row.templateName || row.title || 'Official letter' },
         { key: 'incidentCategory', label: 'Category', render: (row) => row.incidentCategory || 'N/A' },
         { key: 'generatedAt', label: 'Date Issued', render: (row) => formatShortDate(row.generatedAt) },
         {
@@ -690,7 +691,7 @@ const StudentAnalytics = () => {
                         onClick={() => handleDownloadLetterDocx(row)}
                         disabled={downloadingLetterId === row._id}
                         className="rounded-xl border border-blue-200 bg-blue-50 p-2 text-blue-600 transition hover:bg-blue-100 disabled:opacity-60"
-                        title="Download Word file"
+                            title="Download Word File"
                     >
                         {downloadingLetterId === row._id ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
                     </button>
@@ -702,7 +703,7 @@ const StudentAnalytics = () => {
     const statusTrendColumns = [
         { key: 'name', label: 'Period' },
         { key: 'open', label: 'Open' },
-        { key: 'inProgress', label: 'In Progress' },
+        { key: 'inProgress', label: 'In progress' },
         { key: 'closed', label: 'Closed' },
     ];
 
@@ -761,9 +762,9 @@ const StudentAnalytics = () => {
                         {!selectedStudent ? (
                             <>
                                 <DashboardHero
-                                    eyebrow="Student summaries"
+                                    eyebrow="Student Summaries"
                                     title="Student Summaries"
-                                    description={isPassedOutSummary ? 'View passed out student records with historical class and section snapshots.' : 'View student records and incident history.'}
+                                    description={isPassedOutSummary ? 'View passed-out student records with historical class and section snapshots.' : 'View student records and incident history.'}
                                     icon={Users}
                                     actions={(
                                         <div className="flex flex-wrap gap-2">
@@ -772,7 +773,7 @@ const StudentAnalytics = () => {
                                                 onClick={exportStudentSummaryToExcel}
                                                 className="rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
                                             >
-                                                Excel
+                                                Export to Excel
                                             </button>
                                         </div>
                                     )}
@@ -821,7 +822,7 @@ const StudentAnalytics = () => {
                                         setSectionFilter('');
                                         setAcademicYear(currentAcademicYear);
                                     }}
-                                    title="Find a student"
+                                    title="Find a Student"
                                     activeFilterLabels={directoryFilterLabels}
                                     collapsible
                                     defaultCollapsed
@@ -859,7 +860,7 @@ const StudentAnalytics = () => {
                                                 onChange={(event) => setClassFilter(event.target.value)}
                                                 className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-600 focus-visible:outline-none"
                                             >
-                                                <option value="">All Classes</option>
+                                                <option value="">All classes</option>
                                                 {filterOptions.classes.map((option) => (
                                                     <option key={option} value={option}>
                                                         {option}
@@ -874,7 +875,7 @@ const StudentAnalytics = () => {
                                                 onChange={(event) => setSectionFilter(event.target.value)}
                                                 className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-600 focus-visible:outline-none"
                                             >
-                                                <option value="">All Sections</option>
+                                                <option value="">All sections</option>
                                                 {filterOptions.sections.map((option) => (
                                                     <option key={option} value={option}>
                                                         {option}
@@ -886,15 +887,15 @@ const StudentAnalytics = () => {
                                 </UnifiedFilterBar>
 
                                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-                                        <DashboardStatCard title={isPassedOutSummary ? 'Passed Out Students' : 'Total Students'} value={students.length} icon={Users} tone="blue" helper={isPassedOutSummary ? 'Status filtered dataset' : 'Directory population'} />
-                                        <DashboardStatCard title="Showing now" value={filteredStudents.length} icon={Search} tone="cyan" helper="Matching your filters" />
+                                        <DashboardStatCard title={isPassedOutSummary ? 'Passed Out Students' : 'Total Students'} value={students.length} icon={Users} tone="blue" helper={isPassedOutSummary ? 'Students matching the selected status.' : 'Students in the directory.'} />
+                                        <DashboardStatCard title="Showing Now" value={filteredStudents.length} icon={Search} tone="cyan" helper="Matching your filters" />
                                         <DashboardStatCard title="Incidents" value={filteredStudents.reduce((total, student) => total + Number(student.incidentCount || 0), 0)} icon={FileText} tone="slate" helper="In current result" />
                                         <DashboardStatCard title="Letters" value={filteredStudents.reduce((total, student) => total + Number(student.letterCount || 0), 0)} icon={Mail} tone="slate" helper="In current result" />
                                     </div>
 
                                 {filteredStudents.length === 0 ? (
                                     <EmptyStatePanel
-                                        title="No students found"
+                                        title="No students found."
                                         description={searchTerm || classFilter || sectionFilter ? 'Try broadening your filters to surface more students.' : 'No students are currently available in the directory.'}
                                     />
                                 ) : (
@@ -927,7 +928,7 @@ const StudentAnalytics = () => {
                                                     <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1">{student?.letterCount || 0} letters</span>
                                                 </div>
                                                 <div className="mt-4 border-t border-slate-100 pt-4 text-sm font-semibold text-blue-700">
-                                                    View summary & history
+                                                    View Summary & History
                                                 </div>
                                             </button>
                                         ))}
@@ -973,8 +974,8 @@ const StudentAnalytics = () => {
                         ) : (
                             <>
                                 <DashboardHero
-                                    eyebrow={isPassedOutSummary ? 'Passed out student summary' : 'Student summary'}
-                                    title={selectedStudent?.name || (isPassedOutSummary ? 'Passed out student summary' : 'Student summary')}
+                                    eyebrow={isPassedOutSummary ? 'Passed-Out Student Summary' : 'Student Summary'}
+                                    title={selectedStudent?.name || (isPassedOutSummary ? 'Passed-Out Student Summary' : 'Student Summary')}
                                     description="View student incidents and letters."
                                     icon={TrendingUp}
                                     actions={
@@ -1041,32 +1042,32 @@ const StudentAnalytics = () => {
                                             options={filterOptions.incidentTypes}
                                             selected={filters.incidentTypes}
                                             onChange={(value) => setFilters((current) => ({ ...current, incidentTypes: value }))}
-                                            placeholder="All Categories"
-                                            searchPlaceholder="Search category..."
+                                            placeholder="All categories"
+                                            searchPlaceholder="Search categories…"
                                         />
                                         <UnifiedMultiSelect
                                             label="Location"
                                             options={locationFilterOptions}
                                             selected={filters.locations}
                                             onChange={(value) => setFilters((current) => ({ ...current, locations: value }))}
-                                            placeholder="All Locations"
-                                            searchPlaceholder="Search location..."
+                                            placeholder="All locations"
+                                            searchPlaceholder="Search locations…"
                                         />
                                         <UnifiedMultiSelect
                                             label="Evidence Type"
                                             options={evidenceFilterOptions}
                                             selected={filters.evidence}
                                             onChange={(value) => setFilters((current) => ({ ...current, evidence: value }))}
-                                            placeholder="All Evidence Types"
-                                            searchPlaceholder="Search evidence..."
+                                            placeholder="All evidence types"
+                                            searchPlaceholder="Search evidence types…"
                                         />
                                         <UnifiedMultiSelect
                                             label="Status"
                                             options={STATUS_OPTIONS}
                                             selected={statusFilter}
                                             onChange={setStatusFilter}
-                                            placeholder="All Status"
-                                            searchPlaceholder="Search status..."
+                                            placeholder="All statuses"
+                                            searchPlaceholder="Search statuses…"
                                         />
                                     </div>
                                 </UnifiedFilterBar>
@@ -1080,14 +1081,14 @@ const StudentAnalytics = () => {
                                             <DashboardStatCard title="Open" value={studentAnalytics.open} icon={AlertTriangle} tone="amber" helper="Needs attention" />
                                             <DashboardStatCard title="In Progress" value={studentAnalytics.inProgress} icon={Clock} tone="blue" helper="Currently being handled" />
                                             <DashboardStatCard title="Closed" value={studentAnalytics.closed} icon={CheckCircle} tone="emerald" helper="Resolved cases" />
-                                            <DashboardStatCard title="Letters sent" value={studentAnalytics.generatedLetters} icon={Mail} tone="emerald" helper="Letters completed for this student" />
+                                            <DashboardStatCard title="Letters Sent" value={studentAnalytics.generatedLetters} icon={Mail} tone="emerald" helper="Letters completed for this student" />
                                             <DashboardStatCard title="Letters Pending" value={studentAnalytics.pendingLetters} icon={ShieldCheck} tone="amber" helper="Incident cases without letters" />
                                         </div>
 
                                         <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
                                             <DashboardWidgetPanel
                                                 className="xl:col-span-8"
-                                                title="Incident Status Over Time"
+                                            title="Incident Status over Time"
                                                 description="Daily open, in-progress, and closed counts using the incident timeline date."
                                                 icon={TrendingUp}
                                                 chart={<IncidentStatusTrendChart data={studentAnalytics.statusTrendData} idPrefix="student-status" />}
@@ -1095,7 +1096,7 @@ const StudentAnalytics = () => {
                                                     <LegendList
                                                         items={[
                                                             { label: 'Open', color: STATUS_COLORS.Open },
-                                                            { label: 'In Progress', color: STATUS_COLORS['In Progress'] },
+                                                            { label: 'In progress', color: STATUS_COLORS['In Progress'] },
                                                             { label: 'Closed', color: STATUS_COLORS.Closed },
                                                         ]}
                                                     />
@@ -1225,7 +1226,7 @@ const StudentAnalytics = () => {
                                                 icon={ShieldCheck}
                                                 chart={
                                                     studentAnalytics.evidenceData.length === 0 ? (
-                                                        <EmptyStatePanel title="No evidence distribution" description="There are no evidence records for the current filters." />
+                                                        <EmptyStatePanel title="No evidence distribution." description="There are no evidence records for the current filters." />
                                                     ) : (
                                                         <ChartSurface height={280}>
                                                 <ResponsiveContainer width="100%" height="100%" minWidth={1}>
@@ -1271,7 +1272,7 @@ const StudentAnalytics = () => {
                                                     className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
                                                 >
                                                     <Download size={14} aria-hidden="true" />
-                                                    Export
+                                                    Export to Excel
                                                 </button>
                                             }
                                         >
@@ -1293,8 +1294,8 @@ const StudentAnalytics = () => {
                                                 </div>
                                             ) : filteredStudentLetters.length === 0 ? (
                                                 <EmptyStatePanel
-                                                    title="No letters found"
-                                                    description="No letters match the current filters or no letters have been issued yet."
+                                                    title="No letters found."
+                                                    description="No letters match the current filters, or no letters have been issued yet."
                                                 />
                                             ) : (
                                                 <AnalyticsDataTable columns={letterColumns} rows={filteredStudentLetters} emptyMessage="No letters found." />

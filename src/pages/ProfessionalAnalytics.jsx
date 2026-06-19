@@ -67,6 +67,7 @@ import {
     normalizeOptionList,
     toneForStatus,
     withUnknownOption,
+    formatDisplayValue,
 } from '../utils/analytics';
 import { downloadWorkbook } from '../utils/downloadFiles';
 import { withFeedback } from '../utils/notifications';
@@ -190,7 +191,7 @@ const AcademicYearStatusTooltip = ({ active, payload, label }) => {
                 {[
                     { label: 'Total Incidents', value: row.total, color: CHART_COLORS.neutralPrimary },
                     { label: 'Open', value: row.open, color: STATUS_COLORS.Open },
-                    { label: 'In Progress', value: row.inProgress, color: STATUS_COLORS['In Progress'] },
+                    { label: 'In progress', value: row.inProgress, color: STATUS_COLORS['In Progress'] },
                     { label: 'Closed', value: row.closed, color: STATUS_COLORS.Closed },
                 ].map((entry) => (
                     <div key={entry.label} className="flex items-center justify-between gap-4 text-sm">
@@ -267,7 +268,7 @@ const ProfessionalAnalytics = () => {
 
     const allStaffOptions = useMemo(
         // Single unified "Administration" entry for all admin accounts; teachers listed individually.
-        () => ['Administration', ...staffList.filter((staff) => !isAdminRole(staff.role)).map((staff) => staff.name)],
+        () => ['Admin', ...staffList.filter((staff) => !isAdminRole(staff.role)).map((staff) => staff.name)],
         [staffList]
     );
 
@@ -278,7 +279,7 @@ const ProfessionalAnalytics = () => {
         try {
             setLoading(true);
             const allSelected = allStaffOptions.length > 0 && selectedStaff.length === allStaffOptions.length;
-            const administrationSelected = selectedStaff.includes('Administration');
+            const administrationSelected = selectedStaff.includes('Admin');
             const staffIds =
                 !options?.reset && selectedStaff.length > 0 && !allSelected
                     ? staffList
@@ -425,7 +426,7 @@ const ProfessionalAnalytics = () => {
 
         const statusData = [
             { name: 'Open', value: open, color: STATUS_COLORS.Open },
-            { name: 'In Progress', value: inProgress, color: STATUS_COLORS['In Progress'] },
+            { name: 'In progress', value: inProgress, color: STATUS_COLORS['In Progress'] },
             { name: 'Closed', value: closed, color: STATUS_COLORS.Closed },
         ];
 
@@ -534,7 +535,7 @@ const ProfessionalAnalytics = () => {
                     Status: incident.status || 'N/A',
                     Opened: formatShortDate(getIncidentTimestamp(incident)),
                     Closed: formatShortDate(incident.closedAt),
-                    Letter: letterInfo.hasLetter ? 'Issued' : 'Not Issued',
+                    Letter: letterInfo.hasLetter ? 'Issued' : 'Not issued',
                 };
             });
 
@@ -544,7 +545,7 @@ const ProfessionalAnalytics = () => {
             const reportInfoWs = XLSX.utils.json_to_sheet([
                 { Field: 'Report', Value: 'Incident Details' },
                 { Field: 'Generated On', Value: exportDate },
-                { Field: 'Academic Year', Value: academicYear || currentAcademicYear || 'All Years' },
+                { Field: 'Academic Year', Value: academicYear || currentAcademicYear || 'All years' },
                 { Field: 'Date Range', Value: dateRange.start || dateRange.end ? `${dateRange.start || 'Any'} to ${dateRange.end || 'Any'}` : 'All dates' },
                 { Field: 'Classes', Value: filters.classes.length ? filters.classes.join(', ') : 'All classes' },
                 { Field: 'Sections', Value: filters.sections.length ? filters.sections.join(', ') : 'All sections' },
@@ -573,7 +574,7 @@ const ProfessionalAnalytics = () => {
                     XLSX,
                     wb,
                     `Incident_Details_${slugifyExportPart(academicYear || currentAcademicYear || 'All_Years')}_${exportDate}.xlsx`,
-                    { title: 'Incident details export' }
+                    { title: 'Incident Details Export' }
                 ),
                 {
                     successMessage: 'Excel exported successfully.',
@@ -601,12 +602,12 @@ const ProfessionalAnalytics = () => {
     }
 
     const detailColumns = [
-        { key: 'admissionNo', label: 'Admission No', render: (row) => <span className="font-mono text-xs text-slate-600">{row.admissionNo || 'N/A'}</span> },
+        { key: 'admissionNo', label: 'Admission Number', render: (row) => <span className="font-mono text-xs text-slate-600">{row.admissionNo || 'N/A'}</span> },
         { key: 'studentName', label: 'Student', render: (row) => row.studentDetails?.name || row.studentsInvolved?.[0] || 'N/A' },
         { key: 'className', label: 'Class', render: (row) => row.class || row.studentDetails?.className || 'N/A' },
         { key: 'section', label: 'Section', render: (row) => row.section || row.studentDetails?.section || 'N/A' },
-        { key: 'category', label: 'Type', render: (row) => row.category || 'N/A' },
-        { key: 'location', label: 'Location', render: (row) => row.location || 'N/A' },
+        { key: 'category', label: 'Type', render: (row) => formatDisplayValue(row.category) || 'N/A' },
+        { key: 'location', label: 'Location', render: (row) => formatDisplayValue(row.location) || 'N/A' },
         {
             key: 'evidence',
             label: 'Evidence',
@@ -630,7 +631,7 @@ const ProfessionalAnalytics = () => {
             label: 'Status',
             render: (row) => (
                 <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${toneForStatus(row.status)}`}>
-                    {row.status}
+                    {formatDisplayValue(row.status)}
                 </span>
             ),
         },
@@ -649,13 +650,13 @@ const ProfessionalAnalytics = () => {
                 );
             },
         },
-        { key: 'actions', label: 'Actions', render: (row) => (<button type="button" onClick={() => navigate(`/incidents/${row._id || row.id}`)} className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800">View</button>), },
+        { key: 'actions', label: 'Actions', render: (row) => (<button type="button" onClick={() => navigate(`/incidents/${row._id || row.id}`)} className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800">View Details</button>), },
     ];
 
     const statusTrendColumns = [
         { key: 'name', label: 'Period' },
         { key: 'open', label: 'Open' },
-        { key: 'inProgress', label: 'In Progress' },
+        { key: 'inProgress', label: 'In progress' },
         { key: 'closed', label: 'Closed' },
     ];
 
@@ -670,7 +671,7 @@ const ProfessionalAnalytics = () => {
     }));
 
     const statusColumns = [
-        { key: 'name', label: 'Status' },
+        { key: 'name', label: 'Status', render: (row) => formatDisplayValue(row.name) },
         { key: 'value', label: 'Incidents' },
         { key: 'share', label: 'Share' },
     ];
@@ -678,15 +679,15 @@ const ProfessionalAnalytics = () => {
     const workloadColumns = [
         { key: 'name', label: 'Staff Member' },
         { key: 'open', label: 'Open' },
-        { key: 'inProgress', label: 'In Progress' },
+        { key: 'inProgress', label: 'In progress' },
         { key: 'closed', label: 'Closed' },
         { key: 'total', label: 'Total' },
     ];
 
     const categoryHeatmapColumns = [
-        { key: 'label', label: 'Category' },
+        { key: 'label', label: 'Category', render: (row) => formatDisplayValue(row.label) },
         { key: 'open', label: 'Open' },
-        { key: 'inProgress', label: 'In Progress' },
+        { key: 'inProgress', label: 'In progress' },
         { key: 'closed', label: 'Closed' },
         { key: 'total', label: 'Total' },
     ];
@@ -697,7 +698,7 @@ const ProfessionalAnalytics = () => {
     }));
 
     const categoryColumns = [
-        { key: 'name', label: 'Category' },
+        { key: 'name', label: 'Category', render: (row) => formatDisplayValue(row.name) },
         { key: 'count', label: 'Incidents' },
     ];
 
@@ -719,7 +720,7 @@ const ProfessionalAnalytics = () => {
     }));
 
     const locationColumns = [
-        { key: 'name', label: 'Location' },
+        { key: 'name', label: 'Location', render: (row) => formatDisplayValue(row.name) },
         { key: 'count', label: 'Incidents' },
     ];
 
@@ -730,7 +731,7 @@ const ProfessionalAnalytics = () => {
                     <div className="mx-auto max-w-[1600px] space-y-6">
                         <DashboardHero
                             eyebrow="Reports & trends"
-                            title="School reports & summary"
+                            title="School Analytics"
                             description="View school-wide incident reports and trends."
                             icon={ShieldCheck}
                             actions={
@@ -747,17 +748,17 @@ const ProfessionalAnalytics = () => {
                                         className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 ${activeTab === 'details' ? 'bg-white text-slate-900 shadow-sm dark:bg-white dark:text-slate-950' : 'bg-white/10 text-white hover:bg-white/20 dark:bg-white/10 dark:text-white dark:hover:bg-white/20'}`}
                                     >
                                         <List size={16} className="mr-2 inline" />
-                                        Case details
+                                Case Details
                                     </button>
                                 </div>
                             }
                             meta={
                                 <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
                                     <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5">
-                                        {filteredIncidents.length} filtered incident{filteredIncidents.length === 1 ? '' : 's'}
+                                        {filteredIncidents.length} Filtered Incident{filteredIncidents.length === 1 ? '' : 's'}
                                     </span>
                                     <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5">
-                                        Resolution rate {analytics.resolutionRate}
+                                        Resolution Rate {analytics.resolutionRate}
                                     </span>
                                 </div>
                             }
@@ -766,7 +767,7 @@ const ProfessionalAnalytics = () => {
                         <UnifiedFilterBar
                             hasActiveFilters={hasActiveFilters}
                             onReset={resetFilters}
-                            title="Search & filters"
+                            title="Search & Filters"
                             activeFilterLabels={activeFilterLabels}
                             collapsible
                             defaultCollapsed
@@ -777,7 +778,7 @@ const ProfessionalAnalytics = () => {
                                     className="btn-primary"
                                 >
                                     <Download size={14} />
-                                    {isExporting ? 'Exporting...' : 'Export Excel'}
+                                    {isExporting ? 'Exporting…' : 'Export to Excel'}
                                 </button>
                             }
                         >
@@ -809,48 +810,48 @@ const ProfessionalAnalytics = () => {
                                     options={filterOptions.classes}
                                     selected={filters.classes}
                                     onChange={(value) => setFilters((current) => ({ ...current, classes: value }))}
-                                    placeholder="All Classes"
-                                    searchPlaceholder="Search class..."
+                                    placeholder="All classes"
+                                    searchPlaceholder="Search classes…"
                                 />
                                 <UnifiedMultiSelect
                                     label="Section"
                                     options={filterOptions.sections}
                                     selected={filters.sections}
                                     onChange={(value) => setFilters((current) => ({ ...current, sections: value }))}
-                                    placeholder="All Sections"
-                                    searchPlaceholder="Search section..."
+                                    placeholder="All sections"
+                                    searchPlaceholder="Search sections…"
                                 />
                                 <UnifiedMultiSelect
                                     label="Incident Category"
                                     options={filterOptions.incidentTypes}
                                     selected={filters.incidentTypes}
                                     onChange={(value) => setFilters((current) => ({ ...current, incidentTypes: value }))}
-                                    placeholder="All Categories"
-                                    searchPlaceholder="Search category..."
+                                    placeholder="All categories"
+                                    searchPlaceholder="Search categories…"
                                 />
                                 <UnifiedMultiSelect
                                     label="Location"
                                     options={locationFilterOptions}
                                     selected={filters.locations}
                                     onChange={(value) => setFilters((current) => ({ ...current, locations: value }))}
-                                    placeholder="All Locations"
-                                    searchPlaceholder="Search location..."
+                                    placeholder="All locations"
+                                    searchPlaceholder="Search locations…"
                                 />
                                 <UnifiedMultiSelect
                                     label="Evidence Type"
                                     options={evidenceFilterOptions}
                                     selected={filters.evidence}
                                     onChange={(value) => setFilters((current) => ({ ...current, evidence: value }))}
-                                    placeholder="All Evidence Types"
-                                    searchPlaceholder="Search evidence..."
+                                    placeholder="All evidence types"
+                                    searchPlaceholder="Search evidence types…"
                                 />
                                 <UnifiedMultiSelect
                                     label="Status"
                                     options={STATUS_OPTIONS}
                                     selected={filters.statuses}
                                     onChange={(value) => setFilters((current) => ({ ...current, statuses: value }))}
-                                    placeholder="All Status"
-                                    searchPlaceholder="Search status..."
+                                    placeholder="All statuses"
+                                    searchPlaceholder="Search statuses…"
                                 />
                                 {!isOperationalUser ? (
                                     <UnifiedMultiSelect
@@ -858,8 +859,8 @@ const ProfessionalAnalytics = () => {
                                         options={allStaffOptions}
                                         selected={selectedStaff}
                                         onChange={setSelectedStaff}
-                                        placeholder="All Staff"
-                                        searchPlaceholder="Search staff..."
+                                        placeholder="All staff"
+                                        searchPlaceholder="Search staff…"
                                     />
                                 ) : (
                                     <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
@@ -877,13 +878,13 @@ const ProfessionalAnalytics = () => {
                                     <DashboardStatCard title="Open" value={analytics.open} icon={AlertTriangle} tone="amber" helper="Requires immediate action" />
                                     <DashboardStatCard title="In Progress" value={analytics.inProgress} icon={Clock} tone="blue" helper="Being handled right now" />
                                     <DashboardStatCard title="Resolved" value={analytics.closed} icon={CheckCircle} tone="emerald" helper={`Resolution rate ${analytics.resolutionRate}`} />
-                                    <DashboardStatCard title="Letters sent" value={analytics.lettersIssued} icon={TrendingUp} tone="cyan" helper="Letters completed for these incidents" />
+                                    <DashboardStatCard title="Letters Sent" value={analytics.lettersIssued} icon={TrendingUp} tone="cyan" helper="Letters completed for these incidents" />
                                 </div>
 
                                 <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
                                     <DashboardWidgetPanel
                                         className="xl:col-span-7"
-                                        title="Incident status over time"
+                                        title="Incident Status over Time"
                                         description="Shows how counts of open, in-progress, and closed incidents change day by day."
                                         icon={TrendingUp}
                                         chart={<IncidentStatusTrendChart data={analytics.statusTrendData} idPrefix="professional-status" />}
@@ -891,7 +892,7 @@ const ProfessionalAnalytics = () => {
                                             <LegendList
                                                 items={[
                                                     { label: 'Open', color: STATUS_COLORS.Open },
-                                                    { label: 'In Progress', color: STATUS_COLORS['In Progress'] },
+                                                    { label: 'In progress', color: STATUS_COLORS['In Progress'] },
                                                     { label: 'Closed', color: STATUS_COLORS.Closed },
                                                 ]}
                                             />
@@ -903,7 +904,7 @@ const ProfessionalAnalytics = () => {
 
                                     <DashboardWidgetPanel
                                         className="xl:col-span-5"
-                                        title="New incidents by day"
+                                        title="New Incidents by Day"
                                         description="Counts how many new incident reports appear on each calendar day."
                                         icon={AlertTriangle}
                                         chart={<DailyCreationTrendChart data={analytics.creationTrendData} />}
@@ -914,7 +915,7 @@ const ProfessionalAnalytics = () => {
 
                                     <DashboardWidgetPanel
                                         className="xl:col-span-12"
-                                        title="Incidents by academic year"
+                                        title="Incidents by Academic Year"
                                         description="Compares yearly incident volume and resolution status."
                                         icon={BarChart3}
                                         chart={
@@ -926,7 +927,7 @@ const ProfessionalAnalytics = () => {
                                                         <YAxis allowDecimals={false} {...compactYAxisProps} />
                                                         <Tooltip cursor={false} content={<AcademicYearStatusTooltip />} />
                                                         <Bar dataKey="open" stackId="academic-year-status" fill={STATUS_COLORS.Open} name="Open" radius={[0, 0, 0, 0]} />
-                                                        <Bar dataKey="inProgress" stackId="academic-year-status" fill={STATUS_COLORS['In Progress']} name="In Progress" radius={[0, 0, 0, 0]} />
+                                                        <Bar dataKey="inProgress" stackId="academic-year-status" fill={STATUS_COLORS['In Progress']} name="In progress" radius={[0, 0, 0, 0]} />
                                                         <Bar dataKey="closed" stackId="academic-year-status" fill={STATUS_COLORS.Closed} name="Closed" radius={[6, 6, 0, 0]}>
                                                             <LabelList dataKey="total" position="top" className="fill-slate-600 text-xs font-semibold" />
                                                         </Bar>
@@ -938,7 +939,7 @@ const ProfessionalAnalytics = () => {
                                             <LegendList
                                                 items={[
                                                     { label: 'Open', color: STATUS_COLORS.Open },
-                                                    { label: 'In Progress', color: STATUS_COLORS['In Progress'] },
+                                                    { label: 'In progress', color: STATUS_COLORS['In Progress'] },
                                                     { label: 'Closed', color: STATUS_COLORS.Closed },
                                                 ]}
                                             />
@@ -947,7 +948,7 @@ const ProfessionalAnalytics = () => {
                                             { key: 'academicYear', label: 'Academic Year' },
                                             { key: 'total', label: 'Total' },
                                             { key: 'open', label: 'Open' },
-                                            { key: 'inProgress', label: 'In Progress' },
+                                            { key: 'inProgress', label: 'In progress' },
                                             { key: 'closed', label: 'Closed' },
                                             { key: 'unresolved', label: 'Unresolved' },
                                         ]}
@@ -957,7 +958,7 @@ const ProfessionalAnalytics = () => {
 
                                     <DashboardWidgetPanel
                                         className="xl:col-span-5"
-                                        title="Where incidents stand today"
+                                        title="Where Incidents Stand Today"
                                         description="Open, in-progress, and closed incidents as parts of the whole."
                                         icon={BarChart3}
                                         chart={
@@ -998,13 +999,13 @@ const ProfessionalAnalytics = () => {
 
                                     <DashboardWidgetPanel
                                         className="xl:col-span-7"
-                                        title="Workload by staff member"
+                                        title="Workload by Staff Member"
                                         description="Shows how incidents are divided among staff—for open work, ongoing follow-up, and completed cases."
                                         icon={Users}
                                         chart={
                                             analytics.staffWorkload.length === 0 ? (
                                                 <EmptyStatePanel
-                                                    title="No workload data"
+                                                    title="No workload data."
                                                     description="Adjust the filters to reveal staff handling distribution."
                                                 />
                                             ) : (
@@ -1016,7 +1017,7 @@ const ProfessionalAnalytics = () => {
                                                         <YAxis tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
                                                         <ChartTooltip />
                                                         <Bar dataKey="open" stackId="workload" fill={STATUS_COLORS.Open} radius={[6, 6, 0, 0]} name="Open" />
-                                                        <Bar dataKey="inProgress" stackId="workload" fill={STATUS_COLORS['In Progress']} name="In Progress" />
+                                                        <Bar dataKey="inProgress" stackId="workload" fill={STATUS_COLORS['In Progress']} name="In progress" />
                                                         <Bar dataKey="closed" stackId="workload" fill={STATUS_COLORS.Closed} radius={[6, 6, 0, 0]} name="Closed">
                                                             <LabelList dataKey="total" position="top" fill={CHART_THEME.label} fontSize={12} />
                                                         </Bar>
@@ -1033,7 +1034,7 @@ const ProfessionalAnalytics = () => {
 
                                     <DashboardWidgetPanel
                                         className="xl:col-span-6"
-                                        title="Category summary (grid view)"
+                                        title="Category Summary (Grid View)"
                                         description="See how often each incident type appears while open, in progress, or already closed."
                                         icon={BarChart3}
                                         chart={
@@ -1041,7 +1042,7 @@ const ProfessionalAnalytics = () => {
                                                 rows={analytics.categoryHeatmap}
                                                 columns={[
                                                     { key: 'open', label: 'Open', rgb: '249, 115, 22' },
-                                                    { key: 'inProgress', label: 'In Progress', rgb: '59, 130, 246' },
+                                                    { key: 'inProgress', label: 'In progress', rgb: '59, 130, 246' },
                                                     { key: 'closed', label: 'Closed', rgb: '34, 197, 94' },
                                                 ]}
                                             />
@@ -1084,7 +1085,7 @@ const ProfessionalAnalytics = () => {
                                         icon={ShieldCheck}
                                         chart={
                                             analytics.evidenceData.length === 0 ? (
-                                                <EmptyStatePanel title="No evidence data" description="No evidence records are available for the current filters." />
+                                                <EmptyStatePanel title="No evidence data." description="No evidence records are available for the current filters." />
                                             ) : (
                                                 <ChartSurface height={260}>
                                                 <ResponsiveContainer width="100%" height="100%" minWidth={1}>
@@ -1185,7 +1186,7 @@ const ProfessionalAnalytics = () => {
                             </>
                         ) : (
                             <DashboardPanel
-                                title="Single incident breakdown"
+                                title="Single Incident Breakdown"
                                 description="Sortable, exportable detail view of every incident included in the current analytics scope."
                                 icon={List}
                             >
