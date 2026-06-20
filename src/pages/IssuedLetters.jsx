@@ -338,10 +338,14 @@ const IssuedLetters = () => {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
     const [filters, setFilters] = useState({ categories: [], classes: [], sections: [], academicYear: '' });
     const [currentAcademicYear, setCurrentAcademicYear] = useState('');
     const [page, setPage] = useState(1);
+    const [pagination, setPagination] = useState({ page: 1, limit: PAGE_SIZE, total: 0, totalPages: 1 });
+    const [categorySummary, setCategorySummary] = useState([]);
+    const [matchingLetterIds, setMatchingLetterIds] = useState([]);
     const [selectedLetter, setSelectedLetter] = useState(null);
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [deleting, setDeleting] = useState(false);
@@ -399,11 +403,19 @@ const IssuedLetters = () => {
             if (filters.classes?.length > 0) params.append('class', filters.classes.join(','));
             if (filters.sections?.length > 0) params.append('section', filters.sections.join(','));
             if (filters.academicYear) params.set('academicYear', filters.academicYear);
+            params.set('page', String(page));
+            params.set('limit', String(PAGE_SIZE));
+            params.set('includeMatchingIds', 'true');
+            if (debouncedSearchTerm) params.set('search', debouncedSearchTerm);
 
             const requestConfig = params.toString() ? { ...config, params } : config;
             const response = await apiClient.get('/api/issued-letters', requestConfig);
 
-            setLetters(response.data || []);
+            const responseData = response.data || {};
+            setLetters(Array.isArray(responseData.data) ? responseData.data : []);
+            setPagination(responseData.pagination || { page, limit: PAGE_SIZE, total: 0, totalPages: 1 });
+            setCategorySummary(Array.isArray(responseData.summary?.categories) ? responseData.summary.categories : []);
+            setMatchingLetterIds(Array.isArray(responseData.matchingIds) ? responseData.matchingIds : []);
         } catch (error) {
             addToast(error.response?.data?.message || 'Failed to load issued letters.', 'error');
         } finally {
@@ -411,7 +423,7 @@ const IssuedLetters = () => {
             setLoading(false);
             setRefreshing(false);
         }
-    }, [addToast, config, dateRange, filters.academicYear, filters.categories, filters.classes, filters.sections, user?._id]);
+    }, [addToast, config, dateRange, debouncedSearchTerm, filters.academicYear, filters.categories, filters.classes, filters.sections, page, user?._id]);
 
     useEffect(() => {
         fetchFilters();
@@ -423,37 +435,16 @@ const IssuedLetters = () => {
 
     useEffect(() => {
         setPage(1);
-    }, [dateRange.end, dateRange.start, filters.academicYear, filters.categories, filters.classes, filters.sections, searchTerm]);
+    }, [dateRange.end, dateRange.start, filters.academicYear, filters.categories, filters.classes, filters.sections, debouncedSearchTerm]);
 
-    const filteredLetters = useMemo(() => {
-        const query = searchTerm.trim().toLowerCase();
-        const nextLetters = [...letters].sort(
-            (first, second) => new Date(second.generatedAt).getTime() - new Date(first.generatedAt).getTime()
-        );
+    useEffect(() => {
+        const timer = window.setTimeout(() => setDebouncedSearchTerm(searchTerm.trim()), 300);
+        return () => window.clearTimeout(timer);
+    }, [searchTerm]);
 
-        if (!query) return nextLetters;
-
-        return nextLetters.filter((letter) =>
-            [letter.studentName, letter.admissionNo, letter.letterNumber, letter.incidentCategory, letter.title]
-                .filter(Boolean)
-                .some((value) => String(value).toLowerCase().includes(query))
-        );
-    }, [letters, searchTerm]);
-
-    const categorySummary = useMemo(() => {
-        const categoryCounts = filteredLetters.reduce((accumulator, letter) => {
-            const category = String(letter.incidentCategory || letter.incident?.category || 'Uncategorized').trim() || 'Uncategorized';
-            accumulator[category] = (accumulator[category] || 0) + 1;
-            return accumulator;
-        }, {});
-
-        return Object.entries(categoryCounts)
-            .map(([category, count]) => ({ category, count }))
-            .sort((first, second) => second.count - first.count || first.category.localeCompare(second.category));
-    }, [filteredLetters]);
-
-    const totalPages = Math.max(1, Math.ceil(filteredLetters.length / PAGE_SIZE));
-    const paginatedLetters = filteredLetters.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+    const filteredLetters = letters;
+    const totalPages = Math.max(1, pagination.totalPages || 1);
+    const paginatedLetters = letters;
 
     useEffect(() => {
         if (page > totalPages) {
@@ -509,6 +500,8 @@ const IssuedLetters = () => {
             setSelectedLetter((current) => (current?._id === deleteTarget._id ? null : current));
             setDeleteTarget(null);
             addToast('Issued letter deleted.');
+            if (letters.length === 1 && page > 1) setPage((current) => current - 1);
+            else await fetchLetters(false);
         } catch (error) {
             addToast(error.response?.data?.message || 'Delete failed.', 'error');
         } finally {
@@ -662,16 +655,16 @@ const IssuedLetters = () => {
                                 <div>
                                     <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Generated Letters</h2>
                                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                                        Page {page} of {totalPages} — {filteredLetters.length} total result{filteredLetters.length === 1 ? '' : 's'}
+                                        Page {page} of {totalPages} — {pagination.total} total result{pagination.total === 1 ? '' : 's'}
                                     </p>
                                 </div>
                                 <div className="flex flex-wrap items-center gap-2">
                                     {isSuperAdmin ? (
                                         <BulkDeleteControls
                                             moduleName="issued-letters"
-                                            filteredIds={filteredLetters.map((letter) => letter._id).filter(Boolean)}
-                                            allCount={letters.length}
-                                            source={{ page: 'IssuedLetters', filteredCount: filteredLetters.length }}
+                                            filteredIds={matchingLetterIds}
+                                            allCount={pagination.total}
+                                            source={{ page: 'IssuedLetters', filteredCount: pagination.total }}
                                             addToast={addToast}
                                             onComplete={() => {
                                                 fetchLetters(false);
@@ -814,8 +807,8 @@ const IssuedLetters = () => {
 
                                     <div className="flex flex-col gap-4 border-t border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800">
                                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                                            Showing {(page - 1) * PAGE_SIZE + 1}–
-                                            {Math.min(page * PAGE_SIZE, filteredLetters.length)} of {filteredLetters.length}
+                                            Showing {pagination.total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}–
+                                            {Math.min(page * PAGE_SIZE, pagination.total)} of {pagination.total}
                                         </p>
 
                                         <div className="flex items-center gap-2">

@@ -151,6 +151,7 @@ const CheckItem = ({ children }) => (
 /* ─── Main component ──────────────────────────────────────────────── */
 const StudentUpload = () => {
     const fileInputRef = useRef(null);
+    const uploadTriggerRef = useRef(null);
     const mountedRef   = useRef(true);
     const { addToast } = useToast();
 
@@ -300,6 +301,8 @@ const StudentUpload = () => {
 
         if (!file) {
             setMessage({ type: 'error', text: 'Please choose a spreadsheet before uploading.' });
+            uploadTriggerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            uploadTriggerRef.current?.focus({ preventScroll: true });
             return;
         }
         if (preview?.missingColumns?.length > 0) {
@@ -307,6 +310,8 @@ const StudentUpload = () => {
                 type: 'error',
                 text: `Please fix the missing columns before uploading: ${preview.missingColumns.join(', ')}.`,
             });
+            uploadTriggerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            uploadTriggerRef.current?.focus({ preventScroll: true });
             return;
         }
 
@@ -410,6 +415,7 @@ const StudentUpload = () => {
                                     </p>
                                 </div>
                                 <button
+                                    ref={uploadTriggerRef}
                                     type="button"
                                     onClick={() => downloadStudentTemplate(addToast)}
                                     disabled={uploading || parsing}

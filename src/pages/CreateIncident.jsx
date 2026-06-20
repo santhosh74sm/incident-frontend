@@ -33,6 +33,7 @@ import { useNavigate } from 'react-router-dom';
 import apiClient from '../config/apiClient';
 import { isAdminRole, isTeacherRole } from '../utils/roles';
 import { formatDisplayValue } from '../utils/analytics';
+import useFocusFirstInvalid from '../hooks/useFocusFirstInvalid';
 
 dayjs.extend(customParseFormat);
 
@@ -237,6 +238,8 @@ const CreateIncident = () => {
     const confirm = useConfirm();
     const navigate = useNavigate();
     const shownInsightsRef = useRef(new Set());
+    const studentScopeRef = useRef({ className: '', section: '' });
+    const formRef = useRef(null);
 
     const [formData, setFormData] = useState({
         description: '',
@@ -286,6 +289,7 @@ const CreateIncident = () => {
         error: '',
     });
     const [uploadProgress, setUploadProgress] = useState(0);
+    useFocusFirstInvalid(errors, formRef);
 
     const config = useMemo(() => ({ headers: {} }), []);
     const isAdministrationUser = isAdminRole(user?.role);
@@ -423,6 +427,26 @@ const CreateIncident = () => {
             });
         };
     }, []);
+
+    useEffect(() => {
+        const nextScope = { className: formData.class, section: formData.section };
+        const previousScope = studentScopeRef.current;
+        studentScopeRef.current = nextScope;
+
+        if (previousScope.className === nextScope.className && previousScope.section === nextScope.section) return;
+
+        setSelectedStudents([]);
+        setSelectedStudentLookup({});
+        setStudentSearch('');
+        setBehavioralInsight(null);
+        shownInsightsRef.current.clear();
+        setErrors((current) => {
+            if (!current.student) return current;
+            const next = { ...current };
+            delete next.student;
+            return next;
+        });
+    }, [formData.class, formData.section]);
 
     useEffect(() => {
         if (!formData.class || !formData.section || !user?._id) {
@@ -909,6 +933,14 @@ const CreateIncident = () => {
 
         if (!selectedStudents.length) {
             nextErrors.student = 'Select at least one student before submitting the incident.';
+        } else if (
+            selectedStudentObjects.length !== selectedStudents.length
+            || selectedStudentObjects.some((student) => (
+                String(student.className || '') !== String(formData.class || '')
+                || String(student.section || '') !== String(formData.section || '')
+            ))
+        ) {
+            nextErrors.student = 'The selected student list is stale. Re-select students from the current class and section.';
         }
 
         if (!formData.category) {
@@ -1608,7 +1640,7 @@ const CreateIncident = () => {
                             </div>
                         </section>
 
-                        <form onSubmit={handleSubmit} className="space-y-6">
+                        <form ref={formRef} onSubmit={handleSubmit} className="space-y-6" noValidate>
                             {errors.submit && <StatusBanner type="error">{errors.submit}</StatusBanner>}
 
                             {submitSuccess && (
@@ -1739,6 +1771,7 @@ const CreateIncident = () => {
                                                             value={studentSearch}
                                                             onChange={(event) => setStudentSearch(event.target.value)}
                                                             placeholder="Search by student name or admission number"
+                                                            aria-invalid={Boolean(errors.student)}
                                                             className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-10 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
                                                         />
                                                         {studentSearch && (
@@ -1858,6 +1891,7 @@ const CreateIncident = () => {
                                                     <select
                                                         value={selectedCategoryId || formData.category}
                                                         onChange={(event) => handleCategoryChange(event.target.value)}
+                                                        aria-invalid={Boolean(errors.category)}
                                                         className={`w-full rounded-xl border bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 ${
                                                             errors.category ? 'border-red-300' : 'border-slate-200'
                                                         }`}

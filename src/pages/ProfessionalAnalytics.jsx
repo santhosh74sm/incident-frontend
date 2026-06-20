@@ -49,8 +49,6 @@ import {
 import { DailyCreationTrendChart, IncidentStatusTrendChart } from '../components/analytics/TrendCharts';
 import apiClient from '../config/apiClient';
 import {
-    buildDistribution,
-    buildEvidenceDistribution,
     buildIncidentFilterParams,
     CHART_COLORS,
     formatShare,
@@ -60,10 +58,9 @@ import {
     buildCreationTrendSeries,
     buildAcademicYearOptions,
     buildStatusTrendSeries,
+    buildTrendSeriesFromBuckets,
     formatShortDate,
     getIncidentTimestamp,
-    hasUnknownEvidenceType,
-    hasUnknownLocation,
     normalizeOptionList,
     toneForStatus,
     withUnknownOption,
@@ -76,106 +73,6 @@ import { isAdminRole, isTeacherRole } from '../utils/roles';
 const slugifyExportPart = (value, fallback = 'all') => {
     const clean = String(value || fallback).trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 80);
     return clean || fallback;
-};
-
-const buildClassResolution = (items) => {
-    const grouped = {};
-
-    items.forEach((incident) => {
-        const className = incident.class || incident.studentDetails?.className || 'Unknown';
-        if (!grouped[className]) {
-            grouped[className] = { className, total: 0, open: 0, closed: 0 };
-        }
-
-        grouped[className].total += 1;
-        if (incident.status === 'Open') grouped[className].open += 1;
-        if (incident.status === 'Closed') grouped[className].closed += 1;
-    });
-
-    return Object.values(grouped).sort((a, b) => Number(a.className) - Number(b.className) || a.className.localeCompare(b.className));
-};
-
-const buildStaffWorkload = (items) => {
-    const grouped = {};
-
-    items.forEach((incident) => {
-        const staffName = resolveHandlerLabel(incident);
-        if (!grouped[staffName]) {
-            grouped[staffName] = {
-                name: staffName,
-                open: 0,
-                inProgress: 0,
-                closed: 0,
-                total: 0,
-            };
-        }
-
-        grouped[staffName].total += 1;
-        if (incident.status === 'Open') grouped[staffName].open += 1;
-        if (incident.status === 'In Progress') grouped[staffName].inProgress += 1;
-        if (incident.status === 'Closed') grouped[staffName].closed += 1;
-    });
-
-    return Object.values(grouped).sort((a, b) => b.total - a.total).slice(0, 8);
-};
-
-const buildCategoryHeatmap = (items) => {
-    const grouped = {};
-
-    items.forEach((incident) => {
-        const category = incident.category || 'Uncategorized';
-        if (!grouped[category]) {
-            grouped[category] = {
-                label: category,
-                open: 0,
-                inProgress: 0,
-                closed: 0,
-            };
-        }
-
-        if (incident.status === 'Open') grouped[category].open += 1;
-        if (incident.status === 'In Progress') grouped[category].inProgress += 1;
-        if (incident.status === 'Closed') grouped[category].closed += 1;
-    });
-
-    return Object.values(grouped).sort((a, b) => (b.open + b.inProgress + b.closed) - (a.open + a.inProgress + a.closed));
-};
-
-const sortAcademicYearLabels = (first, second) => {
-    const firstYear = Number(String(first).slice(0, 4));
-    const secondYear = Number(String(second).slice(0, 4));
-    if (!Number.isNaN(firstYear) && !Number.isNaN(secondYear)) return firstYear - secondYear;
-    return String(first).localeCompare(String(second));
-};
-
-const buildAcademicYearStatusData = (items) => {
-    const grouped = {};
-
-    items.forEach((incident) => {
-        const academicYear = incident.academicYear || 'Unassigned Year';
-        if (!grouped[academicYear]) {
-            grouped[academicYear] = {
-                name: academicYear,
-                academicYear,
-                total: 0,
-                open: 0,
-                inProgress: 0,
-                closed: 0,
-            };
-        }
-
-        grouped[academicYear].total += 1;
-        if (incident.status === 'Open') grouped[academicYear].open += 1;
-        if (incident.status === 'In Progress') grouped[academicYear].inProgress += 1;
-        if (incident.status === 'Closed') grouped[academicYear].closed += 1;
-    });
-
-    return Object.values(grouped)
-        .map((entry) => ({
-            ...entry,
-            unresolved: entry.open + entry.inProgress,
-        }))
-        .sort((a, b) => sortAcademicYearLabels(a.academicYear, b.academicYear));
 };
 
 const AcademicYearStatusTooltip = ({ active, payload, label }) => {
@@ -216,9 +113,11 @@ const ProfessionalAnalytics = () => {
     const navigate = useNavigate();
     const compactChart = useCompactChart();
     const [incidents, setIncidents] = useState([]);
+    const [serverAnalytics, setServerAnalytics] = useState(null);
     const [staffList, setStaffList] = useState([]);
     const [selectedStaff, setSelectedStaff] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [analyticsError, setAnalyticsError] = useState('');
     const [isExporting, setIsExporting] = useState(false);
     const [activeTab, setActiveTab] = useState('overview');
     const [filters, setFilters] = useState({
@@ -241,6 +140,8 @@ const ProfessionalAnalytics = () => {
     const [currentAcademicYear, setCurrentAcademicYear] = useState('');
     const [academicYears, setAcademicYears] = useState([]);
     const [letterStatusMap, setLetterStatusMap] = useState({});
+    const [detailPage, setDetailPage] = useState(1);
+    const [detailPagination, setDetailPagination] = useState(null);
 
     const config = useMemo(() => ({ headers: {} }), []);
     const compactXAxisProps = useMemo(
@@ -272,50 +173,81 @@ const ProfessionalAnalytics = () => {
         [staffList]
     );
 
-    const fetchIncidents = useCallback(async (options = { reset: false }) => {
-        if (!user?._id) return;
-        if (!academicYear) return;
+    const buildRequestParams = useCallback(() => {
+        const allSelected = allStaffOptions.length > 0 && selectedStaff.length === allStaffOptions.length;
+        const administrationSelected = selectedStaff.includes('Admin');
+        const staffIds = selectedStaff.length > 0 && !allSelected
+            ? staffList
+                .filter((staff) => !isAdminRole(staff.role))
+                .filter((staff) => selectedStaff.includes(staff.name))
+                .map((staff) => staff._id)
+            : [];
+        const params = buildIncidentFilterParams({
+            dateRange: { start: dateRange.start, end: dateRange.end },
+            statuses: filters.statuses,
+            classes: filters.classes,
+            sections: filters.sections,
+            types: filters.incidentTypes,
+            locations: filters.locations,
+            evidenceTypes: filters.evidence,
+            staffIds,
+            includeAdminRole: selectedStaff.length > 0 && !allSelected && administrationSelected,
+            includeUnassigned: false,
+        });
+        if (academicYear) params.set('academicYear', academicYear);
+        params.set('timezoneOffsetMinutes', String(new Date().getTimezoneOffset()));
+        return params;
+    }, [academicYear, allStaffOptions.length, dateRange.end, dateRange.start, filters.classes, filters.evidence, filters.incidentTypes, filters.locations, filters.sections, filters.statuses, selectedStaff, staffList]);
 
+    const fetchAnalytics = useCallback(async () => {
+        if (!user?._id || !academicYear) return;
         try {
             setLoading(true);
-            const allSelected = allStaffOptions.length > 0 && selectedStaff.length === allStaffOptions.length;
-            const administrationSelected = selectedStaff.includes('Admin');
-            const staffIds =
-                !options?.reset && selectedStaff.length > 0 && !allSelected
-                    ? staffList
-                        .filter((staff) => !isAdminRole(staff.role))
-                        .filter((staff) => selectedStaff.includes(staff.name))
-                        .map((staff) => staff._id)
-                    : [];
-            const params = options?.reset
-                ? new URLSearchParams()
-                : buildIncidentFilterParams({
-                    dateRange: { start: dateRange.start, end: dateRange.end },
-                    statuses: filters.statuses,
-                    classes: filters.classes,
-                    sections: filters.sections,
-                    types: filters.incidentTypes,
-                    locations: filters.locations,
-                    evidenceTypes: filters.evidence,
-                    staffIds,
-                    // includeAdminRole: true = fetch incidents for ALL admin-role users
-                    includeAdminRole: selectedStaff.length > 0 && !allSelected && administrationSelected,
-                    includeUnassigned: false,
-                });
-            if (!options?.reset && academicYear) {
-                params.set('academicYear', academicYear);
+            setAnalyticsError('');
+            const params = buildRequestParams();
+            const { data } = await apiClient.get('/api/incidents/analytics', { ...config, params });
+            const requiredArrays = ['statusData', 'categoryData', 'locationData', 'evidenceData', 'classWiseData', 'staffWorkload', 'categoryHeatmap', 'academicYearData', 'trendBuckets'];
+            if (
+                !data
+                || typeof data !== 'object'
+                || !['total', 'open', 'inProgress', 'closed', 'lettersIssued'].every((key) => Number.isFinite(Number(data[key])))
+                || !requiredArrays.every((key) => Array.isArray(data[key]))
+            ) {
+                throw new Error('Analytics endpoint returned an invalid response.');
             }
-
-            const requestConfig = params.toString() ? { ...config, params } : config;
-
-            const { data } = await apiClient.get('/api/incidents', requestConfig);
-            setIncidents(Array.isArray(data) ? data : []);
-        } catch {
+            setServerAnalytics(data || null);
             setIncidents([]);
+            setLetterStatusMap({});
+            setDetailPage(1);
+            setDetailPagination(null);
+        } catch (error) {
+            setServerAnalytics(null);
+            setIncidents([]);
+            setLetterStatusMap({});
+            setAnalyticsError(error.response?.data?.message || error.message || 'Analytics data could not be loaded.');
         } finally {
             setLoading(false);
         }
-    }, [academicYear, allStaffOptions, config, dateRange, filters.classes, filters.evidence, filters.incidentTypes, filters.locations, filters.sections, filters.statuses, selectedStaff, staffList, user?._id]);
+    }, [academicYear, buildRequestParams, config, user?._id]);
+
+    const fetchAnalyticsDetails = useCallback(async ({ updateState = true, page = detailPage, limit = 100 } = {}) => {
+        if (!user?._id || !academicYear) return { data: [], letterStatusMap: {} };
+        const params = buildRequestParams();
+        params.set('page', String(page));
+        params.set('limit', String(limit));
+        const { data } = await apiClient.get('/api/incidents/analytics/details', { ...config, params });
+        const payload = {
+            data: Array.isArray(data?.data) ? data.data : [],
+            letterStatusMap: data?.letterStatusMap || {},
+            pagination: data?.pagination || null,
+        };
+        if (updateState) {
+            setIncidents(payload.data);
+            setLetterStatusMap(payload.letterStatusMap);
+            setDetailPagination(payload.pagination);
+        }
+        return payload;
+    }, [academicYear, buildRequestParams, config, detailPage, user?._id]);
 
     const fetchFilterOptions = useCallback(async () => {
         if (!user?._id) return;
@@ -365,25 +297,9 @@ const ProfessionalAnalytics = () => {
         }
     }, [config, user?._id]);
 
-    const fetchLetterStatusForIncidents = useCallback(async (incidentsList) => {
-        if (!user?._id || !incidentsList || incidentsList.length === 0) return;
-
-        try {
-            const incidentIds = incidentsList.map((incident) => incident._id || incident.id).filter(Boolean);
-            const { data } = await apiClient.post(
-                '/api/issued-letters/status/batch',
-                { incidentIds },
-                config
-            );
-            setLetterStatusMap(data || {});
-        } catch {
-            setLetterStatusMap({});
-        }
-    }, [config, user?._id]);
-
     useEffect(() => {
-        fetchIncidents();
-    }, [academicYear, dateRange.end, dateRange.start, fetchIncidents, filters.classes, filters.evidence, filters.incidentTypes, filters.locations, filters.sections, filters.statuses, selectedStaff, user?._id]);
+        fetchAnalytics();
+    }, [fetchAnalytics]);
 
     useEffect(() => {
         fetchFilterOptions();
@@ -397,68 +313,67 @@ const ProfessionalAnalytics = () => {
     }, [isOperationalUser, user?.name]);
 
     useEffect(() => {
-        if (incidents.length > 0) {
-            // Refetch letter status when the incident count changes, not on every array reference update.
-            fetchLetterStatusForIncidents(incidents);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on incidents.length only
-    }, [incidents.length, fetchLetterStatusForIncidents]);
+        if (activeTab !== 'details' || !serverAnalytics) return;
+        fetchAnalyticsDetails({ page: detailPage }).catch(() => {
+            setIncidents([]);
+            setLetterStatusMap({});
+        });
+    }, [activeTab, detailPage, fetchAnalyticsDetails, serverAnalytics]);
 
     const filteredIncidents = useMemo(() => incidents, [incidents]);
     const locationFilterOptions = useMemo(
-        () => withUnknownOption(filterOptions.locations, hasUnknownLocation(incidents) || filters.locations.includes('Unknown')),
-        [filterOptions.locations, filters.locations, incidents]
+        () => withUnknownOption(filterOptions.locations, serverAnalytics?.hasUnknownLocation || filters.locations.includes('Unknown')),
+        [filterOptions.locations, filters.locations, serverAnalytics?.hasUnknownLocation]
     );
     const evidenceFilterOptions = useMemo(
-        () => withUnknownOption(filterOptions.evidence, hasUnknownEvidenceType(incidents) || filters.evidence.includes('Unknown')),
-        [filterOptions.evidence, filters.evidence, incidents]
+        () => withUnknownOption(filterOptions.evidence, serverAnalytics?.hasUnknownEvidence || filters.evidence.includes('Unknown')),
+        [filterOptions.evidence, filters.evidence, serverAnalytics?.hasUnknownEvidence]
     );
 
     const analytics = useMemo(() => {
-        const total = filteredIncidents.length;
-        const open = filteredIncidents.filter((incident) => incident.status === 'Open').length;
-        const inProgress = filteredIncidents.filter((incident) => incident.status === 'In Progress').length;
-        const closed = filteredIncidents.filter((incident) => incident.status === 'Closed').length;
-        const lettersIssued = filteredIncidents.filter((incident) => {
-            const incidentId = incident._id || incident.id;
-            return letterStatusMap[incidentId]?.hasLetter;
-        }).length;
-
-        const statusData = [
-            { name: 'Open', value: open, color: STATUS_COLORS.Open },
-            { name: 'In progress', value: inProgress, color: STATUS_COLORS['In Progress'] },
-            { name: 'Closed', value: closed, color: STATUS_COLORS.Closed },
-        ];
-
+        const source = serverAnalytics || {};
+        const trendItems = Array.isArray(source.trendSource) ? source.trendSource : [];
+        const aggregatedTrends = buildTrendSeriesFromBuckets({
+            buckets: Array.isArray(source.trendBuckets) ? source.trendBuckets : [],
+            dateRange,
+            fallbackDays: 14,
+        });
         return {
-            total,
-            open,
-            inProgress,
-            closed,
-            lettersIssued,
-            active: open + inProgress,
-            unassigned: filteredIncidents.filter((incident) => !incident?.assignedHandler || isAdminRole(incident?.assignedHandler?.role)).length,
-            resolutionRate: total > 0 ? `${Math.round((closed / total) * 100)}%` : '0%',
-            statusData,
-            statusTrendData: buildStatusTrendSeries({
-                items: filteredIncidents,
+            total: source.total || 0,
+            open: source.open || 0,
+            inProgress: source.inProgress || 0,
+            closed: source.closed || 0,
+            lettersIssued: source.lettersIssued || 0,
+            active: source.active || 0,
+            unassigned: source.unassigned || 0,
+            resolutionRate: source.resolutionRate || '0%',
+            statusData: (source.statusData || []).map((entry) => ({
+                ...entry,
+                color: entry.name === 'Open'
+                    ? STATUS_COLORS.Open
+                    : entry.name === 'Closed'
+                        ? STATUS_COLORS.Closed
+                        : STATUS_COLORS['In Progress'],
+            })),
+            statusTrendData: source.trendBuckets ? aggregatedTrends.statusTrendData : buildStatusTrendSeries({
+                items: trendItems,
                 dateRange,
                 fallbackDays: 14,
             }),
-            creationTrendData: buildCreationTrendSeries({
-                items: filteredIncidents,
+            creationTrendData: source.trendBuckets ? aggregatedTrends.creationTrendData : buildCreationTrendSeries({
+                items: trendItems,
                 dateRange,
                 fallbackDays: 14,
             }),
-            categoryData: buildDistribution(filteredIncidents, (incident) => incident.category || 'Uncategorized'),
-            locationData: buildDistribution(filteredIncidents, (incident) => incident.location),
-            evidenceData: buildEvidenceDistribution(filteredIncidents),
-            classWiseData: buildClassResolution(filteredIncidents),
-            staffWorkload: buildStaffWorkload(filteredIncidents),
-            categoryHeatmap: buildCategoryHeatmap(filteredIncidents),
-            academicYearData: buildAcademicYearStatusData(filteredIncidents),
+            categoryData: source.categoryData || [],
+            locationData: source.locationData || [],
+            evidenceData: source.evidenceData || [],
+            classWiseData: source.classWiseData || [],
+            staffWorkload: source.staffWorkload || [],
+            categoryHeatmap: source.categoryHeatmap || [],
+            academicYearData: source.academicYearData || [],
         };
-    }, [dateRange, filteredIncidents, letterStatusMap]);
+    }, [dateRange, serverAnalytics]);
 
     const filteredIncidentDetails = useMemo(
         () =>
@@ -517,10 +432,30 @@ const ProfessionalAnalytics = () => {
     const exportIncidentDetailsToExcel = useCallback(async () => {
         try {
             setIsExporting(true);
+            const firstPage = await fetchAnalyticsDetails({ updateState: false, page: 1, limit: 500 });
+            const exportRows = [...firstPage.data];
+            const exportLetterStatusMap = { ...firstPage.letterStatusMap };
+            const totalPages = firstPage.pagination?.totalPages || 1;
+            for (let page = 2; page <= totalPages; page += 1) {
+                const nextPage = await fetchAnalyticsDetails({ updateState: false, page, limit: 500 });
+                exportRows.push(...nextPage.data);
+                Object.assign(exportLetterStatusMap, nextPage.letterStatusMap);
+            }
+            const exportIncidentDetails = exportRows.sort((a, b) => {
+                const classA = String(a.class || a.studentDetails?.className || '').toLowerCase();
+                const classB = String(b.class || b.studentDetails?.className || '').toLowerCase();
+                if (classA !== classB) return classA.localeCompare(classB);
 
-            const excelData = filteredIncidentDetails.map((incident) => {
+                const sectionA = String(a.section || a.studentDetails?.section || '').toLowerCase();
+                const sectionB = String(b.section || b.studentDetails?.section || '').toLowerCase();
+                if (sectionA !== sectionB) return sectionA.localeCompare(sectionB);
+
+                return String(a.studentDetails?.name || '').localeCompare(String(b.studentDetails?.name || ''));
+            });
+
+            const excelData = exportIncidentDetails.map((incident) => {
                 const incidentId = incident._id || incident.id;
-                const letterInfo = letterStatusMap[incidentId] || {};
+                const letterInfo = exportLetterStatusMap[incidentId] || {};
 
                 return {
                     'Admission Number': incident.admissionNo || 'N/A',
@@ -554,7 +489,7 @@ const ProfessionalAnalytics = () => {
                 { Field: 'Evidence Types', Value: filters.evidence.length ? filters.evidence.join(', ') : 'All evidence types' },
                 { Field: 'Statuses', Value: filters.statuses.length ? filters.statuses.join(', ') : 'All statuses' },
                 { Field: 'Staff', Value: selectedStaff.length ? selectedStaff.join(', ') : 'All staff' },
-                { Field: 'Record Count', Value: filteredIncidentDetails.length },
+                { Field: 'Record Count', Value: exportIncidentDetails.length },
             ]);
             XLSX.utils.book_append_sheet(wb, reportInfoWs, 'Report Info');
             XLSX.utils.book_append_sheet(wb, ws, 'Incident Details');
@@ -585,15 +520,41 @@ const ProfessionalAnalytics = () => {
         } finally {
             setIsExporting(false);
         }
-    }, [academicYear, addToast, analytics.academicYearData, currentAcademicYear, dateRange.end, dateRange.start, filteredIncidentDetails, filters.classes, filters.evidence, filters.incidentTypes, filters.locations, filters.sections, filters.statuses, letterStatusMap, selectedStaff]);
+    }, [academicYear, addToast, analytics.academicYearData, currentAcademicYear, dateRange.end, dateRange.start, fetchAnalyticsDetails, filters.classes, filters.evidence, filters.incidentTypes, filters.locations, filters.sections, filters.statuses, selectedStaff]);
 
-    if (loading && incidents.length === 0) {
+    if (loading && !serverAnalytics) {
         return (
             <div className="flex min-h-screen bg-slate-100">
                 <div className="flex min-w-0 flex-1 flex-col">
                     <main className="flex-1 overflow-y-auto p-4 lg:p-6">
                         <div className="mx-auto max-w-[1600px]">
                             <DashboardPageSkeleton />
+                        </div>
+                    </main>
+                </div>
+            </div>
+        );
+    }
+
+    if (analyticsError && !serverAnalytics) {
+        return (
+            <div className="flex min-h-screen bg-slate-100">
+                <div className="flex min-w-0 flex-1 flex-col">
+                    <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+                        <div className="mx-auto max-w-[1600px]">
+                            <EmptyStatePanel
+                                title="Analytics could not be loaded"
+                                description={analyticsError}
+                                action={(
+                                    <button
+                                        type="button"
+                                        onClick={fetchAnalytics}
+                                        className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                                    >
+                                        Retry analytics
+                                    </button>
+                                )}
+                            />
                         </div>
                     </main>
                 </div>
@@ -755,7 +716,7 @@ const ProfessionalAnalytics = () => {
                             meta={
                                 <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
                                     <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5">
-                                        {filteredIncidents.length} Filtered Incident{filteredIncidents.length === 1 ? '' : 's'}
+                                        {analytics.total} Filtered Incident{analytics.total === 1 ? '' : 's'}
                                     </span>
                                     <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5">
                                         Resolution Rate {analytics.resolutionRate}
@@ -1195,6 +1156,31 @@ const ProfessionalAnalytics = () => {
                                     rows={filteredIncidentDetails}
                                     emptyMessage="No incidents found for the current filter set."
                                 />
+                                {detailPagination?.totalPages > 1 ? (
+                                    <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-200 pt-4 text-sm">
+                                        <span className="text-slate-500">
+                                            Page {detailPagination.page} of {detailPagination.totalPages} · {detailPagination.total} incidents
+                                        </span>
+                                        <div className="flex gap-2">
+                                            <button
+                                                type="button"
+                                                disabled={detailPage <= 1}
+                                                onClick={() => setDetailPage((page) => Math.max(1, page - 1))}
+                                                className="rounded-lg border border-slate-200 px-3 py-2 font-semibold disabled:opacity-50"
+                                            >
+                                                Previous
+                                            </button>
+                                            <button
+                                                type="button"
+                                                disabled={detailPage >= detailPagination.totalPages}
+                                                onClick={() => setDetailPage((page) => Math.min(detailPagination.totalPages, page + 1))}
+                                                className="rounded-lg border border-slate-200 px-3 py-2 font-semibold disabled:opacity-50"
+                                            >
+                                                Next
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : null}
                             </DashboardPanel>
                         )}
                     </div>

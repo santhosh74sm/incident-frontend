@@ -212,6 +212,7 @@ const CheckItem = ({ children }) => (
 
 const BulkUpload = () => {
     const fileInputRef = useRef(null);
+    const uploadTriggerRef = useRef(null);
     const mountedRef   = useRef(true);
     const { addToast } = useToast();
 
@@ -360,6 +361,8 @@ const BulkUpload = () => {
 
         if (!file) {
             setMessage({ type: 'error', text: 'Choose a file before starting the upload.' });
+            uploadTriggerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            uploadTriggerRef.current?.focus({ preventScroll: true });
             return;
         }
 
@@ -368,6 +371,8 @@ const BulkUpload = () => {
                 type: 'error',
                 text: `This file cannot be uploaded until these columns are fixed: ${preview.missingColumns.join(', ')}.`,
             });
+            uploadTriggerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            uploadTriggerRef.current?.focus({ preventScroll: true });
             return;
         }
 
@@ -521,6 +526,7 @@ const BulkUpload = () => {
                                             </p>
                                         </div>
                                         <button
+                                            ref={uploadTriggerRef}
                                             type="button"
                                             onClick={downloadTemplate}
                                             disabled={uploading || parsing || downloadingTemplate}

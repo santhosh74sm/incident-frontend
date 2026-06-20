@@ -85,6 +85,10 @@ const IncidentList = () => {
     const [priorityIncidents, setPriorityIncidents] = useState([]);
     const [activeTab, setActiveTab] = useState('all');
     const [readStatusFilter, setReadStatusFilter] = useState('All');
+    const [page, setPage] = useState(1);
+    const [pagination, setPagination] = useState({ page: 1, total: 0, totalPages: 1 });
+    const [serverSummary, setServerSummary] = useState({ total: 0, open: 0, inProgress: 0, closed: 0, highPriority: 0, unread: 0 });
+    const pageSize = 18;
 
     const config = useMemo(() => ({ headers: {} }), []);
     const userId = getRecordId(user);
@@ -121,7 +125,7 @@ const IncidentList = () => {
         try {
             setLoading(true);
             setError(null);
-            const requestConfig = { ...config };
+            const requestConfig = { ...config, params: new URLSearchParams() };
 
             if (!options?.reset) {
                 const allSelected = allStaffOptions.length > 0 && selectedStaff.length === allStaffOptions.length;
@@ -147,18 +151,31 @@ const IncidentList = () => {
                     includeUnassigned: false,
                 });
 
-                if (params.toString()) {
-                    requestConfig.params = params;
-                }
+                requestConfig.params = params;
                 if (academicYear) {
                     requestConfig.params = requestConfig.params || new URLSearchParams();
                     requestConfig.params.set('academicYear', academicYear);
                 }
             }
 
-            const { data } = await apiClient.get('/api/incidents', requestConfig);
-            const nextIncidents = Array.isArray(data) ? data : [];
+            requestConfig.params.set('page', String(page));
+            requestConfig.params.set('limit', String(pageSize));
+            if (!options?.reset && debouncedSearchQuery) requestConfig.params.set('search', debouncedSearchQuery);
+            if (!options?.reset && activeTab === 'highPriority') requestConfig.params.set('highPriority', 'true');
+            if (!options?.reset && readStatusFilter !== 'All') requestConfig.params.set('readStatus', readStatusFilter.toLowerCase());
+
+            const listParams = requestConfig.params;
+            const summaryParams = new URLSearchParams(listParams);
+            summaryParams.delete('page');
+            summaryParams.delete('limit');
+            const [{ data }, { data: summaryData }] = await Promise.all([
+                apiClient.get('/api/incidents', requestConfig),
+                apiClient.get('/api/incidents/summary', { ...config, params: summaryParams }),
+            ]);
+            const nextIncidents = Array.isArray(data?.data) ? data.data : [];
             setIncidents(nextIncidents);
+            setPagination(data?.pagination || { page: 1, total: nextIncidents.length, totalPages: 1 });
+            setServerSummary(summaryData || { total: 0, open: 0, inProgress: 0, closed: 0, highPriority: 0, unread: 0 });
 
             const syncedReadIds = nextIncidents
                 .filter((incident) => incident?.readByCurrentUser === true)
@@ -177,7 +194,7 @@ const IncidentList = () => {
         } finally {
             setLoading(false);
         }
-    }, [academicYear, allStaffOptions, categoryFilter, classFilter, config, dateRange.end, dateRange.start, sectionFilter, selectedStaff, staffList, statusFilter, userId]);
+    }, [academicYear, activeTab, allStaffOptions, categoryFilter, classFilter, config, dateRange.end, dateRange.start, debouncedSearchQuery, page, readStatusFilter, sectionFilter, selectedStaff, staffList, statusFilter, userId]);
 
     const fetchFilterData = useCallback(async () => {
         if (!userId) return;
@@ -225,7 +242,7 @@ const IncidentList = () => {
 
     useEffect(() => {
         fetchIncidents();
-    }, [academicYear, categoryFilter, classFilter, dateRange.end, dateRange.start, fetchIncidents, sectionFilter, selectedStaff, statusFilter, userId]);
+    }, [fetchIncidents]);
 
     useEffect(() => {
         const timer = window.setTimeout(() => {
@@ -234,6 +251,10 @@ const IncidentList = () => {
 
         return () => window.clearTimeout(timer);
     }, [searchQuery]);
+
+    useEffect(() => {
+        setPage(1);
+    }, [academicYear, activeTab, categoryFilter, classFilter, dateRange.end, dateRange.start, debouncedSearchQuery, readStatusFilter, sectionFilter, selectedStaff, statusFilter]);
 
     useEffect(() => {
         if (!notifications || notifications.length === 0) return;
@@ -284,32 +305,7 @@ const IncidentList = () => {
     }, [readIncidents]);
 
     const filteredIncidents = useMemo(() => {
-        const query = (debouncedSearchQuery || '').toLowerCase().trim();
         let list = [...incidents];
-
-        if (query) {
-            list = list.filter((incident) => {
-                const titleMatch = (incident.title || '').toLowerCase().includes(query);
-                const admissionMatch = String(incident.admissionNo || incident.adNo || '').toLowerCase().includes(query);
-                const students = Array.isArray(incident.studentsInvolved)
-                    ? incident.studentsInvolved
-                    : incident.studentsInvolved
-                        ? [String(incident.studentsInvolved)]
-                        : [];
-                const studentMatch = students.some((student) => String(student).toLowerCase().includes(query));
-                return titleMatch || studentMatch || admissionMatch;
-            });
-        }
-
-        if (activeTab === 'highPriority') {
-            list = list.filter((incident) => incident.isHighPriority === true);
-        }
-
-        if (readStatusFilter === 'Unread') {
-            list = list.filter((incident) => isUnread(incident));
-        } else if (readStatusFilter === 'Read') {
-            list = list.filter((incident) => !isUnread(incident));
-        }
 
         list.sort((a, b) => {
             const aPriority = isPriority(a) || isUnread(a);
@@ -323,7 +319,7 @@ const IncidentList = () => {
         });
 
         return list;
-    }, [activeTab, debouncedSearchQuery, incidents, isPriority, isUnread, readStatusFilter]);
+    }, [incidents, isPriority, isUnread]);
 
     const hasActiveFilters = Boolean(
         statusFilter.length > 0 ||
@@ -338,18 +334,8 @@ const IncidentList = () => {
         || academicYear !== currentAcademicYear
     );
 
-    const unreadCount = useMemo(
-        () => incidents.filter((incident) => isUnread(incident)).length,
-        [incidents, isUnread]
-    );
-
-    const summary = useMemo(() => ({
-        total: filteredIncidents.length,
-        open: filteredIncidents.filter((incident) => incident.status === 'Open').length,
-        inProgress: filteredIncidents.filter((incident) => incident.status === 'In Progress').length,
-        closed: filteredIncidents.filter((incident) => incident.status === 'Closed').length,
-        highPriority: filteredIncidents.filter((incident) => incident.isHighPriority === true).length,
-    }), [filteredIncidents]);
+    const unreadCount = serverSummary.unread || 0;
+    const summary = serverSummary;
 
     const resetFilters = useCallback(() => {
         setStatusFilter([]);
@@ -466,7 +452,7 @@ const IncidentList = () => {
                                             ? 'bg-blue-600 text-white'
                                             : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
                                     }`}>
-                                        {incidents.length}
+                                        {pagination.total}
                                     </span>
                                 </button>
                                 <div className="w-px self-stretch bg-slate-100 dark:bg-slate-800" aria-hidden="true" />
@@ -635,7 +621,7 @@ const IncidentList = () => {
                         {!error && filteredIncidents.length === 0 ? (
                             <EmptyStatePanel
                                 title="No incidents found."
-                                description={incidents.length === 0 ? 'There are no incidents in the system yet.' : 'No incidents match your current filters.'}
+                                description={summary.total === 0 ? 'There are no incidents in the system yet.' : 'No incidents match your current filters.'}
                                 action={hasActiveFilters ? (
                                     <button
                                         type="button"
@@ -657,7 +643,7 @@ const IncidentList = () => {
                                     <BulkDeleteControls
                                         moduleName="incidents"
                                         filteredIds={filteredIncidents.map((incident) => getRecordId(incident)).filter(Boolean)}
-                                        allCount={incidents.length}
+                                        allCount={summary.total}
                                         source={{ page: 'IncidentList', filteredCount: filteredIncidents.length }}
                                         addToast={addToast}
                                         onComplete={() => fetchIncidents({ reset: true })}
@@ -814,6 +800,27 @@ const IncidentList = () => {
                                             </article>
                                         );
                                     })}
+                                </div>
+                                <div className="mt-5 flex flex-col gap-3 border-t border-slate-100 pt-4 text-sm text-slate-600 dark:border-slate-800 dark:text-slate-300 sm:flex-row sm:items-center sm:justify-between">
+                                    <span>Page {pagination.page} of {pagination.totalPages} · {pagination.total} records</span>
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setPage((current) => Math.max(1, current - 1))}
+                                            disabled={pagination.page <= 1 || loading}
+                                            className="rounded-xl border border-slate-200 px-3 py-2 font-semibold transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:hover:bg-slate-800"
+                                        >
+                                            Previous
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setPage((current) => Math.min(pagination.totalPages, current + 1))}
+                                            disabled={pagination.page >= pagination.totalPages || loading}
+                                            className="rounded-xl border border-slate-200 px-3 py-2 font-semibold transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:hover:bg-slate-800"
+                                        >
+                                            Next
+                                        </button>
+                                    </div>
                                 </div>
                             </DashboardPanel>
                         ) : null}

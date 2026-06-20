@@ -93,6 +93,8 @@ const StudentAnalytics = () => {
     const [sectionFilter, setSectionFilter] = useState('');
     const [studentSummaryPage, setStudentSummaryPage] = useState(1);
     const [studentSummarySort, setStudentSummarySort] = useState({ key: 'name', direction: 'asc' });
+    const [studentPagination, setStudentPagination] = useState({ page: 1, total: 0, totalPages: 1 });
+    const [studentDirectorySummary, setStudentDirectorySummary] = useState({ total: 0, incidentCount: 0, letterCount: 0 });
     const [statusFilter, setStatusFilter] = useState([]);
     const [students, setStudents] = useState([]);
     const [selectedStudent, setSelectedStudent] = useState(null);
@@ -143,42 +145,10 @@ const StudentAnalytics = () => {
     const studentStatus = activeSummaryTab === 'passedOut' ? 'Passed Out' : 'Active';
     const isPassedOutSummary = activeSummaryTab === 'passedOut';
 
-    const filteredStudents = useMemo(
-        () =>
-            (students || []).filter((student) => {
-                const matchesSearch =
-                    !searchTerm ||
-                    student?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    String(student?.admissionNo || '').includes(searchTerm);
-
-                const matchesClass = !classFilter || String(student?.className || '') === String(classFilter);
-                const matchesSection = !sectionFilter || String(student?.section || '') === String(sectionFilter);
-                return matchesSearch && matchesClass && matchesSection;
-            }),
-        [classFilter, searchTerm, sectionFilter, students]
-    );
     const studentSummaryPageSize = 12;
-    const sortedStudents = useMemo(() => {
-        const direction = studentSummarySort.direction === 'desc' ? -1 : 1;
-        const getValue = (student) => {
-            if (studentSummarySort.key === 'incidentCount' || studentSummarySort.key === 'letterCount') {
-                return Number(student?.[studentSummarySort.key] || 0);
-            }
-            return String(student?.[studentSummarySort.key] || '').toLowerCase();
-        };
-        return [...filteredStudents].sort((first, second) => {
-            const firstValue = getValue(first);
-            const secondValue = getValue(second);
-            if (firstValue < secondValue) return -1 * direction;
-            if (firstValue > secondValue) return 1 * direction;
-            return String(first?.name || '').localeCompare(String(second?.name || ''));
-        });
-    }, [filteredStudents, studentSummarySort]);
-    const studentSummaryTotalPages = Math.max(1, Math.ceil(sortedStudents.length / studentSummaryPageSize));
-    const paginatedStudents = useMemo(() => {
-        const start = (studentSummaryPage - 1) * studentSummaryPageSize;
-        return sortedStudents.slice(start, start + studentSummaryPageSize);
-    }, [sortedStudents, studentSummaryPage]);
+    const filteredStudents = students;
+    const paginatedStudents = students;
+    const studentSummaryTotalPages = studentPagination.totalPages;
 
     const fetchFilterOptions = useCallback(async () => {
         if (!user?._id) return;
@@ -220,13 +190,26 @@ const StudentAnalytics = () => {
         try {
             setLoading(true);
             if (!academicYear) return;
-            const config = { params: { academicYear, status: studentStatus, includeSummaryCounts: true } };
-            const { data } = await apiClient.get('/api/students/all', config);
-            const studentsData = Array.isArray(data) ? data : [];
+            const config = { params: {
+                academicYear,
+                status: studentStatus,
+                includeSummaryCounts: true,
+                page: studentSummaryPage,
+                limit: studentSummaryPageSize,
+                ...(params?.admissionNo ? { search: params.admissionNo } : searchTerm ? { search: searchTerm } : {}),
+                ...(classFilter ? { className: classFilter } : {}),
+                ...(sectionFilter ? { section: sectionFilter } : {}),
+                sortBy: studentSummarySort.key,
+                sortDirection: studentSummarySort.direction,
+            } };
+            const { data } = await apiClient.get('/api/students', config);
+            const studentsData = Array.isArray(data?.data) ? data.data : [];
             setStudents(studentsData.map((student) => ({
                 ...student,
                 id: `${student._id || student.admissionNo}-${student.academicYear || academicYear}`,
             })));
+            setStudentPagination(data?.pagination || { page: 1, total: studentsData.length, totalPages: 1 });
+            setStudentDirectorySummary(data?.summary || { total: studentsData.length, incidentCount: 0, letterCount: 0 });
 
             if (params?.admissionNo) {
                 const targetStudent = studentsData.find((student) => String(student.admissionNo) === String(params.admissionNo));
@@ -245,11 +228,11 @@ const StudentAnalytics = () => {
         } finally {
             setLoading(false);
         }
-    }, [academicYear, params?.admissionNo, studentStatus, user?._id]);
+    }, [academicYear, classFilter, params?.admissionNo, searchTerm, sectionFilter, studentStatus, studentSummaryPage, studentSummarySort.direction, studentSummarySort.key, user?._id]);
 
     useEffect(() => {
         setStudentSummaryPage(1);
-    }, [academicYear, activeSummaryTab, classFilter, searchTerm, sectionFilter, students.length]);
+    }, [academicYear, activeSummaryTab, classFilter, searchTerm, sectionFilter]);
 
     const fetchStudentIncidents = useCallback(async (student, options = { reset: false }) => {
         if (!user?._id || !student) return;
@@ -528,8 +511,8 @@ const StudentAnalytics = () => {
         }
     };
 
-    const buildStudentSummaryRows = () =>
-        filteredStudents.map((student) => ({
+    const buildStudentSummaryRows = (sourceStudents = filteredStudents) =>
+        sourceStudents.map((student) => ({
             'Admission Number': student?.admissionNo || 'N/A',
             'Student Name': student?.name || 'N/A',
             Class: student?.className || 'N/A',
@@ -541,6 +524,7 @@ const StudentAnalytics = () => {
         }));
 
     const toggleStudentSummarySort = (key) => {
+        setStudentSummaryPage(1);
         setStudentSummarySort((current) => ({
             key,
             direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc',
@@ -559,7 +543,24 @@ const StudentAnalytics = () => {
     );
 
     const exportStudentSummaryToExcel = async () => {
-        const ws = XLSX.utils.json_to_sheet(buildStudentSummaryRows());
+        const exportStudents = [];
+        const totalPages = Math.max(1, Math.ceil(studentDirectorySummary.total / 100));
+        for (let exportPage = 1; exportPage <= totalPages; exportPage += 1) {
+            const { data } = await apiClient.get('/api/students', { params: {
+                academicYear,
+                status: studentStatus,
+                includeSummaryCounts: true,
+                page: exportPage,
+                limit: 100,
+                ...(searchTerm ? { search: searchTerm } : {}),
+                ...(classFilter ? { className: classFilter } : {}),
+                ...(sectionFilter ? { section: sectionFilter } : {}),
+                sortBy: studentSummarySort.key,
+                sortDirection: studentSummarySort.direction,
+            } });
+            exportStudents.push(...(Array.isArray(data?.data) ? data.data : []));
+        }
+        const ws = XLSX.utils.json_to_sheet(buildStudentSummaryRows(exportStudents));
         const wb = XLSX.utils.book_new();
         const exportDate = new Date().toISOString().split('T')[0];
         const reportInfoWs = XLSX.utils.json_to_sheet([
@@ -570,7 +571,7 @@ const StudentAnalytics = () => {
             { Field: 'Search', Value: searchTerm || 'None' },
             { Field: 'Class', Value: classFilter || 'All classes' },
             { Field: 'Section', Value: sectionFilter || 'All sections' },
-            { Field: 'Record Count', Value: filteredStudents.length },
+            { Field: 'Record Count', Value: studentDirectorySummary.total },
         ]);
         XLSX.utils.book_append_sheet(wb, reportInfoWs, 'Report Info');
         XLSX.utils.book_append_sheet(wb, ws, 'Student Summary');
@@ -780,7 +781,7 @@ const StudentAnalytics = () => {
                                     meta={
                                         <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
                                             <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5">
-                                                {filteredStudents.length} student{filteredStudents.length === 1 ? '' : 's'} in current result
+                                                {studentDirectorySummary.total} student{studentDirectorySummary.total === 1 ? '' : 's'} in current result
                                             </span>
                                             <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5">
                                                 {filterOptions.classes.length} classes in use
@@ -887,13 +888,13 @@ const StudentAnalytics = () => {
                                 </UnifiedFilterBar>
 
                                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-                                        <DashboardStatCard title={isPassedOutSummary ? 'Passed Out Students' : 'Total Students'} value={students.length} icon={Users} tone="blue" helper={isPassedOutSummary ? 'Students matching the selected status.' : 'Students in the directory.'} />
-                                        <DashboardStatCard title="Showing Now" value={filteredStudents.length} icon={Search} tone="cyan" helper="Matching your filters" />
-                                        <DashboardStatCard title="Incidents" value={filteredStudents.reduce((total, student) => total + Number(student.incidentCount || 0), 0)} icon={FileText} tone="slate" helper="In current result" />
-                                        <DashboardStatCard title="Letters" value={filteredStudents.reduce((total, student) => total + Number(student.letterCount || 0), 0)} icon={Mail} tone="slate" helper="In current result" />
+                                        <DashboardStatCard title={isPassedOutSummary ? 'Passed Out Students' : 'Total Students'} value={studentDirectorySummary.total} icon={Users} tone="blue" helper={isPassedOutSummary ? 'Students matching the selected status.' : 'Students in the directory.'} />
+                                        <DashboardStatCard title="Showing Now" value={studentDirectorySummary.total} icon={Search} tone="cyan" helper="Matching your filters" />
+                                        <DashboardStatCard title="Incidents" value={studentDirectorySummary.incidentCount} icon={FileText} tone="slate" helper="In current result" />
+                                        <DashboardStatCard title="Letters" value={studentDirectorySummary.letterCount} icon={Mail} tone="slate" helper="In current result" />
                                     </div>
 
-                                {filteredStudents.length === 0 ? (
+                                {studentDirectorySummary.total === 0 ? (
                                     <EmptyStatePanel
                                         title="No students found."
                                         description={searchTerm || classFilter || sectionFilter ? 'Try broadening your filters to surface more students.' : 'No students are currently available in the directory.'}
@@ -934,10 +935,10 @@ const StudentAnalytics = () => {
                                         ))}
                                     </div>
                                 )}
-                                {filteredStudents.length > 0 ? (
+                                {studentDirectorySummary.total > 0 ? (
                                     <DashboardPanel
                                         title={isPassedOutSummary ? 'Passed Out Students' : 'Student Summary'}
-                                        description={`${filteredStudents.length} record${filteredStudents.length === 1 ? '' : 's'} across the selected filters.`}
+                                        description={`${studentDirectorySummary.total} record${studentDirectorySummary.total === 1 ? '' : 's'} across the selected filters.`}
                                         icon={Users}
                                     >
                                         <AnalyticsDataTable

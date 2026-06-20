@@ -526,6 +526,38 @@ export const buildCreationTrendSeries = ({ items = [], dateRange = { start: '', 
             created: bucketItems.length,
         }),
     });
+
+export const buildTrendSeriesFromBuckets = ({ buckets = [], dateRange = { start: '', end: '' }, fallbackDays = 14 }) => {
+    const normalizedBuckets = buckets
+        .map((bucket) => {
+            const parsed = parseLocalDateParam(bucket?.date);
+            return parsed ? { ...bucket, parsed } : null;
+        })
+        .filter(Boolean);
+    const windowRange = resolveDailyWindow(normalizedBuckets, dateRange, fallbackDays);
+    if (!windowRange?.start?.isValid?.() || !windowRange?.end?.isValid?.() || windowRange.start.valueOf() > windowRange.end.valueOf()) {
+        return { statusTrendData: [], creationTrendData: [] };
+    }
+
+    const bucketMap = new Map(normalizedBuckets.map((bucket) => [normalizeDateParam(bucket.date), bucket]));
+    const statusTrendData = [];
+    const creationTrendData = [];
+    let cursor = windowRange.start.startOf('day');
+    const end = windowRange.end.endOf('day');
+    while (cursor.valueOf() <= end.valueOf()) {
+        const bucket = bucketMap.get(cursor.format('YYYY-MM-DD')) || {};
+        const shared = { name: formatDayBucketLabel(cursor), fullDate: formatDayBucketTitle(cursor) };
+        statusTrendData.push({
+            ...shared,
+            open: Number(bucket.open || 0),
+            inProgress: Number(bucket.inProgress || 0),
+            closed: Number(bucket.closed || 0),
+        });
+        creationTrendData.push({ ...shared, created: Number(bucket.created || 0) });
+        cursor = cursor.add(1, 'day');
+    }
+    return { statusTrendData, creationTrendData };
+};
 export const formatDisplayValue = (val) => {
     const raw = String(val || '').trim();
     if (!raw) return '';

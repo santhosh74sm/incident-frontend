@@ -28,7 +28,7 @@ import {
     resolveHandlerLabel,
     formatDisplayValue,
 } from '../utils/analytics';
-import { isAdminRole, isIncidentReporterRole } from '../utils/roles';
+import { isIncidentReporterRole } from '../utils/roles';
 
 // ─── Error Boundary ───────────────────────────────────────────────────────────
 
@@ -204,7 +204,10 @@ const fetchDashboardData = (user) => {
     if (!dashboardDataRequests.has(requestKey)) {
         dashboardDataRequests.set(
             requestKey,
-            apiClient.get('/api/incidents').finally(() => {
+            Promise.all([
+                apiClient.get('/api/incidents', { params: { page: 1, limit: 6 } }),
+                apiClient.get('/api/incidents/summary'),
+            ]).finally(() => {
                 dashboardDataRequests.delete(requestKey);
             })
         );
@@ -219,6 +222,7 @@ const DashboardContent = memo(() => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const [incidents, setIncidents] = useState([]);
+    const [summary, setSummary] = useState({ total: 0, open: 0, inProgress: 0, closed: 0, unassigned: 0, active: 0 });
     const [loading, setLoading] = useState(true);
 
     const userId = user?._id || user?.id;
@@ -280,7 +284,7 @@ const DashboardContent = memo(() => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const incidentRes = await fetchDashboardData(requestUser);
+                const [incidentRes, summaryRes] = await fetchDashboardData(requestUser);
                 if (!mounted) return;
 
                 const incidentList = Array.isArray(incidentRes.data)
@@ -290,9 +294,11 @@ const DashboardContent = memo(() => {
                         : [];
 
                 setIncidents(incidentList);
+                setSummary(summaryRes.data || { total: 0, open: 0, inProgress: 0, closed: 0, unassigned: 0, active: 0 });
             } catch {
                 if (!mounted) return;
                 setIncidents([]);
+                setSummary({ total: 0, open: 0, inProgress: 0, closed: 0, unassigned: 0, active: 0 });
             } finally {
                 if (mounted) setLoading(false);
             }
@@ -303,17 +309,6 @@ const DashboardContent = memo(() => {
     }, [userId, userRole]);
 
     // ── Derived summaries (unchanged calculations) ────────────────────────
-    const summary = useMemo(() => {
-        const total      = incidents.length;
-        const open       = incidents.filter((i) => i.status === 'Open').length;
-        const inProgress = incidents.filter((i) => i.status === 'In Progress').length;
-        const closed     = incidents.filter((i) => i.status === 'Closed').length;
-        const unassigned = incidents.filter(
-            (i) => !i?.assignedHandler || isAdminRole(i?.assignedHandler?.role)
-        ).length;
-        return { total, open, inProgress, closed, unassigned, active: open + inProgress };
-    }, [incidents]);
-
     const canReportIncident = isIncidentReporterRole(user?.role);
 
     const recentIncidentRows = useMemo(

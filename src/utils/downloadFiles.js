@@ -6,6 +6,14 @@ const NATIVE_OPEN_DIRECTORY = 'CACHE';
 
 let nativePluginPromise = null;
 let filesystemPromise = null;
+const activeDownloads = new Map();
+
+const runSingleDownload = (key, operation) => {
+    if (activeDownloads.has(key)) return activeDownloads.get(key);
+    const promise = Promise.resolve().then(operation).finally(() => activeDownloads.delete(key));
+    activeDownloads.set(key, promise);
+    return promise;
+};
 
 const logDownloadStep = (step, details = {}) => {
     if (process.env.NODE_ENV !== 'development') return;
@@ -243,15 +251,29 @@ export const downloadBlob = async (blob, filename, options = {}) => {
         platform: Capacitor.getPlatform?.(),
     });
 
-    if (!isNativeDownloadPlatform()) {
-        webDownloadBlob(blob, safeFilename);
-        return { filename: safeFilename, native: false, displayPath: safeFilename };
-    }
+    return runSingleDownload(`blob:${safeFilename}:${blob?.size || 0}`, async () => {
+        if (!isNativeDownloadPlatform()) {
+            webDownloadBlob(blob, safeFilename);
+            return { filename: safeFilename, native: false, displayPath: safeFilename };
+        }
 
-    return saveBlobToPublicDownloads(blob, safeFilename, options);
+        return saveBlobToPublicDownloads(blob, safeFilename, options);
+    });
 };
 
 export const downloadRemoteFile = async (url, filename, options = {}) => {
+    const safeFilename = sanitizeDownloadFilename(filename);
+    if (isNativeDownloadPlatform()) {
+        const { NativeDownloadManager } = await ensureNativeDownloadPlugins();
+        const resolvedUrl = new URL(url, window.location.origin).toString();
+        return runSingleDownload(`remote:${resolvedUrl}:${safeFilename}`, async () => NativeDownloadManager.downloadUrl({
+            url: resolvedUrl,
+            filename: safeFilename,
+            mimeType: options.mimeType || inferMimeType(safeFilename),
+            subdirectory: options.subdirectory || DOWNLOAD_SUBDIRECTORY,
+        }));
+    }
+
     logDownloadStep('remote-download-fetch-start', { filename });
     const response = await fetch(url, {
         credentials: 'include',
@@ -270,7 +292,7 @@ export const downloadRemoteFile = async (url, filename, options = {}) => {
     }
 
     const blob = await response.blob();
-    return downloadBlob(blob, filename, options);
+    return downloadBlob(blob, safeFilename, options);
 };
 
 export const openBlob = async (blob, filename, options = {}) => {
@@ -336,12 +358,13 @@ export const downloadWorkbook = async (XLSX, workbook, filename, options = {}) =
         type: 'base64',
         bookType: options.bookType || 'xlsx',
     });
-    const blob = await fetch(`data:${mimeType};base64,${base64Data}`).then((response) => response.blob());
-
-    return saveBlobToPublicDownloads(blob, safeFilename, {
-        ...options,
+    const { NativeDownloadManager } = await ensureNativeDownloadPlugins();
+    return runSingleDownload(`workbook:${safeFilename}`, () => NativeDownloadManager.saveToDownloads({
+        base64Data,
+        filename: safeFilename,
         mimeType,
-    });
+        subdirectory: options.subdirectory || DOWNLOAD_SUBDIRECTORY,
+    }));
 };
 
 export const parseDownloadFilename = (contentDisposition, fallback = 'download') => {

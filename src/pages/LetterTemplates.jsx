@@ -6,6 +6,7 @@ import { useToast } from '../components/ToastProvider';
 import { isAdminRole } from '../utils/roles';
 import { downloadBlob } from '../utils/downloadFiles';
 import { withFeedback } from '../utils/notifications';
+import { focusFirstInvalidField } from '../hooks/useFocusFirstInvalid';
 import {
     AlertTriangle,
     CalendarDays,
@@ -583,6 +584,7 @@ const CreateTemplateModal = ({
                 <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Template Title</span>
                 <input
                 type="text"
+                aria-invalid={formState.error === 'Please enter a title.'}
                 value={formState.title}
                 onChange={(event) => onChange('title', event.target.value)}
                     placeholder="Enter template title"
@@ -593,6 +595,7 @@ const CreateTemplateModal = ({
                 <label className="block">
                     <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Incident Category</span>
                     <select
+                        aria-invalid={formState.error === 'Please choose an incident category.'}
                         value={formState.incidentCategory}
                         onChange={(event) => onChange('incidentCategory', event.target.value)}
                         className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:focus:ring-indigo-400/20"
@@ -979,11 +982,13 @@ const LetterTemplates = () => {
 
         if (!trimmedTitle) {
             setCreateForm((current) => ({ ...current, error: 'Please enter a title.' }));
+            window.requestAnimationFrame(() => focusFirstInvalidField());
             return;
         }
 
         if (!createForm.incidentCategory) {
             setCreateForm((current) => ({ ...current, error: 'Please choose an incident category.' }));
+            window.requestAnimationFrame(() => focusFirstInvalidField());
             return;
         }
 

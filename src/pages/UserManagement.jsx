@@ -42,7 +42,7 @@ const CLASS_OPTIONS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', 
 const PAGE_SIZE = 8;
 
 const INPUT_CLASS_NAME =
-    'w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 shadow-sm transition-all duration-300 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:shadow-none dark:focus:border-blue-400 dark:focus:ring-blue-400/20';
+    'w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 shadow-sm transition-all duration-300 placeholder:text-slate-400 invalid:border-red-400 invalid:ring-2 invalid:ring-red-100 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:shadow-none dark:invalid:border-red-500 dark:invalid:ring-red-500/20 dark:focus:border-blue-400 dark:focus:ring-blue-400/20';
 const READONLY_CLASS_NAME =
     'w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:shadow-none';
 
@@ -190,6 +190,9 @@ const UserManagement = () => {
     const [academicYears, setAcademicYears] = useState([]);
     const [staffPage, setStaffPage] = useState(1);
     const [studentPage, setStudentPage] = useState(1);
+    const [studentPagination, setStudentPagination] = useState({ page: 1, total: 0, totalPages: 1 });
+    const [studentFilterOptions, setStudentFilterOptions] = useState({ classes: [], sections: [] });
+    const [studentDirectoryTotal, setStudentDirectoryTotal] = useState(0);
 
     const [showAddUserModal, setShowAddUserModal] = useState(false);
     const [showAddStudentModal, setShowAddStudentModal] = useState(false);
@@ -261,11 +264,33 @@ const UserManagement = () => {
         const params = {
             ...(shouldRequestYearProjection ? { academicYear: selectedAcademicYear } : {}),
             status,
+            page: studentPage,
+            limit: PAGE_SIZE,
+            ...(studentSearchQuery.trim() ? { search: studentSearchQuery.trim() } : {}),
+            ...(classFilter.length ? { className: classFilter.join(',') } : {}),
+            ...(sectionFilter.length ? { section: sectionFilter.join(',') } : {}),
         };
         const requestConfig = { ...config, params };
-        const { data } = await apiClient.get('/api/students/all', requestConfig);
-        return Array.isArray(data) ? [...data].sort((a, b) => a.name.localeCompare(b.name)) : [];
-    }, [academicYearFilter, config, currentStudentStatus]);
+        const [{ data }, { data: filterData }, { data: directoryData }] = await Promise.all([
+            apiClient.get('/api/students', requestConfig),
+            apiClient.get('/api/students/filters', { ...config, params: {
+                ...(shouldRequestYearProjection ? { academicYear: selectedAcademicYear } : {}),
+                status,
+            } }),
+            apiClient.get('/api/students', { ...config, params: {
+                ...(shouldRequestYearProjection ? { academicYear: selectedAcademicYear } : {}),
+                status,
+                page: 1,
+                limit: 1,
+            } }),
+        ]);
+        return {
+            students: Array.isArray(data?.data) ? data.data : [],
+            pagination: data?.pagination || { page: 1, total: 0, totalPages: 1 },
+            filterOptions: { classes: filterData?.classes || [], sections: filterData?.sections || [] },
+            directoryTotal: directoryData?.pagination?.total || 0,
+        };
+    }, [academicYearFilter, classFilter, config, currentStudentStatus, sectionFilter, studentPage, studentSearchQuery]);
 
     const loadAcademicYears = useCallback(async () => {
         const { data } = await apiClient.get('/api/auth/academic-years', config);
@@ -313,7 +338,10 @@ const UserManagement = () => {
                 }
 
                 if (studentResult.status === 'fulfilled') {
-                    setStudentRegistry(studentResult.value);
+                    setStudentRegistry(studentResult.value.students);
+                    setStudentPagination(studentResult.value.pagination);
+                    setStudentFilterOptions(studentResult.value.filterOptions);
+                    setStudentDirectoryTotal(studentResult.value.directoryTotal);
                 } else {
                     setStudentRegistry([]);
                 }
@@ -353,17 +381,17 @@ const UserManagement = () => {
         const administrationCount = usersList.filter((entry) => getRoleGroup(entry.role) === 'Admin').length;
         const teacherCount = usersList.filter((entry) => normalizeRole(entry.role) === 'Teacher').length;
         const staffCount = usersList.filter((entry) => getRoleGroup(entry.role) !== 'Admin').length;
-        const passedOutCount = studentRegistry.filter((entry) => entry.status === 'Passed Out').length;
+        const passedOutCount = currentStudentStatus === 'Passed Out' ? studentPagination.total : 0;
 
         return {
             totalUsers: usersList.length,
             administrationCount,
             teacherCount,
             staffCount,
-            totalStudents: studentRegistry.length,
+            totalStudents: studentDirectoryTotal,
             passedOutCount,
         };
-    }, [studentRegistry, usersList]);
+    }, [currentStudentStatus, studentDirectoryTotal, studentPagination.total, usersList]);
 
     // Convert role filter options to {id, label} shape for the dropdown
     const roleFilterOptionObjects = useMemo(
@@ -372,13 +400,13 @@ const UserManagement = () => {
     );
 
     const classFilterOptions = useMemo(
-        () => Array.from(new Set(studentRegistry.map((entry) => entry.className).filter(Boolean))).sort((a, b) => Number(a) - Number(b)),
-        [studentRegistry]
+        () => studentFilterOptions.classes,
+        [studentFilterOptions.classes]
     );
 
     const sectionFilterOptions = useMemo(
-        () => Array.from(new Set(studentRegistry.map((entry) => entry.section).filter(Boolean))).sort(),
-        [studentRegistry]
+        () => studentFilterOptions.sections,
+        [studentFilterOptions.sections]
     );
     const academicYearOptions = useMemo(
         () => buildAcademicYearOptions(academicYears, currentAcademicYear),
@@ -405,30 +433,7 @@ const UserManagement = () => {
         return nextUsers;
     }, [roleFilter, staffSearchQuery, usersList]);
 
-    const filteredStudents = useMemo(() => {
-        let nextStudents = [...studentRegistry];
-
-        if (studentSearchQuery.trim()) {
-            const normalizedQuery = studentSearchQuery.trim().toLowerCase();
-            nextStudents = nextStudents.filter(
-                (entry) =>
-                    entry.name?.toLowerCase().includes(normalizedQuery) ||
-                    entry.admissionNo?.toLowerCase().includes(normalizedQuery) ||
-                    entry.className?.toLowerCase().includes(normalizedQuery) ||
-                    entry.section?.toLowerCase().includes(normalizedQuery)
-            );
-        }
-
-        if (classFilter.length > 0) {
-            nextStudents = nextStudents.filter((entry) => classFilter.includes(entry.className));
-        }
-
-        if (sectionFilter.length > 0) {
-            nextStudents = nextStudents.filter((entry) => sectionFilter.includes(entry.section));
-        }
-
-        return nextStudents;
-    }, [classFilter, sectionFilter, studentRegistry, studentSearchQuery]);
+    const filteredStudents = studentRegistry;
 
     useEffect(() => {
         setStaffPage(1);
@@ -436,7 +441,7 @@ const UserManagement = () => {
 
     useEffect(() => {
         setStudentPage(1);
-    }, [filteredStudents.length]);
+    }, [academicYearFilter, classFilter, currentStudentStatus, sectionFilter, studentSearchQuery]);
 
     useEffect(() => {
         if (!createRoleOptions.includes(newUser.role)) {
@@ -445,17 +450,14 @@ const UserManagement = () => {
     }, [createRoleOptions, newUser.role]);
 
     const totalStaffPages = Math.ceil(filteredUsers.length / PAGE_SIZE) || 0;
-    const totalStudentPages = Math.ceil(filteredStudents.length / PAGE_SIZE) || 0;
+    const totalStudentPages = studentPagination.totalPages;
 
     const paginatedUsers = useMemo(
         () => filteredUsers.slice((staffPage - 1) * PAGE_SIZE, staffPage * PAGE_SIZE),
         [filteredUsers, staffPage]
     );
 
-    const paginatedStudents = useMemo(
-        () => filteredStudents.slice((studentPage - 1) * PAGE_SIZE, studentPage * PAGE_SIZE),
-        [filteredStudents, studentPage]
-    );
+    const paginatedStudents = filteredStudents;
 
     const hasActiveStaffFilters = Boolean(staffSearchQuery.trim()) || roleFilter.length > 0;
     const hasActiveStudentFilters =
@@ -1066,7 +1068,7 @@ const UserManagement = () => {
                         ) : (
                             <DashboardPanel
                                 title={activeTab === 'passedOut' ? 'Passed Out Students' : 'Student Registry'}
-                                description={`${filteredStudents.length} student record${filteredStudents.length === 1 ? '' : 's'} in scope`}
+                                description={`${studentPagination.total} student record${studentPagination.total === 1 ? '' : 's'} in scope`}
                                 icon={UserCheck}
                                 bodyClassName="space-y-5"
                             >
@@ -1078,8 +1080,8 @@ const UserManagement = () => {
                                         <BulkDeleteControls
                                             moduleName="students"
                                             filteredIds={filteredStudents.map((student) => student._id).filter(Boolean)}
-                                            allCount={studentRegistry.length}
-                                            source={{ page: 'UserManagement', tab: activeTab, filteredCount: filteredStudents.length }}
+                                            allCount={studentPagination.total}
+                                            source={{ page: 'UserManagement', tab: activeTab, filteredCount: studentPagination.total }}
                                             status={currentStudentStatus}
                                             addToast={addToast}
                                             onComplete={() => fetchData(false)}
@@ -1127,7 +1129,7 @@ const UserManagement = () => {
                                             </p>
                                             <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
                                                  {activeTab === 'passedOut'
-                                                    ? `${filteredStudents.length} passed-out student${filteredStudents.length === 1 ? '' : 's'}`
+                                                    ? `${studentPagination.total} passed-out student${studentPagination.total === 1 ? '' : 's'}`
                                                     : `${summary.totalStudents} active student${summary.totalStudents === 1 ? '' : 's'}`}
                                             </p>
                                             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -1148,7 +1150,7 @@ const UserManagement = () => {
                                     <PaginationFooter
                                         currentPage={studentPage}
                                         totalPages={totalStudentPages}
-                                        totalItems={filteredStudents.length}
+                                        totalItems={studentPagination.total}
                                         pageSize={PAGE_SIZE}
                                         onPageChange={setStudentPage}
                                     />
