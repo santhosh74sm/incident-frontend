@@ -157,9 +157,30 @@ function App() {
                 >
                   <Route path="/dashboard" element={loadPage(<Dashboard />)} />
                   <Route path="/change-password" element={loadPage(<ForceChangePassword />)} />
-                  <Route path="/analytics" element={loadPage(<ProfessionalAnalytics />)} />
-                  <Route path="/student-analytics/:admissionNo" element={loadPage(<StudentAnalytics />)} />
-                  <Route path="/student-analytics" element={loadPage(<StudentAnalytics />)} />
+                  <Route
+                    path="/analytics"
+                    element={loadPage(
+                      <AdminRoute>
+                        <ProfessionalAnalytics />
+                      </AdminRoute>
+                    )}
+                  />
+                  <Route
+                    path="/student-analytics/:admissionNo"
+                    element={loadPage(
+                      <AdminRoute>
+                        <StudentAnalytics />
+                      </AdminRoute>
+                    )}
+                  />
+                  <Route
+                    path="/student-analytics"
+                    element={loadPage(
+                      <AdminRoute>
+                        <StudentAnalytics />
+                      </AdminRoute>
+                    )}
+                  />
                   <Route path="/incidents" element={loadPage(<IncidentList />)} />
                   <Route path="/incidents/:id" element={loadPage(<IncidentDetail />)} />
                   <Route path="/create-incident" element={loadPage(<CreateIncident />)} />

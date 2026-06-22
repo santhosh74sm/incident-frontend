@@ -209,8 +209,8 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
 
     const reportsItems = useMemo(
         () => [
-            { title: 'School Analytics', icon: BarChart3, path: '/analytics', preload: () => import('../pages/ProfessionalAnalytics') },
-            { title: 'Student Analytics', icon: ScrollText, path: '/student-analytics', preload: () => import('../pages/StudentAnalytics') },
+            { title: 'School Analytics', icon: BarChart3, path: '/analytics', preload: () => import('../pages/ProfessionalAnalytics'), roles: ['Super Admin', 'Admin'] },
+            { title: 'Student Analytics', icon: ScrollText, path: '/student-analytics', preload: () => import('../pages/StudentAnalytics'), roles: ['Super Admin', 'Admin'] },
         ],
         []
     );

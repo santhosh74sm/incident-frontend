@@ -28,7 +28,7 @@ import {
     resolveHandlerLabel,
     formatDisplayValue,
 } from '../utils/analytics';
-import { isIncidentReporterRole } from '../utils/roles';
+import { isAdminRole, isIncidentReporterRole } from '../utils/roles';
 
 // ─── Error Boundary ───────────────────────────────────────────────────────────
 
@@ -108,13 +108,13 @@ const QuickActionCard = memo(({ to, tone, icon: Icon, title, description }) => {
     );
 });
 
-const QuickActionsPanel = memo(({ canReportIncident }) => (
+const QuickActionsPanel = memo(({ canAccessAnalytics, canReportIncident }) => (
     <DashboardPanel
         title="Quick Actions"
         description="Jump to the tasks you use most."
         icon={TrendingUp}
     >
-        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-4">
+        <div className={`grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-2 ${canAccessAnalytics ? '2xl:grid-cols-4' : ''}`}>
             {canReportIncident && (
                 <QuickActionCard
                     to="/create-incident"
@@ -131,20 +131,24 @@ const QuickActionsPanel = memo(({ canReportIncident }) => (
                 title="All Incidents"
                 description="Review open cases, assignments, and follow-ups."
             />
-            <QuickActionCard
-                to="/analytics"
-                tone="orange"
-                icon={TrendingUp}
-                title="School Analytics"
-                description="School-wide summaries and charts."
-            />
-            <QuickActionCard
-                to="/student-analytics"
-                tone="emerald"
-                icon={GraduationCap}
-                title="Student Analytics"
-                description="One student's incidents and letters."
-            />
+            {canAccessAnalytics && (
+                <>
+                    <QuickActionCard
+                        to="/analytics"
+                        tone="orange"
+                        icon={TrendingUp}
+                        title="School Analytics"
+                        description="School-wide summaries and charts."
+                    />
+                    <QuickActionCard
+                        to="/student-analytics"
+                        tone="emerald"
+                        icon={GraduationCap}
+                        title="Student Analytics"
+                        description="One student's incidents and letters."
+                    />
+                </>
+            )}
         </div>
     </DashboardPanel>
 ));
@@ -310,6 +314,7 @@ const DashboardContent = memo(() => {
 
     // ── Derived summaries (unchanged calculations) ────────────────────────
     const canReportIncident = isIncidentReporterRole(user?.role);
+    const canAccessAnalytics = isAdminRole(user?.role);
 
     const recentIncidentRows = useMemo(
         () =>
@@ -373,13 +378,15 @@ const DashboardContent = memo(() => {
                                     Create Incident
                                 </Link>
                             )}
-                            <Link
-                                to="/analytics"
-                                className="btn-secondary"
-                            >
-                                <TrendingUp size={15} aria-hidden="true" />
-                                View Reports
-                            </Link>
+                            {canAccessAnalytics && (
+                                <Link
+                                    to="/analytics"
+                                    className="btn-secondary"
+                                >
+                                    <TrendingUp size={15} aria-hidden="true" />
+                                    View Reports
+                                </Link>
+                            )}
                         </>
                     )}
                     meta={(
@@ -469,7 +476,7 @@ const DashboardContent = memo(() => {
 
                     {/* Right column */}
                     <div className="flex flex-col gap-5 xl:col-span-5">
-                        <QuickActionsPanel canReportIncident={canReportIncident} />
+                        <QuickActionsPanel canAccessAnalytics={canAccessAnalytics} canReportIncident={canReportIncident} />
                         <LifecycleOverviewPanel rows={lifecycleRows} />
                     </div>
                 </section>
