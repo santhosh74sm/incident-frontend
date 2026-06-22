@@ -799,7 +799,9 @@ const IncidentDetail = () => {
     const isHandler = useMemo(() => {
         if (!incident || !user) return false;
         if (isAdminRole(user.role)) return true;
-        return Boolean(incident.assignedHandler && getRecordId(incident.assignedHandler) === userId);
+        if (!isTeacherRole(user.role)) return false;
+        return [incident.reportedBy, incident.assignedHandler]
+            .some((owner) => getRecordId(owner) === userId);
     }, [incident, user, userId]);
 
     const timelineData = useMemo(() => {
@@ -861,9 +863,23 @@ const IncidentDetail = () => {
     const showClosureRequestedAlert = Boolean(incident?.closureRequested && incident?.status !== 'Closed');
     const isAdminUser = isAdminRole(user?.role);
     const canManageIncident = isAdminUser || isTeacherRole(user?.role);
-    const showCaseAllocation = Boolean(isAdminUser && incident?.approvalStatus === 'Pending');
+    const showCaseAllocation = Boolean(
+        isAdminUser &&
+        (
+            incident?.approvalStatus === 'Pending' ||
+            (
+                isTeacherRole(incident?.reportedBy?.role) &&
+                !incident?.assignedHandler &&
+                incident?.status !== 'Closed'
+            )
+        )
+    );
     const showAdminCommand = Boolean(isAdminUser && incident?.status !== 'Closed' && incident?.approvalStatus === 'Approved');
-    const showFieldUpdates = Boolean(isHandler && incident?.status !== 'Closed' && incident?.approvalStatus === 'Approved');
+    const showFieldUpdates = Boolean(
+        isHandler &&
+        incident?.status !== 'Closed' &&
+        (!isAdminUser || incident?.approvalStatus === 'Approved')
+    );
 
     if (loading && !incident) {
         return (
@@ -1331,7 +1347,7 @@ const IncidentDetail = () => {
                                 ) : null}
 
                                 {showCaseAllocation ? (
-                                    <DashboardPanel title="Assign Investigator" description="Authorize this case and assign a staff member to handle it." icon={UserPlus}>
+                                    <DashboardPanel title="Assign Investigator" description="Assign a staff member to handle this case." icon={UserPlus}>
                                         <div className="space-y-4">
                                             <div>
                                                 <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Select Investigator</label>
