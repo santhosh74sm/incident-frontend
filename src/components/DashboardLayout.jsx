@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef, useState } from 'react';
+import React, { useLayoutEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
@@ -11,11 +11,10 @@ const SIDEBAR_COLLAPSED_PL = 'lg:pl-[68px]';
 
 const DashboardLayout = () => {
     const location = useLocation();
-    const mainRef = useRef(null);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
     useLayoutEffect(() => {
-        mainRef.current?.scrollTo({ top: 0, left: 0 });
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     }, [location.pathname]);
 
     return (
@@ -24,7 +23,6 @@ const DashboardLayout = () => {
             <Navbar isSidebarCollapsed={isSidebarCollapsed} />
 
             <main
-                ref={mainRef}
                 className={`w-full min-w-0 overflow-x-hidden bg-slate-100 pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))] pt-20 transition-all duration-300 dark:bg-slate-950 sm:pt-24 lg:pb-0 lg:pt-20 ${
                     isSidebarCollapsed ? SIDEBAR_COLLAPSED_PL : SIDEBAR_EXPANDED_PL
                 }`}

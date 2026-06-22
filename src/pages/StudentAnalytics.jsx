@@ -763,8 +763,8 @@ const StudentAnalytics = () => {
                         {!selectedStudent ? (
                             <>
                                 <DashboardHero
-                                    eyebrow="Student Summaries"
-                                    title="Student Summaries"
+                                    eyebrow="Student Analytics"
+                                    title="Student Analytics"
                                     description={isPassedOutSummary ? 'View passed-out student records with historical class and section snapshots.' : 'View student records and incident history.'}
                                     icon={Users}
                                     actions={(

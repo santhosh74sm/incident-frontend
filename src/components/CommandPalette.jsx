@@ -34,7 +34,7 @@ const commandIconByTitle = {
     'Create Incident'          : PlusCircle,
     'View Incident List'       : List,
     'School Analytics'         : BarChart3,
-    'Student Summaries'        : User,
+    'Student Analytics'        : User,
     'View Issued Letters'      : Mail,
 };
 
@@ -75,7 +75,7 @@ const quickActionItems = [
         roles: ['Super Admin', 'Admin', 'Teacher'],
     },
     {
-        title: 'Student Summaries',
+        title: 'Student Analytics',
         sub  : 'Look up one student\'s involvement and history.',
         link : '/student-analytics',
         type : 'command',

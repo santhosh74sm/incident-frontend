@@ -142,7 +142,7 @@ const QuickActionsPanel = memo(({ canReportIncident }) => (
                 to="/student-analytics"
                 tone="emerald"
                 icon={GraduationCap}
-                title="Student History"
+                title="Student Analytics"
                 description="One student's incidents and letters."
             />
         </div>
