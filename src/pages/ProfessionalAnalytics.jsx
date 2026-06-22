@@ -430,14 +430,15 @@ const ProfessionalAnalytics = () => {
     }, [currentAcademicYear, isOperationalUser, user?.name]);
 
     const exportIncidentDetailsToExcel = useCallback(async () => {
+        let downloadFeedbackStarted = false;
         try {
             setIsExporting(true);
-            const firstPage = await fetchAnalyticsDetails({ updateState: false, page: 1, limit: 500 });
+            const firstPage = await fetchAnalyticsDetails({ updateState: false, page: 1, limit: 100 });
             const exportRows = [...firstPage.data];
             const exportLetterStatusMap = { ...firstPage.letterStatusMap };
             const totalPages = firstPage.pagination?.totalPages || 1;
             for (let page = 2; page <= totalPages; page += 1) {
-                const nextPage = await fetchAnalyticsDetails({ updateState: false, page, limit: 500 });
+                const nextPage = await fetchAnalyticsDetails({ updateState: false, page, limit: 100 });
                 exportRows.push(...nextPage.data);
                 Object.assign(exportLetterStatusMap, nextPage.letterStatusMap);
             }
@@ -474,7 +475,9 @@ const ProfessionalAnalytics = () => {
                 };
             });
 
-            const ws = XLSX.utils.json_to_sheet(excelData);
+            const ws = XLSX.utils.json_to_sheet(excelData, {
+                header: ['Admission Number', 'Student Name', 'Class', 'Section', 'Category', 'Location', 'Evidence', 'Reporter', 'Handler', 'Status', 'Opened', 'Closed', 'Letter'],
+            });
             const wb = XLSX.utils.book_new();
             const exportDate = new Date().toISOString().split('T')[0];
             const reportInfoWs = XLSX.utils.json_to_sheet([
@@ -503,6 +506,7 @@ const ProfessionalAnalytics = () => {
             }));
             const academicYearWs = XLSX.utils.json_to_sheet(academicYearSheetData);
             XLSX.utils.book_append_sheet(wb, academicYearWs, 'Academic Year Status');
+            downloadFeedbackStarted = true;
             await withFeedback(
                 addToast,
                 () => downloadWorkbook(
@@ -516,7 +520,10 @@ const ProfessionalAnalytics = () => {
                     errorMessage: 'Export failed. Please try again.',
                 }
             );
-        } catch {
+        } catch (error) {
+            if (!downloadFeedbackStarted) {
+                addToast(error.response?.data?.message || error.message || 'Export failed. Please try again.', 'error');
+            }
         } finally {
             setIsExporting(false);
         }
@@ -734,9 +741,10 @@ const ProfessionalAnalytics = () => {
                             defaultCollapsed
                             actions={
                                 <button
+                                    type="button"
                                     onClick={exportIncidentDetailsToExcel}
                                     disabled={isExporting}
-                                    className="btn-primary"
+                                    className="btn-export"
                                 >
                                     <Download size={14} />
                                     {isExporting ? 'Exporting…' : 'Export to Excel'}

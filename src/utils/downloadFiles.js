@@ -364,6 +364,8 @@ export const openRemoteFile = async (url, filename, options = {}) => {
 
 export const downloadWorkbook = async (XLSX, workbook, filename, options = {}) => {
     const safeFilename = sanitizeDownloadFilename(filename);
+    const mimeType = options.mimeType || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    const bookType = options.bookType || 'xlsx';
 
     logDownloadStep('workbook-download-start', {
         filename: safeFilename,
@@ -371,24 +373,23 @@ export const downloadWorkbook = async (XLSX, workbook, filename, options = {}) =
         platform: Capacitor.getPlatform?.(),
     });
 
-    if (!isNativeDownloadPlatform()) {
-        XLSX.writeFile(workbook, safeFilename);
-        logDownloadStep('workbook-web-download-complete', { filename: safeFilename });
-        return { filename: safeFilename, native: false, displayPath: safeFilename };
-    }
+    return runSingleDownload(`workbook:${safeFilename}`, async () => {
+        if (!isNativeDownloadPlatform()) {
+            const workbookData = XLSX.write(workbook, { type: 'array', bookType });
+            const result = await downloadBlob(new Blob([workbookData], { type: mimeType }), safeFilename, options);
+            logDownloadStep('workbook-web-download-complete', { filename: safeFilename });
+            return result;
+        }
 
-    const mimeType = options.mimeType || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-    const base64Data = XLSX.write(workbook, {
-        type: 'base64',
-        bookType: options.bookType || 'xlsx',
+        const base64Data = XLSX.write(workbook, { type: 'base64', bookType });
+        const { NativeDownloadManager } = await ensureNativeDownloadPlugins();
+        return NativeDownloadManager.saveToDownloads({
+            base64Data,
+            filename: safeFilename,
+            mimeType,
+            subdirectory: options.subdirectory || DOWNLOAD_SUBDIRECTORY,
+        });
     });
-    const { NativeDownloadManager } = await ensureNativeDownloadPlugins();
-    return runSingleDownload(`workbook:${safeFilename}`, () => NativeDownloadManager.saveToDownloads({
-        base64Data,
-        filename: safeFilename,
-        mimeType,
-        subdirectory: options.subdirectory || DOWNLOAD_SUBDIRECTORY,
-    }));
 };
 
 export const parseDownloadFilename = (contentDisposition, fallback = 'download') => {

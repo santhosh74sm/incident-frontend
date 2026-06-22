@@ -91,12 +91,12 @@ const StatusBadge = ({ status }) => {
     );
 };
 
-const ActionIconButton = ({ icon: Icon, label, ...props }) => (
+const ActionIconButton = ({ icon: Icon, label, exportAction = false, ...props }) => (
     <button
         type="button"
         title={label}
         aria-label={label}
-        className="inline-flex h-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+        className={exportAction ? 'btn-export-icon' : 'inline-flex h-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500'}
         {...props}
     >
         <Icon className="h-4 w-4" aria-hidden="true" />
@@ -202,7 +202,7 @@ const DetailModal = ({
                             type="button"
                             onClick={onDownloadDocx}
                             disabled={downloadingDocx}
-                            className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-indigo-700 bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="btn-export w-full rounded-2xl py-3"
                         >
                             {downloadingDocx ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
                                     Download Word File
@@ -321,7 +321,7 @@ const MobileLetterCard = ({ letter, timelineValue, downloading, onView, onDownlo
 
         <div className="mt-4 grid grid-cols-3 gap-2">
             <ActionIconButton icon={Eye} label="View Details" onClick={onView} />
-            <ActionIconButton icon={FileDown} label="Download Word File" onClick={onDownload} disabled={downloading} />
+            <ActionIconButton icon={FileDown} label="Download Word File" onClick={onDownload} disabled={downloading} exportAction />
             <ActionIconButton icon={Trash2} label="Delete Letter" onClick={onDelete} />
         </div>
     </article>
@@ -790,6 +790,7 @@ const IssuedLetters = () => {
                                                                         label="Download Word File"
                                                                         onClick={() => downloadLetter(letter)}
                                                                         disabled={downloadingKey === `${letter?._id}-docx`}
+                                                                        exportAction
                                                                     />
                                                                     <ActionIconButton
                                                                         icon={Trash2}

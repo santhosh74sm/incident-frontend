@@ -418,7 +418,7 @@ const StudentUpload = () => {
                                     type="button"
                                     onClick={() => downloadStudentTemplate(addToast)}
                                     disabled={uploading || parsing}
-                                    className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 sm:w-auto"
+                                    className="btn-export w-full shrink-0 sm:w-auto"
                                 >
                                     <Download className="h-4 w-4" aria-hidden="true" />
                                     Download Sample

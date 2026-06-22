@@ -910,8 +910,8 @@ const IncidentDetail = () => {
                                         <ArrowLeft size={16} className="mr-2 inline" />Back to List
                                     </button>
                                     <button type="button" onClick={handleExportReport} disabled={isExporting}
-                                        className="rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-slate-100 disabled:opacity-60">
-                                        {isExporting ? <Loader2 size={16} className="mr-2 inline animate-spin" /> : <Download size={16} className="mr-2 inline" />}
+                                        className="btn-export">
+                                        {isExporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
                                         Export Report
                                     </button>
                                     {isAdminUser ? (

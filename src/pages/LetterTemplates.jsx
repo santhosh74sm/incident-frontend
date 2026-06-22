@@ -1357,6 +1357,7 @@ const LetterTemplates = () => {
 
                                                 <WorkspaceActionButton
                                                     icon={Download}
+                                                    className="btn-export"
                                                     onClick={() => downloadVariant(selectedTemplate, activeLanguage)}
                                                     disabled={!currentVariant.hasDocx || downloadingKey === `${selectedTemplate._id}-${activeLanguage}-docx`}
                                                 >

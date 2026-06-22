@@ -691,7 +691,7 @@ const StudentAnalytics = () => {
                     <button
                         onClick={() => handleDownloadLetterDocx(row)}
                         disabled={downloadingLetterId === row._id}
-                        className="rounded-xl border border-blue-200 bg-blue-50 p-2 text-blue-600 transition hover:bg-blue-100 disabled:opacity-60"
+                        className="btn-export-icon"
                             title="Download Word File"
                     >
                         {downloadingLetterId === row._id ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
@@ -772,8 +772,9 @@ const StudentAnalytics = () => {
                                             <button
                                                 type="button"
                                                 onClick={exportStudentSummaryToExcel}
-                                                className="rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
+                                                className="btn-export"
                                             >
+                                                <Download size={14} aria-hidden="true" />
                                                 Export to Excel
                                             </button>
                                         </div>
@@ -1270,7 +1271,7 @@ const StudentAnalytics = () => {
                                                 <button
                                                     type="button"
                                                     onClick={exportIncidentTimelineToExcel}
-                                                    className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                                                    className="btn-export"
                                                 >
                                                     <Download size={14} aria-hidden="true" />
                                                     Export to Excel
