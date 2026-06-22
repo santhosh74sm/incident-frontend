@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, Eye, EyeOff, Loader2, Lock, ShieldCheck, XCircle } from 'lucide-react';
 import apiClient from '../config/apiClient';
 import { useAuth } from '../context/AuthContext';
 import { getPasswordStrengthLevel, PASSWORD_MIN_LENGTH, PASSWORD_POLICY_TEXT } from '../lib/validators';
+import useFocusFirstInvalid from '../hooks/useFocusFirstInvalid';
 
 // ─── Security helpers (unchanged) ─────────────────────────────────────────────
 
@@ -79,7 +80,7 @@ const PasswordStrengthBar = ({ password }) => {
     );
 };
 
-const PasswordField = ({ id, label, value, onChange, placeholder, visible, onToggle, minLength }) => {
+const PasswordField = ({ id, label, value, onChange, placeholder, visible, onToggle, minLength, invalid = false }) => {
     const ToggleIcon = visible ? EyeOff : Eye;
 
     return (
@@ -104,6 +105,7 @@ const PasswordField = ({ id, label, value, onChange, placeholder, visible, onTog
                     placeholder={placeholder}
                     minLength={minLength}
                     required
+                    aria-invalid={invalid}
                     className="min-h-[48px] w-full rounded-xl border border-slate-200 bg-white pl-10 pr-12 py-3 text-sm text-slate-900 shadow-sm transition-all duration-200 placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:hover:border-slate-600 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
                 />
 
@@ -123,6 +125,7 @@ const PasswordField = ({ id, label, value, onChange, placeholder, visible, onTog
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 const ForceChangePassword = () => {
+    const formRef = useRef(null);
     const { user, login, restoreAuth } = useAuth();
     const navigate = useNavigate();
 
@@ -131,6 +134,8 @@ const ForceChangePassword = () => {
     const [visibleFields, setVisibleFields]         = useState({ next: false, confirm: false });
     const [error, setError]                         = useState('');
     const [saving, setSaving]                       = useState(false);
+    const confirmInvalid = Boolean(error && error.toLowerCase().includes('match'));
+    useFocusFirstInvalid(error ? { password: error } : {}, formRef);
 
     const toggleVisibility = (field) =>
         setVisibleFields((prev) => ({ ...prev, [field]: !prev[field] }));
@@ -198,6 +203,7 @@ const ForceChangePassword = () => {
 
                 {/* ── Form card ─────────────────────────────────────────────── */}
                 <form
+                    ref={formRef}
                     onSubmit={submit}
                     className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
                     noValidate
@@ -227,6 +233,7 @@ const ForceChangePassword = () => {
                             minLength={PASSWORD_MIN_LENGTH}
                             visible={visibleFields.next}
                             onToggle={() => toggleVisibility('next')}
+                            invalid={Boolean(error && !confirmInvalid)}
                         />
 
                         {/* Strength meter + requirement checklist */}
@@ -249,6 +256,7 @@ const ForceChangePassword = () => {
                                 minLength={PASSWORD_MIN_LENGTH}
                                 visible={visibleFields.confirm}
                                 onToggle={() => toggleVisibility('confirm')}
+                                invalid={confirmInvalid}
                             />
 
                             {/* Live match indicator */}

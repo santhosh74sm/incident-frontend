@@ -21,6 +21,7 @@ import UploadStatusBanner from '../components/upload/UploadStatusBanner';
 import { useToast } from '../components/ToastProvider';
 import { downloadBlob } from '../utils/downloadFiles';
 import { withFeedback } from '../utils/notifications';
+import { focusAndScrollField } from '../hooks/useFocusFirstInvalid';
 import {
     ACCEPTED_UPLOAD_FORMATS,
     buildPreviewFromFile,
@@ -361,8 +362,7 @@ const BulkUpload = () => {
 
         if (!file) {
             setMessage({ type: 'error', text: 'Choose a file before starting the upload.' });
-            uploadTriggerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            uploadTriggerRef.current?.focus({ preventScroll: true });
+            focusAndScrollField(uploadTriggerRef.current);
             return;
         }
 
@@ -371,8 +371,7 @@ const BulkUpload = () => {
                 type: 'error',
                 text: `This file cannot be uploaded until these columns are fixed: ${preview.missingColumns.join(', ')}.`,
             });
-            uploadTriggerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            uploadTriggerRef.current?.focus({ preventScroll: true });
+            focusAndScrollField(uploadTriggerRef.current);
             return;
         }
 

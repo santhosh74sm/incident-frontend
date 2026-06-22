@@ -20,6 +20,7 @@ import UploadStatusBanner from '../components/upload/UploadStatusBanner';
 import { useToast } from '../components/ToastProvider';
 import { downloadWorkbook } from '../utils/downloadFiles';
 import { withFeedback } from '../utils/notifications';
+import { focusAndScrollField } from '../hooks/useFocusFirstInvalid';
 import {
     ACCEPTED_UPLOAD_FORMATS,
     buildPreviewFromFile,
@@ -301,8 +302,7 @@ const StudentUpload = () => {
 
         if (!file) {
             setMessage({ type: 'error', text: 'Please choose a spreadsheet before uploading.' });
-            uploadTriggerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            uploadTriggerRef.current?.focus({ preventScroll: true });
+            focusAndScrollField(uploadTriggerRef.current);
             return;
         }
         if (preview?.missingColumns?.length > 0) {
@@ -310,8 +310,7 @@ const StudentUpload = () => {
                 type: 'error',
                 text: `Please fix the missing columns before uploading: ${preview.missingColumns.join(', ')}.`,
             });
-            uploadTriggerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            uploadTriggerRef.current?.focus({ preventScroll: true });
+            focusAndScrollField(uploadTriggerRef.current);
             return;
         }
 

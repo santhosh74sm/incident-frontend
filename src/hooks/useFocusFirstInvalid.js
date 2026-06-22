@@ -1,16 +1,32 @@
 import { useEffect } from 'react';
 
+const FOCUSABLE_SELECTOR = 'input:not([type="hidden"]), select, textarea, button, [tabindex]:not([tabindex="-1"])';
+
+export const focusAndScrollField = (field) => {
+    if (!field || typeof field.focus !== 'function') return false;
+    field.scrollIntoView?.({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+    try {
+        field.focus({ preventScroll: true });
+    } catch {
+        field.focus();
+    }
+    return true;
+};
+
 export const focusFirstInvalidField = (root = document) => {
     if (!root?.querySelector) return false;
-    const invalid = root.querySelector('[aria-invalid="true"], [data-validation-invalid="true"], :invalid');
-    if (!invalid) return false;
-    const target = typeof invalid.focus === 'function'
-        ? invalid
-        : invalid.querySelector?.('input, select, textarea, button, [tabindex]');
-    if (!target || typeof target.focus !== 'function') return false;
-    target.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
-    target.focus({ preventScroll: true });
-    return true;
+    const candidates = root.querySelectorAll(
+        `[aria-invalid="true"], [data-validation-invalid="true"], ${FOCUSABLE_SELECTOR}:invalid`
+    );
+    for (const invalid of candidates) {
+        const target = invalid.matches?.(FOCUSABLE_SELECTOR)
+            ? invalid
+            : invalid.querySelector?.(FOCUSABLE_SELECTOR);
+        if (target && !target.disabled && target.getClientRects().length > 0) {
+            return focusAndScrollField(target);
+        }
+    }
+    return false;
 };
 
 const hasErrors = (errors) => Boolean(errors && Object.keys(errors).length > 0);

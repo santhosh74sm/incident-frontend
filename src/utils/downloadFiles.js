@@ -7,6 +7,14 @@ const NATIVE_OPEN_DIRECTORY = 'CACHE';
 let nativePluginPromise = null;
 let filesystemPromise = null;
 const activeDownloads = new Map();
+const blobDownloadIds = new WeakMap();
+let nextBlobDownloadId = 1;
+
+const getBlobDownloadId = (blob) => {
+    if (!blob || (typeof blob !== 'object' && typeof blob !== 'function')) return 'unknown';
+    if (!blobDownloadIds.has(blob)) blobDownloadIds.set(blob, nextBlobDownloadId++);
+    return blobDownloadIds.get(blob);
+};
 
 const runSingleDownload = (key, operation) => {
     if (activeDownloads.has(key)) return activeDownloads.get(key);
@@ -78,18 +86,32 @@ const webDownloadBlob = (blob, filename) => {
     document.body.appendChild(link);
     link.click();
     link.remove();
-    window.URL.revokeObjectURL(url);
+    window.setTimeout(() => window.URL.revokeObjectURL(url), 1000);
     logDownloadStep('web-download-complete', { filename });
 };
 
 const blobToBase64 = (blob) =>
     new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onloadend = () => {
+        const cleanup = () => {
+            reader.onload = null;
+            reader.onerror = null;
+            reader.onabort = null;
+        };
+        reader.onload = () => {
             const result = String(reader.result || '');
+            cleanup();
             resolve(result.includes(',') ? result.split(',')[1] : result);
         };
-        reader.onerror = reject;
+        reader.onerror = () => {
+            const error = reader.error || new Error('Unable to read file data.');
+            cleanup();
+            reject(error);
+        };
+        reader.onabort = () => {
+            cleanup();
+            reject(new Error('File read was interrupted.'));
+        };
         reader.readAsDataURL(blob);
     });
 
@@ -182,6 +204,7 @@ export const saveBlobForNativeOpen = async (blob, filename, options = {}) => {
     });
 
     try {
+        await Filesystem.deleteFile({ path, directory }).catch(() => {});
         const writeResult = await Filesystem.writeFile({
             path,
             data: base64Data,
@@ -215,6 +238,7 @@ export const saveBlobForNativeOpen = async (blob, filename, options = {}) => {
             mimeType,
         };
     } catch (error) {
+        await Filesystem.deleteFile({ path, directory }).catch(() => {});
         logDownloadStep('native-open-cache-error', {
             filename: safeFilename,
             message: error?.message,
@@ -251,7 +275,7 @@ export const downloadBlob = async (blob, filename, options = {}) => {
         platform: Capacitor.getPlatform?.(),
     });
 
-    return runSingleDownload(`blob:${safeFilename}:${blob?.size || 0}`, async () => {
+    return runSingleDownload(`blob:${getBlobDownloadId(blob)}:${safeFilename}`, async () => {
         if (!isNativeDownloadPlatform()) {
             webDownloadBlob(blob, safeFilename);
             return { filename: safeFilename, native: false, displayPath: safeFilename };
