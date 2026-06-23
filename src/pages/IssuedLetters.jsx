@@ -33,7 +33,7 @@ import {
 import { downloadBlob } from '../utils/downloadFiles';
 import { withFeedback } from '../utils/notifications';
 import BulkDeleteControls from '../components/BulkDeleteControls';
-import { isAdminRole, isSuperAdminRole } from '../utils/roles';
+import { isSchoolUserRole, isSuperAdminRole } from '../utils/roles';
 
 const PAGE_SIZE = 10;
 
@@ -509,10 +509,10 @@ const IssuedLetters = () => {
         }
     };
 
-    if (!isAdminRole(user?.role)) {
+    if (!isSchoolUserRole(user?.role)) {
         return (
             <div className="flex min-h-screen items-center justify-center bg-slate-100 p-6 text-slate-700">
-                Admin access is required to manage issued letters.
+                Staff access is required to manage issued letters.
             </div>
         );
     }

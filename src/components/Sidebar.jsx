@@ -194,14 +194,14 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
                 icon: FileText,
                 path: '/letter-templates',
                 preload: () => import('../pages/LetterTemplates'),
-                roles: ['Super Admin', 'Admin'],
+                roles: ['Super Admin', 'Admin', 'Teacher'],
             },
             {
                 title: 'Issued Letters',
                 icon: Mail,
                 path: '/issued-letters',
                 preload: () => import('../pages/IssuedLetters'),
-                roles: ['Super Admin', 'Admin'],
+                roles: ['Super Admin', 'Admin', 'Teacher'],
             },
         ],
         []

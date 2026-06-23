@@ -86,7 +86,7 @@ const quickActionItems = [
         sub  : 'See letters produced from incidents.',
         link : '/issued-letters',
         type : 'command',
-        roles: ['Super Admin', 'Admin'],
+        roles: ['Super Admin', 'Admin', 'Teacher'],
     },
 ];
 

@@ -112,6 +112,11 @@ const AdminRoute = ({ children }) => {
   return user && ['Super Admin', 'Admin'].includes(normalizeRole(user.role)) ? children : <Navigate to="/dashboard" />;
 };
 
+const LetterModuleRoute = ({ children }) => {
+  const { user } = useAuth();
+  return user && ['Super Admin', 'Admin', 'Teacher'].includes(normalizeRole(user.role)) ? children : <Navigate to="/dashboard" />;
+};
+
 const SuperAdminRoute = ({ children }) => {
   const { user } = useAuth();
   return user && normalizeRole(user.role) === 'Super Admin' ? children : <Navigate to="/dashboard" />;
@@ -228,17 +233,17 @@ function App() {
                   <Route
                     path="/letter-templates"
                     element={loadPage(
-                      <AdminRoute>
+                      <LetterModuleRoute>
                         <LetterTemplates />
-                      </AdminRoute>
+                      </LetterModuleRoute>
                     )}
                   />
                   <Route
                     path="/issued-letters"
                     element={loadPage(
-                      <AdminRoute>
+                      <LetterModuleRoute>
                         <IssuedLetters />
-                      </AdminRoute>
+                      </LetterModuleRoute>
                     )}
                   />
                 </Route>
