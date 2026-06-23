@@ -59,9 +59,12 @@ import {
     buildAcademicYearOptions,
     buildStatusTrendSeries,
     buildTrendSeriesFromBuckets,
+    formatProgressLogForDisplay,
+    formatProgressLogForExport,
     formatShortDate,
     getIncidentTimestamp,
     normalizeOptionList,
+    resolveIncidentPriorityForExport,
     toneForStatus,
     withUnknownOption,
     formatDisplayValue,
@@ -464,6 +467,9 @@ const ProfessionalAnalytics = () => {
                     Class: incident.class || incident.studentDetails?.className || 'N/A',
                     Section: incident.section || incident.studentDetails?.section || 'N/A',
                     Category: incident.category || 'N/A',
+                    Description: incident.description || '',
+                    Priority: resolveIncidentPriorityForExport(incident),
+                    'Progress Log': formatProgressLogForExport(incident.progressLogs),
                     Location: incident.location || 'N/A',
                     Evidence: (incident.evidence || []).map((entry) => entry?.evidenceType).filter(Boolean).join(', ') || 'None',
                     Reporter: incident.reportedBy?.name || 'Unknown',
@@ -476,7 +482,7 @@ const ProfessionalAnalytics = () => {
             });
 
             const ws = XLSX.utils.json_to_sheet(excelData, {
-                header: ['Admission Number', 'Student Name', 'Class', 'Section', 'Category', 'Location', 'Evidence', 'Reporter', 'Handler', 'Status', 'Opened', 'Closed', 'Letter'],
+                header: ['Admission Number', 'Student Name', 'Class', 'Section', 'Category', 'Description', 'Priority', 'Progress Log', 'Location', 'Evidence', 'Reporter', 'Handler', 'Status', 'Opened', 'Closed', 'Letter'],
             });
             const wb = XLSX.utils.book_new();
             const exportDate = new Date().toISOString().split('T')[0];
@@ -575,6 +581,27 @@ const ProfessionalAnalytics = () => {
         { key: 'className', label: 'Class', render: (row) => row.class || row.studentDetails?.className || 'N/A' },
         { key: 'section', label: 'Section', render: (row) => row.section || row.studentDetails?.section || 'N/A' },
         { key: 'category', label: 'Type', render: (row) => formatDisplayValue(row.category) || 'N/A' },
+        {
+            key: 'description',
+            label: 'Description',
+            className: 'min-w-[220px] max-w-[320px]',
+            render: (row) => (
+                <span className="block whitespace-pre-wrap text-sm leading-5 text-slate-700">
+                    {row.description || 'N/A'}
+                </span>
+            ),
+        },
+        { key: 'priority', label: 'Priority', render: (row) => resolveIncidentPriorityForExport(row) },
+        {
+            key: 'progressLog',
+            label: 'Progress Log',
+            className: 'min-w-[220px] max-w-[320px]',
+            render: (row) => (
+                <span className="block whitespace-pre-wrap text-sm leading-5 text-slate-700">
+                    {formatProgressLogForDisplay(row.progressLogs)}
+                </span>
+            ),
+        },
         { key: 'location', label: 'Location', render: (row) => formatDisplayValue(row.location) || 'N/A' },
         {
             key: 'evidence',

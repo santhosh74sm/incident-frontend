@@ -351,6 +351,68 @@ export const formatShortDateTime = (value) => {
     });
 };
 
+export const formatExportDate = (value) => {
+    if (!value) return 'N/A';
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return 'N/A';
+    return parsed.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+    }).replace(/ /g, '-');
+};
+
+export const resolveIncidentPriorityForExport = (incident) => {
+    if (incident?.isHighPriority === true) return 'High Priority';
+
+    const normalizedPriority = String(incident?.priority || incident?.severity || '')
+        .trim()
+        .toLowerCase();
+    if (['high', 'high priority', 'critical', 'urgent'].includes(normalizedPriority)) {
+        return 'High Priority';
+    }
+
+    const category = String(incident?.category || incident?.incidentCategory || incident?.title || '')
+        .trim()
+        .toLowerCase();
+    const highPriorityCategoryPatterns = [
+        /\bviolence\b/,
+        /\bviolent\b/,
+        /\bfight(?:ing)?\b/,
+        /\bbully(?:ing)?\b/,
+        /\bserious\s+misconduct\b/,
+        /\bparent\s+complaint\b/,
+        /\brepeated\s+offender\b/,
+    ];
+    if (highPriorityCategoryPatterns.some((pattern) => pattern.test(category))) {
+        return 'High Priority';
+    }
+
+    return 'Normal';
+};
+
+export const formatProgressLogForExport = (progressLogs = []) => {
+    if (!Array.isArray(progressLogs) || progressLogs.length === 0) return 'N/A';
+
+    return progressLogs
+        .map((log) => {
+            const note = String(log?.note || '').trim();
+            if (!note) return '';
+            return `${note} (${formatExportDate(log?.timestamp)})`;
+        })
+        .filter(Boolean)
+        .join('\n→ ');
+};
+
+export const formatProgressLogForDisplay = (progressLogs = []) => {
+    if (!Array.isArray(progressLogs) || progressLogs.length === 0) return 'N/A';
+
+    return progressLogs
+        .map((log) => String(log?.note || '').trim())
+        .filter(Boolean)
+        .join('\n→ ') || 'N/A';
+};
+
 export const normalizeOptionList = (options = []) =>
     options
         .map((option) => {
