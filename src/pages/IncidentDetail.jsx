@@ -592,7 +592,7 @@ const IncidentDetail = () => {
         const confirmed = await confirm({
             tone: 'danger',
             title: 'Delete evidence file?',
-            description: `Delete "${entry?.originalName || entry?.filename || 'this evidence file'}"? This removes the evidence record and the stored file from this incident.`,
+            description: `Delete this ${entry?.evidenceType || 'evidence'} record? This removes the evidence record and the stored file from this incident.`,
             confirmLabel: 'Delete evidence',
         });
         if (!confirmed) return;
@@ -1107,11 +1107,7 @@ const IncidentDetail = () => {
                                                         <div className="flex items-start justify-between gap-3">
                                                             <div>
                                                                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{entry?.evidenceType || 'Evidence'}</p>
-                                                                <p className="mt-2 break-all text-sm font-semibold text-slate-900">{fileLabel}</p>
                                                             </div>
-                                                            <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                                                                Asset {index + 1}
-                                                            </span>
                                                         </div>
                                                         {previewUrl ? (
                                                             <EvidenceFilePreview
@@ -1176,7 +1172,7 @@ const IncidentDetail = () => {
                                                 {evidenceEntries.map((entry, index) => (
                                                     <div key={`ev-entry-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
                                                         <div className="flex items-center justify-between">
-                                                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Evidence {index + 1}</p>
+                                                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Evidence File</p>
                                                             {evidenceEntries.length > 1 ? (
                                                                 <button type="button" onClick={() => handleRemoveEvidenceEntry(index)} className="text-slate-400 transition hover:text-red-600">
                                                                     <X size={16} />
@@ -1221,7 +1217,7 @@ const IncidentDetail = () => {
                                                                     <span className="text-xs text-slate-400">Supports image, PDF, DOC, DOCX, XLS, and XLSX</span>
                                                                 </div>
                                                                 <input id={`evidence-file-${index}`} type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" className="hidden"
-                                                                    aria-label={`Evidence ${index + 1} file`}
+                                                                    aria-label="Evidence file"
                                                                     onChange={(e) => { const f = e.target.files?.[0]; if (f) handleEvidenceFileChange(index, f); e.target.value = ''; }} />
                                                             </label>
                                                             {entry.file ? (

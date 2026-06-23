@@ -723,9 +723,6 @@ const IncidentList = () => {
                                                         <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
                                                             Admission Number: <span className="font-semibold text-slate-600 dark:text-slate-300">{incident.admissionNo || 'N/A'}</span>
                                                         </p>
-                                                        <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-                                                            Incident ID: <span className="font-semibold text-slate-600 dark:text-slate-300">{incidentId || 'N/A'}</span>
-                                                        </p>
                                                     </div>
 
                                                     {/* Row 3 — key facts grid */}
