@@ -41,7 +41,6 @@ const READ_STATUS_OPTIONS = ['All', 'Unread', 'Read'];
 const formatDate = formatShortDate;
 
 const statusPill = (status, overrides = {}) => {
-    if (overrides.pending) return 'border-red-200 bg-red-50 text-red-700 dark:border-red-500/40 dark:bg-red-950/30 dark:text-red-300';
     if (overrides.closureRequested) return 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-950/30 dark:text-emerald-300';
     if (status === 'Closed') return 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-950/30 dark:text-emerald-300';
     if (status === 'In Progress') return 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-500/40 dark:bg-blue-950/30 dark:text-blue-300';
@@ -652,7 +651,6 @@ const IncidentList = () => {
                             >
                                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
                                     {filteredIncidents.map((incident) => {
-                                        const isPendingApproval = isAdminRole(user?.role) && incident.approvalStatus === 'Pending';
                                         const isClosureRequest = isAdminRole(user?.role) && incident.closureRequested && incident.status !== 'Closed';
                                         const isHighPriority = incident.isHighPriority === true;
                                         const priority = isPriority(incident) || isHighPriority;
@@ -665,7 +663,7 @@ const IncidentList = () => {
                                                     ? String(incident.studentsInvolved)
                                                     : 'N/A';
                                         const incidentDate = getIncidentTimestamp(incident);
-                                        const badgeLabel = isPendingApproval ? 'Pending approval' : isClosureRequest ? 'Seal ready' : (incident.status === 'In Progress' ? 'In progress' : incident.status);
+                                        const badgeLabel = isClosureRequest ? 'Seal ready' : (incident.status === 'In Progress' ? 'In progress' : incident.status);
                                         const CatIcon = categoryIcon(incident.category);
                                         const incidentId = getRecordId(incident);
 
@@ -683,7 +681,6 @@ const IncidentList = () => {
                                             >
                                                 {/* Card top accent stripe */}
                                                 <div className={`h-1 w-full rounded-t-[22px] ${
-                                                    isPendingApproval ? 'bg-red-400' :
                                                     isClosureRequest ? 'bg-emerald-400' :
                                                     incident.status === 'Closed' ? 'bg-emerald-400' :
                                                     incident.status === 'In Progress' ? 'bg-blue-400' :
@@ -695,7 +692,7 @@ const IncidentList = () => {
                                                     {/* Row 1 — badges + date */}
                                                     <div className="flex flex-wrap items-center justify-between gap-2">
                                                         <div className="flex flex-wrap items-center gap-1.5">
-                                                            <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.14em] ${statusPill(incident.status, { pending: isPendingApproval, closureRequested: isClosureRequest })}`}>
+                                                            <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.14em] ${statusPill(incident.status, { closureRequested: isClosureRequest })}`}>
                                                                 {formatDisplayValue(badgeLabel)}
                                                             </span>
                                                             {isHighPriority ? (

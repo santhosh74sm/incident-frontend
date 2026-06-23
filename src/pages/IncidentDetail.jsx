@@ -416,7 +416,7 @@ const IncidentDetail = () => {
     const fetchStaff = useCallback(async () => {
         if (!isAdminRole(user?.role) || !userId) return;
         try {
-            const { data } = await apiClient.get('/api/auth/users');
+            const { data } = await apiClient.get('/api/auth/users/investigators');
             setStaffList(Array.isArray(data) ? data : []);
         } catch {
             setStaffList([]);
@@ -742,7 +742,7 @@ const IncidentDetail = () => {
             return;
         }
         const messages = {
-            approve: 'Authorize and assign this case?',
+            assign: 'Assign this case?',
             progress: 'Add this progress note?',
             'request-closure': 'Close this case?',
             'finalize-closure': 'Finalize and close this case?',
@@ -816,13 +816,6 @@ const IncidentDetail = () => {
                 icon: Activity, surfaceClass: 'bg-blue-50', iconClass: 'text-blue-600',
             });
         }
-        if (incident.approvedAt) {
-            steps.push({
-                label: 'Case Authorized', time: incident.approvedAt,
-                note: incident.assignedHandler?.name ? `Assigned to ${incident.assignedHandler.name}.` : 'Authorization recorded before assignment.',
-                icon: ShieldCheck, surfaceClass: 'bg-amber-50', iconClass: 'text-amber-600',
-            });
-        }
         const progressTime = incident.inProgressAt || incident.progressAt;
         if (progressTime && (status === 'In Progress' || status === 'Closed')) {
             steps.push({
@@ -863,22 +856,11 @@ const IncidentDetail = () => {
     const showClosureRequestedAlert = Boolean(incident?.closureRequested && incident?.status !== 'Closed');
     const isAdminUser = isAdminRole(user?.role);
     const canManageIncident = isAdminUser || isTeacherRole(user?.role);
-    const showCaseAllocation = Boolean(
-        isAdminUser &&
-        (
-            incident?.approvalStatus === 'Pending' ||
-            (
-                isTeacherRole(incident?.reportedBy?.role) &&
-                !incident?.assignedHandler &&
-                incident?.status !== 'Closed'
-            )
-        )
-    );
-    const showAdminCommand = Boolean(isAdminUser && incident?.status !== 'Closed' && incident?.approvalStatus === 'Approved');
+    const showCaseAllocation = Boolean(isAdminUser && incident?.status !== 'Closed');
+    const showAdminCommand = Boolean(isAdminUser && incident?.status !== 'Closed');
     const showFieldUpdates = Boolean(
         isHandler &&
-        incident?.status !== 'Closed' &&
-        (!isAdminUser || incident?.approvalStatus === 'Approved')
+        incident?.status !== 'Closed'
     );
 
     if (loading && !incident) {
@@ -943,9 +925,6 @@ const IncidentDetail = () => {
                                 <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
                                     <span className={`inline-flex items-center rounded-full border px-3 py-1.5 font-semibold ${statusStyle.badge}`}>
                                         {formatDisplayValue(incident.status || 'Open')}
-                                    </span>
-                                    <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 font-medium text-slate-700">
-                                        {incident.approvalStatus || 'Pending'}
                                     </span>
                                     <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5">
                                         Incident Date: {formatShortDate(getIncidentTimestamp(incident))}
@@ -1359,13 +1338,13 @@ const IncidentDetail = () => {
                                                     ))}
                                                 </select>
                                             </div>
-                                            <button type="button" onClick={() => handleAction('approve', { handlerId: selectedHandler })}
+                                            <button type="button" onClick={() => handleAction('assign', { handlerId: selectedHandler })}
                                                 disabled={!selectedHandler || actionLoading}
                                                 className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
                                                 {actionLoading ? <Loader2 size={16} className="mr-2 inline animate-spin" /> : null}
                                                 Assign Selected Investigator
                                             </button>
-                                            <button type="button" onClick={() => handleAction('approve', { handlerId: userId })}
+                                            <button type="button" onClick={() => handleAction('assign', { handlerId: userId })}
                                                 disabled={actionLoading}
                                                 className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60">
                                                 Assign to Myself

@@ -384,7 +384,7 @@ const CreateIncident = () => {
                     apiClient.get(`/api/students/filters`, config).catch(() => ({ data: { classes: [], sections: [] } })),
                     apiClient.get(`/api/incidents/categories`, config).catch(() => ({ data: [] })),
                     apiClient.get(`/api/incidents/locations`, config).catch(() => ({ data: [] })),
-                    apiClient.get(`/api/auth/users`, config).catch(() => ({ data: [] })),
+                    apiClient.get(`/api/auth/users/investigators`, config).catch(() => ({ data: [] })),
                     apiClient.get(`/api/evidence-types`, config).catch(() => ({ data: [] })),
                 ]);
 
@@ -392,10 +392,7 @@ const CreateIncident = () => {
             setDbOptions(filtersResponse.data || { classes: [], sections: [] });
             setCategories(categoryResponse.data || []);
             setLocations(locationResponse.data || []);
-            // Only keep Teacher-role users in the handler dropdown.
-            // Admins assign incidents to Teachers, not to other Admins.
-            const allUsers = Array.isArray(staffResponse.data) ? staffResponse.data : [];
-            setStaffList(allUsers.filter((u) => isTeacherRole(u.role)));
+            setStaffList(Array.isArray(staffResponse.data) ? staffResponse.data : []);
             setEvidenceTypes(evidenceResponse.data || []);
         } catch (error) {
             if (!isMounted()) return;
