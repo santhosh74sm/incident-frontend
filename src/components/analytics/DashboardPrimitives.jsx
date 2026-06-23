@@ -341,7 +341,7 @@ export const AnalyticsDataTable = ({ columns = [], rows = [], emptyMessage = 'No
 
     return (
         <div className="analytics-table-shell">
-            <div className="hidden overflow-x-auto md:block">
+            <div className="analytics-table-scroll hidden md:block">
                 <table className="analytics-table">
                     <thead className="analytics-table-head">
                         <tr>

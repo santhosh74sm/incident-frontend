@@ -58,7 +58,6 @@ import {
     buildStatusTrendSeries,
     CHART_COLORS,
     formatShare,
-    formatProgressLogForDisplay,
     formatProgressLogForExport,
     formatShortDate,
     getIncidentTimestamp,
@@ -638,27 +637,7 @@ const StudentAnalytics = () => {
 
     const incidentColumns = [
         { key: 'category', label: 'Type', render: (row) => formatDisplayValue(row.category) || 'N/A' },
-        {
-            key: 'description',
-            label: 'Description',
-            className: 'min-w-[220px] max-w-[320px]',
-            render: (row) => (
-                <span className="block whitespace-pre-wrap text-sm leading-5 text-slate-700">
-                    {row.description || 'N/A'}
-                </span>
-            ),
-        },
         { key: 'priority', label: 'Priority', render: (row) => resolveIncidentPriorityForExport(row) },
-        {
-            key: 'progressLog',
-            label: 'Progress Log',
-            className: 'min-w-[220px] max-w-[320px]',
-            render: (row) => (
-                <span className="block whitespace-pre-wrap text-sm leading-5 text-slate-700">
-                    {formatProgressLogForDisplay(row.progressLogs)}
-                </span>
-            ),
-        },
         { key: 'location', label: 'Location', render: (row) => formatDisplayValue(row.location) || 'N/A' },
         {
             key: 'evidence',

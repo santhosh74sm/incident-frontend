@@ -221,7 +221,11 @@
   }
 
   .analytics-table {
-    @apply min-w-full text-sm;
+    @apply w-full min-w-max text-sm;
+  }
+
+  .analytics-table-scroll {
+    @apply max-h-[70vh] overflow-auto overscroll-contain;
   }
 
   .analytics-table-head {

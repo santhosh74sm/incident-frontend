@@ -404,15 +404,6 @@ export const formatProgressLogForExport = (progressLogs = []) => {
         .join('\n→ ');
 };
 
-export const formatProgressLogForDisplay = (progressLogs = []) => {
-    if (!Array.isArray(progressLogs) || progressLogs.length === 0) return 'N/A';
-
-    return progressLogs
-        .map((log) => String(log?.note || '').trim())
-        .filter(Boolean)
-        .join('\n→ ') || 'N/A';
-};
-
 export const normalizeOptionList = (options = []) =>
     options
         .map((option) => {
