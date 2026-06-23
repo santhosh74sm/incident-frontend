@@ -121,6 +121,7 @@ const ProfessionalAnalytics = () => {
     const [loading, setLoading] = useState(true);
     const [analyticsError, setAnalyticsError] = useState('');
     const [isExporting, setIsExporting] = useState(false);
+    const [detailsLoading, setDetailsLoading] = useState(false);
     const [activeTab, setActiveTab] = useState('overview');
     const [filters, setFilters] = useState({
         classes: [],
@@ -142,9 +143,6 @@ const ProfessionalAnalytics = () => {
     const [currentAcademicYear, setCurrentAcademicYear] = useState('');
     const [academicYears, setAcademicYears] = useState([]);
     const [letterStatusMap, setLetterStatusMap] = useState({});
-    const [detailPage, setDetailPage] = useState(1);
-    const [detailPagination, setDetailPagination] = useState(null);
-
     const config = useMemo(() => ({ headers: {} }), []);
     const compactXAxisProps = useMemo(
         () => compactChart
@@ -220,8 +218,6 @@ const ProfessionalAnalytics = () => {
             setServerAnalytics(data || null);
             setIncidents([]);
             setLetterStatusMap({});
-            setDetailPage(1);
-            setDetailPagination(null);
         } catch (error) {
             setServerAnalytics(null);
             setIncidents([]);
@@ -232,24 +228,36 @@ const ProfessionalAnalytics = () => {
         }
     }, [academicYear, buildRequestParams, config, user?._id]);
 
-    const fetchAnalyticsDetails = useCallback(async ({ updateState = true, page = detailPage, limit = 100 } = {}) => {
+    const fetchAnalyticsDetails = useCallback(async ({ updateState = true, page = 1, limit = 100, fetchAll = false } = {}) => {
         if (!user?._id || !academicYear) return { data: [], letterStatusMap: {} };
-        const params = buildRequestParams();
-        params.set('page', String(page));
-        params.set('limit', String(limit));
-        const { data } = await apiClient.get('/api/incidents/analytics/details', { ...config, params });
-        const payload = {
-            data: Array.isArray(data?.data) ? data.data : [],
-            letterStatusMap: data?.letterStatusMap || {},
-            pagination: data?.pagination || null,
+        const fetchPage = async (nextPage) => {
+            const params = buildRequestParams();
+            params.set('page', String(nextPage));
+            params.set('limit', String(limit));
+            const { data } = await apiClient.get('/api/incidents/analytics/details', { ...config, params });
+            return {
+                data: Array.isArray(data?.data) ? data.data : [],
+                letterStatusMap: data?.letterStatusMap || {},
+                pagination: data?.pagination || null,
+            };
         };
+
+        const payload = await fetchPage(page);
+        if (fetchAll) {
+            const totalPages = payload.pagination?.totalPages || 1;
+            for (let nextPage = page + 1; nextPage <= totalPages; nextPage += 1) {
+                const nextPayload = await fetchPage(nextPage);
+                payload.data.push(...nextPayload.data);
+                Object.assign(payload.letterStatusMap, nextPayload.letterStatusMap);
+                payload.pagination = nextPayload.pagination || payload.pagination;
+            }
+        }
         if (updateState) {
             setIncidents(payload.data);
             setLetterStatusMap(payload.letterStatusMap);
-            setDetailPagination(payload.pagination);
         }
         return payload;
-    }, [academicYear, buildRequestParams, config, detailPage, user?._id]);
+    }, [academicYear, buildRequestParams, config, user?._id]);
 
     const fetchFilterOptions = useCallback(async () => {
         if (!user?._id) return;
@@ -316,11 +324,22 @@ const ProfessionalAnalytics = () => {
 
     useEffect(() => {
         if (activeTab !== 'details' || !serverAnalytics) return;
-        fetchAnalyticsDetails({ page: detailPage }).catch(() => {
-            setIncidents([]);
-            setLetterStatusMap({});
-        });
-    }, [activeTab, detailPage, fetchAnalyticsDetails, serverAnalytics]);
+        setDetailsLoading(true);
+        fetchAnalyticsDetails({ fetchAll: true, limit: 100 })
+            .catch(async () => {
+                try {
+                    const params = buildRequestParams();
+                    const { data } = await apiClient.get('/api/incidents', { ...config, params });
+                    setIncidents(Array.isArray(data) ? data : []);
+                } catch {
+                    setIncidents([]);
+                }
+                setLetterStatusMap({});
+            })
+            .finally(() => {
+                setDetailsLoading(false);
+            });
+    }, [activeTab, buildRequestParams, config, fetchAnalyticsDetails, serverAnalytics]);
 
     const filteredIncidents = useMemo(() => incidents, [incidents]);
     const locationFilterOptions = useMemo(
@@ -575,6 +594,7 @@ const ProfessionalAnalytics = () => {
     }
 
     const detailColumns = [
+        { key: 'serialNumber', label: 'S.No', render: (row, index) => index + 1 },
         { key: 'admissionNo', label: 'Admission Number', render: (row) => <span className="font-mono text-xs text-slate-600">{row.admissionNo || 'N/A'}</span> },
         { key: 'studentName', label: 'Student', render: (row) => row.studentDetails?.name || row.studentsInvolved?.[0] || 'N/A' },
         { key: 'className', label: 'Class', render: (row) => row.class || row.studentDetails?.className || 'N/A' },
@@ -1168,33 +1188,8 @@ const ProfessionalAnalytics = () => {
                                 <AnalyticsDataTable
                                     columns={detailColumns}
                                     rows={filteredIncidentDetails}
-                                    emptyMessage="No incidents found for the current filter set."
+                                    emptyMessage={detailsLoading && analytics.total > 0 ? 'Loading incident records...' : 'No incidents found for the current filter set.'}
                                 />
-                                {detailPagination?.totalPages > 1 ? (
-                                    <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-200 pt-4 text-sm">
-                                        <span className="text-slate-500">
-                                            Page {detailPagination.page} of {detailPagination.totalPages} · {detailPagination.total} incidents
-                                        </span>
-                                        <div className="flex gap-2">
-                                            <button
-                                                type="button"
-                                                disabled={detailPage <= 1}
-                                                onClick={() => setDetailPage((page) => Math.max(1, page - 1))}
-                                                className="rounded-lg border border-slate-200 px-3 py-2 font-semibold disabled:opacity-50"
-                                            >
-                                                Previous
-                                            </button>
-                                            <button
-                                                type="button"
-                                                disabled={detailPage >= detailPagination.totalPages}
-                                                onClick={() => setDetailPage((page) => Math.min(detailPagination.totalPages, page + 1))}
-                                                className="rounded-lg border border-slate-200 px-3 py-2 font-semibold disabled:opacity-50"
-                                            >
-                                                Next
-                                            </button>
-                                        </div>
-                                    </div>
-                                ) : null}
                             </DashboardPanel>
                         )}
                     </div>

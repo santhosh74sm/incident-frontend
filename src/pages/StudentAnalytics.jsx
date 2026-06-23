@@ -93,9 +93,7 @@ const StudentAnalytics = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [classFilter, setClassFilter] = useState('');
     const [sectionFilter, setSectionFilter] = useState('');
-    const [studentSummaryPage, setStudentSummaryPage] = useState(1);
     const [studentSummarySort, setStudentSummarySort] = useState({ key: 'name', direction: 'asc' });
-    const [studentPagination, setStudentPagination] = useState({ page: 1, total: 0, totalPages: 1 });
     const [studentDirectorySummary, setStudentDirectorySummary] = useState({ total: 0, incidentCount: 0, letterCount: 0 });
     const [statusFilter, setStatusFilter] = useState([]);
     const [students, setStudents] = useState([]);
@@ -147,10 +145,9 @@ const StudentAnalytics = () => {
     const studentStatus = activeSummaryTab === 'passedOut' ? 'Passed Out' : 'Active';
     const isPassedOutSummary = activeSummaryTab === 'passedOut';
 
-    const studentSummaryPageSize = 12;
+    const studentSummaryPageSize = 100;
     const filteredStudents = students;
     const paginatedStudents = students;
-    const studentSummaryTotalPages = studentPagination.totalPages;
 
     const fetchFilterOptions = useCallback(async () => {
         if (!user?._id) return;
@@ -192,26 +189,29 @@ const StudentAnalytics = () => {
         try {
             setLoading(true);
             if (!academicYear) return;
-            const config = { params: {
+            const baseParams = {
                 academicYear,
                 status: studentStatus,
                 includeSummaryCounts: true,
-                page: studentSummaryPage,
                 limit: studentSummaryPageSize,
                 ...(params?.admissionNo ? { search: params.admissionNo } : searchTerm ? { search: searchTerm } : {}),
                 ...(classFilter ? { className: classFilter } : {}),
                 ...(sectionFilter ? { section: sectionFilter } : {}),
                 sortBy: studentSummarySort.key,
                 sortDirection: studentSummarySort.direction,
-            } };
-            const { data } = await apiClient.get('/api/students', config);
-            const studentsData = Array.isArray(data?.data) ? data.data : [];
+            };
+            const firstResponse = await apiClient.get('/api/students', { params: { ...baseParams, page: 1 } });
+            const studentsData = Array.isArray(firstResponse.data?.data) ? [...firstResponse.data.data] : [];
+            const pagination = firstResponse.data?.pagination || { page: 1, total: studentsData.length, totalPages: 1 };
+            for (let page = 2; page <= (pagination.totalPages || 1); page += 1) {
+                const { data } = await apiClient.get('/api/students', { params: { ...baseParams, page } });
+                studentsData.push(...(Array.isArray(data?.data) ? data.data : []));
+            }
             setStudents(studentsData.map((student) => ({
                 ...student,
                 id: `${student._id || student.admissionNo}-${student.academicYear || academicYear}`,
             })));
-            setStudentPagination(data?.pagination || { page: 1, total: studentsData.length, totalPages: 1 });
-            setStudentDirectorySummary(data?.summary || { total: studentsData.length, incidentCount: 0, letterCount: 0 });
+            setStudentDirectorySummary(firstResponse.data?.summary || { total: studentsData.length, incidentCount: 0, letterCount: 0 });
 
             if (params?.admissionNo) {
                 const targetStudent = studentsData.find((student) => String(student.admissionNo) === String(params.admissionNo));
@@ -230,11 +230,7 @@ const StudentAnalytics = () => {
         } finally {
             setLoading(false);
         }
-    }, [academicYear, classFilter, params?.admissionNo, searchTerm, sectionFilter, studentStatus, studentSummaryPage, studentSummarySort.direction, studentSummarySort.key, user?._id]);
-
-    useEffect(() => {
-        setStudentSummaryPage(1);
-    }, [academicYear, activeSummaryTab, classFilter, searchTerm, sectionFilter]);
+    }, [academicYear, classFilter, params?.admissionNo, searchTerm, sectionFilter, studentStatus, studentSummarySort.direction, studentSummarySort.key, user?._id]);
 
     const fetchStudentIncidents = useCallback(async (student, options = { reset: false }) => {
         if (!user?._id || !student) return;
@@ -529,7 +525,6 @@ const StudentAnalytics = () => {
         }));
 
     const toggleStudentSummarySort = (key) => {
-        setStudentSummaryPage(1);
         setStudentSummarySort((current) => ({
             key,
             direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc',
@@ -610,6 +605,7 @@ const StudentAnalytics = () => {
     }
 
     const studentSummaryColumns = [
+        { key: 'serialNumber', label: 'S.No', render: (row, index) => index + 1 },
         { key: 'admissionNo', label: renderSortLabel('admissionNo', 'Admission Number'), render: (row) => row.admissionNo || 'N/A' },
         {
             key: 'name',
@@ -636,6 +632,7 @@ const StudentAnalytics = () => {
     ];
 
     const incidentColumns = [
+        { key: 'serialNumber', label: 'S.No', render: (row, index) => index + 1 },
         { key: 'category', label: 'Type', render: (row) => formatDisplayValue(row.category) || 'N/A' },
         { key: 'priority', label: 'Priority', render: (row) => resolveIncidentPriorityForExport(row) },
         { key: 'location', label: 'Location', render: (row) => formatDisplayValue(row.location) || 'N/A' },
@@ -953,29 +950,6 @@ const StudentAnalytics = () => {
                                             rows={paginatedStudents}
                                             emptyMessage="No students match the current filters."
                                         />
-                                        <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 text-sm text-slate-600 dark:border-slate-800 dark:text-slate-300 sm:flex-row sm:items-center sm:justify-between">
-                                            <span>
-                                                Page {studentSummaryPage} of {studentSummaryTotalPages}
-                                            </span>
-                                            <div className="flex gap-2">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setStudentSummaryPage((page) => Math.max(1, page - 1))}
-                                                    disabled={studentSummaryPage <= 1}
-                                                    className="rounded-xl border border-slate-200 px-3 py-2 font-semibold transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:hover:bg-slate-800"
-                                                >
-                                                    Previous
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setStudentSummaryPage((page) => Math.min(studentSummaryTotalPages, page + 1))}
-                                                    disabled={studentSummaryPage >= studentSummaryTotalPages}
-                                                    className="rounded-xl border border-slate-200 px-3 py-2 font-semibold transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:hover:bg-slate-800"
-                                                >
-                                                    Next
-                                                </button>
-                                            </div>
-                                        </div>
                                     </DashboardPanel>
                                 ) : null}
                             </>
