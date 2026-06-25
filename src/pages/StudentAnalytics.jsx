@@ -52,6 +52,7 @@ import {
     buildCreationTrendSeries,
     buildDistribution,
     buildAcademicYearOptions,
+    buildManagementReportWorksheet,
     buildEvidenceDistribution,
     buildIncidentFilterParams,
     buildIssuedLetterFilterParams,
@@ -477,23 +478,30 @@ const StudentAnalytics = () => {
             };
         });
 
-        const ws = XLSX.utils.json_to_sheet(excelData);
+        const exportColumns = ['Student Name', 'Admission Number', 'Category', 'Description', 'Priority', 'Progress Log', 'Location', 'Evidence', 'Reporter', 'Handler', 'Status', 'Opened', 'Closed', 'Letter'];
         const wb = XLSX.utils.book_new();
-        const exportDate = new Date().toISOString().split('T')[0];
-        const reportInfoWs = XLSX.utils.json_to_sheet([
-            { Field: 'Report', Value: 'Student Incident Timeline' },
-            { Field: 'Generated On', Value: exportDate },
-            { Field: 'Student', Value: selectedStudent?.name || 'N/A' },
-            { Field: 'Admission Number', Value: selectedStudent?.admissionNo || 'N/A' },
-            { Field: 'Academic Year', Value: academicYear || currentAcademicYear || 'All years' },
-            { Field: 'Date Range', Value: dateRange.start || dateRange.end ? `${dateRange.start || 'Any'} to ${dateRange.end || 'Any'}` : 'All dates' },
-            { Field: 'Categories', Value: filters.incidentTypes.length ? filters.incidentTypes.join(', ') : 'All categories' },
-            { Field: 'Locations', Value: filters.locations.length ? filters.locations.join(', ') : 'All locations' },
-            { Field: 'Evidence Types', Value: filters.evidence.length ? filters.evidence.join(', ') : 'All evidence types' },
-            { Field: 'Statuses', Value: statusFilter.length ? statusFilter.join(', ') : 'All statuses' },
-            { Field: 'Record Count', Value: studentAnalytics.incidentDetails.length },
-        ]);
-        XLSX.utils.book_append_sheet(wb, reportInfoWs, 'Report Info');
+        const generatedAt = new Date();
+        const exportDate = generatedAt.toISOString().split('T')[0];
+        const ws = buildManagementReportWorksheet(XLSX, {
+            reportTitle: 'Student Analytics Report',
+            generatedBy: user?.name || user?.email || 'Unknown',
+            generatedOn: generatedAt,
+            academicYear: academicYear || currentAcademicYear || 'All years',
+            contextRows: [
+                ['Student:', selectedStudent?.name || 'N/A'],
+                ['Admission Number:', selectedStudent?.admissionNo || 'N/A'],
+            ],
+            appliedFilters: [
+                { label: 'Date Range', value: dateRange.start || dateRange.end ? `${dateRange.start || 'Any'} to ${dateRange.end || 'Any'}` : '' },
+                { label: 'Category', value: filters.incidentTypes },
+                { label: 'Location', value: filters.locations },
+                { label: 'Evidence Type', value: filters.evidence },
+                { label: 'Status', value: statusFilter },
+            ],
+            totalRecords: studentAnalytics.incidentDetails.length,
+            columns: exportColumns,
+            rows: excelData,
+        });
         XLSX.utils.book_append_sheet(wb, ws, 'Incident Timeline');
         await withFeedback(
             addToast,

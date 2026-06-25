@@ -57,6 +57,7 @@ import {
     STATUS_OPTIONS,
     buildCreationTrendSeries,
     buildAcademicYearOptions,
+    buildManagementReportWorksheet,
     buildStatusTrendSeries,
     buildTrendSeriesFromBuckets,
     formatProgressLogForExport,
@@ -499,26 +500,29 @@ const ProfessionalAnalytics = () => {
                 };
             });
 
-            const ws = XLSX.utils.json_to_sheet(excelData, {
-                header: ['Admission Number', 'Student Name', 'Class', 'Section', 'Category', 'Description', 'Priority', 'Progress Log', 'Location', 'Evidence', 'Reporter', 'Handler', 'Status', 'Opened', 'Closed', 'Letter'],
-            });
+            const exportColumns = ['Admission Number', 'Student Name', 'Class', 'Section', 'Category', 'Description', 'Priority', 'Progress Log', 'Location', 'Evidence', 'Reporter', 'Handler', 'Status', 'Opened', 'Closed', 'Letter'];
             const wb = XLSX.utils.book_new();
-            const exportDate = new Date().toISOString().split('T')[0];
-            const reportInfoWs = XLSX.utils.json_to_sheet([
-                { Field: 'Report', Value: 'Incident Details' },
-                { Field: 'Generated On', Value: exportDate },
-                { Field: 'Academic Year', Value: academicYear || currentAcademicYear || 'All years' },
-                { Field: 'Date Range', Value: dateRange.start || dateRange.end ? `${dateRange.start || 'Any'} to ${dateRange.end || 'Any'}` : 'All dates' },
-                { Field: 'Classes', Value: filters.classes.length ? filters.classes.join(', ') : 'All classes' },
-                { Field: 'Sections', Value: filters.sections.length ? filters.sections.join(', ') : 'All sections' },
-                { Field: 'Categories', Value: filters.incidentTypes.length ? filters.incidentTypes.join(', ') : 'All categories' },
-                { Field: 'Locations', Value: filters.locations.length ? filters.locations.join(', ') : 'All locations' },
-                { Field: 'Evidence Types', Value: filters.evidence.length ? filters.evidence.join(', ') : 'All evidence types' },
-                { Field: 'Statuses', Value: filters.statuses.length ? filters.statuses.join(', ') : 'All statuses' },
-                { Field: 'Staff', Value: selectedStaff.length ? selectedStaff.join(', ') : 'All staff' },
-                { Field: 'Record Count', Value: exportIncidentDetails.length },
-            ]);
-            XLSX.utils.book_append_sheet(wb, reportInfoWs, 'Report Info');
+            const generatedAt = new Date();
+            const exportDate = generatedAt.toISOString().split('T')[0];
+            const ws = buildManagementReportWorksheet(XLSX, {
+                reportTitle: 'School Analytics Report',
+                generatedBy: user?.name || user?.email || 'Unknown',
+                generatedOn: generatedAt,
+                academicYear: academicYear || currentAcademicYear || 'All years',
+                appliedFilters: [
+                    { label: 'Date Range', value: dateRange.start || dateRange.end ? `${dateRange.start || 'Any'} to ${dateRange.end || 'Any'}` : '' },
+                    { label: 'Class', value: filters.classes },
+                    { label: 'Section', value: filters.sections },
+                    { label: 'Category', value: filters.incidentTypes },
+                    { label: 'Location', value: filters.locations },
+                    { label: 'Evidence Type', value: filters.evidence },
+                    { label: 'Status', value: filters.statuses },
+                    { label: 'Assigned To', value: selectedStaff },
+                ],
+                totalRecords: exportIncidentDetails.length,
+                columns: exportColumns,
+                rows: excelData,
+            });
             XLSX.utils.book_append_sheet(wb, ws, 'Incident Details');
             const academicYearSheetData = analytics.academicYearData.map((entry) => ({
                 'Academic Year': entry.academicYear,
@@ -551,7 +555,7 @@ const ProfessionalAnalytics = () => {
         } finally {
             setIsExporting(false);
         }
-    }, [academicYear, addToast, analytics.academicYearData, currentAcademicYear, dateRange.end, dateRange.start, fetchAnalyticsDetails, filters.classes, filters.evidence, filters.incidentTypes, filters.locations, filters.sections, filters.statuses, selectedStaff]);
+    }, [academicYear, addToast, analytics.academicYearData, currentAcademicYear, dateRange.end, dateRange.start, fetchAnalyticsDetails, filters.classes, filters.evidence, filters.incidentTypes, filters.locations, filters.sections, filters.statuses, selectedStaff, user?.email, user?.name]);
 
     if (loading && !serverAnalytics) {
         return (
