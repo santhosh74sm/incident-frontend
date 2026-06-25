@@ -757,16 +757,31 @@ const IncidentDetail = () => {
         if (!confirmed) return;
         try {
             setActionLoading(true);
-            await apiClient.put(`/api/incidents/${id}/${path}`, payload);
+            const { data } = await apiClient.put(`/api/incidents/${id}/${path}`, payload);
             setAdminFinalNote('');
             setNote('');
             await fetchIncident();
+            if (path === 'assign') {
+                addToast(data?.message || 'Incident assigned.', data?.alreadyAssigned ? 'info' : 'success');
+            }
         } catch (err) {
             addToast(err.response?.data?.message || 'Action failed. Please try again.', 'error');
         } finally {
             setActionLoading(false);
         }
     }, [addToast, confirm, fetchIncident, id]);
+
+    const handleAssignToMyself = useCallback(() => {
+        if (!userId) {
+            addToast('Could not detect the current user. Please sign in again.', 'error');
+            return;
+        }
+        if (getRecordId(incident?.assignedHandler) === userId) {
+            addToast('Already assigned to you.', 'info');
+            return;
+        }
+        handleAction('assign', { handlerId: userId });
+    }, [addToast, handleAction, incident?.assignedHandler, userId]);
 
     const handleGeneratedLetterDownload = useCallback(async () => {
         const letterId = getRecordId(generatedLetter) || getRecordId(incident?.letterGenerated);
@@ -1340,8 +1355,8 @@ const IncidentDetail = () => {
                                                 {actionLoading ? <Loader2 size={16} className="mr-2 inline animate-spin" /> : null}
                                                 Assign Selected Investigator
                                             </button>
-                                            <button type="button" onClick={() => handleAction('assign', { handlerId: userId })}
-                                                disabled={actionLoading}
+                                            <button type="button" onClick={handleAssignToMyself}
+                                                disabled={!userId || actionLoading}
                                                 className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60">
                                                 Assign to Myself
                                             </button>
