@@ -197,7 +197,7 @@ const UserManagement = () => {
     const [showAddUserModal, setShowAddUserModal] = useState(false);
     const [showAddStudentModal, setShowAddStudentModal] = useState(false);
     const [detailModal, setDetailModal] = useState({ open: false, type: 'staff', record: null });
-    const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null, type: 'staff', label: '', record: null, preview: null, loadingPreview: false });
+    const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null, type: 'staff', label: '', record: null, preview: null, loadingPreview: false, deleting: false });
 
     const [newUser, setNewUser] = useState({ name: '', email: '', role: 'Teacher', password: '' });
     const [showPassword, setShowPassword] = useState(false);
@@ -571,6 +571,7 @@ const UserManagement = () => {
             record,
             preview: null,
             loadingPreview: type === 'student',
+            deleting: false,
         });
         if (type === 'student') {
             apiClient.get(`/api/students/${record._id}/delete-preview`, config)
@@ -593,6 +594,8 @@ const UserManagement = () => {
     }, [addToast, config]);
 
     const confirmDelete = useCallback(async () => {
+        if (deleteDialog.deleting) return;
+        setDeleteDialog((current) => ({ ...current, deleting: true }));
         try {
             const endpoint =
                 deleteDialog.type === 'staff'
@@ -601,16 +604,24 @@ const UserManagement = () => {
 
             const { data } = await apiClient.delete(endpoint, config);
             addToast(
-                data?.message || `${deleteDialog.type === 'staff' ? 'User' : 'Student'} deleted successfully.`,
+                deleteDialog.type === 'staff'
+                    ? data?.message || 'User deleted successfully.'
+                    : 'Student deleted successfully.',
                 'success'
             );
-            setDeleteDialog({ open: false, id: null, type: 'staff', label: '', record: null, preview: null, loadingPreview: false });
+            setDeleteDialog({ open: false, id: null, type: 'staff', label: '', record: null, preview: null, loadingPreview: false, deleting: false });
             setDetailModal({ open: false, type: 'staff', record: null });
             fetchData(false);
         } catch (requestError) {
-            addToast(requestError.response?.data?.message || 'Unable to delete this record.', 'error');
+            addToast(
+                deleteDialog.type === 'staff'
+                    ? requestError.response?.data?.message || 'Unable to delete this record.'
+                    : 'Student deletion failed. No changes were made.',
+                'error'
+            );
+            setDeleteDialog((current) => ({ ...current, deleting: false }));
         }
-    }, [addToast, config, deleteDialog.id, deleteDialog.type, fetchData]);
+    }, [addToast, config, deleteDialog.deleting, deleteDialog.id, deleteDialog.type, fetchData]);
 
     const openDetailModal = useCallback((record, type) => {
         setDetailModal({ open: true, type, record });
@@ -1753,7 +1764,8 @@ const UserManagement = () => {
                             <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-center">
                                 <button
                                     type="button"
-                                    onClick={() => setDeleteDialog({ open: false, id: null, type: 'staff', label: '', record: null, preview: null, loadingPreview: false })}
+                                    onClick={() => setDeleteDialog({ open: false, id: null, type: 'staff', label: '', record: null, preview: null, loadingPreview: false, deleting: false })}
+                                    disabled={deleteDialog.deleting}
                                     className="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition-all duration-300 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                                 >
                                     Cancel
@@ -1761,11 +1773,15 @@ const UserManagement = () => {
                                 <button
                                     type="button"
                                     onClick={confirmDelete}
-                                    disabled={deleteDialog.type === 'student' && deleteDialog.loadingPreview}
+                                    disabled={deleteDialog.deleting || (deleteDialog.type === 'student' && deleteDialog.loadingPreview)}
                                     className="inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-5 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
-                                    <Trash2 size={16} />
-                                    {deleteDialog.type === 'staff' ? 'Delete User' : 'Delete Student'}
+                                    {deleteDialog.deleting ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                                    {deleteDialog.deleting
+                                        ? deleteDialog.type === 'student'
+                                            ? 'Deleting student... Please wait.'
+                                            : 'Deleting...'
+                                        : deleteDialog.type === 'staff' ? 'Delete User' : 'Delete Student'}
                                 </button>
                             </div>
                         </div>
