@@ -30,6 +30,9 @@ import {
 } from '../utils/uploadHelpers';
 
 const REQUIRED_COLUMNS = ['admissionNumber', 'category', 'day', 'month', 'year', 'hour', 'minute'];
+const JOB_POLL_INTERVAL_MS = 1500;
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const HEADER_ALIASES = {
     admissionnumber: 'admissionNumber',
@@ -225,6 +228,7 @@ const BulkUpload = () => {
     const [message, setMessage] = useState({ type: '', text: '' });
     const [dragActive, setDragActive] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
+    const [uploadStage, setUploadStage] = useState('');
     const [results, setResults] = useState(null);
     const [showResults, setShowResults] = useState(false);
     const [academicYears, setAcademicYears] = useState([]);
@@ -274,6 +278,7 @@ const BulkUpload = () => {
         setFile(null);
         setPreview(null);
         setUploadProgress(0);
+        setUploadStage('');
         setMessage({ type: '', text: '' });
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
@@ -357,6 +362,27 @@ const BulkUpload = () => {
         }
     };
 
+    const pollBulkUploadJob = async (jobId) => {
+        while (mountedRef.current) {
+            await sleep(JOB_POLL_INTERVAL_MS);
+            const response = await apiClient.get(`/api/incidents/upload/${jobId}`);
+            const job = response.data;
+            const progress = job.progress || {};
+
+            if (progress.stage) setUploadStage(progress.stage);
+            if (Number.isFinite(progress.percent)) setUploadProgress(progress.percent);
+
+            if (job.status === 'completed') return job.result || {};
+            if (job.status === 'failed') {
+                const error = new Error(job.error?.message || 'Upload failed. Please confirm the workbook format and try again.');
+                error.response = { data: job.error || {} };
+                throw error;
+            }
+        }
+
+        throw new Error('Upload status polling stopped before the job completed.');
+    };
+
     const handleUpload = async (event) => {
         event.preventDefault();
 
@@ -381,6 +407,7 @@ const BulkUpload = () => {
 
         setUploading(true);
         setUploadProgress(0);
+        setUploadStage('Uploading spreadsheet');
         setMessage({ type: 'info', text: 'Uploading your spreadsheet…' });
 
         try {
@@ -394,8 +421,16 @@ const BulkUpload = () => {
                 },
             });
 
-            const validationResults = response.data.validationResults || null;
-            const successMessage = response.data.message || 'Incident upload completed successfully.';
+            let uploadResult = response.data;
+            if (response.status === 202 && response.data?.jobId) {
+                setUploadStage(response.data.progress?.stage || 'Processing spreadsheet');
+                setUploadProgress(response.data.progress?.percent || 1);
+                setMessage({ type: 'info', text: response.data.message || 'Processing your spreadsheet...' });
+                uploadResult = await pollBulkUploadJob(response.data.jobId);
+            }
+
+            const validationResults = uploadResult.validationResults || null;
+            const successMessage = uploadResult.message || 'Incident upload completed successfully.';
 
             if (validationResults) {
                 setResults(validationResults);
@@ -416,6 +451,7 @@ const BulkUpload = () => {
             }
 
             setUploadProgress(100);
+            setUploadStage('Completed');
             resetSelection();
         } catch (error) {
             const errorData = error.response?.data;
@@ -428,6 +464,7 @@ const BulkUpload = () => {
                 setShowResults(true);
             }
 
+            setUploadStage('Failed');
             setMessage({ type: 'error', text: errorText });
         } finally {
             setUploading(false);
@@ -603,7 +640,7 @@ const BulkUpload = () => {
                                             >
                                                 <div className="mb-2.5 flex items-center justify-between text-sm font-semibold text-blue-900 dark:text-blue-100">
                                                     <span>
-                                                        {uploadProgress < 100
+                                                        {uploadStage ? uploadStage : uploadProgress < 100
                                                             ? 'Uploading your spreadsheet…'
                                                             : 'Saving incident records…'}
                                                     </span>

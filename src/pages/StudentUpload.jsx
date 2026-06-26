@@ -29,6 +29,9 @@ import {
 } from '../utils/uploadHelpers';
 
 const REQUIRED_COLUMNS = ['admissionNo', 'name', 'class', 'section'];
+const JOB_POLL_INTERVAL_MS = 1500;
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const HEADER_ALIASES = {
     admissionno: 'admissionNo',
@@ -163,6 +166,7 @@ const StudentUpload = () => {
     const [message,        setMessage]        = useState({ type: '', text: '' });
     const [dragActive,     setDragActive]     = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
+    const [uploadStage,    setUploadStage]    = useState('');
     const [lastUpload,     setLastUpload]     = useState(null);
     const [currentAcademicYear, setCurrentAcademicYear] = useState('');
     const [academicYears, setAcademicYears] = useState([]);
@@ -225,6 +229,7 @@ const StudentUpload = () => {
         setFile(null);
         setPreview(null);
         setUploadProgress(0);
+        setUploadStage('');
         setMessage({ type: '', text: '' });
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
@@ -297,6 +302,27 @@ const StudentUpload = () => {
         if (dropped) await handleSelectedFile(dropped);
     };
 
+    const pollStudentUploadJob = async (jobId) => {
+        while (mountedRef.current) {
+            await sleep(JOB_POLL_INTERVAL_MS);
+            const response = await apiClient.get(`/api/students/upload/${jobId}`);
+            const job = response.data;
+            const progress = job.progress || {};
+
+            if (progress.stage) setUploadStage(progress.stage);
+            if (Number.isFinite(progress.percent)) setUploadProgress(progress.percent);
+
+            if (job.status === 'completed') return job.result || {};
+            if (job.status === 'failed') {
+                const error = new Error(job.error?.message || 'Upload failed. Please check the spreadsheet format and try again.');
+                error.response = { data: job.error || {} };
+                throw error;
+            }
+        }
+
+        throw new Error('Upload status polling stopped before the job completed.');
+    };
+
     const handleUpload = async (e) => {
         e.preventDefault();
 
@@ -320,6 +346,7 @@ const StudentUpload = () => {
 
         setUploading(true);
         setUploadProgress(0);
+        setUploadStage('Uploading spreadsheet');
         setMessage({ type: 'info', text: 'Uploading your spreadsheet…' });
 
         try {
@@ -330,16 +357,26 @@ const StudentUpload = () => {
                 },
             });
 
-            const successText = response.data.message || 'Student upload processed successfully.';
+            let uploadResult = response.data;
+            if (response.status === 202 && response.data?.jobId) {
+                setUploadStage(response.data.progress?.stage || 'Processing spreadsheet');
+                setUploadProgress(response.data.progress?.percent || 1);
+                setMessage({ type: 'info', text: response.data.message || 'Processing your spreadsheet...' });
+                uploadResult = await pollStudentUploadJob(response.data.jobId);
+            }
+
+            const successText = uploadResult.message || 'Student upload processed successfully.';
             setMessage({ type: 'success', text: successText });
             setLastUpload({ fileName: file.name, totalRows: preview?.totalRows || 0 });
             setUploadProgress(100);
+            setUploadStage('Completed');
             addToast(successText, 'success');
             resetSelection();
         } catch (error) {
             const errorText =
                 error.response?.data?.message ||
                 'Upload failed. Please check the spreadsheet format and try again.';
+            setUploadStage('Failed');
             setMessage({ type: 'error', text: errorText });
         } finally {
             setUploading(false);
@@ -499,7 +536,7 @@ const StudentUpload = () => {
                                     >
                                         <div className="mb-2.5 flex items-center justify-between text-sm font-semibold text-blue-900 dark:text-blue-100">
                                             <span>
-                                                {uploadProgress < 100
+                                                {uploadStage ? uploadStage : uploadProgress < 100
                                                     ? 'Uploading your spreadsheet…'
                                                     : 'Saving student records…'}
                                             </span>
