@@ -10,7 +10,6 @@ import {
     CalendarDays,
     Camera,
     Check,
-    CheckSquare,
     Clock3,
     FileImage,
     FileText,
@@ -23,7 +22,6 @@ import {
     Send,
     ShieldCheck,
     Sparkles,
-    Square,
     Tag,
     Trash2,
     Users,
@@ -266,8 +264,7 @@ const CreateIncident = () => {
     const [staffList, setStaffList] = useState([]);
     const [students, setStudents] = useState([]);
     const [studentSearch, setStudentSearch] = useState('');
-    const [selectedStudents, setSelectedStudents] = useState([]);
-    const [selectedStudentLookup, setSelectedStudentLookup] = useState({});
+    const [selectedStudent, setSelectedStudent] = useState(null);
     const [categories, setCategories] = useState([]);
     const [locations, setLocations] = useState([]);
     const [evidenceTypes, setEvidenceTypes] = useState([]);
@@ -312,13 +309,6 @@ const CreateIncident = () => {
         [categories, formData.category, selectedCategoryId]
     );
 
-    const selectedStudentIdsSet = useMemo(() => new Set(selectedStudents), [selectedStudents]);
-
-    const selectedStudentObjects = useMemo(
-        () => selectedStudents.map((studentId) => selectedStudentLookup[studentId]).filter(Boolean),
-        [selectedStudentLookup, selectedStudents]
-    );
-
     const filteredStudents = useMemo(() => {
         const search = studentSearch.trim().toLowerCase();
         if (!search) return students;
@@ -329,11 +319,6 @@ const CreateIncident = () => {
             return nameMatch || admissionMatch;
         });
     }, [studentSearch, students]);
-
-    const allFilteredSelected = useMemo(
-        () => filteredStudents.length > 0 && filteredStudents.every((student) => selectedStudentIdsSet.has(student._id)),
-        [filteredStudents, selectedStudentIdsSet]
-    );
 
     const checkLetterTemplate = useCallback(
         async (categoryName) => {
@@ -432,8 +417,7 @@ const CreateIncident = () => {
 
         if (previousScope.className === nextScope.className && previousScope.section === nextScope.section) return;
 
-        setSelectedStudents([]);
-        setSelectedStudentLookup({});
+        setSelectedStudent(null);
         setStudentSearch('');
         setBehavioralInsight(null);
         shownInsightsRef.current.clear();
@@ -864,80 +848,22 @@ const CreateIncident = () => {
         }
     };
 
-    const toggleStudentSelection = (student) => {
-        const isSelected = selectedStudentIdsSet.has(student._id);
-
-        setSelectedStudents((current) => {
-            if (isSelected) {
-                return current.filter((id) => id !== student._id);
-            }
-
-            if (current.includes(student._id)) return current;
-            return [...current, student._id];
-        });
-
-        setSelectedStudentLookup((current) => {
-            if (isSelected) {
-                const next = { ...current };
-                delete next[student._id];
-                return next;
-            }
-
-            return { ...current, [student._id]: student };
-        });
-
+    const selectStudent = (student) => {
+        setSelectedStudent(student);
         removeFieldError('student');
-
-        if (!isSelected) {
-            fetchBehavioralInsight(student);
-        }
-    };
-
-    const toggleAllFilteredStudents = () => {
-        const filteredIds = filteredStudents.map((student) => student._id);
-
-        setSelectedStudents((current) => {
-            const filteredIdSet = new Set(filteredIds);
-
-            if (allFilteredSelected) {
-                return current.filter((id) => !filteredIdSet.has(id));
-            }
-
-            return Array.from(new Set([...current, ...filteredIds]));
-        });
-
-        setSelectedStudentLookup((current) => {
-            const next = { ...current };
-
-            if (allFilteredSelected) {
-                filteredIds.forEach((id) => {
-                    delete next[id];
-                });
-                return next;
-            }
-
-            filteredStudents.forEach((student) => {
-                next[student._id] = student;
-            });
-            return next;
-        });
-
-        removeFieldError('student');
+        fetchBehavioralInsight(student);
     };
 
     const validate = () => {
         const nextErrors = {};
 
-        if (!selectedStudents.length) {
-            nextErrors.student = 'Select at least one student before submitting the incident.';
+        if (!selectedStudent?._id) {
+            nextErrors.student = 'Please select a student.';
         } else if (
-            selectedStudentObjects.length !== selectedStudents.length
-            || selectedStudentObjects.some((student) => (
-                String(student.className || '') !== String(formData.class || '')
-                || String(student.section || '') !== String(formData.section || '')
-            ))
+            String(selectedStudent.className || '') !== String(formData.class || '')
+            || String(selectedStudent.section || '') !== String(formData.section || '')
         ) {
-            nextErrors.student = 'The selected student list is stale. Re-select students from the current class and section.';
+            nextErrors.student = 'The selected student is stale. Re-select a student from the current class and section.';
         }
 
         if (!formData.category) {
@@ -985,8 +911,8 @@ const CreateIncident = () => {
             data.append(key, formData[key] ?? '');
         });
 
-        data.append('studentIds', JSON.stringify(selectedStudents));
-        data.append('studentsInvolved', JSON.stringify(selectedStudentObjects.map((student) => student.name)));
+        data.append('studentId', selectedStudent?._id || '');
+        data.append('admissionNo', selectedStudent?.admissionNo || '');
         data.append('title', formData.category);
         data.append('shouldGenerateLetter', shouldGenerateLetter ? 'true' : 'false');
 
@@ -1026,27 +952,6 @@ const CreateIncident = () => {
 
         setSubmitSuccess(true);
 
-        if (responseData.success && responseData.createdCount > 1) {
-            if (responseData.letterGenerated) {
-                setLetterInfo({
-                    letterNumber: responseData.letterGenerated.letterNumber,
-                    templateName: responseData.letterGenerated.templateName,
-                    count: responseData.lettersGenerated,
-                });
-                addToast(responseData.message || 'Incident reports and letters created successfully.', 'success');
-                setTimeout(() => navigate('/issued-letters'), 3000);
-            } else {
-                if (shouldGenerateLetter) {
-                    addToast('Incident saved, but the letter could not be created. Please try again or contact ICT support.', 'error');
-                } else {
-                    addToast(responseData.message || `${responseData.createdCount} incident reports created successfully.`, 'success');
-                }
-                setTimeout(() => navigate('/incidents'), 1600);
-            }
-
-            return;
-        }
-
         if (responseData.letterGenerated) {
             setLetterInfo(responseData.letterGenerated);
             addToast(responseData.letterMessage || 'Incident and official letter created successfully.', 'success');
@@ -1065,9 +970,7 @@ const CreateIncident = () => {
         const confirmed = await confirm({
             tone: 'info',
             title: 'Submit Incident Report',
-            description: `Create incident record for ${selectedStudents.length} student${
-                selectedStudents.length === 1 ? '' : 's'
-            }? You can add progress notes later from the incident detail page.`,
+            description: `Create an incident record for ${selectedStudent?.name || 'the selected student'}? You can add progress notes later from the incident detail page.`,
             confirmLabel: 'Create Incident',
         });
         if (!confirmed) {
@@ -1201,7 +1104,6 @@ const CreateIncident = () => {
     };
 
     const categoryHasTemplate = hasAvailableLetterTemplate(categoryTemplateStatus.templates);
-    const selectedStudentsPreview = selectedStudentObjects.slice(0, 6);
 
     return (
         <div className="flex bg-slate-100">
@@ -1396,18 +1298,11 @@ const CreateIncident = () => {
 
                             <div className="space-y-5 p-6">
                                 <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
-                                    {selectedStudents.length === 1 ? (
-                                        <p>
-                                            Create the official letter for{' '}
-                                            <strong>{selectedStudentObjects[0]?.name || 'the selected student'}</strong> in the{' '}
-                                            <strong>{letterPermission.categoryName}</strong> category?
-                                        </p>
-                                    ) : (
-                                        <p>
-                                            Create official letters for <strong>{selectedStudents.length}</strong> selected students in the{' '}
-                                            <strong>{letterPermission.categoryName}</strong> category?
-                                        </p>
-                                    )}
+                                    <p>
+                                        Create the official letter for{' '}
+                                        <strong>{selectedStudent?.name || 'the selected student'}</strong> in the{' '}
+                                        <strong>{letterPermission.categoryName}</strong> category?
+                                    </p>
                                 </div>
 
                                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -1608,8 +1503,8 @@ const CreateIncident = () => {
 
                                     <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3 lg:w-auto">
                                         <div className="rounded-xl border border-white/10 bg-white/8 px-3 py-2.5 text-center backdrop-blur-sm">
-                                            <p className="text-[10px] font-semibold uppercase tracking-widest text-indigo-300">Students</p>
-                                            <p className="mt-1 text-xl font-black text-white tabular-nums">{selectedStudents.length}</p>
+                                            <p className="text-[10px] font-semibold uppercase tracking-widest text-indigo-300">Student</p>
+                                            <p className="mt-1 text-xs font-bold text-white">{selectedStudent ? 'Selected' : 'Required'}</p>
                                         </div>
                                         <div className="rounded-xl border border-white/10 bg-white/8 px-3 py-2.5 text-center backdrop-blur-sm">
                                             <p className="text-[10px] font-semibold uppercase tracking-widest text-indigo-300">Letter</p>
@@ -1642,25 +1537,16 @@ const CreateIncident = () => {
 
                             {submitSuccess && (
                                 <StatusBanner type="success">
-                                    {selectedStudents.length > 1
-                                        ? `${selectedStudents.length} incident reports created successfully. Redirecting now.`
-                                        : 'Incident reported successfully. Redirecting now.'}
+                                    Incident reported successfully. Redirecting now.
                                 </StatusBanner>
                             )}
 
                             {letterInfo && (
                                 <StatusBanner type="info">
-                                    {letterInfo.count > 1 ? (
-                                        <p>
-                                            Generated <strong>{letterInfo.count}</strong> official letters using the layout{' '}
-                                            <strong>{letterInfo.templateName}</strong>.
-                                        </p>
-                                    ) : (
-                                        <p>
-                                            Letter <strong>{letterInfo.letterNumber}</strong> was created with the layout{' '}
-                                            <strong>{letterInfo.templateName}</strong>.
-                                        </p>
-                                    )}
+                                    <p>
+                                        Letter <strong>{letterInfo.letterNumber}</strong> was created with the layout{' '}
+                                        <strong>{letterInfo.templateName}</strong>.
+                                    </p>
                                 </StatusBanner>
                             )}
 
@@ -1668,7 +1554,7 @@ const CreateIncident = () => {
                                 <SectionCard
                                     icon={Users}
                                     title="Student Selection"
-                            description="Choose a class and section, then search for and select students."
+                                    description="Choose a class and section, then search for and select one student."
                                     step={1}
                                 >
                                     <div className="space-y-5">
@@ -1716,34 +1602,13 @@ const CreateIncident = () => {
                                             </div>
                                         </div>
 
-                                        {selectedStudentObjects.length > 0 && (
+                                        {selectedStudent && (
                                             <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
-                                                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                                                    <div>
-                                                        <p className="text-sm font-semibold text-indigo-900">
-                                                            {selectedStudents.length} student{selectedStudents.length === 1 ? '' : 's'} selected
-                                                        </p>
-                                                        <p className="mt-1 text-sm text-indigo-800">
-                                                            Review the selected students below before submitting.
-                                                        </p>
-                                                    </div>
-                                                </div>
-
-                                                <div className="mt-3 flex flex-wrap gap-2">
-                                                    {selectedStudentsPreview.map((student) => (
-                                                        <span
-                                                            key={student._id}
-                                                            className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-indigo-200"
-                                                        >
-                                                            {student.name}
-                                                            <span className="text-slate-400">#{student.admissionNo}</span>
-                                                        </span>
-                                                    ))}
-                                                    {selectedStudentObjects.length > selectedStudentsPreview.length && (
-                                                        <span className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-indigo-200">
-                                                            +{selectedStudentObjects.length - selectedStudentsPreview.length} more
-                                                        </span>
-                                                    )}
+                                                <div>
+                                                    <p className="text-sm font-semibold text-indigo-900">Selected student</p>
+                                                    <p className="mt-1 text-sm text-indigo-800">
+                                                        {selectedStudent.name} #{selectedStudent.admissionNo}
+                                                    </p>
                                                 </div>
                                             </div>
                                         )}
@@ -1782,25 +1647,7 @@ const CreateIncident = () => {
                                                         )}
                                                     </div>
 
-                                                    {filteredStudents.length > 0 && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={toggleAllFilteredStudents}
-                                                            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                                                        >
-                                                            {allFilteredSelected ? (
-                                                                <>
-                                                                    <Square className="h-4 w-4" />
-                                                                    Deselect Filtered Students
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    <CheckSquare className="h-4 w-4" />
-                                                                    Select Filtered Students
-                                                                </>
-                                                            )}
-                                                        </button>
-                                                    )}
+                                                    <p className="text-xs font-semibold text-slate-500">Only one student can be selected.</p>
                                                 </div>
 
                                                 <div className="h-[340px] overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-slate-50 p-2">
@@ -1816,13 +1663,13 @@ const CreateIncident = () => {
                                                     ) : (
                                                         <div className="space-y-2">
                                                             {filteredStudents.map((student) => {
-                                                                const isSelected = selectedStudentIdsSet.has(student._id);
+                                                                const isSelected = selectedStudent?._id === student._id;
 
                                                                 return (
                                                                     <button
                                                                         key={student._id}
                                                                         type="button"
-                                                                        onClick={() => toggleStudentSelection(student)}
+                                                                        onClick={() => selectStudent(student)}
                                                                         className={`w-full rounded-xl border px-4 py-3 text-left transition ${
                                                                             isSelected
                                                                                 ? 'border-indigo-300 bg-indigo-600 text-white'
@@ -1832,11 +1679,7 @@ const CreateIncident = () => {
                                                                         <div className="flex items-center justify-between gap-3">
                                                                             <div className="min-w-0">
                                                                                 <div className="flex items-center gap-2">
-                                                                                    {isSelected ? (
-                                                                                        <CheckSquare className="h-4 w-4 shrink-0" />
-                                                                                    ) : (
-                                                                                        <Square className="h-4 w-4 shrink-0 text-slate-400" />
-                                                                                    )}
+                                                                                    {isSelected && <Check className="h-4 w-4 shrink-0" />}
                                                                                     <span className="truncate text-sm font-semibold">{student.name}</span>
                                                                                 </div>
                                                                                 <p
@@ -2410,12 +2253,12 @@ const CreateIncident = () => {
                                 <div className="flex flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
                                     <div className="flex min-w-0 flex-wrap items-center gap-3 text-sm">
                                         <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${
-                                            selectedStudents.length > 0
+                                            selectedStudent
                                                 ? 'border-indigo-200 bg-indigo-50 text-indigo-700'
                                                 : 'border-slate-200 bg-slate-50 text-slate-500'
                                         }`}>
                                             <Users className="h-3.5 w-3.5" />
-                                            {selectedStudents.length} student{selectedStudents.length === 1 ? '' : 's'} selected
+                                            {selectedStudent ? selectedStudent.name : 'No student selected'}
                                         </span>
                                         {formData.category && (
                                             <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
@@ -2447,14 +2290,10 @@ const CreateIncident = () => {
                                                 ? `Uploading… ${uploadProgress}%`
                                                 : uploadProgress === 100
                                                     ? 'Processing…'
-                                                    : selectedStudents.length > 1
-                                                        ? `Creating ${selectedStudents.length} Incidents…`
-                                                        : 'Creating Incident…'
+                                                    : 'Creating Incident…'
                                             : submitSuccess
                                                 ? 'Incident created ✓'
-                                                : selectedStudents.length > 1
-                                                    ? `Submit ${selectedStudents.length} Reports`
-                                                    : 'Create Incident'}
+                                                : 'Create Incident'}
                                     </button>
                                 </div>
                             </section>
