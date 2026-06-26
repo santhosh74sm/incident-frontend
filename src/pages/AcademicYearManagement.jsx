@@ -34,23 +34,21 @@ const AcademicYearManagement = () => {
     }, [addToast]);
 
     const submitChange = async () => {
+        if (saving) return;
         setSaving(true);
         try {
             const { data } = await apiClient.put('/api/auth/academic-year', {});
             setCurrentAcademicYear(data.currentAcademicYear);
-            const promotion = data?.promotion || {};
-            addToast(
-                `Academic year updated successfully. Students promoted: ${promotion.promoted || 0}. Students passed out: ${promotion.passedOut || 0}.`,
-                'success'
-            );
+            addToast('Academic Year updated successfully. Student promotion completed.', 'success');
         } catch (error) {
-            addToast(error.response?.data?.message || 'Could not update the academic year.', 'error');
+            addToast('Academic Year change failed. No changes were saved.', 'error');
         } finally {
             setSaving(false);
         }
     };
 
     const confirmAcademicYearChange = async () => {
+        if (saving) return;
         const confirmed = await confirm({
             tone: 'warning',
             title: 'Change Academic Year',
@@ -101,11 +99,11 @@ const AcademicYearManagement = () => {
                             <button
                                 type="button"
                                 onClick={confirmAcademicYearChange}
-                                disabled={!nextAcademicYear || saving}
+                                disabled={!nextAcademicYear || saving || loading}
                                 className="btn-primary h-12 justify-center disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                                <CheckCircle size={16} />
-                                Change To Next Academic Year
+                                {saving ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
+                                {saving ? 'Processing Academic Year Change... Please wait.' : 'Change To Next Academic Year'}
                             </button>
                         </div>
                     )}
