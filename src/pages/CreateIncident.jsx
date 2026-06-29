@@ -970,8 +970,8 @@ const CreateIncident = () => {
         const confirmed = await confirm({
             tone: 'info',
             title: 'Submit Incident Report',
-            description: `Create an incident record for ${selectedStudent?.name || 'the selected student'}? You can add progress notes later from the incident detail page.`,
-            confirmLabel: 'Create Incident',
+            description: `Submit an incident record for ${selectedStudent?.name || 'the selected student'}? You can add progress notes later from the incident detail page.`,
+            confirmLabel: 'Submit Incident',
         });
         if (!confirmed) {
             return;
@@ -2293,7 +2293,7 @@ const CreateIncident = () => {
                                                     : 'Creating Incident…'
                                             : submitSuccess
                                                 ? 'Incident created ✓'
-                                                : 'Create Incident'}
+                                                : 'Save Incident'}
                                     </button>
                                 </div>
                             </section>
