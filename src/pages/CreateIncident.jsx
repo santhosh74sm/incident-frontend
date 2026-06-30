@@ -1501,22 +1501,6 @@ const CreateIncident = () => {
                                         </p>
                                     </div>
 
-                                    <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3 lg:w-auto">
-                                        <div className="rounded-xl border border-white/10 bg-white/8 px-3 py-2.5 text-center backdrop-blur-sm">
-                                            <p className="text-[10px] font-semibold uppercase tracking-widest text-indigo-300">Student</p>
-                                            <p className="mt-1 text-xs font-bold text-white">{selectedStudent ? 'Selected' : 'Required'}</p>
-                                        </div>
-                                        <div className="rounded-xl border border-white/10 bg-white/8 px-3 py-2.5 text-center backdrop-blur-sm">
-                                            <p className="text-[10px] font-semibold uppercase tracking-widest text-indigo-300">Letter</p>
-                                            <p className="mt-1 text-xs font-bold text-white">
-                                                {!formData.category ? '—' : categoryTemplateStatus.loading ? '…' : categoryHasTemplate ? 'Ready' : 'None'}
-                                            </p>
-                                        </div>
-                                        <div className="rounded-xl border border-white/10 bg-white/8 px-3 py-2.5 text-center backdrop-blur-sm">
-                                            <p className="text-[10px] font-semibold uppercase tracking-widest text-indigo-300">Timeline</p>
-                                            <p className="mt-1 text-xs font-bold text-white">{manualTiming ? 'Custom' : 'Auto'}</p>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
 
@@ -1975,7 +1959,7 @@ const CreateIncident = () => {
                                     {canUseManualTiming && (
                                     <SectionCard
                                         icon={ShieldCheck}
-                                        title={isAdministrationUser ? 'Administrative Actions' : 'Manual Time Setup'}
+                                        title={isAdministrationUser ? 'Handler Assignment' : 'Manual Time Setup'}
                                         description={isAdministrationUser ? 'Assign a handler or configure custom dates.' : 'Configure custom incident dates.'}
                                         step={3}
                                     >

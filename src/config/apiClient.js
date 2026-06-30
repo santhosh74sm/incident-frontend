@@ -108,6 +108,8 @@ const isAuthRestoreRequest = (config = {}) => getRequestPath(config) === AUTH_RE
 const isRefreshRequest = (config = {}) => getRequestPath(config) === REFRESH_PATH;
 const isCsrfRequest = (config = {}) => [CSRF_PATH, CSRF_FALLBACK_PATH].includes(getRequestPath(config));
 const isAccessTokenExpired = (error) => error.response?.data?.code === 'ACCESS_TOKEN_EXPIRED';
+const isAccessTokenMissing = (error) => error.response?.data?.code === 'ACCESS_TOKEN_MISSING';
+const isRenewableAccessFailure = (error) => isAccessTokenExpired(error) || isAccessTokenMissing(error);
 const isRefreshRaceGrace = (error) => error.response?.data?.code === 'REFRESH_RETRY_GRACE';
 const isCsrfInvalid = (error) => error.response?.status === 403 && error.response?.data?.code === 'CSRF_TOKEN_INVALID';
 const isConfirmedInvalidSession = (error) => error.response?.status === 401;
@@ -267,7 +269,7 @@ apiClient.interceptors.response.use(
 
         if (
             status === 401 &&
-            isAccessTokenExpired(error) &&
+            isRenewableAccessFailure(error) &&
             !config.__refreshRetried &&
             !isPublicAuthRequest(config) &&
             !isRefreshRequest(config)

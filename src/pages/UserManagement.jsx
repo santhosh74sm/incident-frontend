@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import apiClient from '../config/apiClient';
 import {
     AlertCircle,
@@ -182,6 +182,7 @@ const UserManagement = () => {
     const [activeTab, setActiveTab] = useState('staff');
     const [staffSearchQuery, setStaffSearchQuery] = useState('');
     const [studentSearchQuery, setStudentSearchQuery] = useState('');
+    const [debouncedStudentSearchQuery, setDebouncedStudentSearchQuery] = useState('');
     const [roleFilter, setRoleFilter] = useState([]);
     const [classFilter, setClassFilter] = useState([]);
     const [sectionFilter, setSectionFilter] = useState([]);
@@ -211,6 +212,12 @@ const UserManagement = () => {
     const [resettingPasswordId, setResettingPasswordId] = useState(null);
 
     const config = useMemo(() => ({ headers: {} }), []);
+    const studentRequestRef = useRef({ controller: null, id: 0 });
+    const fetchDataRequestIdRef = useRef(0);
+    const hasLoadedManagementDataRef = useRef(false);
+    const studentMetadataScopeRef = useRef('');
+    const studentFilterOptionsRef = useRef({ classes: [], sections: [] });
+    const studentDirectoryTotalRef = useRef(0);
     const currentRole = useMemo(() => normalizeRole(user?.role), [user?.role]);
     const createRoleOptions = useMemo(() => getCreateRoleOptions(currentRole), [currentRole]);
     const getCurrentUserId = useCallback(() => String(user?._id || user?.id || ''), [user?._id, user?.id]);
@@ -259,38 +266,86 @@ const UserManagement = () => {
 
     const currentStudentStatus = activeTab === 'passedOut' ? 'Passed Out' : 'Active';
 
-    const loadStudents = useCallback(async (selectedAcademicYear = academicYearFilter, status = currentStudentStatus) => {
+    useEffect(() => {
+        const nextSearch = studentSearchQuery.trim();
+        if (!nextSearch) {
+            setStudentPage(1);
+            setDebouncedStudentSearchQuery('');
+            return undefined;
+        }
+
+        const debounceTimer = window.setTimeout(() => {
+            setStudentPage(1);
+            setDebouncedStudentSearchQuery((current) => (current === nextSearch ? current : nextSearch));
+        }, 400);
+
+        return () => window.clearTimeout(debounceTimer);
+    }, [studentSearchQuery]);
+
+    useEffect(() => () => {
+        studentRequestRef.current.controller?.abort();
+    }, []);
+
+    useEffect(() => {
+        studentFilterOptionsRef.current = studentFilterOptions;
+    }, [studentFilterOptions]);
+
+    useEffect(() => {
+        studentDirectoryTotalRef.current = studentDirectoryTotal;
+    }, [studentDirectoryTotal]);
+
+    const loadStudents = useCallback(async (selectedAcademicYear = academicYearFilter, status = currentStudentStatus, options = {}) => {
+        studentRequestRef.current.controller?.abort();
+        const controller = new AbortController();
+        const requestId = studentRequestRef.current.id + 1;
+        studentRequestRef.current = { controller, id: requestId };
+        const includeMetadata = Boolean(options.includeMetadata);
+
         const shouldRequestYearProjection = Boolean(selectedAcademicYear);
         const params = {
             ...(shouldRequestYearProjection ? { academicYear: selectedAcademicYear } : {}),
             status,
             page: studentPage,
             limit: PAGE_SIZE,
-            ...(studentSearchQuery.trim() ? { search: studentSearchQuery.trim() } : {}),
+            ...(debouncedStudentSearchQuery ? { search: debouncedStudentSearchQuery } : {}),
             ...(classFilter.length ? { className: classFilter.join(',') } : {}),
             ...(sectionFilter.length ? { section: sectionFilter.join(',') } : {}),
         };
-        const requestConfig = { ...config, params };
-        const [{ data }, { data: filterData }, { data: directoryData }] = await Promise.all([
-            apiClient.get('/api/students', requestConfig),
-            apiClient.get('/api/students/filters', { ...config, params: {
-                ...(shouldRequestYearProjection ? { academicYear: selectedAcademicYear } : {}),
-                status,
-            } }),
-            apiClient.get('/api/students', { ...config, params: {
-                ...(shouldRequestYearProjection ? { academicYear: selectedAcademicYear } : {}),
-                status,
-                page: 1,
-                limit: 1,
-            } }),
-        ]);
+        const requestConfig = { ...config, params, signal: controller.signal };
+        const studentResponse = await apiClient.get('/api/students', requestConfig);
+        let filterData = null;
+        let directoryData = null;
+
+        if (includeMetadata) {
+            [{ data: filterData }, { data: directoryData }] = await Promise.all([
+                apiClient.get('/api/students/filters', { ...config, params: {
+                    ...(shouldRequestYearProjection ? { academicYear: selectedAcademicYear } : {}),
+                    status,
+                }, signal: controller.signal }),
+                apiClient.get('/api/students', { ...config, params: {
+                    ...(shouldRequestYearProjection ? { academicYear: selectedAcademicYear } : {}),
+                    status,
+                    page: 1,
+                    limit: 1,
+                }, signal: controller.signal }),
+            ]);
+        }
+
+        if (studentRequestRef.current.id !== requestId) {
+            const staleError = new Error('Stale student registry request ignored.');
+            staleError.code = 'ERR_STALE_STUDENT_REQUEST';
+            throw staleError;
+        }
+
         return {
-            students: Array.isArray(data?.data) ? data.data : [],
-            pagination: data?.pagination || { page: 1, total: 0, totalPages: 1 },
-            filterOptions: { classes: filterData?.classes || [], sections: filterData?.sections || [] },
-            directoryTotal: directoryData?.pagination?.total || 0,
+            students: Array.isArray(studentResponse.data?.data) ? studentResponse.data.data : [],
+            pagination: studentResponse.data?.pagination || { page: 1, total: 0, totalPages: 1 },
+            filterOptions: includeMetadata
+                ? { classes: filterData?.classes || [], sections: filterData?.sections || [] }
+                : studentFilterOptionsRef.current,
+            directoryTotal: includeMetadata ? directoryData?.pagination?.total || 0 : studentDirectoryTotalRef.current,
         };
-    }, [academicYearFilter, classFilter, config, currentStudentStatus, sectionFilter, studentPage, studentSearchQuery]);
+    }, [academicYearFilter, classFilter, config, currentStudentStatus, debouncedStudentSearchQuery, sectionFilter, studentPage]);
 
     const loadAcademicYears = useCallback(async () => {
         const { data } = await apiClient.get('/api/auth/academic-years', config);
@@ -304,6 +359,9 @@ const UserManagement = () => {
         async (showLoader = true, options = {}) => {
             if (!user?._id) return;
             const isMounted = options.isMounted || (() => true);
+            const requestId = fetchDataRequestIdRef.current + 1;
+            fetchDataRequestIdRef.current = requestId;
+            const isActiveRequest = () => isMounted() && fetchDataRequestIdRef.current === requestId;
 
             if (showLoader) {
                 setLoading(true);
@@ -315,7 +373,7 @@ const UserManagement = () => {
 
             try {
                 const yearResult = await Promise.allSettled([loadAcademicYears()]).then(([result]) => result);
-                if (!isMounted()) return;
+                if (!isActiveRequest()) return;
 
                 let effectiveAcademicYear = academicYearFilter || currentAcademicYear;
                 if (yearResult.status === 'fulfilled') {
@@ -325,11 +383,13 @@ const UserManagement = () => {
                     setAcademicYearFilter((current) => current || effectiveAcademicYear);
                 }
 
+                const studentMetadataScope = `${effectiveAcademicYear || ''}|${currentStudentStatus}`;
+                const includeStudentMetadata = studentMetadataScopeRef.current !== studentMetadataScope;
                 const [userResult, studentResult] = await Promise.allSettled([
                     loadUsers(),
-                    loadStudents(effectiveAcademicYear, currentStudentStatus),
+                    loadStudents(effectiveAcademicYear, currentStudentStatus, { includeMetadata: includeStudentMetadata }),
                 ]);
-                if (!isMounted()) return;
+                if (!isActiveRequest()) return;
 
                 if (userResult.status === 'fulfilled') {
                     setUsersList(userResult.value);
@@ -342,6 +402,9 @@ const UserManagement = () => {
                     setStudentPagination(studentResult.value.pagination);
                     setStudentFilterOptions(studentResult.value.filterOptions);
                     setStudentDirectoryTotal(studentResult.value.directoryTotal);
+                    if (includeStudentMetadata) {
+                        studentMetadataScopeRef.current = studentMetadataScope;
+                    }
                 } else {
                     setStudentRegistry([]);
                 }
@@ -351,14 +414,17 @@ const UserManagement = () => {
                 }
 
                 if (studentResult.status === 'rejected') {
-                    setError(studentResult.reason?.response?.data?.message || 'Student registry could not be loaded.');
+                    if (!['ERR_CANCELED', 'ERR_STALE_STUDENT_REQUEST'].includes(studentResult.reason?.code)) {
+                        setError(studentResult.reason?.response?.data?.message || 'Student registry could not be loaded.');
+                    }
                 }
             } catch (requestError) {
-                if (!isMounted()) return;
+                if (!isActiveRequest()) return;
                 setUsersList([]);
                 setError(requestError.response?.data?.message || 'Failed to load management data.');
             } finally {
-                if (!isMounted()) return;
+                if (!isActiveRequest()) return;
+                hasLoadedManagementDataRef.current = true;
                 if (showLoader) {
                     setLoading(false);
                 } else {
@@ -370,8 +436,13 @@ const UserManagement = () => {
     );
 
     useEffect(() => {
+        setStudentPage(1);
+    }, [academicYearFilter, classFilter, currentStudentStatus, debouncedStudentSearchQuery, sectionFilter]);
+
+    useEffect(() => {
         let mounted = true;
-        void fetchData(true, { isMounted: () => mounted });
+        const showInitialLoader = !hasLoadedManagementDataRef.current;
+        void fetchData(showInitialLoader, { isMounted: () => mounted });
         return () => {
             mounted = false;
         };
@@ -440,10 +511,6 @@ const UserManagement = () => {
     }, [filteredUsers.length]);
 
     useEffect(() => {
-        setStudentPage(1);
-    }, [academicYearFilter, classFilter, currentStudentStatus, sectionFilter, studentSearchQuery]);
-
-    useEffect(() => {
         if (!createRoleOptions.includes(newUser.role)) {
             setNewUser((current) => ({ ...current, role: createRoleOptions[0] || 'Teacher' }));
         }
@@ -470,10 +537,27 @@ const UserManagement = () => {
 
     const clearStudentFilters = useCallback(() => {
         setStudentSearchQuery('');
+        setDebouncedStudentSearchQuery('');
+        setStudentPage(1);
         setClassFilter([]);
         setSectionFilter([]);
         setAcademicYearFilter(currentAcademicYear);
     }, [currentAcademicYear]);
+
+    const updateAcademicYearFilter = useCallback((value) => {
+        setStudentPage(1);
+        setAcademicYearFilter(value);
+    }, []);
+
+    const updateClassFilter = useCallback((value) => {
+        setStudentPage(1);
+        setClassFilter(value);
+    }, []);
+
+    const updateSectionFilter = useCallback((value) => {
+        setStudentPage(1);
+        setSectionFilter(value);
+    }, []);
 
     const applyUpdatedStudentRecord = useCallback((updatedStudent) => {
         const studentId = String(updatedStudent?._id || updatedStudent?.id || '');
@@ -1112,7 +1196,7 @@ const UserManagement = () => {
                                             </span>
                                             <select
                                                 value={academicYearFilter}
-                                                onChange={(event) => setAcademicYearFilter(event.target.value)}
+                                                onChange={(event) => updateAcademicYearFilter(event.target.value)}
                                                 className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                                             >
                                                 {academicYearOptions.map((option) => (
@@ -1124,14 +1208,14 @@ const UserManagement = () => {
                                             label="Class"
                                             options={classFilterOptions}
                                             selected={classFilter}
-                                            onChange={setClassFilter}
+                                            onChange={updateClassFilter}
                                             placeholder="All classes"
                                         />
                                         <UnifiedMultiSelect
                                             label="Section"
                                             options={sectionFilterOptions}
                                             selected={sectionFilter}
-                                            onChange={setSectionFilter}
+                                            onChange={updateSectionFilter}
                                             placeholder="All sections"
                                         />
                                         <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 dark:border-slate-700 dark:bg-slate-950/80">
