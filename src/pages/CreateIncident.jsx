@@ -32,6 +32,11 @@ import apiClient from '../config/apiClient';
 import { isAdminRole, isTeacherRole } from '../utils/roles';
 import { formatDisplayValue } from '../utils/analytics';
 import useFocusFirstInvalid from '../hooks/useFocusFirstInvalid';
+import {
+    clearCreateIncidentDraft,
+    getCreateIncidentDraft,
+    setCreateIncidentDraft,
+} from '../utils/createIncidentDraftStore';
 
 dayjs.extend(customParseFormat);
 
@@ -50,6 +55,30 @@ const getOptionLabel = (option) => formatDisplayValue(option?.name || option?.la
 const hasAvailableLetterTemplate = (templates) => Boolean(templates?.en || templates?.ta);
 const findOptionByValue = (options, value) =>
     options.find((option) => String(getOptionId(option)) === String(value) || getOptionLabel(option) === value);
+
+const createEmptyEvidenceEntry = () => ({ evidenceType: '', file: null, preview: null });
+const createEvidenceEntriesFromDraft = (entries = []) => {
+    if (!Array.isArray(entries) || entries.length === 0) {
+        return [createEmptyEvidenceEntry()];
+    }
+
+    const hydratedEntries = entries.map((entry) => {
+        const file = entry?.file || null;
+        return {
+            evidenceType: entry?.evidenceType || '',
+            file,
+            preview: file && file.type?.startsWith('image/') ? URL.createObjectURL(file) : null,
+        };
+    });
+
+    return hydratedEntries.length ? hydratedEntries : [createEmptyEvidenceEntry()];
+};
+
+const serializeEvidenceEntriesForDraft = (entries = []) =>
+    entries.map((entry) => ({
+        evidenceType: entry?.evidenceType || '',
+        file: entry?.file || null,
+    }));
 
 const createManualValue = (date = dayjs().format('YYYY-MM-DD')) => ({
     date,
@@ -237,6 +266,8 @@ const CreateIncident = () => {
     const navigate = useNavigate();
     const shownInsightsRef = useRef(new Set());
     const studentScopeRef = useRef({ className: '', section: '' });
+    const isRestoringStudentRef = useRef(false);
+    const restoredStudentRef = useRef(null);
     const formRef = useRef(null);
 
     const [formData, setFormData] = useState({
@@ -286,6 +317,8 @@ const CreateIncident = () => {
         error: '',
     });
     const [uploadProgress, setUploadProgress] = useState(0);
+    const [scrollPosition, setScrollPosition] = useState(0);
+    const [isDraftHydrated, setIsDraftHydrated] = useState(false);
     useFocusFirstInvalid(errors, formRef);
 
     const config = useMemo(() => ({ headers: {} }), []);
@@ -385,6 +418,96 @@ const CreateIncident = () => {
         }
     }, [addToast, config, user?._id]);
 
+    const persistDraft = useCallback(() => {
+        if (submitSuccess) return;
+
+        setCreateIncidentDraft({
+            formData,
+            manualTiming,
+            manualSetup,
+            isManualTimeFinalized,
+            selectedCategoryId,
+            evidenceEntries: serializeEvidenceEntriesForDraft(evidenceEntries),
+            studentSearch,
+            selectedStudent,
+            errors,
+            letterInfo,
+            letterPermission,
+            letterLanguage,
+            behavioralInsight,
+            categoryTemplateStatus,
+            scrollPosition,
+        });
+    }, [
+        behavioralInsight,
+        categoryTemplateStatus,
+        errors,
+        evidenceEntries,
+        formData,
+        isManualTimeFinalized,
+        letterInfo,
+        letterLanguage,
+        letterPermission,
+        manualSetup,
+        manualTiming,
+        scrollPosition,
+        selectedCategoryId,
+        selectedStudent,
+        studentSearch,
+        submitSuccess,
+    ]);
+
+    useEffect(() => {
+        const savedDraft = getCreateIncidentDraft();
+        if (!savedDraft) {
+            setIsDraftHydrated(true);
+            return;
+        }
+
+        const nextFormData = { ...savedDraft.formData };
+        const restoredStudent = savedDraft.selectedStudent || null;
+        studentScopeRef.current = {
+            className: nextFormData.class || '',
+            section: nextFormData.section || '',
+        };
+        restoredStudentRef.current = restoredStudent;
+        isRestoringStudentRef.current = Boolean(restoredStudent?._id);
+
+        setFormData((current) => ({ ...current, ...nextFormData }));
+        setManualTiming(Boolean(savedDraft.manualTiming));
+        setManualSetup(savedDraft.manualSetup || {
+            status: 'Open',
+            openedAt: null,
+            inProgressAt: null,
+            closedAt: null,
+        });
+        setIsManualTimeFinalized(Boolean(savedDraft.isManualTimeFinalized));
+        setSelectedCategoryId(savedDraft.selectedCategoryId || '');
+        setEvidenceEntries(createEvidenceEntriesFromDraft(savedDraft.evidenceEntries));
+        setStudentSearch(savedDraft.studentSearch || '');
+        setSelectedStudent(restoredStudent);
+        setErrors(savedDraft.errors || {});
+        setLetterInfo(savedDraft.letterInfo || null);
+        setLetterPermission(savedDraft.letterPermission || { ...emptyLetterPermission });
+        setLetterLanguage(savedDraft.letterLanguage || 'en');
+        setBehavioralInsight(savedDraft.behavioralInsight || null);
+        setCategoryTemplateStatus(savedDraft.categoryTemplateStatus || {
+            loading: false,
+            templates: null,
+            checkedCategory: '',
+            categoryId: null,
+            message: '',
+            error: '',
+        });
+        setScrollPosition(savedDraft.scrollPosition || 0);
+
+        requestAnimationFrame(() => {
+            window.scrollTo({ top: savedDraft.scrollPosition || 0, behavior: 'auto' });
+        });
+
+        setIsDraftHydrated(true);
+    }, []);
+
     useEffect(() => {
         let active = true;
 
@@ -401,6 +524,28 @@ const CreateIncident = () => {
     }, [fetchAllData]);
 
     useEffect(() => {
+        if (!isDraftHydrated) return;
+        persistDraft();
+    }, [isDraftHydrated, persistDraft]);
+
+    useEffect(() => {
+        if (!isDraftHydrated) return undefined;
+
+        let ticking = false;
+        const handleScroll = () => {
+            if (ticking) return;
+            ticking = true;
+            requestAnimationFrame(() => {
+                setScrollPosition(window.scrollY || 0);
+                ticking = false;
+            });
+        };
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, [isDraftHydrated]);
+
+    useEffect(() => {
         return () => {
             evidenceEntriesRef.current.forEach((entry) => {
                 if (entry.preview) {
@@ -411,11 +556,26 @@ const CreateIncident = () => {
     }, []);
 
     useEffect(() => {
+        if (!isDraftHydrated) return;
+
         const nextScope = { className: formData.class, section: formData.section };
         const previousScope = studentScopeRef.current;
         studentScopeRef.current = nextScope;
 
         if (previousScope.className === nextScope.className && previousScope.section === nextScope.section) return;
+
+        if (isRestoringStudentRef.current) {
+            const restoredStudent = restoredStudentRef.current;
+            const classMatches = String(restoredStudent?.className || '') === String(nextScope.className || '');
+            const sectionMatches = String(restoredStudent?.section || '') === String(nextScope.section || '');
+            if (classMatches && sectionMatches) {
+                isRestoringStudentRef.current = false;
+                restoredStudentRef.current = null;
+                return;
+            }
+            isRestoringStudentRef.current = false;
+            restoredStudentRef.current = null;
+        }
 
         setSelectedStudent(null);
         setStudentSearch('');
@@ -427,7 +587,7 @@ const CreateIncident = () => {
             delete next.student;
             return next;
         });
-    }, [formData.class, formData.section]);
+    }, [formData.class, formData.section, isDraftHydrated]);
 
     useEffect(() => {
         if (!formData.class || !formData.section || !user?._id) {
@@ -769,7 +929,7 @@ const CreateIncident = () => {
     const handleAddEvidenceEntry = () => {
         setEvidenceEntries((currentEntries) => [
             ...currentEntries,
-            { evidenceType: '', file: null, preview: null },
+            createEmptyEvidenceEntry(),
         ]);
     };
 
@@ -781,7 +941,7 @@ const CreateIncident = () => {
                 URL.revokeObjectURL(removedEntry.preview);
             }
             nextEntries.splice(index, 1);
-            return nextEntries.length ? nextEntries : [{ evidenceType: '', file: null, preview: null }];
+            return nextEntries.length ? nextEntries : [createEmptyEvidenceEntry()];
         });
     };
 
@@ -951,6 +1111,7 @@ const CreateIncident = () => {
         }
 
         setSubmitSuccess(true);
+        clearCreateIncidentDraft();
 
         if (responseData.letterGenerated) {
             setLetterInfo(responseData.letterGenerated);
@@ -1101,6 +1262,17 @@ const CreateIncident = () => {
         }
 
         await submitIncident(false);
+    };
+
+    const handleViewStudentDetails = () => {
+        const admissionNo = selectedStudent?.admissionNo || behavioralInsight?.admissionNo;
+        if (!admissionNo) {
+            setBehavioralInsight(null);
+            navigate('/student-analytics');
+            return;
+        }
+        setBehavioralInsight(null);
+        navigate(`/student-analytics/${encodeURIComponent(admissionNo)}`);
     };
 
     const categoryHasTemplate = hasAvailableLetterTemplate(categoryTemplateStatus.templates);
@@ -1472,7 +1644,15 @@ const CreateIncident = () => {
                                 )}
                             </div>
 
-                            <div className="border-t border-slate-200 bg-slate-50 px-6 py-4 text-right">
+                            <div className="border-t border-slate-200 bg-slate-50 px-6 py-4">
+                                <div className="flex items-center justify-end gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={handleViewStudentDetails}
+                                        className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-100"
+                                    >
+                                        View Details
+                                    </button>
                                 <button
                                     type="button"
                                     onClick={() => setBehavioralInsight(null)}
@@ -1480,6 +1660,7 @@ const CreateIncident = () => {
                                 >
                                     Acknowledge
                                 </button>
+                                </div>
                             </div>
                         </div>
                     </div>
