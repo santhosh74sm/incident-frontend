@@ -68,6 +68,11 @@ const ConfirmProvider = ({ children }) => {
                                 <p id="confirm-dialog-description" className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
                                     {dialog.description}
                                 </p>
+                                {dialog.details ? (
+                                    <div className="mt-4 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                                        {dialog.details}
+                                    </div>
+                                ) : null}
                             </div>
                         </div>
                         <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">

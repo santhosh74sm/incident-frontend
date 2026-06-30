@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { CalendarDays, CheckCircle, Loader2 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { AlertTriangle, CalendarDays, CheckCircle, Loader2, RotateCcw } from 'lucide-react';
 import apiClient from '../config/apiClient';
 import { DashboardHero, DashboardPanel } from '../components/analytics/DashboardPrimitives';
 import { useToast } from '../components/ToastProvider';
@@ -10,7 +10,10 @@ const AcademicYearManagement = () => {
     const confirm = useConfirm();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [reversing, setReversing] = useState(false);
+    const [rollbackProgress, setRollbackProgress] = useState('');
     const [currentAcademicYear, setCurrentAcademicYear] = useState('');
+    const rollbackTimersRef = useRef([]);
 
     const getNextAcademicYear = (year) => {
         const match = String(year || '').match(/^(\d{4})-\d{2}$/);
@@ -20,6 +23,34 @@ const AcademicYearManagement = () => {
     };
 
     const nextAcademicYear = getNextAcademicYear(currentAcademicYear);
+    const getPreviousAcademicYear = (year) => {
+        const match = String(year || '').match(/^(\d{4})-\d{2}$/);
+        if (!match) return '';
+        const startYear = Number(match[1]) - 1;
+        return `${startYear}-${String((startYear + 1) % 100).padStart(2, '0')}`;
+    };
+
+    const previousAcademicYear = getPreviousAcademicYear(currentAcademicYear);
+
+    const clearRollbackTimers = () => {
+        rollbackTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+        rollbackTimersRef.current = [];
+    };
+
+    const startRollbackProgress = () => {
+        clearRollbackTimers();
+        const steps = [
+            [0, 'Deleting promoted year records...'],
+            [900, 'Restoring students...'],
+            [1800, 'Restoring classes...'],
+            [2700, 'Validating data...'],
+            [3600, 'Finishing rollback...'],
+        ];
+        steps.forEach(([delay, label]) => {
+            const timer = window.setTimeout(() => setRollbackProgress(label), delay);
+            rollbackTimersRef.current.push(timer);
+        });
+    };
 
     useEffect(() => {
         let mounted = true;
@@ -32,6 +63,8 @@ const AcademicYearManagement = () => {
             .finally(() => mounted && setLoading(false));
         return () => { mounted = false; };
     }, [addToast]);
+
+    useEffect(() => () => clearRollbackTimers(), []);
 
     const submitChange = async () => {
         if (saving) return;
@@ -48,7 +81,7 @@ const AcademicYearManagement = () => {
     };
 
     const confirmAcademicYearChange = async () => {
-        if (saving) return;
+        if (saving || reversing) return;
         const confirmed = await confirm({
             tone: 'warning',
             title: 'Change Academic Year',
@@ -65,6 +98,46 @@ const AcademicYearManagement = () => {
         });
         if (confirmed) {
             await submitChange();
+        }
+    };
+
+    const submitRollback = async () => {
+        if (reversing) return;
+        setReversing(true);
+        startRollbackProgress();
+        try {
+            const { data } = await apiClient.post('/api/auth/academic-year/reverse', {});
+            clearRollbackTimers();
+            setRollbackProgress('');
+            setCurrentAcademicYear(data.currentAcademicYear);
+            addToast('Academic Year has been successfully restored. Previous Academic Year is now active. All student promotions have been reversed successfully.', 'success');
+        } catch (error) {
+            clearRollbackTimers();
+            setRollbackProgress('');
+            const reason = error.response?.data?.message || error.message || 'The system has been restored to its original state.';
+            addToast(`Rollback failed. Reason: ${reason}`, 'error');
+        } finally {
+            setReversing(false);
+        }
+    };
+
+    const confirmRollback = async () => {
+        if (saving || reversing) return;
+        const confirmed = await confirm({
+            tone: 'danger',
+            title: 'Reverse Academic Year Update',
+            description: 'You are about to reverse the Academic Year Update.',
+            details: (
+                <div className="space-y-3">
+                    <p>This will restore the previous Academic Year and permanently remove all data created for the promoted Academic Year.</p>
+                    <p>This action cannot be undone.</p>
+                    <p className="font-semibold">Do you want to continue?</p>
+                </div>
+            ),
+            confirmLabel: 'Reverse Academic Year Update',
+        });
+        if (confirmed) {
+            await submitRollback();
         }
     };
 
@@ -96,17 +169,42 @@ const AcademicYearManagement = () => {
                                     <span className="mt-2 block text-lg font-bold text-slate-900 dark:text-slate-100">{nextAcademicYear}</span>
                                 </div>
                             </div>
-                            <button
-                                type="button"
-                                onClick={confirmAcademicYearChange}
-                                disabled={!nextAcademicYear || saving || loading}
-                                className="btn-primary h-12 justify-center disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                                {saving ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
-                                {saving ? 'Processing Academic Year Change... Please wait.' : 'Change To Next Academic Year'}
-                            </button>
+                            <div className="flex flex-col gap-3">
+                                <button
+                                    type="button"
+                                    onClick={confirmAcademicYearChange}
+                                    disabled={!nextAcademicYear || saving || reversing || loading}
+                                    className="btn-primary h-12 justify-center disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    {saving ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
+                                    {saving ? 'Processing Academic Year Change... Please wait.' : 'Change To Next Academic Year'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={confirmRollback}
+                                    disabled={!previousAcademicYear || saving || reversing || loading}
+                                    className="btn-danger h-12 justify-center disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    {reversing ? <Loader2 size={16} className="animate-spin" /> : <RotateCcw size={16} />}
+                                    {reversing ? 'Reversing Academic Year Update...' : 'Reverse Academic Year Update'}
+                                </button>
+                            </div>
                         </div>
                     )}
+                </DashboardPanel>
+
+                <DashboardPanel title="Rollback Safety" description="Use this only when the most recent Academic Year Update was executed by mistake." icon={AlertTriangle}>
+                    <div className="space-y-4">
+                        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-800 dark:border-rose-500/30 dark:bg-rose-950/30 dark:text-rose-100">
+                            Reversing restores students from their previous academic-year history, removes records created in the promoted year, validates integrity, and writes an audit log.
+                        </div>
+                        {rollbackProgress ? (
+                            <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                                <Loader2 className="h-4 w-4 animate-spin text-rose-600" />
+                                {rollbackProgress}
+                            </div>
+                        ) : null}
+                    </div>
                 </DashboardPanel>
             </div>
 
