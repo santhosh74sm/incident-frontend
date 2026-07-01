@@ -112,64 +112,108 @@ const formatFileSize = (size = 0) => {
     return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 };
 
+const evidencePreviewCache = new Map();
+
+const subscribeToEvidencePreview = (src, callback) => {
+    const cached = evidencePreviewCache.get(src);
+    if (cached?.status === 'ready' || cached?.status === 'failed') {
+        callback(cached);
+        return () => {};
+    }
+
+    if (cached?.status === 'loading') {
+        cached.subscribers.add(callback);
+        return () => cached.subscribers.delete(callback);
+    }
+
+    const entry = {
+        status: 'loading',
+        objectUrl: '',
+        previewType: '',
+        subscribers: new Set([callback]),
+    };
+    evidencePreviewCache.set(src, entry);
+
+    apiClient.get(src, {
+        responseType: 'blob',
+        headers: { Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,application/pdf,*/*;q=0.8' },
+    }).then((response) => {
+        const contentType = String(response.headers?.['content-type'] || response.data?.type || '').toLowerCase();
+        const canPreviewImage = contentType.startsWith('image/');
+        const canPreviewPdf = contentType.startsWith('application/pdf');
+
+        if (!canPreviewImage && !canPreviewPdf) {
+            throw new Error('Preview response was not an image or PDF.');
+        }
+
+        entry.status = 'ready';
+        entry.previewType = canPreviewPdf ? 'pdf' : 'image';
+        entry.objectUrl = window.URL.createObjectURL(response.data);
+    }).catch(() => {
+        entry.status = 'failed';
+    }).finally(() => {
+        const snapshot = { ...entry };
+        entry.subscribers.forEach((subscriber) => subscriber(snapshot));
+        entry.subscribers.clear();
+    });
+
+    return () => entry.subscribers.delete(callback);
+};
+
 const EvidenceFilePreview = ({ src, alt }) => {
+    const [shouldLoad, setShouldLoad] = useState(false);
     const [objectUrl, setObjectUrl] = useState('');
     const [previewType, setPreviewType] = useState('');
     const [failed, setFailed] = useState(false);
-    const activeObjectUrlRef = useRef('');
+    const previewRef = useRef(null);
 
     useEffect(() => {
-        let cancelled = false;
-        let createdObjectUrl = '';
-
-        const revokeActiveObjectUrl = () => {
-            if (!activeObjectUrlRef.current) return;
-            window.URL.revokeObjectURL(activeObjectUrlRef.current);
-            activeObjectUrlRef.current = '';
-        };
-
-        revokeActiveObjectUrl();
+        setShouldLoad(false);
         setObjectUrl('');
         setPreviewType('');
         setFailed(false);
-
-        if (!src) return undefined;
-
-        apiClient.get(src, {
-            responseType: 'blob',
-            headers: { Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,application/pdf,*/*;q=0.8' },
-        }).then((response) => {
-            const contentType = String(response.headers?.['content-type'] || response.data?.type || '').toLowerCase();
-            const canPreviewImage = contentType.startsWith('image/');
-            const canPreviewPdf = contentType.startsWith('application/pdf');
-
-            if (!canPreviewImage && !canPreviewPdf) {
-                throw new Error('Preview response was not an image or PDF.');
-            }
-
-            createdObjectUrl = window.URL.createObjectURL(response.data);
-            if (!cancelled) {
-                activeObjectUrlRef.current = createdObjectUrl;
-                setPreviewType(canPreviewPdf ? 'pdf' : 'image');
-                setObjectUrl(createdObjectUrl);
-            } else {
-                window.URL.revokeObjectURL(createdObjectUrl);
-            }
-        }).catch(() => {
-            if (!cancelled) setFailed(true);
-        });
-
-        return () => {
-            cancelled = true;
-            if (createdObjectUrl && activeObjectUrlRef.current === createdObjectUrl) {
-                revokeActiveObjectUrl();
-            }
-        };
     }, [src]);
+
+    useEffect(() => {
+        if (!src) return undefined;
+        if (typeof IntersectionObserver === 'undefined') {
+            setShouldLoad(true);
+            return undefined;
+        }
+
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setShouldLoad(true);
+                    observer.disconnect();
+                }
+            },
+            { rootMargin: '180px 0px' }
+        );
+
+        if (previewRef.current) observer.observe(previewRef.current);
+        return () => observer.disconnect();
+    }, [src]);
+
+    useEffect(() => {
+        if (!src || !shouldLoad) return undefined;
+
+        return subscribeToEvidencePreview(src, (entry) => {
+            if (entry.status === 'failed') {
+                setFailed(true);
+                return;
+            }
+
+            if (entry.status === 'ready') {
+                setPreviewType(entry.previewType);
+                setObjectUrl(entry.objectUrl);
+            }
+        });
+    }, [src, shouldLoad]);
 
     if (failed) {
         return (
-            <div className="mt-4 flex h-44 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white text-sm font-medium text-slate-500">
+            <div ref={previewRef} className="mt-4 flex h-44 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white text-sm font-medium text-slate-500">
                 Preview unavailable
             </div>
         );
@@ -177,8 +221,8 @@ const EvidenceFilePreview = ({ src, alt }) => {
 
     if (!objectUrl) {
         return (
-            <div className="mt-4 flex h-44 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white text-sm font-medium text-slate-500">
-                Loading preview...
+            <div ref={previewRef} className="mt-4 flex h-44 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white text-sm font-medium text-slate-500">
+                {shouldLoad ? 'Loading preview...' : 'Preview will load when visible'}
             </div>
         );
     }
@@ -186,8 +230,11 @@ const EvidenceFilePreview = ({ src, alt }) => {
     if (previewType === 'image') {
         return (
         <img
+            ref={previewRef}
             src={objectUrl}
             alt={alt}
+            loading="lazy"
+            decoding="async"
             className="mt-4 h-44 w-full rounded-2xl border border-slate-200 object-cover"
         />
         );
@@ -196,15 +243,17 @@ const EvidenceFilePreview = ({ src, alt }) => {
     if (previewType === 'pdf') {
         return (
             <iframe
+                ref={previewRef}
                 src={objectUrl}
                 title={alt}
+                loading="lazy"
                 className="mt-4 h-44 w-full rounded-2xl border border-slate-200 bg-white"
             />
         );
     }
 
     return (
-        <div className="mt-4 flex h-44 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white text-sm font-medium text-slate-500">
+        <div ref={previewRef} className="mt-4 flex h-44 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white text-sm font-medium text-slate-500">
             Preview unavailable
         </div>
     );
