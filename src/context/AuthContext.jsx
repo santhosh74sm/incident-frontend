@@ -1,5 +1,6 @@
 import React, { createContext, memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import apiClient, { clearLegacyAuthState, resetAuthEventGuard } from '../config/apiClient';
+import { clearAllCreateIncidentDrafts } from '../utils/createIncidentDraftStore';
 
 const AuthContext = createContext({
     user: null,
@@ -90,6 +91,7 @@ export const AuthProvider = memo(({ children }) => {
         });
 
         const handleLogout = () => {
+            void clearAllCreateIncidentDrafts();
             clearLegacyAuthState();
             setAuthRestoreError(null);
             setUser(null);
@@ -118,6 +120,7 @@ export const AuthProvider = memo(({ children }) => {
         } catch {
             // Session may already be expired; local state still needs clearing.
         }
+        await clearAllCreateIncidentDrafts();
         clearLegacyAuthState();
         setAuthRestoreError(null);
         setUser(null);

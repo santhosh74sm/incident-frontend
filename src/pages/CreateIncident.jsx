@@ -57,6 +57,32 @@ const findOptionByValue = (options, value) =>
     options.find((option) => String(getOptionId(option)) === String(value) || getOptionLabel(option) === value);
 
 const createEmptyEvidenceEntry = () => ({ evidenceType: '', file: null, preview: null });
+const createInitialFormData = () => ({
+    description: '',
+    category: '',
+    class: '',
+    section: '',
+    location: '',
+    assignedHandler: '',
+    isHighPriority: false,
+});
+
+const createInitialManualSetup = () => ({
+    status: 'Open',
+    openedAt: null,
+    inProgressAt: null,
+    closedAt: null,
+});
+
+const createInitialCategoryTemplateStatus = () => ({
+    loading: false,
+    templates: null,
+    checkedCategory: '',
+    categoryId: null,
+    message: '',
+    error: '',
+});
+
 const createEvidenceEntriesFromDraft = (entries = []) => {
     if (!Array.isArray(entries) || entries.length === 0) {
         return [createEmptyEvidenceEntry()];
@@ -79,6 +105,36 @@ const serializeEvidenceEntriesForDraft = (entries = []) =>
         evidenceType: entry?.evidenceType || '',
         file: entry?.file || null,
     }));
+
+const hasDraftableEvidence = (entries = []) =>
+    entries.some((entry) => entry?.evidenceType || entry?.file);
+
+const hasCreateIncidentDraftContent = ({
+    formData,
+    manualTiming,
+    selectedCategoryId,
+    evidenceEntries,
+    studentSearch,
+    selectedStudent,
+    letterInfo,
+    behavioralInsight,
+}) =>
+    Boolean(
+        formData?.description ||
+        formData?.category ||
+        formData?.class ||
+        formData?.section ||
+        formData?.location ||
+        formData?.assignedHandler ||
+        formData?.isHighPriority ||
+        manualTiming ||
+        selectedCategoryId ||
+        hasDraftableEvidence(evidenceEntries) ||
+        studentSearch ||
+        selectedStudent?._id ||
+        letterInfo ||
+        behavioralInsight
+    );
 
 const createManualValue = (date = dayjs().format('YYYY-MM-DD')) => ({
     date,
@@ -271,22 +327,9 @@ const CreateIncident = () => {
     const restoredStudentRef = useRef(null);
     const formRef = useRef(null);
 
-    const [formData, setFormData] = useState({
-        description: '',
-        category: '',
-        class: '',
-        section: '',
-        location: '',
-        assignedHandler: '',
-        isHighPriority: false,
-    });
+    const [formData, setFormData] = useState(createInitialFormData);
     const [manualTiming, setManualTiming] = useState(false);
-    const [manualSetup, setManualSetup] = useState({
-        status: 'Open',
-        openedAt: null,
-        inProgressAt: null,
-        closedAt: null,
-    });
+    const [manualSetup, setManualSetup] = useState(createInitialManualSetup);
     const [isManualTimeFinalized, setIsManualTimeFinalized] = useState(false);
     const [selectedCategoryId, setSelectedCategoryId] = useState('');
     const [evidenceEntries, setEvidenceEntries] = useState([{ evidenceType: '', file: null, preview: null }]);
@@ -309,14 +352,7 @@ const CreateIncident = () => {
     const [letterPermission, setLetterPermission] = useState({ ...emptyLetterPermission });
     const [letterLanguage, setLetterLanguage] = useState('en');
     const [behavioralInsight, setBehavioralInsight] = useState(null);
-    const [categoryTemplateStatus, setCategoryTemplateStatus] = useState({
-        loading: false,
-        templates: null,
-        checkedCategory: '',
-        categoryId: null,
-        message: '',
-        error: '',
-    });
+    const [categoryTemplateStatus, setCategoryTemplateStatus] = useState(createInitialCategoryTemplateStatus);
     const [uploadProgress, setUploadProgress] = useState(0);
     const [scrollPosition, setScrollPosition] = useState(0);
     const [isDraftHydrated, setIsDraftHydrated] = useState(false);
@@ -358,6 +394,15 @@ const CreateIncident = () => {
             return nameMatch || admissionMatch;
         });
     }, [sectionFilteredStudents, studentSearch]);
+    const emptyStudentListMessage = useMemo(() => {
+        if (formData.section && sectionFilteredStudents.length === 0) {
+            return 'No students available in this section.';
+        }
+        if (studentSearch.trim()) {
+            return 'No students match the current search.';
+        }
+        return 'No students match the current filters.';
+    }, [formData.section, sectionFilteredStudents.length, studentSearch]);
 
     const checkLetterTemplate = useCallback(
         async (categoryName) => {
@@ -425,9 +470,25 @@ const CreateIncident = () => {
     }, [addToast, config, user?._id]);
 
     const persistDraft = useCallback(() => {
-        if (submitSuccess) return;
+        if (submitSuccess || !user?._id) return;
 
-        setCreateIncidentDraft({
+        const hasContent = hasCreateIncidentDraftContent({
+            formData,
+            manualTiming,
+            selectedCategoryId,
+            evidenceEntries,
+            studentSearch,
+            selectedStudent,
+            letterInfo,
+            behavioralInsight,
+        });
+
+        if (!hasContent) {
+            void clearCreateIncidentDraft(user);
+            return;
+        }
+
+        void setCreateIncidentDraft(user, {
             formData,
             manualTiming,
             manualSetup,
@@ -461,58 +522,64 @@ const CreateIncident = () => {
         selectedStudent,
         studentSearch,
         submitSuccess,
+        user,
     ]);
 
     useEffect(() => {
-        const savedDraft = getCreateIncidentDraft();
-        if (!savedDraft) {
-            setIsDraftHydrated(true);
-            return;
-        }
+        let active = true;
 
-        const nextFormData = { ...savedDraft.formData };
-        const restoredStudent = savedDraft.selectedStudent || null;
-        studentScopeRef.current = {
-            className: nextFormData.class || '',
-            section: nextFormData.section || '',
-        };
-        restoredStudentRef.current = restoredStudent;
-        isRestoringStudentRef.current = Boolean(restoredStudent?._id);
+        const hydrateDraft = async () => {
+            if (!user?._id) {
+                setIsDraftHydrated(true);
+                return;
+            }
 
-        setFormData((current) => ({ ...current, ...nextFormData }));
+            const savedDraft = await getCreateIncidentDraft(user);
+            if (!active) return;
+
+            if (!savedDraft) {
+                setIsDraftHydrated(true);
+                return;
+            }
+
+            const nextFormData = { ...savedDraft.formData };
+            const restoredStudent = savedDraft.selectedStudent || null;
+            studentScopeRef.current = {
+                className: nextFormData.class || '',
+                section: nextFormData.section || '',
+            };
+            restoredStudentRef.current = restoredStudent;
+            isRestoringStudentRef.current = Boolean(restoredStudent?._id);
+
+            setFormData((current) => ({ ...current, ...nextFormData }));
         setManualTiming(Boolean(savedDraft.manualTiming));
-        setManualSetup(savedDraft.manualSetup || {
-            status: 'Open',
-            openedAt: null,
-            inProgressAt: null,
-            closedAt: null,
-        });
-        setIsManualTimeFinalized(Boolean(savedDraft.isManualTimeFinalized));
-        setSelectedCategoryId(savedDraft.selectedCategoryId || '');
-        setEvidenceEntries(createEvidenceEntriesFromDraft(savedDraft.evidenceEntries));
-        setStudentSearch(savedDraft.studentSearch || '');
-        setSelectedStudent(restoredStudent);
-        setErrors(savedDraft.errors || {});
-        setLetterInfo(savedDraft.letterInfo || null);
-        setLetterPermission(savedDraft.letterPermission || { ...emptyLetterPermission });
-        setLetterLanguage(savedDraft.letterLanguage || 'en');
-        setBehavioralInsight(savedDraft.behavioralInsight || null);
-        setCategoryTemplateStatus(savedDraft.categoryTemplateStatus || {
-            loading: false,
-            templates: null,
-            checkedCategory: '',
-            categoryId: null,
-            message: '',
-            error: '',
-        });
-        setScrollPosition(savedDraft.scrollPosition || 0);
+            setManualSetup(savedDraft.manualSetup || createInitialManualSetup());
+            setIsManualTimeFinalized(Boolean(savedDraft.isManualTimeFinalized));
+            setSelectedCategoryId(savedDraft.selectedCategoryId || '');
+            setEvidenceEntries(createEvidenceEntriesFromDraft(savedDraft.evidenceEntries));
+            setStudentSearch(savedDraft.studentSearch || '');
+            setSelectedStudent(restoredStudent);
+            setErrors(savedDraft.errors || {});
+            setLetterInfo(savedDraft.letterInfo || null);
+            setLetterPermission(savedDraft.letterPermission || { ...emptyLetterPermission });
+            setLetterLanguage(savedDraft.letterLanguage || 'en');
+            setBehavioralInsight(savedDraft.behavioralInsight || null);
+            setCategoryTemplateStatus(savedDraft.categoryTemplateStatus || createInitialCategoryTemplateStatus());
+            setScrollPosition(savedDraft.scrollPosition || 0);
 
-        requestAnimationFrame(() => {
-            window.scrollTo({ top: savedDraft.scrollPosition || 0, behavior: 'auto' });
-        });
+            requestAnimationFrame(() => {
+                window.scrollTo({ top: savedDraft.scrollPosition || 0, behavior: 'auto' });
+            });
 
-        setIsDraftHydrated(true);
-    }, []);
+            setIsDraftHydrated(true);
+        };
+
+        void hydrateDraft();
+
+        return () => {
+            active = false;
+        };
+    }, [user]);
 
     useEffect(() => {
         let active = true;
@@ -569,6 +636,7 @@ const CreateIncident = () => {
         studentScopeRef.current = nextScope;
 
         if (previousScope.className === nextScope.className && previousScope.section === nextScope.section) return;
+        if (previousScope.className === nextScope.className) return;
 
         if (isRestoringStudentRef.current) {
             const restoredStudent = restoredStudentRef.current;
@@ -642,27 +710,28 @@ const CreateIncident = () => {
     }, [config, formData.class, user?._id]);
 
     useEffect(() => {
-        if (!formData.class || !formData.section || students.length === 0) return;
-        const sectionExists = students.some((student) => String(student.section || '') === String(formData.section || ''));
-        if (sectionExists) return;
+        if (!selectedStudent?._id) return;
 
-        setFormData((current) => (
-            current.class === formData.class && current.section === formData.section
-                ? { ...current, section: '' }
-                : current
-        ));
-    }, [formData.class, formData.section, students]);
+        const classMatches = String(selectedStudent.className || '') === String(formData.class || '');
+        const sectionMatches = !formData.section || String(selectedStudent.section || '') === String(formData.section || '');
+
+        setErrors((current) => {
+            const next = { ...current };
+            if (classMatches && !sectionMatches) {
+                next.student = 'Selected student is not in the chosen section. Please select another student.';
+                return next;
+            }
+
+            if (next.student === 'Selected student is not in the chosen section. Please select another student.') {
+                delete next.student;
+            }
+            return next;
+        });
+    }, [formData.class, formData.section, selectedStudent]);
 
     useEffect(() => {
         if (!formData.category) {
-            setCategoryTemplateStatus({
-                loading: false,
-                templates: null,
-                checkedCategory: '',
-                categoryId: null,
-                message: '',
-                error: '',
-            });
+            setCategoryTemplateStatus(createInitialCategoryTemplateStatus());
             return;
         }
 
@@ -772,12 +841,7 @@ const CreateIncident = () => {
     const clearManualSetup = () => {
         setManualTiming(false);
         setIsManualTimeFinalized(false);
-        setManualSetup({
-            status: 'Open',
-            openedAt: null,
-            inProgressAt: null,
-            closedAt: null,
-        });
+        setManualSetup(createInitialManualSetup());
         removeFieldError('manualTiming');
     };
 
@@ -793,6 +857,39 @@ const CreateIncident = () => {
     };
 
     const closeLetterPermission = () => setLetterPermission({ ...emptyLetterPermission });
+
+    const handleDiscardDraft = async () => {
+        await clearCreateIncidentDraft(user);
+
+        evidenceEntriesRef.current.forEach((entry) => {
+            if (entry.preview) {
+                URL.revokeObjectURL(entry.preview);
+            }
+        });
+
+        setFormData(createInitialFormData());
+        setManualTiming(false);
+        setManualSetup(createInitialManualSetup());
+        setIsManualTimeFinalized(false);
+        setSelectedCategoryId('');
+        setEvidenceEntries([createEmptyEvidenceEntry()]);
+        setStudentSearch('');
+        setSelectedStudent(null);
+        setErrors({});
+        setSubmitSuccess(false);
+        setLetterInfo(null);
+        setLetterPermission({ ...emptyLetterPermission });
+        setLetterLanguage('en');
+        setBehavioralInsight(null);
+        setCategoryTemplateStatus(createInitialCategoryTemplateStatus());
+        setScrollPosition(0);
+        studentScopeRef.current = { className: '', section: '' };
+        restoredStudentRef.current = null;
+        isRestoringStudentRef.current = false;
+        shownInsightsRef.current.clear();
+        window.scrollTo({ top: 0, behavior: 'auto' });
+        addToast('Draft discarded.', 'success');
+    };
 
     const handleCategoryChange = (value) => {
         const category = findOptionByValue(categories, value);
@@ -1051,11 +1148,10 @@ const CreateIncident = () => {
 
         if (!selectedStudent?._id) {
             nextErrors.student = 'Please select a student.';
-        } else if (
-            String(selectedStudent.className || '') !== String(formData.class || '')
-            || String(selectedStudent.section || '') !== String(formData.section || '')
-        ) {
-            nextErrors.student = 'The selected student is stale. Re-select a student from the current class and section.';
+        } else if (String(selectedStudent.className || '') !== String(formData.class || '')) {
+            nextErrors.student = 'The selected student is stale. Re-select a student from the current class.';
+        } else if (formData.section && String(selectedStudent.section || '') !== String(formData.section || '')) {
+            nextErrors.student = 'Selected student is not in the chosen section. Please select another student.';
         }
 
         if (!formData.category) {
@@ -1143,7 +1239,7 @@ const CreateIncident = () => {
         }
 
         setSubmitSuccess(true);
-        clearCreateIncidentDraft();
+        void clearCreateIncidentDraft(user);
 
         if (responseData.letterGenerated) {
             setLetterInfo(responseData.letterGenerated);
@@ -1714,6 +1810,14 @@ const CreateIncident = () => {
                                         </p>
                                     </div>
 
+                                    <button
+                                        type="button"
+                                        onClick={handleDiscardDraft}
+                                        className="inline-flex w-fit items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                        Discard Draft
+                                    </button>
                                 </div>
                             </div>
 
@@ -1855,7 +1959,7 @@ const CreateIncident = () => {
                                                         </div>
                                                     ) : filteredStudents.length === 0 ? (
                                                         <div className="flex h-full items-center justify-center text-sm text-slate-500">
-                                                            No students match the current filters.
+                                                            {emptyStudentListMessage}
                                                         </div>
                                                     ) : (
                                                         <div className="space-y-2">
