@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import {
@@ -144,6 +144,7 @@ const ProfessionalAnalytics = () => {
     const [currentAcademicYear, setCurrentAcademicYear] = useState('');
     const [academicYears, setAcademicYears] = useState([]);
     const [letterStatusMap, setLetterStatusMap] = useState({});
+    const analyticsRequestRef = useRef({ controller: null, id: 0 });
     const config = useMemo(() => ({ headers: {} }), []);
     const compactXAxisProps = useMemo(
         () => compactChart
@@ -202,11 +203,17 @@ const ProfessionalAnalytics = () => {
 
     const fetchAnalytics = useCallback(async () => {
         if (!user?._id || !academicYear) return;
+        analyticsRequestRef.current.controller?.abort();
+        const controller = new AbortController();
+        const requestId = analyticsRequestRef.current.id + 1;
+        analyticsRequestRef.current = { controller, id: requestId };
+        const isCurrentRequest = () => analyticsRequestRef.current.id === requestId;
         try {
             setLoading(true);
             setAnalyticsError('');
             const params = buildRequestParams();
-            const { data } = await apiClient.get('/api/incidents/analytics', { ...config, params });
+            const { data } = await apiClient.get('/api/incidents/analytics', { ...config, params, signal: controller.signal });
+            if (!isCurrentRequest()) return;
             const requiredArrays = ['statusData', 'categoryData', 'locationData', 'evidenceData', 'classWiseData', 'staffWorkload', 'categoryHeatmap', 'academicYearData', 'trendBuckets'];
             if (
                 !data
@@ -220,14 +227,22 @@ const ProfessionalAnalytics = () => {
             setIncidents([]);
             setLetterStatusMap({});
         } catch (error) {
+            if (error?.code === 'ERR_CANCELED' || error?.name === 'CanceledError') return;
+            if (!isCurrentRequest()) return;
             setServerAnalytics(null);
             setIncidents([]);
             setLetterStatusMap({});
             setAnalyticsError(error.response?.data?.message || error.message || 'Analytics data could not be loaded.');
         } finally {
-            setLoading(false);
+            if (isCurrentRequest()) {
+                setLoading(false);
+            }
         }
     }, [academicYear, buildRequestParams, config, user?._id]);
+
+    useEffect(() => () => {
+        analyticsRequestRef.current.controller?.abort();
+    }, []);
 
     const fetchAnalyticsDetails = useCallback(async ({ updateState = true, page = 1, limit = 100, fetchAll = false } = {}) => {
         if (!user?._id || !academicYear) return { data: [], letterStatusMap: {} };

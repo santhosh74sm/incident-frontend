@@ -69,6 +69,9 @@ let logoutDispatched = false;
 let refreshPromise = null;
 let csrfTokenMemory = '';
 let csrfPromise = null;
+const inFlightGetRequests = new Map();
+const completedGetRequests = new Map();
+const COMPLETED_GET_CACHE_TTL_MS = 1500;
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -176,6 +179,34 @@ const removeContentTypeHeader = (headers) => {
     delete headers['content-type'];
 };
 
+const normalizeParamsForKey = (params) => {
+    if (!params) return '';
+
+    if (params instanceof URLSearchParams) {
+        return params.toString();
+    }
+
+    try {
+        return JSON.stringify(params, Object.keys(params).sort());
+    } catch {
+        return String(params);
+    }
+};
+
+const getDedupeKey = (url, config = {}) => {
+    const baseURL = config.baseURL || apiClient.defaults.baseURL || API_BASE;
+    return [
+        baseURL,
+        url,
+        normalizeParamsForKey(config.params),
+        config.responseType || 'json',
+    ].join('|');
+};
+
+const clearCompletedGetRequests = () => {
+    completedGetRequests.clear();
+};
+
 export const clearLegacyAuthState = () => {
     removeAuthHeader(apiClient.defaults.headers.common);
     removeAuthHeader(axios.defaults.headers.common);
@@ -226,6 +257,10 @@ apiClient.interceptors.request.use(async (config) => {
     }
 
     const method = String(config.method || 'get').toLowerCase();
+    if (method !== 'get') {
+        clearCompletedGetRequests();
+    }
+
     if (CSRF_METHODS.has(method) && !isCsrfRequest(config)) {
         const csrfToken = await ensureCsrfToken();
         if (csrfToken) {
@@ -325,6 +360,62 @@ apiClient.interceptors.response.use(
         return apiClient(config);
     }
 );
+
+const originalGet = apiClient.get.bind(apiClient);
+
+apiClient.get = (url, config = {}) => {
+    const responseType = config.responseType || 'json';
+    const canDedupe =
+        !config.signal &&
+        !config.__skipDedupe &&
+        (!responseType || responseType === 'json');
+    const canUseCompletedDuplicate =
+        !config.signal &&
+        !config.__skipDedupe &&
+        !config.__skipCompletedDedupe &&
+        (!responseType || responseType === 'json');
+
+    if (!canDedupe && !canUseCompletedDuplicate) {
+        return originalGet(url, config);
+    }
+
+    const key = getDedupeKey(url, config);
+    if (canUseCompletedDuplicate) {
+        const cached = completedGetRequests.get(key);
+        if (cached && Date.now() - cached.timestamp <= COMPLETED_GET_CACHE_TTL_MS) {
+            return Promise.resolve(cached.response);
+        }
+        if (cached) {
+            completedGetRequests.delete(key);
+        }
+    }
+
+    if (!canDedupe) {
+        return originalGet(url, config).then((response) => {
+            if (canUseCompletedDuplicate) {
+                completedGetRequests.set(key, { response, timestamp: Date.now() });
+            }
+            return response;
+        });
+    }
+
+    if (inFlightGetRequests.has(key)) {
+        return inFlightGetRequests.get(key);
+    }
+
+    const request = originalGet(url, config)
+        .then((response) => {
+            if (canUseCompletedDuplicate) {
+                completedGetRequests.set(key, { response, timestamp: Date.now() });
+            }
+            return response;
+        })
+        .finally(() => {
+            inFlightGetRequests.delete(key);
+        });
+    inFlightGetRequests.set(key, request);
+    return request;
+};
 
 export { API_BASE };
 export default apiClient;

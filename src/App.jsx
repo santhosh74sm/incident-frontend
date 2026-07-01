@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
@@ -34,23 +34,43 @@ const lazyWithChunkRetry = (importPage) =>
       })
   );
 
-const Login = lazyWithChunkRetry(() => import('./pages/Login'));
-const Register = lazyWithChunkRetry(() => import('./pages/Register'));
-const ForceChangePassword = lazyWithChunkRetry(() => import('./pages/ForceChangePassword'));
-const Dashboard = lazyWithChunkRetry(() => import('./pages/Dashboard'));
-const CreateIncident = lazyWithChunkRetry(() => import('./pages/CreateIncident'));
-const IncidentList = lazyWithChunkRetry(() => import('./pages/IncidentList'));
-const IncidentDetail = lazyWithChunkRetry(() => import('./pages/IncidentDetail'));
-const UserManagement = lazyWithChunkRetry(() => import('./pages/UserManagement'));
-const StudentUpload = lazyWithChunkRetry(() => import('./pages/StudentUpload'));
-const BulkUpload = lazyWithChunkRetry(() => import('./pages/BulkUpload'));
-const ProfessionalAnalytics = lazyWithChunkRetry(() => import('./pages/ProfessionalAnalytics'));
-const StudentAnalytics = lazyWithChunkRetry(() => import('./pages/StudentAnalytics'));
-const Logs = lazyWithChunkRetry(() => import('./pages/Logs'));
-const LetterTemplates = lazyWithChunkRetry(() => import('./pages/LetterTemplates'));
-const IssuedLetters = lazyWithChunkRetry(() => import('./pages/IssuedLetters'));
-const AcademicYearManagement = lazyWithChunkRetry(() => import('./pages/AcademicYearManagement'));
-const CommandPalette = lazyWithChunkRetry(() => import('./components/CommandPalette'));
+const pageImports = {
+  Login: () => import('./pages/Login'),
+  Register: () => import('./pages/Register'),
+  ForceChangePassword: () => import('./pages/ForceChangePassword'),
+  Dashboard: () => import('./pages/Dashboard'),
+  CreateIncident: () => import('./pages/CreateIncident'),
+  IncidentList: () => import('./pages/IncidentList'),
+  IncidentDetail: () => import('./pages/IncidentDetail'),
+  UserManagement: () => import('./pages/UserManagement'),
+  StudentUpload: () => import('./pages/StudentUpload'),
+  BulkUpload: () => import('./pages/BulkUpload'),
+  ProfessionalAnalytics: () => import('./pages/ProfessionalAnalytics'),
+  StudentAnalytics: () => import('./pages/StudentAnalytics'),
+  Logs: () => import('./pages/Logs'),
+  LetterTemplates: () => import('./pages/LetterTemplates'),
+  IssuedLetters: () => import('./pages/IssuedLetters'),
+  AcademicYearManagement: () => import('./pages/AcademicYearManagement'),
+  CommandPalette: () => import('./components/CommandPalette'),
+};
+
+const Login = lazyWithChunkRetry(pageImports.Login);
+const Register = lazyWithChunkRetry(pageImports.Register);
+const ForceChangePassword = lazyWithChunkRetry(pageImports.ForceChangePassword);
+const Dashboard = lazyWithChunkRetry(pageImports.Dashboard);
+const CreateIncident = lazyWithChunkRetry(pageImports.CreateIncident);
+const IncidentList = lazyWithChunkRetry(pageImports.IncidentList);
+const IncidentDetail = lazyWithChunkRetry(pageImports.IncidentDetail);
+const UserManagement = lazyWithChunkRetry(pageImports.UserManagement);
+const StudentUpload = lazyWithChunkRetry(pageImports.StudentUpload);
+const BulkUpload = lazyWithChunkRetry(pageImports.BulkUpload);
+const ProfessionalAnalytics = lazyWithChunkRetry(pageImports.ProfessionalAnalytics);
+const StudentAnalytics = lazyWithChunkRetry(pageImports.StudentAnalytics);
+const Logs = lazyWithChunkRetry(pageImports.Logs);
+const LetterTemplates = lazyWithChunkRetry(pageImports.LetterTemplates);
+const IssuedLetters = lazyWithChunkRetry(pageImports.IssuedLetters);
+const AcademicYearManagement = lazyWithChunkRetry(pageImports.AcademicYearManagement);
+const CommandPalette = lazyWithChunkRetry(pageImports.CommandPalette);
 
 const PageLoader = () => (
   <div className="flex min-h-[50vh] items-center justify-center">
@@ -97,6 +117,60 @@ const loadPage = (element) => (
     <Suspense fallback={<PageLoader />}>{element}</Suspense>
   </ChunkErrorBoundary>
 );
+
+const scheduleIdleWork = (callback) => {
+  if (typeof window === 'undefined') return () => {};
+  if ('requestIdleCallback' in window) {
+    const id = window.requestIdleCallback(callback, { timeout: 2500 });
+    return () => window.cancelIdleCallback?.(id);
+  }
+  const id = window.setTimeout(callback, 600);
+  return () => window.clearTimeout(id);
+};
+
+const AuthenticatedRoutePreloader = () => {
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user) return undefined;
+
+    const role = normalizeRole(user.role);
+    const imports = [
+      pageImports.Dashboard,
+      pageImports.IncidentList,
+      pageImports.IncidentDetail,
+      pageImports.CommandPalette,
+    ];
+
+    if (['Admin', 'Teacher'].includes(role)) {
+      imports.push(pageImports.CreateIncident);
+    }
+
+    if (['Super Admin', 'Admin'].includes(role)) {
+      imports.push(
+        pageImports.ProfessionalAnalytics,
+        pageImports.StudentAnalytics,
+        pageImports.UserManagement,
+        pageImports.StudentUpload,
+        pageImports.BulkUpload
+      );
+    }
+
+    if (['Super Admin', 'Admin', 'Teacher'].includes(role)) {
+      imports.push(pageImports.LetterTemplates, pageImports.IssuedLetters);
+    }
+
+    if (role === 'Super Admin') {
+      imports.push(pageImports.Logs, pageImports.AcademicYearManagement);
+    }
+
+    return scheduleIdleWork(() => {
+      imports.forEach((preload) => preload().catch(() => {}));
+    });
+  }, [user]);
+
+  return null;
+};
 
 const PrivateRoute = ({ children }) => {
   const { user } = useAuth();
@@ -149,6 +223,7 @@ function App() {
               <Suspense fallback={null}>
                 <CommandPalette />
               </Suspense>
+              <AuthenticatedRoutePreloader />
               <Routes>
                 <Route path="/login" element={loadPage(<Login />)} />
                 <Route path="/register" element={loadPage(<Register />)} />

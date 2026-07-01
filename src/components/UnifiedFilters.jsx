@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useDeferredValue, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Calendar, ChevronDown, Filter, RefreshCw, Search, X } from 'lucide-react';
 import { formatDisplayValue } from '../utils/analytics';
@@ -78,13 +78,15 @@ export const FilterDropdown = ({
     const [dropdownLayout, setDropdownLayout] = useState(null);
     const triggerRef = useRef(null);
     const menuRef    = useRef(null);
+    const deferredQuery = useDeferredValue(query);
 
     const normalizedOptions = useMemo(() => normalizeOptions(options), [options]);
+    const selectedSet = useMemo(() => new Set(selected), [selected]);
     const filteredOptions   = useMemo(() => {
-        const q = query.trim().toLowerCase();
+        const q = deferredQuery.trim().toLowerCase();
         if (!q) return normalizedOptions;
         return normalizedOptions.filter((option) => option.label.toLowerCase().includes(q));
-    }, [normalizedOptions, query]);
+    }, [deferredQuery, normalizedOptions]);
 
     const selectedLabel = useMemo(
         () => getButtonLabel(selected, normalizedOptions, placeholder),
@@ -140,6 +142,17 @@ export const FilterDropdown = ({
         onChange([]);
         setQuery('');
     };
+
+    const handleSelectAll = useCallback((event) => {
+        onChange(event.target.checked ? normalizedOptions.map((option) => option.id) : []);
+    }, [normalizedOptions, onChange]);
+
+    const handleOptionToggle = useCallback((optionId) => {
+        const next = selectedSet.has(optionId)
+            ? selected.filter((item) => item !== optionId)
+            : [...selected, optionId];
+        onChange(next);
+    }, [onChange, selected, selectedSet]);
 
     const selectionSummary = selected.length === 0
         ? 'None selected'
@@ -205,9 +218,7 @@ export const FilterDropdown = ({
                                 ref={(input) => {
                                     if (input) input.indeterminate = someSelected;
                                 }}
-                                onChange={(event) =>
-                                    onChange(event.target.checked ? normalizedOptions.map((o) => o.id) : [])
-                                }
+                                onChange={handleSelectAll}
                                 className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-950"
                             />
                             <span>Select All</span>
@@ -233,18 +244,13 @@ export const FilterDropdown = ({
                                 <label
                                     key={option.id}
                                     role="option"
-                                    aria-selected={selected.includes(option.id)}
+                                    aria-selected={selectedSet.has(option.id)}
                                     className="flex min-h-[44px] cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-700 transition-colors duration-150 hover:bg-blue-50 dark:text-slate-200 dark:hover:bg-slate-800"
                                 >
                                     <input
                                         type="checkbox"
-                                        checked={selected.includes(option.id)}
-                                        onChange={() => {
-                                            const next = selected.includes(option.id)
-                                                ? selected.filter((item) => item !== option.id)
-                                                : [...selected, option.id];
-                                            onChange(next);
-                                        }}
+                                        checked={selectedSet.has(option.id)}
+                                        onChange={() => handleOptionToggle(option.id)}
                                         className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-950"
                                     />
                                     <span className="min-w-0 flex-1 truncate" title={option.label}>

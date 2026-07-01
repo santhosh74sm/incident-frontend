@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import apiClient from '../config/apiClient';
 import * as XLSX from 'xlsx';
@@ -92,6 +92,7 @@ const StudentAnalytics = () => {
     const [loading, setLoading] = useState(true);
     const [activeSummaryTab, setActiveSummaryTab] = useState('active');
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
     const [classFilter, setClassFilter] = useState('');
     const [sectionFilter, setSectionFilter] = useState('');
     const [studentSummarySort, setStudentSummarySort] = useState({ key: 'name', direction: 'asc' });
@@ -121,6 +122,7 @@ const StudentAnalytics = () => {
     const [currentAcademicYear, setCurrentAcademicYear] = useState('');
     const [academicYears, setAcademicYears] = useState([]);
     const [locationDistribution, setLocationDistribution] = useState([]);
+    const studentDirectoryRequestRef = useRef(0);
     const compactXAxisProps = useMemo(
         () => compactChart
             ? { height: 72, interval: 0, tickMargin: 12, tick: <CompactXAxisTick maxLength={12} /> }
@@ -187,6 +189,27 @@ const StudentAnalytics = () => {
 
     const fetchStudents = useCallback(async () => {
         if (!user?._id) return;
+        const requestId = studentDirectoryRequestRef.current + 1;
+        studentDirectoryRequestRef.current = requestId;
+        const isCurrentRequest = () => studentDirectoryRequestRef.current === requestId;
+        const attachStableId = (student) => ({
+            ...student,
+            id: `${student._id || student.admissionNo}-${student.academicYear || academicYear}`,
+        });
+        const syncSelectedStudent = (studentsData) => {
+            if (params?.admissionNo) {
+                const targetStudent = studentsData.find((student) => String(student.admissionNo) === String(params.admissionNo));
+                if (targetStudent) {
+                    setSelectedStudent(targetStudent);
+                }
+                return;
+            }
+            setSelectedStudent((current) => (
+                current
+                    ? studentsData.find((student) => String(student.admissionNo) === String(current.admissionNo)) || current
+                    : current
+            ));
+        };
         try {
             setLoading(true);
             if (!academicYear) return;
@@ -195,43 +218,50 @@ const StudentAnalytics = () => {
                 status: studentStatus,
                 includeSummaryCounts: true,
                 limit: studentSummaryPageSize,
-                ...(params?.admissionNo ? { search: params.admissionNo } : searchTerm ? { search: searchTerm } : {}),
+                ...(params?.admissionNo ? { search: params.admissionNo } : debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
                 ...(classFilter ? { className: classFilter } : {}),
                 ...(sectionFilter ? { section: sectionFilter } : {}),
                 sortBy: studentSummarySort.key,
                 sortDirection: studentSummarySort.direction,
             };
             const firstResponse = await apiClient.get('/api/students', { params: { ...baseParams, page: 1 } });
-            const studentsData = Array.isArray(firstResponse.data?.data) ? [...firstResponse.data.data] : [];
-            const pagination = firstResponse.data?.pagination || { page: 1, total: studentsData.length, totalPages: 1 };
-            for (let page = 2; page <= (pagination.totalPages || 1); page += 1) {
-                const { data } = await apiClient.get('/api/students', { params: { ...baseParams, page } });
-                studentsData.push(...(Array.isArray(data?.data) ? data.data : []));
-            }
-            setStudents(studentsData.map((student) => ({
-                ...student,
-                id: `${student._id || student.admissionNo}-${student.academicYear || academicYear}`,
-            })));
-            setStudentDirectorySummary(firstResponse.data?.summary || { total: studentsData.length, incidentCount: 0, letterCount: 0 });
+            if (!isCurrentRequest()) return;
 
-            if (params?.admissionNo) {
-                const targetStudent = studentsData.find((student) => String(student.admissionNo) === String(params.admissionNo));
-                if (targetStudent) {
-                    setSelectedStudent(targetStudent);
-                }
-            } else {
-                setSelectedStudent((current) => (
-                    current
-                        ? studentsData.find((student) => String(student.admissionNo) === String(current.admissionNo)) || current
-                        : current
-                ));
-            }
-        } catch {
-            setStudents([]);
-        } finally {
+            const firstPageStudents = Array.isArray(firstResponse.data?.data) ? firstResponse.data.data : [];
+            const pagination = firstResponse.data?.pagination || { page: 1, total: firstPageStudents.length, totalPages: 1 };
+            setStudents(firstPageStudents.map(attachStableId));
+            setStudentDirectorySummary(firstResponse.data?.summary || { total: firstPageStudents.length, incidentCount: 0, letterCount: 0 });
+            syncSelectedStudent(firstPageStudents);
             setLoading(false);
+
+            const totalPages = pagination.totalPages || 1;
+            if (totalPages <= 1) return;
+
+            const remainingPages = Array.from({ length: totalPages - 1 }, (_, index) => index + 2);
+            const remainingResponses = await Promise.all(
+                remainingPages.map((page) => (
+                    apiClient.get('/api/students', { params: { ...baseParams, page } })
+                        .catch(() => ({ data: { data: [] } }))
+                ))
+            );
+            if (!isCurrentRequest()) return;
+
+            const remainingStudents = remainingResponses.flatMap(({ data }) => (
+                Array.isArray(data?.data) ? data.data : []
+            ));
+            const studentsData = [...firstPageStudents, ...remainingStudents];
+            setStudents(studentsData.map(attachStableId));
+            syncSelectedStudent(studentsData);
+        } catch {
+            if (isCurrentRequest()) {
+                setStudents([]);
+            }
+        } finally {
+            if (isCurrentRequest()) {
+                setLoading(false);
+            }
         }
-    }, [academicYear, classFilter, params?.admissionNo, searchTerm, sectionFilter, studentStatus, studentSummarySort.direction, studentSummarySort.key, user?._id]);
+    }, [academicYear, classFilter, debouncedSearchTerm, params?.admissionNo, sectionFilter, studentStatus, studentSummarySort.direction, studentSummarySort.key, user?._id]);
 
     const fetchStudentIncidents = useCallback(async (student, options = { reset: false }) => {
         if (!user?._id || !student) return;
@@ -328,6 +358,13 @@ const StudentAnalytics = () => {
         fetchFilterOptions();
         fetchStudents();
     }, [fetchFilterOptions, fetchStudents]);
+
+    useEffect(() => {
+        const timer = window.setTimeout(() => {
+            setDebouncedSearchTerm(searchTerm.trim());
+        }, 300);
+        return () => window.clearTimeout(timer);
+    }, [searchTerm]);
 
     useEffect(() => {
         if (selectedStudent) {
@@ -560,7 +597,7 @@ const StudentAnalytics = () => {
                 includeSummaryCounts: true,
                 page: exportPage,
                 limit: 100,
-                ...(searchTerm ? { search: searchTerm } : {}),
+                ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
                 ...(classFilter ? { className: classFilter } : {}),
                 ...(sectionFilter ? { section: sectionFilter } : {}),
                 sortBy: studentSummarySort.key,
@@ -598,7 +635,7 @@ const StudentAnalytics = () => {
         );
     };
 
-    if (loading && !selectedStudent) {
+    if (loading && !selectedStudent && students.length === 0) {
         return (
             <div className="flex min-h-screen bg-slate-100 dark:bg-slate-950">
                 <div className="flex min-w-0 flex-1 flex-col">

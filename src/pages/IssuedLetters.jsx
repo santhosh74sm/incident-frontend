@@ -351,6 +351,7 @@ const IssuedLetters = () => {
     const [deleting, setDeleting] = useState(false);
     const [downloadingKey, setDownloadingKey] = useState('');
     const hasLoadedLettersRef = useRef(false);
+    const lettersRequestRef = useRef({ controller: null, id: 0 });
 
     const config = useMemo(() => ({ headers: {} }), []);
     const isSuperAdmin = isSuperAdminRole(user?.role);
@@ -387,6 +388,11 @@ const IssuedLetters = () => {
     const fetchLetters = useCallback(async (showLoader = true) => {
         if (!user?._id) return;
         if (!filters.academicYear) return;
+        lettersRequestRef.current.controller?.abort();
+        const controller = new AbortController();
+        const requestId = lettersRequestRef.current.id + 1;
+        lettersRequestRef.current = { controller, id: requestId };
+        const isCurrentRequest = () => lettersRequestRef.current.id === requestId;
 
         try {
             if (showLoader && !hasLoadedLettersRef.current) {
@@ -408,8 +414,11 @@ const IssuedLetters = () => {
             params.set('includeMatchingIds', 'true');
             if (debouncedSearchTerm) params.set('search', debouncedSearchTerm);
 
-            const requestConfig = params.toString() ? { ...config, params } : config;
+            const requestConfig = params.toString()
+                ? { ...config, params, signal: controller.signal }
+                : { ...config, signal: controller.signal };
             const response = await apiClient.get('/api/issued-letters', requestConfig);
+            if (!isCurrentRequest()) return;
 
             const responseData = response.data || {};
             setLetters(Array.isArray(responseData.data) ? responseData.data : []);
@@ -417,13 +426,21 @@ const IssuedLetters = () => {
             setCategorySummary(Array.isArray(responseData.summary?.categories) ? responseData.summary.categories : []);
             setMatchingLetterIds(Array.isArray(responseData.matchingIds) ? responseData.matchingIds : []);
         } catch (error) {
+            if (error?.code === 'ERR_CANCELED' || error?.name === 'CanceledError') return;
+            if (!isCurrentRequest()) return;
             addToast(error.response?.data?.message || 'Failed to load issued letters.', 'error');
         } finally {
-            hasLoadedLettersRef.current = true;
-            setLoading(false);
-            setRefreshing(false);
+            if (isCurrentRequest()) {
+                hasLoadedLettersRef.current = true;
+                setLoading(false);
+                setRefreshing(false);
+            }
         }
     }, [addToast, config, dateRange, debouncedSearchTerm, filters.academicYear, filters.categories, filters.classes, filters.sections, page, user?._id]);
+
+    useEffect(() => () => {
+        lettersRequestRef.current.controller?.abort();
+    }, []);
 
     useEffect(() => {
         fetchFilters();

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import apiClient from '../config/apiClient';
 import dayjs from 'dayjs';
 import { buildAcademicYearOptions, formatActivityRecordLabel } from '../utils/analytics';
@@ -226,6 +226,7 @@ const Logs = () => {
     const [academicYears, setAcademicYears] = useState([]);
     const [currentAcademicYear, setCurrentAcademicYear] = useState('');
     const [expandedRowId, setExpandedRowId] = useState(null);
+    const logsRequestRef = useRef({ controller: null, id: 0 });
 
     useEffect(() => {
         const timer = window.setTimeout(() => {
@@ -238,6 +239,11 @@ const Logs = () => {
 
     const fetchLogs = useCallback(async () => {
         if (!user?._id || !filters.academicYear) return;
+        logsRequestRef.current.controller?.abort();
+        const controller = new AbortController();
+        const requestId = logsRequestRef.current.id + 1;
+        logsRequestRef.current = { controller, id: requestId };
+        const isCurrentRequest = () => logsRequestRef.current.id === requestId;
 
         setLoading(true);
 
@@ -256,7 +262,9 @@ const Logs = () => {
             const { data } = await apiClient.get('/api/logs', {
                 headers: {},
                 params,
+                signal: controller.signal,
             });
+            if (!isCurrentRequest()) return;
 
             setLogs(Array.isArray(data?.logs) ? data.logs : []);
             setPagination(data?.pagination || {
@@ -280,7 +288,9 @@ const Logs = () => {
                 const fromResponse = Array.isArray(data?.filters?.academicYears) ? data.filters.academicYears : [];
                 return fromResponse.length > 0 ? fromResponse : current;
             });
-        } catch {
+        } catch (error) {
+            if (error?.code === 'ERR_CANCELED' || error?.name === 'CanceledError') return;
+            if (!isCurrentRequest()) return;
             setLogs([]);
             setPagination((current) => ({
                 ...current,
@@ -290,9 +300,15 @@ const Logs = () => {
                 hasPrevPage: false,
             }));
         } finally {
-            setLoading(false);
+            if (isCurrentRequest()) {
+                setLoading(false);
+            }
         }
     }, [debouncedSearch, filters.academicYear, filters.end, filters.entityType, filters.start, page, pageSize, user?._id]);
+
+    useEffect(() => () => {
+        logsRequestRef.current.controller?.abort();
+    }, []);
 
     useEffect(() => {
         fetchLogs();

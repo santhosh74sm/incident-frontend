@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     AlertTriangle,
@@ -88,6 +88,7 @@ const IncidentList = () => {
     const [pagination, setPagination] = useState({ page: 1, total: 0, totalPages: 1 });
     const [serverSummary, setServerSummary] = useState({ total: 0, open: 0, inProgress: 0, closed: 0, highPriority: 0, unread: 0 });
     const pageSize = 18;
+    const incidentRequestRef = useRef({ controller: null, id: 0 });
 
     const config = useMemo(() => ({ headers: {} }), []);
     const userId = getRecordId(user);
@@ -120,11 +121,16 @@ const IncidentList = () => {
     const fetchIncidents = useCallback(async (options = { reset: false }) => {
         if (!userId) return;
         if (!academicYear) return;
+        incidentRequestRef.current.controller?.abort();
+        const controller = new AbortController();
+        const requestId = incidentRequestRef.current.id + 1;
+        incidentRequestRef.current = { controller, id: requestId };
+        const isCurrentRequest = () => incidentRequestRef.current.id === requestId;
 
         try {
             setLoading(true);
             setError(null);
-            const requestConfig = { ...config, params: new URLSearchParams() };
+            const requestConfig = { ...config, params: new URLSearchParams(), signal: controller.signal };
 
             if (!options?.reset) {
                 const allSelected = allStaffOptions.length > 0 && selectedStaff.length === allStaffOptions.length;
@@ -169,8 +175,9 @@ const IncidentList = () => {
             summaryParams.delete('limit');
             const [{ data }, { data: summaryData }] = await Promise.all([
                 apiClient.get('/api/incidents', requestConfig),
-                apiClient.get('/api/incidents/summary', { ...config, params: summaryParams }),
+                apiClient.get('/api/incidents/summary', { ...config, params: summaryParams, signal: controller.signal }),
             ]);
+            if (!isCurrentRequest()) return;
             const nextIncidents = Array.isArray(data?.data) ? data.data : [];
             setIncidents(nextIncidents);
             setPagination(data?.pagination || { page: 1, total: nextIncidents.length, totalPages: 1 });
@@ -189,11 +196,19 @@ const IncidentList = () => {
                 });
             }
         } catch (requestError) {
+            if (['ERR_CANCELED', 'CanceledError'].includes(requestError?.code) || requestError?.name === 'CanceledError') return;
+            if (!isCurrentRequest()) return;
             setError(requestError.response?.data?.message || 'Failed to load incidents.');
         } finally {
-            setLoading(false);
+            if (isCurrentRequest()) {
+                setLoading(false);
+            }
         }
     }, [academicYear, activeTab, allStaffOptions, categoryFilter, classFilter, config, dateRange.end, dateRange.start, debouncedSearchQuery, page, readStatusFilter, sectionFilter, selectedStaff, staffList, statusFilter, userId]);
+
+    useEffect(() => () => {
+        incidentRequestRef.current.controller?.abort();
+    }, []);
 
     const fetchFilterData = useCallback(async () => {
         if (!userId) return;
