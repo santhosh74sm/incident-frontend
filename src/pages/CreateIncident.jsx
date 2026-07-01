@@ -266,6 +266,7 @@ const CreateIncident = () => {
     const navigate = useNavigate();
     const shownInsightsRef = useRef(new Set());
     const studentScopeRef = useRef({ className: '', section: '' });
+    const studentClassCacheRef = useRef(new Map());
     const isRestoringStudentRef = useRef(false);
     const restoredStudentRef = useRef(null);
     const formRef = useRef(null);
@@ -342,16 +343,21 @@ const CreateIncident = () => {
         [categories, formData.category, selectedCategoryId]
     );
 
+    const sectionFilteredStudents = useMemo(() => {
+        if (!formData.section) return students;
+        return students.filter((student) => String(student.section || '') === String(formData.section || ''));
+    }, [formData.section, students]);
+
     const filteredStudents = useMemo(() => {
         const search = studentSearch.trim().toLowerCase();
-        if (!search) return students;
+        if (!search) return sectionFilteredStudents;
 
-        return students.filter((student) => {
+        return sectionFilteredStudents.filter((student) => {
             const nameMatch = (student.name || '').toLowerCase().includes(search);
             const admissionMatch = (student.admissionNo || '').toLowerCase().includes(search);
             return nameMatch || admissionMatch;
         });
-    }, [studentSearch, students]);
+    }, [sectionFilteredStudents, studentSearch]);
 
     const checkLetterTemplate = useCallback(
         async (categoryName) => {
@@ -590,23 +596,37 @@ const CreateIncident = () => {
     }, [formData.class, formData.section, isDraftHydrated]);
 
     useEffect(() => {
-        if (!formData.class || !formData.section || !user?._id) {
+        if (!formData.class || !user?._id) {
             setStudents([]);
             return;
         }
 
         let active = true;
         const controller = new AbortController();
+        const className = formData.class;
+        const cachedStudents = studentClassCacheRef.current.get(className);
+
+        if (cachedStudents) {
+            setStudents(cachedStudents);
+            setFetchingStudents(false);
+            return () => {
+                active = false;
+                controller.abort();
+            };
+        }
 
         setFetchingStudents(true);
 
         apiClient
-            .get(`/api/students/filter?className=${formData.class}&section=${formData.section}`, {
+            .get(`/api/students/filter?className=${encodeURIComponent(className)}`, {
                 ...config,
                 signal: controller.signal,
             })
             .then((response) => {
-                if (active) setStudents(response.data || []);
+                if (!active) return;
+                const nextStudents = Array.isArray(response.data) ? response.data : [];
+                studentClassCacheRef.current.set(className, nextStudents);
+                setStudents(nextStudents);
             })
             .catch((error) => {
                 if (active && error?.code !== 'ERR_CANCELED') setStudents([]);
@@ -619,7 +639,19 @@ const CreateIncident = () => {
             active = false;
             controller.abort();
         };
-    }, [config, formData.class, formData.section, user?._id]);
+    }, [config, formData.class, user?._id]);
+
+    useEffect(() => {
+        if (!formData.class || !formData.section || students.length === 0) return;
+        const sectionExists = students.some((student) => String(student.section || '') === String(formData.section || ''));
+        if (sectionExists) return;
+
+        setFormData((current) => (
+            current.class === formData.class && current.section === formData.section
+                ? { ...current, section: '' }
+                : current
+        ));
+    }, [formData.class, formData.section, students]);
 
     useEffect(() => {
         if (!formData.category) {
@@ -1719,7 +1751,7 @@ const CreateIncident = () => {
                                 <SectionCard
                                     icon={Users}
                                     title="Student Selection"
-                                    description="Choose a class and section, then search for and select one student."
+                                    description="Choose a class to load students, then optionally narrow by section or search."
                                     step={1}
                                 >
                                     <div className="space-y-5">
@@ -1778,14 +1810,14 @@ const CreateIncident = () => {
                                             </div>
                                         )}
 
-                                        {!formData.class || !formData.section ? (
+                                        {!formData.class ? (
                                             <div className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/70 px-4 py-10 text-center">
                                                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100">
                                                     <Users className="h-5 w-5 text-indigo-500" />
                                                 </div>
                                                 <div>
                                                     <p className="text-sm font-semibold text-slate-700">No students loaded yet.</p>
-                                                    <p className="mt-1 text-xs text-slate-400">Select a class and section above to load the student list.</p>
+                                                    <p className="mt-1 text-xs text-slate-400">Select a class above to load the student list.</p>
                                                 </div>
                                             </div>
                                         ) : (
