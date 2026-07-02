@@ -18,10 +18,10 @@ const normalizeOptions = (options = []) =>
 // ─── Shared style tokens ───────────────────────────────────────────────────────
 
 const labelClassName =
-    'mb-1.5 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400';
+    'mb-1.5 block text-[11px] font-bold text-slate-500 dark:text-slate-400';
 
 const fieldClassName =
-    'min-h-[44px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 shadow-sm shadow-slate-200/40 transition-all duration-200 placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:shadow-none dark:placeholder:text-slate-500 dark:hover:border-slate-600 dark:focus:border-blue-400 dark:focus:ring-blue-400/20';
+    'min-h-[44px] w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 shadow-sm shadow-slate-200/30 transition-all duration-200 placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:shadow-none dark:placeholder:text-slate-500 dark:hover:border-slate-600 dark:focus:border-blue-400 dark:focus:ring-blue-400/20';
 
 // ─── Portal dropdown positioning ──────────────────────────────────────────────
 
@@ -397,15 +397,15 @@ export const UnifiedFilterBar = ({
     const showFields = !collapsible || !isCollapsed;
 
     return (
-        <div className="overflow-visible rounded-[28px] border border-white/70 bg-white/90 shadow-md shadow-slate-200/70 backdrop-blur transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-slate-950/50">
+        <div className="overflow-visible rounded-lg border border-slate-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900">
             {/* Bar header */}
-            <div className={`flex flex-col gap-3 px-5 py-4 dark:border-slate-800 md:flex-row md:items-center md:justify-between ${showFields ? 'border-b border-slate-100' : ''}`}>
+            <div className={`flex flex-col gap-3 px-5 py-4 dark:border-slate-800 md:flex-row md:items-center md:justify-between ${showFields ? 'border-b border-slate-200' : ''}`}>
                 <div className="flex items-center gap-3">
-                    <div className="rounded-2xl border border-blue-100 bg-blue-50 p-2.5 text-blue-600 shadow-sm dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300">
+                    <div className="rounded-lg border border-blue-100 bg-blue-50 p-2.5 text-blue-600 shadow-sm dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300">
                         <Filter className="h-4 w-4" aria-hidden />
                     </div>
                     <div className="flex items-center gap-2">
-                        <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-700 dark:text-slate-200">
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
                             {title}
                         </h3>
                         {hasActiveFilters ? (
@@ -425,7 +425,7 @@ export const UnifiedFilterBar = ({
                             onClick={() => setIsCollapsed((current) => !current)}
                             aria-expanded={showFields}
                             aria-controls={panelId}
-                            className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm font-semibold text-blue-700 transition-colors duration-200 hover:border-blue-300 hover:bg-blue-100 dark:border-blue-500/30 dark:bg-blue-950/30 dark:text-blue-200 dark:hover:bg-blue-950/50 sm:w-auto"
+                            className="inline-flex min-h-[40px] w-full items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 transition-colors duration-200 hover:border-blue-300 hover:bg-blue-100 dark:border-blue-500/30 dark:bg-blue-950/30 dark:text-blue-200 dark:hover:bg-blue-950/50 sm:w-auto"
                         >
                             <Filter className="h-3.5 w-3.5" aria-hidden />
                             {showFields ? 'Hide Filters' : 'Show Filters'}
@@ -434,7 +434,7 @@ export const UnifiedFilterBar = ({
                     <button
                         type="button"
                         onClick={onReset}
-                        className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-600 transition-colors duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800 sm:w-auto"
+                        className="inline-flex min-h-[40px] w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition-colors duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800 sm:w-auto"
                     >
                         <RefreshCw className="h-3.5 w-3.5" aria-hidden />
                         Reset Filters

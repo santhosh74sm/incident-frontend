@@ -38,9 +38,7 @@ import {
     Zap,
 } from 'lucide-react';
 import {
-    DashboardHero,
     DashboardPanel,
-    DashboardStatCard,
     EmptyStatePanel,
 } from '../components/analytics/DashboardPrimitives';
 import { formatShortDate, formatShortDateTime, getIncidentTimestamp, resolveHandlerLabel, formatDisplayValue } from '../utils/analytics';
@@ -60,7 +58,7 @@ const STATUS_STYLES = {
     Closed: { badge: 'border-emerald-200 bg-emerald-50 text-emerald-700', tone: 'emerald' },
 };
 const FIELD_CARD_CLASS =
-    'rounded-2xl border border-slate-200 bg-slate-50/80 p-4 shadow-sm shadow-slate-200/40';
+    'incident-field-card rounded-lg border border-slate-200 bg-slate-50/70 p-4 shadow-sm shadow-slate-200/30 dark:border-slate-800 dark:bg-slate-950/40 dark:shadow-none';
 
 const getStatusStyle = (status) =>
     STATUS_STYLES[status] || { badge: 'border-slate-200 bg-slate-50 text-slate-700', tone: 'slate' };
@@ -213,7 +211,7 @@ const EvidenceFilePreview = ({ src, alt }) => {
 
     if (failed) {
         return (
-            <div ref={previewRef} className="mt-4 flex h-44 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white text-sm font-medium text-slate-500">
+            <div ref={previewRef} className="mt-3 flex h-36 items-center justify-center rounded-lg border border-dashed border-slate-200 bg-white text-sm font-medium text-slate-500">
                 Preview unavailable
             </div>
         );
@@ -221,7 +219,7 @@ const EvidenceFilePreview = ({ src, alt }) => {
 
     if (!objectUrl) {
         return (
-            <div ref={previewRef} className="mt-4 flex h-44 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white text-sm font-medium text-slate-500">
+            <div ref={previewRef} className="mt-3 flex h-36 items-center justify-center rounded-lg border border-dashed border-slate-200 bg-white text-sm font-medium text-slate-500">
                 {shouldLoad ? 'Loading preview...' : 'Preview will load when visible'}
             </div>
         );
@@ -235,7 +233,7 @@ const EvidenceFilePreview = ({ src, alt }) => {
             alt={alt}
             loading="lazy"
             decoding="async"
-            className="mt-4 h-44 w-full rounded-2xl border border-slate-200 object-cover"
+            className="mt-3 h-36 w-full rounded-lg border border-slate-200 object-cover"
         />
         );
     }
@@ -247,13 +245,13 @@ const EvidenceFilePreview = ({ src, alt }) => {
                 src={objectUrl}
                 title={alt}
                 loading="lazy"
-                className="mt-4 h-44 w-full rounded-2xl border border-slate-200 bg-white"
+                className="mt-3 h-36 w-full rounded-lg border border-slate-200 bg-white"
             />
         );
     }
 
     return (
-        <div ref={previewRef} className="mt-4 flex h-44 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white text-sm font-medium text-slate-500">
+        <div ref={previewRef} className="mt-3 flex h-36 items-center justify-center rounded-lg border border-dashed border-slate-200 bg-white text-sm font-medium text-slate-500">
             Preview unavailable
         </div>
     );
@@ -263,13 +261,13 @@ const DetailField = ({ icon: Icon, label, value, helper = null, action = null })
     <div className={FIELD_CARD_CLASS}>
         <div className="flex items-start gap-3">
             {Icon ? (
-                <div className="rounded-2xl bg-white p-2.5 text-slate-600 shadow-sm shadow-slate-200/70">
-                    <Icon size={18} />
+                <div className="rounded-lg bg-white p-2 text-slate-500 shadow-sm shadow-slate-200/60 dark:bg-slate-900 dark:shadow-none">
+                    <Icon size={16} />
                 </div>
             ) : null}
             <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">{label}</p>
-                <div className="mt-2 text-sm font-semibold text-slate-900">{value || 'N/A'}</div>
+                <p className="text-xs font-medium text-slate-500">{label}</p>
+                <div className="mt-1.5 text-sm font-semibold text-slate-950 dark:text-slate-100">{value || 'N/A'}</div>
                 {helper ? <p className="mt-1 text-sm text-slate-500">{helper}</p> : null}
             </div>
             {action}
@@ -282,18 +280,18 @@ const TimelineStep = ({ step, isLast }) => {
     return (
         <div className="flex gap-4">
             <div className="flex flex-col items-center">
-                <div className={`flex h-10 w-10 items-center justify-center rounded-2xl ${step.surfaceClass}`}>
-                    <Icon size={18} className={step.iconClass} />
+                <div className={`flex h-9 w-9 items-center justify-center rounded-full ${step.surfaceClass}`}>
+                    <Icon size={16} className={step.iconClass} />
                 </div>
-                {!isLast ? <div className="mt-3 h-full min-h-[48px] w-px bg-slate-200" /> : null}
+                {!isLast ? <div className="mt-2 h-full min-h-[46px] w-px bg-slate-200 dark:bg-slate-800" /> : null}
             </div>
-            <div className="flex-1 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 shadow-sm shadow-slate-200/40">
+            <div className="flex-1 pb-5">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                        <p className="text-sm font-semibold text-slate-900">{step.label}</p>
+                        <p className="text-sm font-bold text-slate-950 dark:text-slate-100">{step.label}</p>
                         {step.note ? <p className="mt-1 text-sm text-slate-500">{step.note}</p> : null}
                     </div>
-                    <span className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
+                    <span className="text-xs font-medium text-slate-500">
                         {formatShortDateTime(step.time)}
                     </span>
                 </div>
@@ -343,6 +341,8 @@ const IncidentDetail = () => {
     const deleteInFlightRef = useRef(false);
     const markedIncidentReadRef = useRef('');
     const userId = getRecordId(user);
+    const detailSectionRefs = useRef({});
+    const [activeDetailSection, setActiveDetailSection] = useState('overview');
 
     const fetchFieldOptions = useCallback(async () => {
         try {
@@ -911,10 +911,6 @@ const IncidentDetail = () => {
     );
 
     const statusStyle = getStatusStyle(incident?.status);
-    const heroDescription = useMemo(() => {
-        if (!incident) return 'Review incident details and progress.';
-        return 'Review incident details and progress.';
-    }, [incident]);
 
     const showRejectionAlert = Boolean(incident?.rejectionReason && !incident?.closureRequested && incident?.status !== 'Closed');
     const showClosureRequestedAlert = Boolean(incident?.closureRequested && incident?.status !== 'Closed');
@@ -926,6 +922,21 @@ const IncidentDetail = () => {
         isHandler &&
         incident?.status !== 'Closed'
     );
+    const detailTabs = useMemo(() => ([
+        { key: 'overview', label: 'Overview', count: 0, icon: ShieldCheck },
+        { key: 'evidence', label: 'Evidence', count: evidenceAssets.length, icon: FileImage },
+        { key: 'progress', label: 'Progress', count: progressLogs.length, icon: Activity },
+        { key: 'letters', label: 'Letters', count: incident?.letterGenerated || generatedLetter ? 1 : 0, icon: Mail },
+        { key: 'notes', label: 'Notes', count: progressLogs.length, icon: MessageSquare },
+        { key: 'actionLog', label: 'Action Log', count: timelineData.length, icon: Clock },
+    ]), [evidenceAssets.length, generatedLetter, incident?.letterGenerated, progressLogs.length, timelineData.length]);
+    const scrollToDetailSection = useCallback((sectionKey) => {
+        setActiveDetailSection(sectionKey);
+        detailSectionRefs.current[sectionKey]?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+        });
+    }, []);
 
     if (loading && !incident) {
         return (
@@ -957,35 +968,58 @@ const IncidentDetail = () => {
     }
 
     return (
-        <div className="w-full min-w-0 p-4 lg:p-6">
-            <div className="mx-auto max-w-[1600px] space-y-6">
-                        <DashboardHero
-                            eyebrow="Case Management"
-                            title={incident.title || 'Untitled Incident'}
-                            description={heroDescription}
-                            icon={ShieldCheck}
-                            actions={(
-                                <>
+        <div className="incident-workspace w-full min-w-0 bg-[#f6f8fc] p-3 text-slate-800 dark:bg-slate-950 dark:text-slate-100 sm:p-4 lg:p-6">
+            <div className="mx-auto max-w-[1680px] space-y-4">
+                        <section className="incident-hero space-y-4 rounded-lg border border-slate-200 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+                            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                                <div className="min-w-0">
+                                    <nav className="mb-4 flex flex-wrap items-center gap-2 text-sm font-medium text-slate-500" aria-label="Breadcrumb">
+                                        <button type="button" onClick={() => navigate('/incidents')} className="inline-flex items-center gap-1 text-blue-600 transition hover:text-blue-700">
+                                            <Activity size={14} /> All Incidents
+                                        </button>
+                                        <span aria-hidden="true">/</span>
+                                        <span className="text-slate-800 dark:text-slate-200">Incident Details</span>
+                                    </nav>
+                                    <span className={`inline-flex rounded-md border px-2.5 py-1 text-xs font-bold uppercase ${statusStyle.badge}`}>
+                                        {formatDisplayValue(incident.status || 'Open')}
+                                    </span>
+                                    <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-slate-950 dark:text-slate-100 sm:text-[28px]">
+                                        {incident.title || 'Untitled Incident'}
+                                    </h1>
+                                    <p className="mt-2 text-sm font-medium text-slate-600 dark:text-slate-400">
+                                        Admission No: {incident.admissionNo || 'N/A'} <span className="mx-2">-</span> Incident ID: {incident.incidentId || id}
+                                    </p>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
                                     <button type="button" onClick={() => navigate('/incidents')}
                                         aria-label="Back to incident list"
-                                        className="rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60">
-                                        <ArrowLeft size={16} className="mr-2 inline" />Back to List
+                                        className="inline-flex min-h-[40px] items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                                        <ArrowLeft size={16} />Back to List
                                     </button>
+                                    {incident.status !== 'Closed' && canManageIncident ? (
+                                        <button type="button" onClick={() => {
+                                            setDescriptionDraft(incident.description || '');
+                                            setDescriptionEditing(true);
+                                        }}
+                                            className="inline-flex min-h-[40px] items-center gap-2 rounded-lg border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+                                            <FileText size={16} />Edit Incident
+                                        </button>
+                                    ) : null}
                                     <button type="button" onClick={handleExportReport} disabled={isExporting}
-                                        className="btn-export">
+                                        className="inline-flex min-h-[40px] items-center gap-2 rounded-lg border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-50 disabled:opacity-60">
                                         {isExporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-                                        Export Report
+                                        Export
                                     </button>
                                     {isAdminUser ? (
                                         <button type="button" onClick={handleDelete} disabled={isDeleting}
-                                            className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60">
-                                            {isDeleting ? <Loader2 size={16} className="mr-2 inline animate-spin" /> : <Trash2 size={16} className="mr-2 inline" />}
+                                            className="inline-flex min-h-[40px] items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 disabled:opacity-60">
+                                            {isDeleting ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
                                             Delete Incident
                                         </button>
                                     ) : null}
-                                </>
-                            )}
-                        />
+                                </div>
+                            </div>
+                        </section>
 
                         {showRejectionAlert ? (
                             <div role="alert" className="rounded-3xl border border-red-200 bg-red-50 p-4 shadow-sm">
@@ -1013,25 +1047,97 @@ const IncidentDetail = () => {
                             </div>
                         ) : null}
 
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-                            <DashboardStatCard
-                                title="Current Status" value={formatDisplayValue(incident.status || 'Open')}
-                                icon={incident.status === 'Closed' ? CheckCircle : incident.status === 'In Progress' ? Clock : AlertTriangle}
-                                tone={statusStyle.tone} helper="Current incident status"
-                            />
-                            <DashboardStatCard
-                                title="Assigned To"
-                                value={resolveHandlerLabel(incident)}
-                                icon={UserCheck} tone={incident.assignedHandler ? 'blue' : 'amber'}
-                                helper={isAdminRole(incident.assignedHandler?.role) ? 'Admin' : (incident.assignedHandler?.role || 'Awaiting ownership')}
-                            />
-                            <DashboardStatCard title="Evidence Files" value={evidenceAssets.length} icon={FileImage} tone="slate" helper="Supporting files currently attached" />
-                            <DashboardStatCard title="Progress Entries" value={progressLogs.length} icon={Activity} tone="blue" helper="Operational notes on the case" />
+                        <div className="incident-summary-grid grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                            <DetailField icon={Calendar} label="Incident Date" value={formatShortDateTime(getIncidentTimestamp(incident))} />
+                            <DetailField icon={FileText} label="Category" value={formatDisplayValue(incident.category || 'N/A')} />
+                            <DetailField icon={Users} label="Reported By" value={incident.reportedBy?.name || 'N/A'} />
+                            <DetailField icon={UserCheck} label="Assigned To" value={resolveHandlerLabel(incident)} />
+                            <DetailField icon={Calendar} label="Opened On" value={formatShortDateTime(getIncidentTimestamp(incident))} />
                         </div>
 
-                        <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
-                            <DashboardPanel className="xl:col-span-4" title="Student Information" description="Student identity and class placement for this incident." icon={Users}>
-                                <div className="grid gap-4">
+                        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)] dark:border-slate-800 dark:bg-slate-900">
+                            <div className="flex overflow-x-auto" role="tablist" aria-label="Incident detail sections">
+                                {detailTabs.map(({ key, label, count, icon: Icon }) => (
+                                    <button
+                                        key={label}
+                                        type="button"
+                                        role="tab"
+                                        onClick={() => scrollToDetailSection(key)}
+                                        aria-selected={activeDetailSection === key}
+                                        className={`inline-flex min-w-max items-center gap-2 border-b-2 px-5 py-3.5 text-sm font-semibold transition ${
+                                            activeDetailSection === key
+                                                ? 'border-blue-600 bg-blue-50/70 text-blue-700'
+                                                : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800 dark:hover:bg-slate-800'
+                                        }`}
+                                    >
+                                        <Icon size={15} />
+                                        {label}
+                                        {count ? <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">{count}</span> : null}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div ref={(node) => { detailSectionRefs.current.overview = node; }} className="scroll-mt-24 grid grid-cols-1 gap-4 2xl:grid-cols-12">
+                            <DashboardPanel className="2xl:col-span-8" title="Incident Description" description="" icon={FileText}>
+                                <div className="flex items-start gap-3">
+                                    <div className="rounded-lg bg-blue-50 p-2 text-blue-600"><FileText size={16} /></div>
+                                    <div className="min-w-0 flex-1">
+                                        {descriptionEditing ? (
+                                            <div className="space-y-3">
+                                                <textarea
+                                                    className="min-h-[112px] w-full rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                                                    value={descriptionDraft}
+                                                    maxLength={3000}
+                                                    onChange={(event) => setDescriptionDraft(event.target.value)}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={handleSaveDescription}
+                                                    disabled={descriptionSaving}
+                                                    className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
+                                                >
+                                                    {descriptionSaving ? <Loader2 size={16} className="mr-2 inline animate-spin" /> : <Check size={16} className="mr-2 inline" />}
+                                                    Save Description
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700 dark:text-slate-300">
+                                                {incident.description || 'No description provided.'}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            </DashboardPanel>
+
+                            <DashboardPanel className="2xl:col-span-4" title="Current Status" description="" icon={incident.status === 'Closed' ? CheckCircle : Clock}>
+                                <div className="flex items-start gap-4">
+                                    <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-full ${incident.status === 'Closed' ? 'bg-emerald-100 text-emerald-600' : incident.status === 'In Progress' ? 'bg-blue-100 text-blue-600' : 'bg-orange-100 text-orange-600'}`}>
+                                        {incident.status === 'Closed' ? <CheckCircle size={22} /> : <Clock size={22} />}
+                                    </div>
+                                    <div className="min-w-0">
+                                        <h3 className="text-xl font-extrabold text-slate-950 dark:text-slate-100">{formatDisplayValue(incident.status || 'Open')}</h3>
+                                        <p className="mt-1 text-sm text-slate-500">
+                                            {incident.status === 'Closed' ? 'This incident has been resolved and closed.' : 'This incident is currently active.'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="mt-5 space-y-4 text-sm">
+                                    <DetailField icon={Calendar} label={incident.status === 'Closed' ? 'Closed On' : 'Opened On'} value={formatShortDateTime(incident.closedAt || getIncidentTimestamp(incident))} />
+                                    <DetailField icon={UserCheck} label={incident.status === 'Closed' ? 'Closed By' : 'Assigned To'} value={resolveHandlerLabel(incident)} />
+                                    {incident.actionTaken ? (
+                                        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+                                            <p className="font-semibold">Resolution</p>
+                                            <p className="mt-1">{incident.actionTaken}</p>
+                                        </div>
+                                    ) : null}
+                                </div>
+                            </DashboardPanel>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
+                            <DashboardPanel className="xl:col-span-7" title="Student Information" description="" icon={Users}>
+                                <div className="grid gap-3 md:grid-cols-2">
                                     <DetailField icon={Users} label="Student Name" value={studentNames}
                                         action={incident.admissionNo ? (
                                             <button type="button" onClick={() => navigate(`/student-analytics/${incident.admissionNo}`)}
@@ -1047,12 +1153,12 @@ const IncidentDetail = () => {
                                 </div>
                             </DashboardPanel>
 
-                            <DashboardPanel className="xl:col-span-4" title="Incident Details" description="Where the incident happened and what was reported." icon={MessageSquare}>
-                                <div className="grid gap-4">
+                            <DashboardPanel className="xl:col-span-5" title="Incident Information" description="" icon={MessageSquare}>
+                                <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-1">
                                     <DetailField icon={FileText} label="Category" value={formatDisplayValue(incident.category || 'N/A')} />
                                     <DetailField icon={MapPin} label="Location" value={formatDisplayValue(incident.location || 'N/A')} />
                                     <DetailField icon={Calendar} label="Incident Date" value={formatShortDate(getIncidentTimestamp(incident))} helper="Date the incident occurred." />
-                                    <div className={FIELD_CARD_CLASS}>
+                                    <div className={`${FIELD_CARD_CLASS} hidden`}>
                                         <div className="flex items-start gap-3">
                                             <div className="rounded-2xl bg-white p-2.5 text-slate-600 shadow-sm shadow-slate-200/70"><MessageSquare size={18} /></div>
                                             <div className="min-w-0 flex-1">
@@ -1100,8 +1206,8 @@ const IncidentDetail = () => {
                                 </div>
                             </DashboardPanel>
 
-                            <DashboardPanel className="xl:col-span-4" title="Case Administration" description="Who reported the case, who is handling it, and key dates." icon={ShieldCheck}>
-                                <div className="grid gap-4">
+                            <DashboardPanel className="xl:col-span-12" title="Case Administration" description="" icon={ShieldCheck}>
+                                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                                     <DetailField icon={ShieldCheck} label="Reported By" value={incident.reportedBy?.name || 'N/A'} />
                                     <DetailField icon={UserCheck} label="Assigned Handler"
                                         value={resolveHandlerLabel(incident)}
@@ -1112,9 +1218,10 @@ const IncidentDetail = () => {
                             </DashboardPanel>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
-                            <div className="space-y-6 xl:col-span-8">
-                                <DashboardPanel title="Case History" description="Important milestones as this case moves from opened through closed." icon={Clock}>
+                        <div className="grid grid-cols-1 gap-4 xl:grid-cols-12 xl:items-start">
+                            <div className="space-y-4 xl:col-span-8">
+                                <div ref={(node) => { detailSectionRefs.current.actionLog = node; }} className="scroll-mt-24">
+                                <DashboardPanel title="Case History" description="Important milestones as this case moves from opened through closed." icon={Clock} bodyClassName="max-h-[360px] overflow-y-auto custom-scrollbar">
                                     {timelineData.length === 0 ? (
                                         <EmptyStatePanel title="No case history yet" description="Milestones will appear here as the case progresses through each stage." />
                                     ) : (
@@ -1125,7 +1232,9 @@ const IncidentDetail = () => {
                                         </div>
                                     )}
                                 </DashboardPanel>
+                                </div>
 
+                                <div ref={(node) => { detailSectionRefs.current.evidence = node; }} className="scroll-mt-24">
                                 <DashboardPanel
                                     title="Evidence Records"
                                     description="Uploaded files and supporting documents attached to this case."
@@ -1303,8 +1412,10 @@ const IncidentDetail = () => {
                                         </div>
                                     ) : null}
                                 </DashboardPanel>
+                                </div>
 
-                                <DashboardPanel title="Case Updates" description="Notes from staff, follow-up steps, and decisions along the way." icon={Activity}>
+                                <div ref={(node) => { detailSectionRefs.current.progress = node; detailSectionRefs.current.notes = node; }} className="scroll-mt-24">
+                                <DashboardPanel title="Case Updates" description="Notes from staff, follow-up steps, and decisions along the way." icon={Activity} bodyClassName="max-h-[420px] overflow-y-auto custom-scrollbar">
                                     {progressLogs.length === 0 ? (
                                         <EmptyStatePanel title="No case updates yet" description="Use Field Operations to start documenting progress and actions." />
                                     ) : (
@@ -1326,10 +1437,12 @@ const IncidentDetail = () => {
                                         </div>
                                     )}
                                 </DashboardPanel>
+                                </div>
                             </div>
 
-                            <div className="space-y-6 xl:col-span-4">
+                            <div className="incident-command-rail space-y-4 xl:col-span-4 xl:sticky xl:top-24">
                                 {canManageIncident ? (
+                                    <div ref={(node) => { detailSectionRefs.current.letters = node; }} className="scroll-mt-24">
                                     <DashboardPanel title="Generated Letter" description="Official letter linked to this case." icon={FileText}>
                                         {incident.letterGenerated || generatedLetter ? (
                                             <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
@@ -1364,6 +1477,7 @@ const IncidentDetail = () => {
                                             </div>
                                         )}
                                     </DashboardPanel>
+                                    </div>
                                 ) : null}
 
                                 {showCaseAllocation ? (

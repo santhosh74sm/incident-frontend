@@ -27,14 +27,14 @@ import { normalizeRole } from '../utils/roles';
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const DESKTOP_COLLAPSE_KEY = 'workspaceSidebarCollapsed';
-const SIDEBAR_EXPANDED_WIDTH = 'lg:w-[268px]';
+const SIDEBAR_EXPANDED_WIDTH = 'lg:w-[242px]';
 const SIDEBAR_COLLAPSED_WIDTH = 'lg:w-[68px]';
 
 // Base classes extracted to avoid rebuilding strings on every render
 const NAV_ITEM_BASE =
-    'group relative flex w-full items-center rounded-xl border text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/70';
+    'group relative flex w-full items-center rounded-lg border text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/70';
 const NAV_ICON_BASE =
-    'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-colors duration-200';
+    'flex h-8 w-8 shrink-0 items-center justify-center rounded-md border transition-colors duration-200';
 
 // ─── NavItem — extracted as a proper component so React can memo it ───────────
 
@@ -66,8 +66,8 @@ const NavItem = memo(({ item, collapsed, mobile, onNavigate, isActive }) => {
                 collapsed ? 'min-h-[42px] justify-center px-1 py-1' : 'min-h-[44px] gap-3 px-2.5 py-2'
             } ${
                 isActive
-                    ? 'border-indigo-400/25 bg-indigo-500/12 text-white'
-                    : 'border-transparent text-slate-300 hover:border-slate-700/80 hover:bg-slate-800/60 hover:text-white'
+                    ? 'border-blue-400/20 bg-blue-600 text-white shadow-[0_12px_28px_rgba(37,99,235,0.22)]'
+                    : 'border-transparent text-slate-300 hover:border-white/10 hover:bg-white/[0.07] hover:text-white'
             }`}
         >
             {/* Active indicator bar */}
@@ -75,7 +75,7 @@ const NavItem = memo(({ item, collapsed, mobile, onNavigate, isActive }) => {
                 aria-hidden="true"
                 className={`absolute bottom-2 left-0 top-2 w-[3px] rounded-r-full transition-all duration-200 ${
                     isActive
-                        ? 'bg-indigo-400 shadow-[0_0_18px_rgba(129,140,248,0.65)]'
+                        ? 'bg-white/80'
                         : 'bg-transparent group-hover:bg-slate-600/60'
                 }`}
             />
@@ -84,8 +84,8 @@ const NavItem = memo(({ item, collapsed, mobile, onNavigate, isActive }) => {
             <span
                 className={`${NAV_ICON_BASE} ${
                     isActive
-                        ? 'border-indigo-300/25 bg-indigo-500/18 text-white'
-                        : 'border-slate-700/70 bg-slate-900/60 text-slate-400 group-hover:border-slate-600/80 group-hover:bg-slate-800/70 group-hover:text-slate-200'
+                        ? 'border-white/20 bg-white/14 text-white'
+                        : 'border-transparent bg-transparent text-slate-400 group-hover:text-slate-200'
                 }`}
             >
                 <Icon size={item.nested ? 16 : 17} strokeWidth={2.2} aria-hidden="true" />
@@ -115,7 +115,7 @@ const NavItem = memo(({ item, collapsed, mobile, onNavigate, isActive }) => {
 // ─── Section label ─────────────────────────────────────────────────────────
 
 const SectionLabel = memo(({ label }) => (
-    <p className="mb-1.5 px-2.5 text-[10px] font-bold uppercase tracking-[0.26em] text-slate-500">
+    <p className="mb-2 px-2.5 text-[10px] font-bold uppercase tracking-[0.28em] text-slate-500">
         {label}
     </p>
 ));
@@ -371,12 +371,12 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
         };
 
         return (
-            <div className="flex h-full flex-col bg-[radial-gradient(circle_at_top,rgba(79,70,229,0.15),transparent_30%),linear-gradient(180deg,rgba(2,6,23,0.99)_0%,rgba(15,23,42,0.995)_50%,rgba(2,6,23,1)_100%)]">
+            <div className="flex h-full flex-col bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.22),transparent_30%),linear-gradient(180deg,#0a1730_0%,#071226_48%,#050d1c_100%)]">
 
                 {/* ── Header ── */}
                 <div
-                    className={`border-b border-white/[0.07] ${
-                        collapsed ? 'px-1.5 py-3' : 'px-3 py-3'
+                    className={`border-b border-white/[0.06] ${
+                        collapsed ? 'px-1.5 py-4' : 'px-4 py-5'
                     }`}
                 >
                     <div
@@ -388,8 +388,8 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
                         <div className={`flex min-w-0 items-center ${collapsed ? 'justify-center' : 'gap-2.5'}`}>
                             <div
                                 className={`${
-                                    collapsed ? 'h-9 w-9' : 'h-9 w-9'
-                                } flex shrink-0 items-center justify-center rounded-xl border border-indigo-300/20 bg-gradient-to-br from-indigo-500 to-blue-600 text-white shadow-[0_12px_28px_rgba(79,70,229,0.28)]`}
+                                    collapsed ? 'h-9 w-9' : 'h-10 w-10'
+                                } flex shrink-0 items-center justify-center rounded-xl border border-blue-300/20 bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-[0_12px_28px_rgba(37,99,235,0.32)]`}
                             >
                                 <ShieldCheck size={18} aria-hidden="true" />
                             </div>
@@ -411,7 +411,7 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
                                 <button
                                     type="button"
                                     onClick={toggleCollapsed}
-                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-700/80 bg-slate-900/60 text-slate-400 transition-colors duration-200 hover:border-indigo-400/30 hover:bg-slate-800 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/70"
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-slate-400 transition-colors duration-200 hover:border-blue-400/30 hover:bg-white/[0.08] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/70"
                                     aria-label={isDesktopCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                                 >
                                     {isDesktopCollapsed ? (
@@ -442,10 +442,10 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
                         scrollPositionsRef.current[scrollKey] = e.currentTarget.scrollTop;
                     }}
                     className={`flex-1 overflow-y-auto [scrollbar-color:rgba(100,116,139,0.4)_transparent] [scrollbar-width:thin] ${
-                        collapsed ? 'px-1.5 py-3' : 'px-2.5 py-3'
+                        collapsed ? 'px-1.5 py-4' : 'px-3 py-5'
                     }`}
                 >
-                    <nav aria-label="Sidebar navigation" className={collapsed ? 'space-y-3' : 'space-y-4'}>
+                    <nav aria-label="Sidebar navigation" className={collapsed ? 'space-y-3' : 'space-y-5'}>
 
                         {/* Incidents */}
                         {renderGroup(visibleMain, 'Incidents')}
@@ -465,19 +465,19 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
                 {/* ── Footer: user + sign out ── */}
                 <div
                     className={`border-t border-white/[0.07] ${
-                        collapsed ? 'p-1.5' : 'p-2.5'
+                        collapsed ? 'p-1.5' : 'p-3'
                     }`}
                 >
                     {/* User chip */}
                     <div
-                        className={`mb-1.5 rounded-xl border border-slate-700/70 bg-slate-900/60 p-2 ${
+                        className={`mb-1.5 rounded-lg border border-white/10 bg-white/[0.04] p-2 ${
                             collapsed ? 'flex justify-center' : ''
                         }`}
                     >
                         <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-2.5'}`}>
                             <div
                                 aria-hidden="true"
-                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-blue-600 text-[13px] font-bold text-white shadow-[0_6px_20px_rgba(79,70,229,0.22)]"
+                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-[13px] font-bold text-white shadow-[0_6px_20px_rgba(37,99,235,0.24)]"
                             >
                                 {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                             </div>

@@ -187,30 +187,26 @@ export const ChartSurface = memo(({ height = 400, className = '', children }) =>
 
 export const DashboardHero = ({ eyebrow, title, description, icon: Icon, actions = null, meta = null }) => (
     <section className="dashboard-hero">
-        <div className="dashboard-hero-band">
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start">
-                    {Icon ? (
-                        <div className="w-fit shrink-0 rounded-2xl border border-white/20 bg-white/10 p-3 text-white shadow-lg shadow-slate-950/10">
-                            <Icon size={22} />
-                        </div>
-                    ) : null}
-                    <div className="min-w-0 space-y-3">
-                        {eyebrow ? (
-                            <span className="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-blue-100">
-                                {eyebrow}
-                            </span>
-                        ) : null}
-                        <div className="min-w-0">
-                            <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">{title}</h1>
-                            <p className="mt-2 max-w-3xl text-sm leading-6 text-blue-100/90">{description}</p>
-                        </div>
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start">
+                {Icon ? (
+                    <div className="hidden w-fit shrink-0 rounded-xl bg-blue-50 p-3 text-blue-600 sm:block">
+                        <Icon size={22} />
                     </div>
+                ) : null}
+                <div className="min-w-0">
+                    {eyebrow ? (
+                        <span className="mb-2 inline-flex text-[11px] font-bold uppercase tracking-[0.22em] text-blue-600">
+                            {eyebrow}
+                        </span>
+                    ) : null}
+                    <h1 className="text-2xl font-extrabold tracking-tight text-slate-950 dark:text-slate-100 sm:text-[28px]">{title}</h1>
+                    <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-400">{description}</p>
                 </div>
-                {actions ? <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:flex-wrap">{actions}</div> : null}
             </div>
+            {actions ? <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:flex-wrap">{actions}</div> : null}
         </div>
-        {meta ? <div className="border-t border-slate-200 bg-white px-6 py-4 transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900"><div className="flex flex-wrap items-center gap-2">{meta}</div></div> : null}
+        {meta ? <div className="mt-4 flex flex-wrap items-center gap-2">{meta}</div> : null}
     </section>
 );
 
@@ -219,19 +215,19 @@ export const DashboardStatCard = ({ title, value, icon: Icon, tone = 'blue', hel
 
     return (
         <div className="dashboard-stat-card">
-            <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                    <p className="dashboard-kicker">{title}</p>
-                    <p className="dashboard-stat-value">{value}</p>
-                    {helper ? <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{helper}</p> : null}
-                </div>
+            <div className="flex items-start gap-4">
                 {Icon ? (
-                    <div className={`shrink-0 rounded-2xl p-3 ${currentTone.icon}`}>
-                        <Icon size={22} />
+                    <div className={`shrink-0 rounded-full p-3 ${currentTone.icon}`}>
+                        <Icon size={21} />
                     </div>
                 ) : null}
+                <div className="min-w-0 flex-1">
+                    <p className="dashboard-kicker">{title}</p>
+                    <p className="dashboard-stat-value">{value}</p>
+                    {helper ? <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{helper}</p> : null}
+                    {footer ? <div className="mt-4 text-sm font-semibold">{footer}</div> : null}
+                </div>
             </div>
-            {footer ? <div className="mt-4 border-t border-slate-100 pt-3 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">{footer}</div> : null}
         </div>
     );
 };
@@ -242,13 +238,13 @@ export const DashboardPanel = ({ title, description, icon: Icon, actions = null,
             <div className="dashboard-panel-header">
                 <div className="flex min-w-0 items-start gap-3">
                     {Icon ? (
-                        <div className="rounded-xl bg-slate-100 p-2 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                        <div className="rounded-lg bg-blue-50 p-2 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300">
                             <Icon size={18} />
                         </div>
                     ) : null}
                     <div className="min-w-0">
-                        {title ? <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">{title}</h3> : null}
-                        {description ? <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{description}</p> : null}
+                        {title ? <h3 className="text-base font-bold tracking-tight text-slate-950 dark:text-slate-100">{title}</h3> : null}
+                        {description ? <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{description}</p> : null}
                     </div>
                 </div>
                 {actions ? <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">{actions}</div> : null}

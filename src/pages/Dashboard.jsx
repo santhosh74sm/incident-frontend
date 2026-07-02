@@ -44,7 +44,7 @@ class DashboardErrorBoundary extends React.Component {
     render() {
         if (this.state.hasError) {
             return (
-                <div className="min-h-screen bg-slate-100 p-4 text-slate-800 dark:bg-slate-950 lg:p-6">
+                <div className="min-h-screen bg-[#f6f8fc] p-4 text-slate-800 dark:bg-slate-950 lg:p-6">
                     <div className="mx-auto max-w-[1560px] rounded-2xl border border-red-200 bg-white p-8 shadow-sm dark:border-red-900/30 dark:bg-slate-900">
                         <div className="flex items-start gap-4">
                             <div className="rounded-xl bg-red-50 p-3 text-red-600 dark:bg-red-950/40">
@@ -89,20 +89,22 @@ const QuickActionCard = memo(({ to, tone, icon: Icon, title, description }) => {
     return (
         <Link
             to={to}
-            className={`group flex min-h-[44px] flex-col justify-center rounded-xl border border-slate-200 bg-slate-50/80 p-4 transition-all duration-200 dark:border-slate-800 dark:bg-slate-900/60 ${t.hover}`}
+            className={`group flex min-h-[92px] flex-col justify-between rounded-lg border border-slate-200 bg-white p-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-900/60 sm:min-h-[124px] sm:p-4 ${t.hover}`}
         >
             <div className="flex items-center justify-between">
-                <div className={`rounded-lg p-2 ${t.icon}`}>
-                    <Icon size={16} aria-hidden="true" />
+                <div className={`rounded-lg p-2.5 sm:p-3 ${t.icon}`}>
+                    <Icon size={18} aria-hidden="true" />
                 </div>
                 <ArrowRight
-                    size={14}
+                    size={15}
                     aria-hidden="true"
                     className="text-slate-400 transition-transform duration-200 group-hover:translate-x-0.5"
                 />
             </div>
-            <p className="mt-3 text-[13px] font-bold text-slate-900 dark:text-slate-100">{title}</p>
-            <p className="mt-0.5 text-[12px] leading-snug text-slate-500 dark:text-slate-400">{description}</p>
+            <div>
+                <p className="text-sm font-bold text-slate-950 dark:text-slate-100">{title}</p>
+                <p className="mt-1 text-xs leading-4 text-slate-500 dark:text-slate-400 sm:mt-1.5 sm:leading-5">{description}</p>
+            </div>
         </Link>
     );
 });
@@ -110,10 +112,10 @@ const QuickActionCard = memo(({ to, tone, icon: Icon, title, description }) => {
 const QuickActionsPanel = memo(({ canAccessAnalytics, canReportIncident }) => (
     <DashboardPanel
         title="Quick Actions"
-        description="Jump to the tasks you use most."
+        description="Common tasks you can perform quickly."
         icon={TrendingUp}
     >
-        <div className={`grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-2 ${canAccessAnalytics ? '2xl:grid-cols-4' : ''}`}>
+        <div className={`grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-2 ${canAccessAnalytics ? '2xl:grid-cols-4' : ''}`}>
             {canReportIncident && (
                 <QuickActionCard
                     to="/create-incident"
@@ -164,14 +166,17 @@ const LIFECYCLE_TONE_MAP = {
 const LifecycleRow = memo(({ row }) => {
     const barColor = LIFECYCLE_TONE_MAP[row.tone] || 'bg-amber-500';
     return (
-        <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-900/60">
-            <div className="flex items-center justify-between gap-4 text-sm">
-                <span className="font-semibold text-slate-900 dark:text-slate-100">{row.label}</span>
-                <span className="shrink-0 text-slate-500 dark:text-slate-400">
-                    {row.count} &middot; {row.share}
+        <div>
+            <div className="mb-2 flex items-center justify-between gap-4 text-sm">
+                <span className="flex items-center gap-2 font-medium text-slate-700 dark:text-slate-200">
+                    <span className={`h-2.5 w-2.5 rounded-full ${barColor}`} />
+                    {row.label}
+                </span>
+                <span className="shrink-0 text-sm font-medium text-slate-500 dark:text-slate-300">
+                    {row.count} ({row.share})
                 </span>
             </div>
-            <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+            <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                 <div
                     className={`h-full rounded-full transition-all duration-500 ${barColor}`}
                     style={{ width: row.share }}
@@ -187,13 +192,31 @@ const LifecycleRow = memo(({ row }) => {
 const LifecycleOverviewPanel = memo(({ rows }) => (
     <DashboardPanel
         title="Incident Breakdown"
-        description="Where cases stand right now at a glance."
+        description="Overview of incidents by their current status."
         icon={Activity}
     >
-        <div className="space-y-2.5">
-            {rows.map((row) => (
-                <LifecycleRow key={row.id} row={row} />
-            ))}
+        <div className="grid gap-6 md:grid-cols-[150px_minmax(0,1fr)] xl:grid-cols-1 2xl:grid-cols-[150px_minmax(0,1fr)]">
+            <div
+                className="mx-auto grid h-36 w-36 place-items-center rounded-full"
+                style={{
+                    background: `conic-gradient(#f97316 0 ${rows[0]?.share || '0%'}, #3b82f6 ${rows[0]?.share || '0%'} ${Number.parseFloat(rows[0]?.share || 0) + Number.parseFloat(rows[1]?.share || 0)}%, #10b981 ${Number.parseFloat(rows[0]?.share || 0) + Number.parseFloat(rows[1]?.share || 0)}% 100%)`,
+                }}
+                aria-label="Incident breakdown chart"
+            >
+                <div className="grid h-24 w-24 place-items-center rounded-full bg-white text-center shadow-inner dark:bg-slate-900">
+                    <div>
+                        <p className="text-2xl font-extrabold leading-none text-slate-950 dark:text-slate-100">
+                            {rows.reduce((sum, row) => sum + Number(row.count || 0), 0)}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-500">Total</p>
+                    </div>
+                </div>
+            </div>
+            <div className="space-y-5">
+                {rows.map((row) => (
+                    <LifecycleRow key={row.id} row={row} />
+                ))}
+            </div>
         </div>
     </DashboardPanel>
 ));
@@ -201,6 +224,7 @@ const LifecycleOverviewPanel = memo(({ rows }) => (
 // ─── Module-level request dedup map (unchanged) ────────────────────────────────
 
 const dashboardDataRequests = new Map();
+const STATUS_PRIORITY = { Open: 0, 'In Progress': 1, Closed: 2 };
 
 const fetchDashboardData = (user) => {
     const requestKey = `${user?._id || user?.id || 'unknown'}:${user?.role || 'unknown'}`;
@@ -266,7 +290,7 @@ const DashboardContent = memo(() => {
                 render: (row) => (
                     <button
                         onClick={() => handleViewIncident(row.id)}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-blue-700 dark:hover:bg-blue-950/40 dark:hover:text-blue-300"
+                        className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-950/40"
                     >
                         <Eye size={13} aria-hidden="true" />
                         View Details
@@ -315,14 +339,23 @@ const DashboardContent = memo(() => {
     const canReportIncident = isIncidentReporterRole(user?.role);
     const canAccessAnalytics = isAdminRole(user?.role);
 
+    // Actionable-first ordering: Open, then In Progress (oldest pending surfaces first within
+    // each), then Closed. Purely a client-side re-sort of the already-fetched incidents — no
+    // API or calculation changes.
     const recentIncidentRows = useMemo(
         () =>
             [...incidents]
-                .sort(
-                    (a, b) =>
-                        new Date(getIncidentTimestamp(b) || 0) -
-                        new Date(getIncidentTimestamp(a) || 0)
-                )
+                .sort((a, b) => {
+                    const priorityA = STATUS_PRIORITY[a.status] ?? 0;
+                    const priorityB = STATUS_PRIORITY[b.status] ?? 0;
+                    if (priorityA !== priorityB) return priorityA - priorityB;
+
+                    const timeA = new Date(getIncidentTimestamp(a) || 0).getTime();
+                    const timeB = new Date(getIncidentTimestamp(b) || 0).getTime();
+                    // Open/In Progress: oldest pending first (needs attention).
+                    // Closed: most recently closed first.
+                    return priorityA === 2 ? timeB - timeA : timeA - timeB;
+                })
                 .slice(0, 6)
                 .map((incident) => ({
                     id:      incident._id,
@@ -347,7 +380,7 @@ const DashboardContent = memo(() => {
     // ── Loading state ─────────────────────────────────────────────────────
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-100 p-4 text-slate-800 dark:bg-slate-950 lg:p-6">
+            <div className="min-h-screen bg-[#f6f8fc] p-4 text-slate-800 dark:bg-slate-950 lg:p-6">
                 <div className="mx-auto max-w-[1560px]">
                     <DashboardPageSkeleton />
                 </div>
@@ -357,14 +390,13 @@ const DashboardContent = memo(() => {
 
     // ── Render ─────────────────────────────────────────────────────────────
     return (
-        <div className="min-h-screen bg-slate-100 p-4 text-slate-800 dark:bg-slate-950 lg:p-5">
+        <div className="min-h-screen bg-[#f6f8fc] p-4 text-slate-800 dark:bg-slate-950 lg:p-7">
             <div className="mx-auto max-w-[1560px] space-y-5">
 
                 {/* Hero */}
                 <DashboardHero
-                    eyebrow="School overview"
-                    title="Dashboard"
-                    description="Monitor incidents and school activity."
+                    title={`Good afternoon, ${user?.name || 'Admin'}!`}
+                    description="Here's what's happening with your school incidents today."
                     icon={ShieldCheck}
                     actions={(
                         <>
@@ -393,17 +425,17 @@ const DashboardContent = memo(() => {
                 {/* ── Stat cards ── */}
                 <section
                     aria-label="Incident statistics"
-                    className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4"
+                    className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
                 >
                     <DashboardStatCard
                         title="Total Incidents"
                         value={summary.total}
                         icon={TrendingUp}
                         tone="blue"
-                        helper="All incidents in the All academic year."
+                        helper="All incidents this academic year"
                     />
                     <DashboardStatCard
-                        title="Open"
+                        title="Open Incidents"
                         value={summary.open}
                         icon={AlertCircle}
                         tone="amber"
@@ -417,7 +449,7 @@ const DashboardContent = memo(() => {
                         helper="Currently being handled"
                     />
                     <DashboardStatCard
-                        title="Closed"
+                        title="Closed Incidents"
                         value={summary.closed}
                         icon={CheckCircle}
                         tone="emerald"
@@ -428,33 +460,71 @@ const DashboardContent = memo(() => {
                 {/* ── Main body: table + side panels ── */}
                 <section
                     aria-label="Recent incidents and actions"
-                    className="grid grid-cols-1 gap-5 xl:grid-cols-12"
+                    className="grid grid-cols-1 gap-4 xl:grid-cols-12"
                 >
                     {/* Recent incidents table */}
                     <DashboardPanel
                         className="xl:col-span-7"
                         title="Recent Incidents"
-                        description="Latest cases — most recently opened or updated."
+                        description="Showing latest incidents that need your attention."
                         icon={FileText}
                         actions={(
                             <Link
                                 to="/incidents"
-                                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
                             >
                                 View All
                                 <ArrowRight size={13} aria-hidden="true" />
                             </Link>
                         )}
                     >
-                        <AnalyticsDataTable
-                            columns={recentIncidentColumns}
-                            rows={recentIncidentRows}
-                            emptyMessage="No incidents have been recorded yet."
-                        />
+                        <div className="hidden md:block">
+                            <AnalyticsDataTable
+                                columns={recentIncidentColumns}
+                                rows={recentIncidentRows}
+                                emptyMessage="No incidents have been recorded yet."
+                            />
+                        </div>
+                        <div className="space-y-2 md:hidden">
+                            {recentIncidentRows.length === 0 ? (
+                                <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-6 text-center text-sm text-slate-500">
+                                    No incidents have been recorded yet.
+                                </div>
+                            ) : recentIncidentRows.map((row) => (
+                                <article key={row.id} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <span
+                                                className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold ${
+                                                    row.status === 'Closed'
+                                                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                                                        : row.status === 'In Progress'
+                                                            ? 'border-blue-200 bg-blue-50 text-blue-700'
+                                                            : 'border-orange-200 bg-orange-50 text-orange-700'
+                                                }`}
+                                            >
+                                                {row.status}
+                                            </span>
+                                            <h3 className="mt-2 truncate text-sm font-bold text-slate-950">{row.title}</h3>
+                                            <p className="mt-1 truncate text-xs text-slate-500">{row.student}</p>
+                                            <p className="mt-1 text-xs tabular-nums text-slate-400">{row.opened}</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleViewIncident(row.id)}
+                                            className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-50"
+                                        >
+                                            <Eye size={12} />
+                                            View
+                                        </button>
+                                    </div>
+                                </article>
+                            ))}
+                        </div>
                     </DashboardPanel>
 
                     {/* Right column */}
-                    <div className="flex flex-col gap-5 xl:col-span-5">
+                    <div className="flex flex-col gap-4 xl:col-span-5">
                         <QuickActionsPanel canAccessAnalytics={canAccessAnalytics} canReportIncident={canReportIncident} />
                         <LifecycleOverviewPanel rows={lifecycleRows} />
                     </div>

@@ -3,6 +3,8 @@ import {
     Bell,
     Check,
     Command,
+    Building2,
+    ChevronDown,
     Edit3,
     ListFilter,
     LogOut,
@@ -29,8 +31,15 @@ const themeOptions = [
     { value: 'system', label: 'System', icon: Monitor },
 ];
 
+const isMacPlatform = () => {
+    if (typeof navigator === 'undefined') return false;
+    const platform = navigator.userAgentData?.platform || navigator.platform || navigator.userAgent || '';
+    return /Mac|iPhone|iPad|iPod/i.test(platform);
+};
+
 const Navbar = ({ isSidebarCollapsed = false }) => {
     const { user, logout, restoreAuth } = useAuth();
+    const [isMac] = useState(isMacPlatform);
     const { unreadCount, enabled: notificationsEnabled } = useNotifications();
     const { themeMode, setThemeMode } = useTheme();
     const confirm = useConfirm();
@@ -164,26 +173,33 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
     const normalizedRole = normalizeRole(user?.role);
 
     const hasUnread = unreadCount > 0;
-    const iconButtonBase =
-        'inline-flex h-11 min-h-[44px] min-w-[44px] w-11 items-center justify-center rounded-xl bg-white/80 text-slate-600 backdrop-blur transition-all duration-200 hover:bg-white hover:text-slate-950 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white';
-
     return (
         <nav
-            className={`fixed right-0 top-0 z-[60] h-14 bg-white/80 px-3 py-2 backdrop-blur-xl transition-all duration-300 dark:bg-slate-950/80 sm:px-4 lg:px-5 ${
-                isSidebarCollapsed ? 'left-0 lg:left-[68px]' : 'left-0 lg:left-[268px]'
+            className={`fixed right-0 top-0 z-[60] h-[76px] border-b border-slate-200/75 bg-white/95 px-3 py-3 backdrop-blur-xl transition-all duration-300 dark:border-slate-800 dark:bg-slate-950/90 sm:px-4 lg:px-7 ${
+                isSidebarCollapsed ? 'left-0 lg:left-[68px]' : 'left-0 lg:left-[242px]'
             }`}
         >
             <div className="pl-14 sm:pl-16 lg:pl-0">
-                <div className="h-10 rounded-2xl bg-white/90 px-2 backdrop-blur-xl dark:bg-slate-900/90 sm:px-3">
-                    <div className="flex h-full min-w-0 items-center justify-between gap-2">
-                        <div className="hidden min-w-0 lg:block">
-                            <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{normalizedRole || 'User'} Workspace</p>
-                        </div>
+                <div className="h-[52px]">
+                    <div className="flex h-full min-w-0 items-center justify-between gap-3">
+                        <button
+                            type="button"
+                            onClick={openCommandPalette}
+                            className="hidden min-h-[44px] min-w-[220px] items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 text-left text-slate-900 shadow-sm transition-all duration-200 hover:border-slate-300 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 lg:flex"
+                            aria-label="Open workspace search"
+                            title="Workspace"
+                        >
+                            <span className="flex min-w-0 items-center gap-3">
+                                <Building2 size={17} className="shrink-0 text-slate-500" />
+                                <span className="truncate text-sm font-semibold">{normalizedRole || 'User'} Workspace</span>
+                            </span>
+                            <ChevronDown size={15} className="shrink-0 text-slate-500" />
+                        </button>
 
                         <button
                             type="button"
                             onClick={openCommandPalette}
-                            className="group inline-flex h-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-xl bg-white/70 text-slate-900 backdrop-blur transition-all duration-200 hover:bg-white hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:bg-slate-900/70 dark:text-slate-100 dark:hover:bg-slate-800 sm:hidden"
+                            className="group inline-flex h-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-900 shadow-sm transition-all duration-200 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 sm:hidden"
                             aria-label="Open search"
                             title="Search"
                         >
@@ -193,30 +209,32 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                         <button
                             type="button"
                             onClick={openCommandPalette}
-                            className="group hidden min-w-0 max-w-[200px] shrink-0 items-center gap-2 rounded-xl bg-white/70 px-2.5 py-1.5 text-left backdrop-blur transition-all duration-200 hover:bg-white hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:bg-slate-900/70 dark:hover:bg-slate-800 sm:flex lg:max-w-[220px]"
+                            className="group hidden h-11 min-w-0 flex-1 max-w-[380px] items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 text-left text-slate-600 shadow-sm transition-all duration-200 hover:border-slate-300 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 sm:flex"
                             aria-label="Open search"
                             title="Search"
                         >
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-950 text-white shadow-lg shadow-slate-950/15 transition-all duration-200 group-hover:bg-indigo-600">
-                                <Command size={16} />
-                            </div>
+                            <Command size={17} className="shrink-0 text-slate-500" />
                             <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">Search</p>
+                                <p className="truncate text-sm font-medium">Search incidents...</p>
                             </div>
-                            <div className="hidden shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50/90 px-2.5 py-1.5 shadow-sm dark:border-slate-700 dark:bg-slate-800/90 md:flex">
-                                <kbd className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-600 dark:text-slate-300">Ctrl</kbd>
-                                <span className="text-slate-300 dark:text-slate-600">+</span>
+                            <div className="hidden shrink-0 items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 dark:border-slate-700 dark:bg-slate-800/90 md:flex">
+                                {isMac ? (
+                                    <kbd className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">⌘</kbd>
+                                ) : (
+                                    <kbd className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-600 dark:text-slate-300">Ctrl</kbd>
+                                )}
+                                {!isMac && <span className="text-slate-300 dark:text-slate-600">+</span>}
                                 <kbd className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-600 dark:text-slate-300">K</kbd>
                             </div>
                         </button>
 
-                        <div className="flex shrink-0 items-center justify-end gap-1.5 sm:gap-2">
+                        <div className="flex shrink-0 items-center justify-end gap-2 sm:gap-3">
                             {isAdminRole(user?.role) ? (
                                 <button
                                     type="button"
                                     title="Settings"
                                     onClick={() => navigate('/user-management')}
-                                    className={iconButtonBase}
+                                    className="inline-flex h-11 min-h-[44px] min-w-[44px] w-11 items-center justify-center rounded-lg text-slate-600 transition-all duration-200 hover:bg-slate-100 hover:text-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
                                     aria-label="Open settings"
                                 >
                                     <Settings size={18} />
@@ -232,9 +250,9 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                                     data-notification-trigger
                                     className={`relative inline-flex h-11 min-h-[44px] min-w-[44px] w-11 items-center justify-center rounded-xl transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
                                         showNotificationPanel || hasUnread
-                                            ? 'bg-indigo-50 text-indigo-700 shadow-sm shadow-indigo-100/70'
-                                            : iconButtonBase
-                                    } ${showNotificationPanel || hasUnread ? 'dark:bg-indigo-950/70 dark:text-indigo-200 dark:shadow-none' : ''} ${!notificationsEnabled ? 'cursor-not-allowed opacity-60' : ''}`}
+                                            ? 'bg-blue-50 text-blue-700 shadow-sm shadow-blue-100/70'
+                                            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white'
+                                    } ${showNotificationPanel || hasUnread ? 'dark:bg-blue-950/70 dark:text-blue-200 dark:shadow-none' : ''} ${!notificationsEnabled ? 'cursor-not-allowed opacity-60' : ''}`}
                                     aria-label={hasUnread ? `${unreadCount} unread notifications` : 'Notifications'}
                                     aria-disabled={!notificationsEnabled}
                                     aria-expanded={showNotificationPanel}
@@ -258,10 +276,10 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                                     type="button"
                                     title="Profile"
                                     onClick={toggleProfileDropdown}
-                                    className={`flex min-h-[44px] items-center gap-2 rounded-xl px-2 py-1 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 sm:gap-3 sm:px-3 ${
+                                    className={`flex min-h-[44px] items-center gap-2 rounded-lg px-2 py-1 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:gap-3 sm:px-3 ${
                                         showDropdown
-                                            ? 'bg-indigo-50 shadow-sm shadow-indigo-100/70 dark:bg-indigo-950/70 dark:shadow-none'
-                                            : 'bg-white/80 hover:bg-white hover:shadow-sm dark:bg-slate-900/80 dark:hover:bg-slate-800'
+                                            ? 'bg-blue-50 shadow-sm shadow-blue-100/70 dark:bg-blue-950/70 dark:shadow-none'
+                                            : 'hover:bg-slate-100 dark:hover:bg-slate-800'
                                     }`}
                                     aria-expanded={showDropdown}
                                     aria-haspopup="menu"
@@ -275,9 +293,10 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                                         </p>
                                     </div>
 
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-blue-600 text-sm font-bold text-white shadow-lg shadow-indigo-500/20">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-bold text-white shadow-lg shadow-blue-500/20">
                                         {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                                     </div>
+                                    <ChevronDown size={15} className="hidden text-slate-500 sm:block" />
                                 </button>
 
                                 {showDropdown ? (

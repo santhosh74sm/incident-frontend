@@ -366,7 +366,7 @@ const IncidentList = () => {
 
     if (loading && incidents.length === 0) {
         return (
-            <div className="flex bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-100">
+            <div className="flex bg-[#f6f8fc] text-slate-800 dark:bg-slate-950 dark:text-slate-100">
                 <div className="flex min-w-0 flex-1 flex-col">
                     <main className="flex-1 p-4 lg:p-6">
                         <div className="mx-auto max-w-[1600px]">
@@ -379,10 +379,10 @@ const IncidentList = () => {
     }
 
     return (
-        <div className="flex bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-100">
+        <div className="flex bg-[#f6f8fc] text-slate-800 dark:bg-slate-950 dark:text-slate-100">
             <div className="flex min-w-0 flex-1 flex-col">
-                <main className="flex-1 p-4 lg:p-6">
-                    <div className="mx-auto max-w-[1600px] space-y-6">
+                <main className="flex-1 p-4 lg:p-7">
+                    <div className="mx-auto max-w-[1600px] space-y-5">
                         <DashboardHero
                             eyebrow="Incident Management"
                             title="All Incidents"
@@ -415,7 +415,7 @@ const IncidentList = () => {
                             )}
                         />
 
-                        <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                             <DashboardStatCard
                                 title="Total"
                                 value={summary.total}
@@ -446,7 +446,7 @@ const IncidentList = () => {
                             />
                         </div>
 
-                        <div className="overflow-hidden rounded-[20px] border border-white/70 bg-white/90 shadow-md shadow-slate-200/70 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-slate-950/40 sm:rounded-[26px]">
+                        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)] dark:border-slate-800 dark:bg-slate-900">
                             <div className="flex" role="tablist" aria-label="Incident view">
                                 <button
                                     type="button"
@@ -455,7 +455,7 @@ const IncidentList = () => {
                                     onClick={() => setActiveTab('all')}
                                     className={`flex flex-1 items-center justify-center gap-2.5 border-b-2 px-4 py-3.5 text-sm font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset sm:px-6 sm:py-4 ${
                                         activeTab === 'all'
-                                            ? 'border-blue-500 bg-blue-50/80 text-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
+                                            ? 'border-blue-600 bg-blue-50/80 text-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
                                             : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200'
                                     }`}
                                 >
@@ -463,8 +463,8 @@ const IncidentList = () => {
                                     <span>All Incidents</span>
                                     <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold tabular-nums ${
                                         activeTab === 'all'
-                                            ? 'bg-blue-600 text-white'
-                                            : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
+                                            ? 'bg-blue-100 text-blue-700'
+                                            : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300'
                                     }`}>
                                         {pagination.total}
                                     </span>
@@ -477,7 +477,7 @@ const IncidentList = () => {
                                     onClick={() => setActiveTab('highPriority')}
                                     className={`flex flex-1 items-center justify-center gap-2.5 border-b-2 px-4 py-3.5 text-sm font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-inset sm:px-6 sm:py-4 ${
                                         activeTab === 'highPriority'
-                                            ? 'border-amber-500 bg-amber-50/80 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300'
+                                            ? 'border-blue-600 bg-blue-50/80 text-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
                                             : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200'
                                     }`}
                                 >
@@ -497,11 +497,10 @@ const IncidentList = () => {
                         </div>
 
                         <UnifiedFilterBar
-                            title="Find Records"
+                            title="Filters"
                             hasActiveFilters={hasActiveFilters}
                             onReset={resetFilters}
                             collapsible
-                            defaultCollapsed
                             actions={loading ? (
                                 <span className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
                                     <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-blue-200 border-t-blue-600" />
@@ -664,7 +663,125 @@ const IncidentList = () => {
                                     />
                                 ) : null}
                             >
-                                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+                                <div className="hidden overflow-hidden rounded-lg border border-slate-200 md:block dark:border-slate-800">
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full min-w-[1040px] text-left text-sm">
+                                            <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:bg-slate-950 dark:text-slate-400">
+                                                <tr>
+                                                    <th className="px-4 py-3">#</th>
+                                                    <th className="px-4 py-3">Incident</th>
+                                                    <th className="px-4 py-3">Student</th>
+                                                    <th className="px-4 py-3">Category</th>
+                                                    <th className="px-4 py-3">Status</th>
+                                                    <th className="px-4 py-3">Assigned To</th>
+                                                    <th className="px-4 py-3">Opened On</th>
+                                                    <th className="px-4 py-3 text-right">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100 bg-white dark:divide-slate-800 dark:bg-slate-900">
+                                                {filteredIncidents.map((incident, index) => {
+                                                    const isClosureRequest = isAdminRole(user?.role) && incident.closureRequested && incident.status !== 'Closed';
+                                                    const isHighPriority = incident.isHighPriority === true;
+                                                    const priority = isPriority(incident) || isHighPriority;
+                                                    const unread = isUnread(incident);
+                                                    const studentsDisplay = incident.studentDetails?.name
+                                                        ? incident.studentDetails.name
+                                                        : Array.isArray(incident.studentsInvolved)
+                                                            ? incident.studentsInvolved[0] ?? 'N/A'
+                                                            : incident.studentsInvolved
+                                                                ? String(incident.studentsInvolved)
+                                                                : 'N/A';
+                                                    const incidentDate = getIncidentTimestamp(incident);
+                                                    const badgeLabel = isClosureRequest ? 'Seal ready' : (incident.status === 'In Progress' ? 'In progress' : incident.status);
+                                                    const incidentId = getRecordId(incident);
+                                                    const rowNumber = ((pagination.page || 1) - 1) * pageSize + index + 1;
+
+                                                    return (
+                                                        <tr
+                                                            key={incidentId}
+                                                            className={`transition hover:bg-slate-50/80 dark:hover:bg-slate-800/60 ${
+                                                                priority ? 'bg-amber-50/20 dark:bg-amber-950/10' : unread ? 'bg-blue-50/20 dark:bg-blue-950/10' : ''
+                                                            }`}
+                                                        >
+                                                            <td className="px-4 py-3.5 text-xs font-semibold text-slate-500">{rowNumber}</td>
+                                                            <td className="px-4 py-3.5">
+                                                                <div className="flex items-start gap-2">
+                                                                    <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${
+                                                                        isClosureRequest || incident.status === 'Closed' ? 'bg-emerald-500' :
+                                                                        incident.status === 'In Progress' ? 'bg-blue-500' :
+                                                                        isHighPriority ? 'bg-amber-500' :
+                                                                        'bg-orange-500'
+                                                                    }`} />
+                                                                    <div className="min-w-0">
+                                                                        <p className="font-bold leading-tight text-slate-950 dark:text-slate-100">{incident.title || 'Untitled Incident'}</p>
+                                                                        <p className="mt-1 text-xs text-slate-500">Admission No: {incident.admissionNo || 'N/A'}</p>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-4 py-3.5">
+                                                                <div className="min-w-0">
+                                                                    <p className="font-medium text-slate-700 dark:text-slate-200">{studentsDisplay}</p>
+                                                                    <p className="mt-1 text-xs text-slate-500">Class {incident.class || '-'} - {incident.section || '-'}</p>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-4 py-3.5">
+                                                                <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${
+                                                                    (incident.category || '').toLowerCase().includes('late') ? 'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-500/30 dark:bg-violet-950/30 dark:text-violet-300' :
+                                                                    (incident.category || '').toLowerCase().includes('absent') ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/30 dark:text-amber-300' :
+                                                                    'border-red-200 bg-red-50 text-red-700 dark:border-red-500/30 dark:bg-red-950/30 dark:text-red-300'
+                                                                }`}>
+                                                                    {formatDisplayValue(incident.category || 'Uncategorized')}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-4 py-3.5">
+                                                                <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${statusPill(incident.status, { closureRequested: isClosureRequest })}`}>
+                                                                    {formatDisplayValue(badgeLabel)}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-4 py-3.5">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="grid h-6 w-6 place-items-center rounded-full bg-blue-600 text-[11px] font-bold text-white">A</span>
+                                                                    <span className="font-medium text-slate-700 dark:text-slate-200">{resolveHandlerLabel(incident)}</span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-4 py-3.5 text-sm tabular-nums text-slate-600 dark:text-slate-300">
+                                                                {formatDate(incidentDate)}
+                                                            </td>
+                                                            <td className="px-4 py-3.5">
+                                                                <div className="flex justify-end gap-2">
+                                                                    <button
+                                                                        type="button"
+                                                                        aria-label={`View details for ${incident.title || 'this incident'}`}
+                                                                        onClick={() => {
+                                                                            markAsRead(incidentId);
+                                                                            navigate(`/incidents/${incidentId}`);
+                                                                        }}
+                                                                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                                                                    >
+                                                                        <Eye size={15} aria-hidden="true" />
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        aria-label={`More actions for ${incident.title || 'this incident'}`}
+                                                                        onClick={() => {
+                                                                            markAsRead(incidentId);
+                                                                            navigate(`/incidents/${incidentId}`);
+                                                                        }}
+                                                                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                                                                    >
+                                                                        ...
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-2.5 md:hidden">
                                     {filteredIncidents.map((incident) => {
                                         const isClosureRequest = isAdminRole(user?.role) && incident.closureRequested && incident.status !== 'Closed';
                                         const isHighPriority = incident.isHighPriority === true;
@@ -686,7 +803,7 @@ const IncidentList = () => {
                                             <article
                                                 key={incidentId}
                                                 aria-label={`Incident: ${incident.title || 'Untitled'}`}
-                                                className={`group flex flex-col rounded-[22px] border bg-white/95 shadow-md shadow-slate-200/60 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg dark:bg-slate-900/95 dark:shadow-slate-950/30 ${
+                                                className={`incident-list-mobile-card group flex flex-col rounded-lg border bg-white shadow-sm transition-all duration-200 dark:bg-slate-900/95 dark:shadow-slate-950/30 ${
                                                     priority
                                                         ? 'border-amber-200 ring-1 ring-amber-200/70 dark:border-amber-500/40 dark:ring-amber-500/20'
                                                         : unread
@@ -695,7 +812,7 @@ const IncidentList = () => {
                                                 }`}
                                             >
                                                 {/* Card top accent stripe */}
-                                                <div className={`h-1 w-full rounded-t-[22px] ${
+                                                <div className={`h-1 w-full rounded-t-lg ${
                                                     isClosureRequest ? 'bg-emerald-400' :
                                                     incident.status === 'Closed' ? 'bg-emerald-400' :
                                                     incident.status === 'In Progress' ? 'bg-blue-400' :
@@ -703,7 +820,7 @@ const IncidentList = () => {
                                                     'bg-orange-300'
                                                 }`} aria-hidden="true" />
 
-                                                <div className="flex flex-1 flex-col gap-0 p-4 sm:p-5">
+                                                <div className="flex flex-1 flex-col gap-0 p-3">
                                                     {/* Row 1 — badges + date */}
                                                     <div className="flex flex-wrap items-center justify-between gap-2">
                                                         <div className="flex flex-wrap items-center gap-1.5">
@@ -731,8 +848,8 @@ const IncidentList = () => {
                                                     </div>
 
                                                     {/* Row 2 — title + admission */}
-                                                    <div className="mt-3">
-                                                        <h3 className="line-clamp-2 text-base font-bold leading-snug tracking-tight text-slate-900 dark:text-slate-50">
+                                                    <div className="mt-2">
+                                                        <h3 className="line-clamp-1 text-sm font-bold leading-snug tracking-tight text-slate-900 dark:text-slate-50">
                                                             {incident.title || 'Untitled Incident'}
                                                         </h3>
                                                         <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
@@ -741,7 +858,7 @@ const IncidentList = () => {
                                                     </div>
 
                                                     {/* Row 3 — key facts grid */}
-                                                    <dl className="mt-3.5 grid grid-cols-2 gap-2">
+                                                    <dl className="incident-list-mobile-facts mt-2.5 grid grid-cols-2 gap-2">
                                                         <div className="flex items-start gap-2 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-slate-800 dark:bg-slate-950/60">
                                                             <Users size={13} className="mt-0.5 shrink-0 text-slate-400" aria-hidden="true" />
                                                             <div className="min-w-0">
@@ -787,7 +904,7 @@ const IncidentList = () => {
                                                     ) : null}
 
                                                     {/* Card footer */}
-                                                    <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3.5 dark:border-slate-800 mt-4">
+                                                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
                                                         <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
                                                             <BookOpen size={11} aria-hidden="true" />
                                                             Class {incident.class || '—'} · {incident.section || '—'}
@@ -799,7 +916,7 @@ const IncidentList = () => {
                                                                 markAsRead(incidentId);
                                                                 navigate(`/incidents/${incidentId}`);
                                                             }}
-                                                            className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-3.5 py-2 text-xs font-bold text-white transition-all duration-150 hover:bg-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:bg-slate-700 dark:hover:bg-blue-600"
+                                                            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900 dark:text-blue-300 dark:hover:bg-slate-800"
                                                         >
                                                             <Eye size={13} aria-hidden="true" />
                                                             View Details
