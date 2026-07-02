@@ -915,6 +915,103 @@ const UserManagement = () => {
         [activeTab, openDeleteDialog, openDetailModal]
     );
 
+    const staffMobileCards = (
+        <div className="space-y-3 md:hidden">
+            {paginatedUsers.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-400">
+                    No staff records match your search. Try a different name, email, or role.
+                </div>
+            ) : (
+                paginatedUsers.map((record) => {
+                    const canDelete = canDeleteStaffUser(record);
+                    const isActive = record?.isActive !== false;
+                    return (
+                        <article key={record?._id || record?.id || record?.email} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                            <div className="flex items-start gap-3">
+                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-sm font-bold text-blue-700 dark:bg-blue-500/10 dark:text-blue-200">
+                                    {(record?.name || 'U').charAt(0).toUpperCase()}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <p className="truncate text-sm font-bold text-slate-950 dark:text-slate-100">{record?.name || 'Staff member'}</p>
+                                            <p className="mt-0.5 truncate text-xs font-medium text-slate-500 dark:text-slate-400">{record?.email || 'Email not available'}</p>
+                                        </div>
+                                        <RoleBadge role={record?.role} />
+                                    </div>
+                                    <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-300">
+                                        <div>
+                                            <span className="block font-semibold text-slate-400">Joined</span>
+                                            <span className="font-semibold">{formatDate(record?.createdAt)}</span>
+                                        </div>
+                                        <div>
+                                            <span className="block font-semibold text-slate-400">Status</span>
+                                            <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${isActive ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-100 text-slate-600'}`}>
+                                                {isActive ? 'Active' : 'Inactive'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="mt-3 flex justify-end gap-2">
+                                        <ActionButton icon={Edit3} label="Edit User" tone="blue" onClick={() => openDetailModal(record, 'staff')} />
+                                        {canDelete ? <ActionButton icon={Trash2} label="Delete User" tone="red" onClick={() => openDeleteDialog(record, 'staff')} /> : null}
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+                    );
+                })
+            )}
+        </div>
+    );
+
+    const studentMobileCards = (
+        <div className="space-y-3 md:hidden">
+            {paginatedStudents.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-400">
+                    No student records match your search. Try a different name, admission number, class, or section.
+                </div>
+            ) : (
+                paginatedStudents.map((record) => (
+                    <article key={record?._id || record?.id || record?.admissionNo} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                        <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                                <p className="truncate text-sm font-bold text-slate-950 dark:text-slate-100">{record?.name || 'Student'}</p>
+                                <p className="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">Admission No: {record?.admissionNo || 'N/A'}</p>
+                            </div>
+                            <span className={`inline-flex shrink-0 rounded-full border px-2.5 py-1 text-xs font-semibold ${activeTab === 'passedOut' ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}>
+                                {activeTab === 'passedOut' ? record?.status || 'Passed Out' : record?.status || 'Active'}
+                            </span>
+                        </div>
+                        <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-300">
+                            <div>
+                                <span className="block font-semibold text-slate-400">Class</span>
+                                <span className="font-semibold">{record?.className || 'N/A'}</span>
+                            </div>
+                            <div>
+                                <span className="block font-semibold text-slate-400">Section</span>
+                                <span className="font-semibold">{record?.section || 'N/A'}</span>
+                            </div>
+                            <div>
+                                <span className="block font-semibold text-slate-400">Academic Year</span>
+                                <span className="font-semibold">{record?.academicYear || 'N/A'}</span>
+                            </div>
+                            {activeTab === 'passedOut' ? (
+                                <div>
+                                    <span className="block font-semibold text-slate-400">Passed Out</span>
+                                    <span className="font-semibold">{getPassedOutYear(record)}</span>
+                                </div>
+                            ) : null}
+                        </div>
+                        <div className="mt-3 flex justify-end gap-2">
+                            <ActionButton icon={Edit3} label="View Student Details" tone="blue" onClick={() => openDetailModal(record, 'student')} />
+                            <ActionButton icon={Trash2} label="Delete Student" tone="red" onClick={() => openDeleteDialog(record, 'student')} />
+                        </div>
+                    </article>
+                ))
+            )}
+        </div>
+    );
+
     if (loading) {
         return (
             <div className="flex min-h-screen bg-slate-100 text-slate-800 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
@@ -930,7 +1027,7 @@ const UserManagement = () => {
     }
 
     return (
-        <div className="flex min-h-screen bg-slate-100 text-slate-800 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
+        <div className="user-management flex min-h-screen bg-slate-100 text-slate-800 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
             <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
                 <main className="flex-1 overflow-y-auto p-4 lg:p-6">
                     <div className="mx-auto max-w-[1600px] space-y-6">
@@ -940,11 +1037,11 @@ const UserManagement = () => {
                             description="Manage users, roles, and student records."
                             icon={Users}
                             actions={(
-                                <>
+                                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
                                     <button
                                         type="button"
                                         onClick={() => setShowAddUserModal(true)}
-                                        className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 transition-all duration-300 hover:bg-blue-50 dark:bg-slate-100 dark:text-slate-950"
+                                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-sm transition-all duration-300 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-100 dark:text-slate-950"
                                     >
                                         <UserPlus size={16} />
                                         {currentRole === 'Super Admin' ? 'Add New Admin/Teacher' : 'Add New Teacher'}
@@ -952,7 +1049,7 @@ const UserManagement = () => {
                                     <button
                                         type="button"
                                         onClick={() => setShowAddStudentModal(true)}
-                                        className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/15"
+                                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                                     >
                                         <Plus size={16} />
                                         Add Student
@@ -960,12 +1057,12 @@ const UserManagement = () => {
                                     <button
                                         type="button"
                                         onClick={() => fetchData(false)}
-                                        className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/15"
+                                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                                     >
                                         <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
                                         Refresh
                                     </button>
-                                </>
+                                </div>
                             )}
                             meta={(
                                 <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
@@ -979,7 +1076,7 @@ const UserManagement = () => {
                             )}
                         />
 
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                        <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
                             <DashboardStatCard title="Total Users" value={summary.totalUsers} icon={Users} tone="blue" />
                             <DashboardStatCard title="Admin" value={summary.administrationCount} icon={Shield} tone="slate" />
                             <DashboardStatCard title="Teachers" value={summary.teacherCount} icon={UserPlus} tone="emerald" />
@@ -1000,13 +1097,13 @@ const UserManagement = () => {
                             </div>
                         ) : null}
 
-                        <section className="rounded-[28px] border border-white/80 bg-white/85 p-2 shadow-lg shadow-slate-200/70 backdrop-blur transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/85 dark:shadow-slate-950/50">
-                            <div className="grid gap-2 md:grid-cols-3">
+                        <section className="overflow-x-auto rounded-lg border border-white/80 bg-white/85 p-2 shadow-lg shadow-slate-200/70 backdrop-blur transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/85 dark:shadow-slate-950/50">
+                            <div className="grid min-w-[720px] gap-2 md:min-w-0 md:grid-cols-3">
                                 <button
                                     type="button"
                                     onClick={() => setActiveTab('staff')}
                                     aria-pressed={activeTab === 'staff'}
-                                    className={`rounded-[22px] px-5 py-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-400 ${
+                                    className={`rounded-lg px-5 py-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-400 ${
                                         activeTab === 'staff'
                                             ? 'bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-[0_18px_34px_rgba(15,23,42,0.18)]'
                                             : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'
@@ -1039,7 +1136,7 @@ const UserManagement = () => {
                                      type="button"
                                      onClick={() => setActiveTab('students')}
                                     aria-pressed={activeTab === 'students'}
-                                    className={`rounded-[22px] px-5 py-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400 ${
+                                    className={`rounded-lg px-5 py-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400 ${
                                         activeTab === 'students'
                                             ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_18px_34px_rgba(59,130,246,0.22)]'
                                             : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'
@@ -1072,7 +1169,7 @@ const UserManagement = () => {
                                     type="button"
                                     onClick={() => setActiveTab('passedOut')}
                                     aria-pressed={activeTab === 'passedOut'}
-                                    className={`rounded-[22px] px-5 py-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-400 ${
+                                    className={`rounded-lg px-5 py-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-400 ${
                                         activeTab === 'passedOut'
                                             ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-[0_18px_34px_rgba(245,158,11,0.2)]'
                                             : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'
@@ -1143,13 +1240,16 @@ const UserManagement = () => {
                                     </div>
                                 </UnifiedFilterBar>
 
-                                <div className="min-w-0 overflow-hidden rounded-[28px] border border-slate-200 bg-white transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900">
-                                    <div className="overflow-x-auto">
-                                    <AnalyticsDataTable
-                                        columns={staffColumns}
-                                        rows={paginatedUsers}
-                                        emptyMessage="No staff records match your search. Try a different name, email, or role."
-                                    />
+                                <div className="min-w-0 overflow-hidden rounded-lg border border-slate-200 bg-white transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900">
+                                    <div className="hidden overflow-x-auto md:block">
+                                        <AnalyticsDataTable
+                                            columns={staffColumns}
+                                            rows={paginatedUsers}
+                                            emptyMessage="No staff records match your search. Try a different name, email, or role."
+                                        />
+                                    </div>
+                                    <div className="p-3 md:hidden">
+                                        {staffMobileCards}
                                     </div>
                                     <PaginationFooter
                                         currentPage={staffPage}
@@ -1234,13 +1334,16 @@ const UserManagement = () => {
                                     </div>
                                 </UnifiedFilterBar>
 
-                                <div className="min-w-0 overflow-hidden rounded-[28px] border border-slate-200 bg-white transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900">
-                                    <div className="overflow-x-auto">
-                                    <AnalyticsDataTable
-                                        columns={studentColumns}
-                                        rows={paginatedStudents}
-                                        emptyMessage="No student records match your search. Try a different name, admission number, class, or section."
-                                    />
+                                <div className="min-w-0 overflow-hidden rounded-lg border border-slate-200 bg-white transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900">
+                                    <div className="hidden overflow-x-auto md:block">
+                                        <AnalyticsDataTable
+                                            columns={studentColumns}
+                                            rows={paginatedStudents}
+                                            emptyMessage="No student records match your search. Try a different name, admission number, class, or section."
+                                        />
+                                    </div>
+                                    <div className="p-3 md:hidden">
+                                        {studentMobileCards}
                                     </div>
                                     <PaginationFooter
                                         currentPage={studentPage}
