@@ -985,24 +985,6 @@ const IncidentDetail = () => {
                                     ) : null}
                                 </>
                             )}
-                            meta={(
-                                <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
-                                    <span className={`inline-flex items-center rounded-full border px-3 py-1.5 font-semibold ${statusStyle.badge}`}>
-                                        {formatDisplayValue(incident.status || 'Open')}
-                                    </span>
-                                    <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5">
-                                        Incident Date: {formatShortDate(getIncidentTimestamp(incident))}
-                                    </span>
-                                    <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5">
-                                        Handler: {resolveHandlerLabel(incident)}
-                                    </span>
-                                    {incident.isHighPriority ? (
-                                        <span className="rounded-full border border-orange-200 bg-orange-50 px-3 py-1.5 font-semibold text-orange-700">
-                                            High Priority
-                                        </span>
-                                    ) : null}
-                                </div>
-                            )}
                         />
 
                         {showRejectionAlert ? (
@@ -1120,10 +1102,9 @@ const IncidentDetail = () => {
 
                             <DashboardPanel className="xl:col-span-4" title="Case Administration" description="Who reported the case, who is handling it, and key dates." icon={ShieldCheck}>
                                 <div className="grid gap-4">
-                                    <DetailField icon={ShieldCheck} label="Reported By" value={incident.reportedBy?.name || 'N/A'} helper={incident.reportedBy?.role || 'Reporter'} />
+                                    <DetailField icon={ShieldCheck} label="Reported By" value={incident.reportedBy?.name || 'N/A'} />
                                     <DetailField icon={UserCheck} label="Assigned Handler"
                                         value={resolveHandlerLabel(incident)}
-                                        helper={isAdminRole(incident.assignedHandler?.role) ? 'Admin' : (incident.assignedHandler?.role || 'Waiting for assignment')}
                                     />
                                     <DetailField icon={Calendar} label="Opened" value={formatShortDateTime(getIncidentTimestamp(incident))} />
                                     <DetailField icon={Activity} label="Last Updated" value={formatShortDateTime(incident.updatedAt || incident.closedAt || getIncidentTimestamp(incident))} />
@@ -1394,7 +1375,7 @@ const IncidentDetail = () => {
                                                     value={selectedHandler} onChange={(e) => setSelectedHandler(e.target.value)}>
                                                     <option value="">Choose investigator...</option>
                                                     {staffList.map((staff) => (
-                                                        <option key={getRecordId(staff)} value={getRecordId(staff)}>{staff.name} ({staff.role})</option>
+                                                        <option key={getRecordId(staff)} value={getRecordId(staff)}>{staff.name}</option>
                                                     ))}
                                                 </select>
                                             </div>

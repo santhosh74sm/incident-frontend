@@ -765,16 +765,6 @@ const ProfessionalAnalytics = () => {
                                     </button>
                                 </div>
                             }
-                            meta={
-                                <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
-                                    <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5">
-                                        {analytics.total} Filtered Incident{analytics.total === 1 ? '' : 's'}
-                                    </span>
-                                    <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5">
-                                        Resolution Rate {analytics.resolutionRate}
-                                    </span>
-                                </div>
-                            }
                         />
 
                         <UnifiedFilterBar
