@@ -146,15 +146,19 @@ export const useCompactChart = () => {
 export const ChartSurface = memo(({ height = 400, className = '', children }) => {
     const surfaceRef = useRef(null);
     const [hasValidSize, setHasValidSize] = useState(false);
-    const safeHeight = Math.max(Number(height) || 0, 300);
+    const safeHeight = Math.max(Number(height) || 0, 240);
 
     useLayoutEffect(() => {
         const node = surfaceRef.current;
         if (!node) return undefined;
 
+        let animationFrame = null;
         const updateSize = () => {
-            const { width, height: measuredHeight } = node.getBoundingClientRect();
-            setHasValidSize(width > 0 && measuredHeight > 0);
+            if (animationFrame) cancelAnimationFrame(animationFrame);
+            animationFrame = requestAnimationFrame(() => {
+                const { width, height: measuredHeight } = node.getBoundingClientRect();
+                setHasValidSize(width > 0 && measuredHeight > 0);
+            });
         };
 
         updateSize();
@@ -164,6 +168,7 @@ export const ChartSurface = memo(({ height = 400, className = '', children }) =>
         window.addEventListener('resize', updateSize);
 
         return () => {
+            if (animationFrame) cancelAnimationFrame(animationFrame);
             resizeObserver?.disconnect();
             window.removeEventListener('orientationchange', updateSize);
             window.removeEventListener('resize', updateSize);
@@ -173,11 +178,11 @@ export const ChartSurface = memo(({ height = 400, className = '', children }) =>
     return (
         <div
             ref={surfaceRef}
-            className={`relative w-full min-w-0 overflow-visible ${className}`}
-            style={{ height: `${safeHeight}px`, minHeight: '300px', minWidth: '1px' }}
+            className={`relative w-full min-w-0 overflow-hidden ${className}`}
+            style={{ height: safeHeight, minHeight: safeHeight, minWidth: 1 }}
         >
             {hasValidSize ? (
-                <div className="h-full w-full min-w-[1px]">
+                <div className="h-full w-full min-w-[1px]" style={{ height: safeHeight }}>
                     {children}
                 </div>
             ) : null}

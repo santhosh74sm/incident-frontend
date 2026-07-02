@@ -370,8 +370,20 @@ const ProfessionalAnalytics = () => {
     const analytics = useMemo(() => {
         const source = serverAnalytics || {};
         const trendItems = Array.isArray(source.trendSource) ? source.trendSource : [];
+        const trendBuckets = Array.isArray(source.trendBuckets) ? source.trendBuckets : [];
+        const hasTrendBuckets = trendBuckets.length > 0;
         const aggregatedTrends = buildTrendSeriesFromBuckets({
-            buckets: Array.isArray(source.trendBuckets) ? source.trendBuckets : [],
+            buckets: trendBuckets,
+            dateRange,
+            fallbackDays: 14,
+        });
+        const fallbackStatusTrendData = buildStatusTrendSeries({
+            items: trendItems,
+            dateRange,
+            fallbackDays: 14,
+        });
+        const fallbackCreationTrendData = buildCreationTrendSeries({
+            items: trendItems,
             dateRange,
             fallbackDays: 14,
         });
@@ -392,16 +404,8 @@ const ProfessionalAnalytics = () => {
                         ? STATUS_COLORS.Closed
                         : STATUS_COLORS['In Progress'],
             })),
-            statusTrendData: source.trendBuckets ? aggregatedTrends.statusTrendData : buildStatusTrendSeries({
-                items: trendItems,
-                dateRange,
-                fallbackDays: 14,
-            }),
-            creationTrendData: source.trendBuckets ? aggregatedTrends.creationTrendData : buildCreationTrendSeries({
-                items: trendItems,
-                dateRange,
-                fallbackDays: 14,
-            }),
+            statusTrendData: hasTrendBuckets ? aggregatedTrends.statusTrendData : fallbackStatusTrendData,
+            creationTrendData: hasTrendBuckets ? aggregatedTrends.creationTrendData : fallbackCreationTrendData,
             categoryData: source.categoryData || [],
             locationData: source.locationData || [],
             evidenceData: source.evidenceData || [],
@@ -738,34 +742,36 @@ const ProfessionalAnalytics = () => {
     ];
 
     return (
-        <div className="flex min-h-screen bg-slate-100">
+        <div className="school-analytics flex min-h-screen bg-[#f6f8fc]">
             <div className="flex min-w-0 flex-1 flex-col">
-                <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-                    <div className="mx-auto max-w-[1600px] space-y-6">
-                        <DashboardHero
-                            eyebrow="Reports & trends"
-                            title="School Analytics"
-                            description="View school-wide incident reports and trends."
-                            icon={ShieldCheck}
-                            actions={
-                                <div className="flex flex-wrap gap-2">
+                <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6">
+                    <div className="mx-auto max-w-[1600px] space-y-4">
+                        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                            <DashboardHero
+                                eyebrow="Reports & Trends"
+                                title="School Analytics"
+                                description="View school-wide incident reports and trends."
+                                icon={ShieldCheck}
+                            />
+                            <div className="inline-flex w-full rounded-lg border border-slate-200 bg-slate-100 p-1 md:w-auto">
                                     <button
+                                        type="button"
                                         onClick={() => setActiveTab('overview')}
-                                        className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 ${activeTab === 'overview' ? 'bg-white text-slate-900 shadow-sm dark:bg-white dark:text-slate-950' : 'bg-white/10 text-white hover:bg-white/20 dark:bg-white/10 dark:text-white dark:hover:bg-white/20'}`}
+                                        className={`inline-flex min-h-[40px] flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition md:flex-none ${activeTab === 'overview' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
                                     >
-                                        <BarChart3 size={16} className="mr-2 inline" />
+                                        <BarChart3 size={16} />
                                         Overview
                                     </button>
                                     <button
+                                        type="button"
                                         onClick={() => setActiveTab('details')}
-                                        className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 ${activeTab === 'details' ? 'bg-white text-slate-900 shadow-sm dark:bg-white dark:text-slate-950' : 'bg-white/10 text-white hover:bg-white/20 dark:bg-white/10 dark:text-white dark:hover:bg-white/20'}`}
+                                        className={`inline-flex min-h-[40px] flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition md:flex-none ${activeTab === 'details' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
                                     >
-                                        <List size={16} className="mr-2 inline" />
-                                Case Details
+                                        <List size={16} />
+                                        Case Details
                                     </button>
-                                </div>
-                            }
-                        />
+                            </div>
+                        </div>
 
                         <UnifiedFilterBar
                             hasActiveFilters={hasActiveFilters}
@@ -773,7 +779,7 @@ const ProfessionalAnalytics = () => {
                             title="Search & Filters"
                             activeFilterLabels={activeFilterLabels}
                             collapsible
-                            defaultCollapsed
+                            defaultCollapsed={compactChart}
                             actions={
                                 <button
                                     type="button"
@@ -786,7 +792,7 @@ const ProfessionalAnalytics = () => {
                                 </button>
                             }
                         >
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-8">
+                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-6">
                                 <label className="min-w-0">
                                     <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Academic Year</span>
                                     <select
@@ -877,7 +883,7 @@ const ProfessionalAnalytics = () => {
 
                         {activeTab === 'overview' ? (
                             <>
-                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
                                     <DashboardStatCard title="Total Incidents" value={analytics.total} icon={FileText} tone="blue" helper="All incidents in current view" />
                                     <DashboardStatCard title="Open" value={analytics.open} icon={AlertTriangle} tone="amber" helper="Requires immediate action" />
                                     <DashboardStatCard title="In Progress" value={analytics.inProgress} icon={Clock} tone="blue" helper="Being handled right now" />
@@ -885,7 +891,7 @@ const ProfessionalAnalytics = () => {
                                     <DashboardStatCard title="Letters Sent" value={analytics.lettersIssued} icon={TrendingUp} tone="cyan" helper="Letters completed for these incidents" />
                                 </div>
 
-                                <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+                                <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
                                     <DashboardWidgetPanel
                                         className="xl:col-span-7"
                                         title="Incident Status over Time"
@@ -918,12 +924,12 @@ const ProfessionalAnalytics = () => {
                                     />
 
                                     <DashboardWidgetPanel
-                                        className="xl:col-span-12"
+                                        className="xl:col-span-7"
                                         title="Incidents by Academic Year"
                                         description="Compares yearly incident volume and resolution status."
                                         icon={BarChart3}
                                         chart={
-                                            <ChartSurface height={300}>
+                                            <ChartSurface height={260}>
                                                 <ResponsiveContainer width="100%" height="100%" minWidth={1}>
                                                     <BarChart data={analytics.academicYearData} margin={horizontalBarMargin}>
                                                         <CartesianGrid strokeDasharray="3 3" stroke={CHART_THEME.grid} />
@@ -962,7 +968,7 @@ const ProfessionalAnalytics = () => {
 
                                     <DashboardWidgetPanel
                                         className="xl:col-span-5"
-                                        title="Where Incidents Stand Today"
+                                        title="Incident Status Mix"
                                         description="Open, in-progress, and closed incidents as parts of the whole."
                                         icon={BarChart3}
                                         chart={
@@ -1013,7 +1019,7 @@ const ProfessionalAnalytics = () => {
                                                     description="Adjust the filters to reveal staff handling distribution."
                                                 />
                                             ) : (
-                                                <ChartSurface height={340}>
+                                                <ChartSurface height={300}>
                                                 <ResponsiveContainer width="100%" height="100%" minWidth={1}>
                                                 <BarChart data={analytics.staffWorkload} margin={horizontalBarMargin}>
                                                         <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" vertical={false} />
@@ -1058,11 +1064,11 @@ const ProfessionalAnalytics = () => {
 
                                     <DashboardWidgetPanel
                                         className="xl:col-span-6"
-                                        title="Category Distribution"
+                                        title="Incidents by Type"
                                         description="Incident types ranked by how often they appear."
                                         icon={FileText}
                                         chart={
-                                            <ChartSurface height={320}>
+                                            <ChartSurface height={280}>
                                                 <ResponsiveContainer width="100%" height="100%" minWidth={1}>
                                                 <BarChart data={analytics.categoryData.slice(0, 8)} layout="vertical" margin={{ top: 10, right: 24, left: 8, bottom: 0 }}>
                                                     <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" horizontal={false} />
@@ -1091,7 +1097,7 @@ const ProfessionalAnalytics = () => {
                                             analytics.evidenceData.length === 0 ? (
                                                 <EmptyStatePanel title="No evidence data." description="No evidence records are available for the current filters." />
                                             ) : (
-                                                <ChartSurface height={260}>
+                                                <ChartSurface height={240}>
                                                 <ResponsiveContainer width="100%" height="100%" minWidth={1}>
                                                     <PieChart>
                                                         <Pie
@@ -1138,7 +1144,7 @@ const ProfessionalAnalytics = () => {
                                         description="Open versus closed cases by class for fast intervention targeting."
                                         icon={TrendingUp}
                                         chart={
-                                            <ChartSurface height={320}>
+                                            <ChartSurface height={280}>
                                                 <ResponsiveContainer width="100%" height="100%" minWidth={1}>
                                                 <BarChart data={analytics.classWiseData} margin={horizontalBarMargin}>
                                                     <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" vertical={false} />
@@ -1162,12 +1168,12 @@ const ProfessionalAnalytics = () => {
                                     />
 
                                     <DashboardWidgetPanel
-                                        className="xl:col-span-12"
-                                        title="Location Distribution"
+                                        className="xl:col-span-6"
+                                        title="Top Locations"
                                         description="Most active locations in the filtered incident set."
                                         icon={ShieldCheck}
                                         chart={
-                                            <ChartSurface height={320}>
+                                            <ChartSurface height={280}>
                                                 <ResponsiveContainer width="100%" height="100%" minWidth={1}>
                                                 <BarChart data={analytics.locationData.slice(0, 8)} margin={horizontalBarMargin}>
                                                     <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" vertical={false} />

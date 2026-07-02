@@ -459,10 +459,185 @@
   .create-stepper {
     scrollbar-width: thin;
   }
+
+  /* School analytics page */
+  .school-analytics .dashboard-hero {
+    @apply py-0;
+  }
+
+  .school-analytics .dashboard-hero h1 {
+    font-size: 22px;
+    font-weight: 800;
+  }
+
+  .school-analytics .dashboard-panel {
+    @apply rounded-lg border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_30px_rgba(15,23,42,0.055)];
+  }
+
+  .school-analytics .dashboard-panel-header {
+    @apply gap-3 px-4 py-3;
+  }
+
+  .school-analytics .dashboard-panel-body {
+    @apply p-4;
+  }
+
+  .school-analytics .dashboard-stat-card {
+    @apply min-h-[116px] p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_24px_rgba(15,23,42,0.05)];
+  }
+
+  .school-analytics .dashboard-stat-card .rounded-full {
+    @apply rounded-lg p-2.5;
+  }
+
+  .school-analytics .dashboard-stat-value {
+    @apply mt-1 text-[28px];
+  }
+
+  .school-analytics .dashboard-kicker {
+    @apply tracking-[0.12em];
+  }
+
+  .school-analytics .analytics-table-scroll {
+    @apply max-h-[62vh];
+  }
+
+  .school-analytics .analytics-table-th {
+    @apply bg-slate-50 px-3 py-2.5;
+  }
+
+  .school-analytics .analytics-table-td {
+    @apply px-3 py-2.5;
+  }
+
+  .school-analytics .analytics-heat-cell {
+    @apply h-10 rounded-lg text-xs;
+  }
+
+  .school-analytics .recharts-responsive-container,
+  .school-analytics .recharts-wrapper,
+  .school-analytics .recharts-surface {
+    min-width: 1px;
+  }
+
+  .student-analytics .dashboard-panel {
+    @apply rounded-lg border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_30px_rgba(15,23,42,0.055)];
+  }
+
+  .student-analytics .dashboard-panel-header {
+    @apply gap-3 px-4 py-3;
+  }
+
+  .student-analytics .dashboard-panel-body {
+    @apply p-4;
+  }
+
+  .student-analytics .dashboard-stat-card {
+    @apply min-h-[116px] p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_24px_rgba(15,23,42,0.05)];
+  }
+
+  .student-analytics .dashboard-stat-card .rounded-full {
+    @apply rounded-lg p-2.5;
+  }
+
+  .student-analytics .dashboard-stat-value {
+    @apply mt-1 text-[28px];
+  }
+
+  .student-analytics .recharts-responsive-container,
+  .student-analytics .recharts-wrapper,
+  .student-analytics .recharts-surface {
+    min-width: 1px;
+  }
 }
 
 /* ── Mobile table: stacked card layout ──────────────────────────────────────── */
 @media (max-width: 767px) {
+  .school-analytics {
+    @apply bg-[#f6f8fc];
+  }
+
+  .school-analytics .dashboard-panel-header {
+    @apply px-3 py-3;
+  }
+
+  .school-analytics .dashboard-panel-body {
+    @apply p-3;
+  }
+
+  .school-analytics .dashboard-stat-card {
+    @apply min-h-[84px] p-3;
+  }
+
+  .school-analytics .dashboard-stat-card .flex.items-start {
+    @apply gap-3;
+  }
+
+  .school-analytics .dashboard-stat-value {
+    @apply text-2xl;
+  }
+
+  .school-analytics .dashboard-stat-card p.mt-2 {
+    @apply mt-1 text-xs leading-4;
+  }
+
+  .school-analytics .analytics-table-shell {
+    @apply overflow-x-auto;
+  }
+
+  .school-analytics .analytics-table-scroll {
+    @apply block max-h-none overflow-x-auto;
+  }
+
+  .school-analytics .analytics-table {
+    @apply min-w-[640px];
+  }
+
+  .school-analytics .analytics-table thead {
+    display: table-header-group;
+  }
+
+  .school-analytics .analytics-table,
+  .school-analytics .analytics-table tbody,
+  .school-analytics .analytics-table tr,
+  .school-analytics .analytics-table td {
+    display: revert;
+    width: auto;
+  }
+
+  .school-analytics .analytics-table tr {
+    @apply mb-0 rounded-none border-0 p-0 shadow-none;
+  }
+
+  .school-analytics .analytics-table-td {
+    @apply table-cell border-b-0 px-3 py-2.5 text-left;
+  }
+
+  .school-analytics .analytics-table-td::before {
+    content: none;
+  }
+
+  .student-analytics {
+    @apply bg-[#f6f8fc];
+  }
+
+  .student-analytics .dashboard-panel-header,
+  .student-analytics .dashboard-panel-body {
+    @apply px-3 py-3;
+  }
+
+  .student-analytics .dashboard-stat-card {
+    @apply min-h-[92px] rounded-lg p-3;
+  }
+
+  .student-analytics .dashboard-stat-card p.mt-2 {
+    @apply hidden;
+  }
+
+  .student-analytics .student-detail-stats > :last-child {
+    grid-column: 1 / -1;
+  }
+
   .dashboard-stat-card {
     @apply p-3;
   }

@@ -19,6 +19,7 @@ import {
     ArrowLeft,
     CheckCircle,
     Clock,
+    Eye,
     Download,
     FileText,
     Loader2,
@@ -96,6 +97,8 @@ const StudentAnalytics = () => {
     const [classFilter, setClassFilter] = useState('');
     const [sectionFilter, setSectionFilter] = useState('');
     const [studentSummarySort, setStudentSummarySort] = useState({ key: 'name', direction: 'asc' });
+    const [studentSummaryPage, setStudentSummaryPage] = useState(1);
+    const [studentRowsPerPage, setStudentRowsPerPage] = useState(10);
     const [studentDirectorySummary, setStudentDirectorySummary] = useState({ total: 0, incidentCount: 0, letterCount: 0 });
     const [statusFilter, setStatusFilter] = useState([]);
     const [students, setStudents] = useState([]);
@@ -150,7 +153,11 @@ const StudentAnalytics = () => {
 
     const studentSummaryPageSize = 100;
     const filteredStudents = students;
-    const paginatedStudents = students;
+    const studentVisibleTotal = filteredStudents.length;
+    const studentSummaryTotalPages = Math.max(1, Math.ceil(studentVisibleTotal / studentRowsPerPage));
+    const normalizedStudentPage = Math.min(studentSummaryPage, studentSummaryTotalPages);
+    const studentPageStartIndex = (normalizedStudentPage - 1) * studentRowsPerPage;
+    const paginatedStudents = filteredStudents.slice(studentPageStartIndex, studentPageStartIndex + studentRowsPerPage);
 
     const fetchFilterOptions = useCallback(async () => {
         if (!user?._id) return;
@@ -367,6 +374,16 @@ const StudentAnalytics = () => {
     }, [searchTerm]);
 
     useEffect(() => {
+        setStudentSummaryPage(1);
+    }, [academicYear, classFilter, debouncedSearchTerm, sectionFilter, studentRowsPerPage, studentStatus, studentSummarySort.direction, studentSummarySort.key]);
+
+    useEffect(() => {
+        if (studentSummaryPage > studentSummaryTotalPages) {
+            setStudentSummaryPage(studentSummaryTotalPages);
+        }
+    }, [studentSummaryPage, studentSummaryTotalPages]);
+
+    useEffect(() => {
         if (selectedStudent) {
             fetchStudentIncidents(selectedStudent);
             fetchStudentLetters(selectedStudent);
@@ -580,12 +597,34 @@ const StudentAnalytics = () => {
         <button
             type="button"
             onClick={() => toggleStudentSummarySort(key)}
-            className="inline-flex items-center gap-1 font-semibold text-slate-600 hover:text-blue-700 dark:text-slate-300 dark:hover:text-blue-300"
+            className="inline-flex items-center gap-1 font-semibold text-slate-600 transition hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-slate-300 dark:hover:text-blue-300"
+            aria-label={`Sort by ${label}`}
         >
             {label}
             <span className="text-[10px]">{studentSummarySort.key === key ? (studentSummarySort.direction === 'asc' ? '^' : 'v') : '-'}</span>
         </button>
     );
+
+    const openStudentSummary = (student) => {
+        if (student?.academicYear) setAcademicYear(student.academicYear);
+        setSelectedStudent(student);
+    };
+
+    const renderStudentStatusPill = (status) => {
+        const normalizedStatus = formatDisplayValue(status || studentStatus);
+        const tone = normalizedStatus === 'Active'
+            ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+            : normalizedStatus === 'Passed Out'
+                ? 'border-slate-200 bg-slate-100 text-slate-600'
+                : 'border-amber-200 bg-amber-50 text-amber-700';
+
+        return (
+            <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold ${tone}`}>
+                <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
+                {normalizedStatus || 'Unknown'}
+            </span>
+        );
+    };
 
     const exportStudentSummaryToExcel = async () => {
         const exportStudents = [];
@@ -650,18 +689,14 @@ const StudentAnalytics = () => {
     }
 
     const studentSummaryColumns = [
-        { key: 'serialNumber', label: 'S.No', render: (row, index) => index + 1 },
-        { key: 'admissionNo', label: renderSortLabel('admissionNo', 'Admission Number'), render: (row) => row.admissionNo || 'N/A' },
+        { key: 'admissionNo', label: renderSortLabel('admissionNo', 'Admission No'), render: (row) => row.admissionNo || 'N/A' },
         {
             key: 'name',
             label: renderSortLabel('name', 'Student Name'),
             render: (row) => (
                 <button
                     type="button"
-                    onClick={() => {
-                        if (row.academicYear) setAcademicYear(row.academicYear);
-                        setSelectedStudent(row);
-                    }}
+                    onClick={() => openStudentSummary(row)}
                     className="font-semibold text-blue-700 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
                 >
                     {row.name || 'Unknown Student'}
@@ -670,10 +705,24 @@ const StudentAnalytics = () => {
         },
         { key: 'className', label: renderSortLabel('className', 'Class'), render: (row) => row.className || 'N/A' },
         { key: 'section', label: renderSortLabel('section', 'Section'), render: (row) => row.section || 'N/A' },
-        { key: 'academicYear', label: renderSortLabel('academicYear', 'Academic Year'), render: (row) => row.academicYear || academicYear || 'N/A' },
-        { key: 'status', label: renderSortLabel('status', 'Status'), render: (row) => formatDisplayValue(row.status || studentStatus) },
-        { key: 'incidentCount', label: renderSortLabel('incidentCount', 'Incident Count'), render: (row) => row.incidentCount || 0 },
-        { key: 'letterCount', label: renderSortLabel('letterCount', 'Letter Count'), render: (row) => row.letterCount || 0 },
+        { key: 'incidentCount', label: renderSortLabel('incidentCount', 'Incidents'), render: (row) => row.incidentCount || 0 },
+        { key: 'letterCount', label: renderSortLabel('letterCount', 'Letters'), render: (row) => row.letterCount || 0 },
+        { key: 'status', label: renderSortLabel('status', 'Status'), render: (row) => renderStudentStatusPill(row.status) },
+        {
+            key: 'action',
+            label: 'Action',
+            render: (row) => (
+                <button
+                    type="button"
+                    onClick={() => openStudentSummary(row)}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-blue-100 bg-blue-50 text-blue-700 transition hover:border-blue-200 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    aria-label={`View ${row.name || 'student'} summary`}
+                    title="View summary"
+                >
+                    <Eye size={16} aria-hidden="true" />
+                </button>
+            ),
+        },
     ];
 
     const incidentColumns = [
@@ -803,8 +852,23 @@ const StudentAnalytics = () => {
         ...statusFilter.map((value) => `Status: ${value}`),
     ].filter(Boolean);
 
+    const studentSummaryRangeStart = studentVisibleTotal === 0 ? 0 : studentPageStartIndex + 1;
+    const studentSummaryRangeEnd = Math.min(studentPageStartIndex + studentRowsPerPage, studentVisibleTotal);
+    const studentPaginationPages = Array.from({ length: studentSummaryTotalPages }, (_, index) => index + 1)
+        .filter((page) => (
+            page === 1 ||
+            page === studentSummaryTotalPages ||
+            Math.abs(page - normalizedStudentPage) <= 1
+        ));
+    const resetDirectoryFilters = () => {
+        setSearchTerm('');
+        setClassFilter('');
+        setSectionFilter('');
+        setAcademicYear(currentAcademicYear);
+    };
+
     return (
-        <div className="flex min-h-screen bg-slate-100 dark:bg-slate-950">
+        <div className="student-analytics flex min-h-screen bg-slate-100 dark:bg-slate-950">
             <div className="flex min-w-0 flex-1 flex-col">
                 <main className="flex-1 overflow-y-auto p-4 lg:p-6">
                     <div className="mx-auto max-w-[1600px] space-y-6">
@@ -943,82 +1007,212 @@ const StudentAnalytics = () => {
                                         <DashboardStatCard title="Letters" value={studentDirectorySummary.letterCount} icon={Mail} tone="slate" helper="In current result" />
                                     </div>
 
-                                {studentDirectorySummary.total === 0 ? (
-                                    <EmptyStatePanel
-                                        title="No students found."
-                                        description={searchTerm || classFilter || sectionFilter ? 'Try broadening your filters to surface more students.' : 'No students are currently available in the directory.'}
-                                    />
-                                ) : (
-                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                                        {paginatedStudents.map((student) => (
-                                            <button
-                                                key={student.id || `${student._id}-${student.academicYear}`}
-                                                type="button"
-                                                onClick={() => {
-                                                    if (student.academicYear) setAcademicYear(student.academicYear);
-                                                    setSelectedStudent(student);
-                                                }}
-                                                className="rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-lg font-bold text-blue-700">
-                                                        {student?.name?.charAt(0)?.toUpperCase() || '?'}
-                                                    </div>
-                                                    <div className="min-w-0">
-                                                        <p className="truncate font-semibold text-slate-900">{student?.name || 'Unknown Student'}</p>
-                                                        <p className="truncate text-xs font-medium text-slate-500">{student?.admissionNo || 'N/A'}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-600">
-                                                    <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1">Class {student?.className || 'N/A'}</span>
-                                                    <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1">Section {student?.section || 'N/A'}</span>
-                                                    <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1">{student?.academicYear || academicYear || 'N/A'}</span>
-                                                    <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-emerald-700">{student?.status || studentStatus}</span>
-                                                    <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1">{student?.incidentCount || 0} incidents</span>
-                                                    <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1">{student?.letterCount || 0} letters</span>
-                                                </div>
-                                                <div className="mt-4 border-t border-slate-100 pt-4 text-sm font-semibold text-blue-700">
-                                                    View Summary & History
-                                                </div>
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                                {studentDirectorySummary.total > 0 ? (
-                                    <DashboardPanel
-                                        title={isPassedOutSummary ? 'Passed Out Students' : 'Student Summary'}
-                                        description={`${studentDirectorySummary.total} record${studentDirectorySummary.total === 1 ? '' : 's'} across the selected filters.`}
-                                        icon={Users}
-                                    >
-                                        <AnalyticsDataTable
-                                            columns={studentSummaryColumns}
-                                            rows={paginatedStudents}
-                                            emptyMessage="No students match the current filters."
+                                <DashboardPanel
+                                    title={isPassedOutSummary ? 'Passed Out Students' : 'Student Summary'}
+                                    description={`${studentDirectorySummary.total} record${studentDirectorySummary.total === 1 ? '' : 's'} across the selected filters.`}
+                                    icon={Users}
+                                >
+                                    {studentDirectorySummary.total === 0 ? (
+                                        <EmptyStatePanel
+                                            title="No students found"
+                                            description={searchTerm || classFilter || sectionFilter ? 'Try broadening your filters to surface more students.' : 'No students are currently available in the directory.'}
+                                            action={(
+                                                <button
+                                                    type="button"
+                                                    onClick={resetDirectoryFilters}
+                                                    className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                                                >
+                                                    Reset filters
+                                                </button>
+                                            )}
                                         />
-                                    </DashboardPanel>
-                                ) : null}
+                                    ) : (
+                                        <>
+                                            <div className="student-summary-table">
+                                                <div className="hidden md:block">
+                                                    <table className="w-full min-w-[860px] table-fixed border-collapse">
+                                                        <thead className="sticky top-0 z-10 bg-slate-50">
+                                                            <tr>
+                                                                {studentSummaryColumns.map((column) => (
+                                                                    <th
+                                                                        key={column.key}
+                                                                        scope="col"
+                                                                        className="border-b border-slate-200 px-4 py-3 text-left text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500"
+                                                                    >
+                                                                        {column.label}
+                                                                    </th>
+                                                                ))}
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody className="divide-y divide-slate-100">
+                                                            {paginatedStudents.map((student, index) => (
+                                                                <tr
+                                                                    key={student.id || `${student._id}-${student.academicYear}` || index}
+                                                                    onClick={() => openStudentSummary(student)}
+                                                                    className="cursor-pointer bg-white transition hover:bg-blue-50/50"
+                                                                    tabIndex={0}
+                                                                    onKeyDown={(event) => {
+                                                                        if (event.key === 'Enter' || event.key === ' ') {
+                                                                            event.preventDefault();
+                                                                            openStudentSummary(student);
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    {studentSummaryColumns.map((column) => (
+                                                                        <td key={column.key} className="px-4 py-3 text-sm font-medium text-slate-700">
+                                                                            {column.render ? column.render(student, index) : student?.[column.key]}
+                                                                        </td>
+                                                                    ))}
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+
+                                                <div className="divide-y divide-slate-100 md:hidden">
+                                                    {paginatedStudents.map((student) => (
+                                                        <div
+                                                            key={student.id || `${student._id}-${student.academicYear}`}
+                                                            className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 px-3 py-4"
+                                                        >
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => openStudentSummary(student)}
+                                                                className="min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                                                            >
+                                                                <p className="truncate text-sm font-bold text-slate-950">{student?.name || 'Unknown Student'}</p>
+                                                                <p className="mt-1 text-xs font-semibold text-slate-500">
+                                                                    {student?.admissionNo || 'N/A'} - Class {student?.className || 'N/A'} - Section {student?.section || 'N/A'}
+                                                                </p>
+                                                                <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs font-semibold text-slate-600">
+                                                                    <span>Incidents: {student?.incidentCount || 0}</span>
+                                                                    <span>Letters: {student?.letterCount || 0}</span>
+                                                                </div>
+                                                            </button>
+                                                            <div className="flex flex-col items-end justify-between gap-3">
+                                                                {renderStudentStatusPill(student?.status)}
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => openStudentSummary(student)}
+                                                                    className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-blue-100 bg-blue-50 text-blue-700 transition hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                                                                    aria-label={`View ${student?.name || 'student'} summary`}
+                                                                >
+                                                                    <Eye size={16} aria-hidden="true" />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-col gap-3 border-t border-slate-100 px-1 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                                                <p className="text-sm font-medium text-slate-600">
+                                                    Showing {studentSummaryRangeStart} to {studentSummaryRangeEnd} of {studentVisibleTotal} students
+                                                </p>
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setStudentSummaryPage((page) => Math.max(1, page - 1))}
+                                                        disabled={normalizedStudentPage === 1}
+                                                        className="min-h-10 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                                                    >
+                                                        Previous
+                                                    </button>
+                                                    {studentPaginationPages.map((page, index) => {
+                                                        const previousPage = studentPaginationPages[index - 1];
+                                                        const showGap = previousPage && page - previousPage > 1;
+                                                        return (
+                                                            <React.Fragment key={page}>
+                                                                {showGap ? <span className="px-1 text-sm text-slate-400">...</span> : null}
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setStudentSummaryPage(page)}
+                                                                    className={`h-10 min-w-10 rounded-lg border px-3 text-sm font-semibold transition ${
+                                                                        normalizedStudentPage === page
+                                                                            ? 'border-blue-600 bg-blue-600 text-white shadow-sm'
+                                                                            : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                                                                    }`}
+                                                                    aria-current={normalizedStudentPage === page ? 'page' : undefined}
+                                                                >
+                                                                    {page}
+                                                                </button>
+                                                            </React.Fragment>
+                                                        );
+                                                    })}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setStudentSummaryPage((page) => Math.min(studentSummaryTotalPages, page + 1))}
+                                                        disabled={normalizedStudentPage === studentSummaryTotalPages}
+                                                        className="min-h-10 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                                                    >
+                                                        Next
+                                                    </button>
+                                                    <label className="ml-0 flex items-center gap-2 text-sm font-medium text-slate-600 sm:ml-2">
+                                                        Rows
+                                                        <select
+                                                            value={studentRowsPerPage}
+                                                            onChange={(event) => setStudentRowsPerPage(Number(event.target.value))}
+                                                            className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                                                        >
+                                                            {[10, 25, 50, 100].map((size) => (
+                                                                <option key={size} value={size}>{size}</option>
+                                                            ))}
+                                                        </select>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+                                </DashboardPanel>
                             </>
                         ) : (
                             <>
-                                <DashboardHero
-                                    eyebrow={isPassedOutSummary ? 'Passed-Out Student Summary' : 'Student Summary'}
-                                    title={selectedStudent?.name || (isPassedOutSummary ? 'Passed-Out Student Summary' : 'Student Summary')}
-                                    description="View student incidents and letters."
-                                    icon={TrendingUp}
-                                    actions={
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-600">
+                                        <TrendingUp size={16} className="text-blue-600" aria-hidden="true" />
+                                        <span className="text-blue-700">Student Analytics</span>
+                                        <span className="text-slate-300">/</span>
+                                        <span className="text-slate-900">{selectedStudent?.name || 'Student Summary'}</span>
+                                    </div>
+                                    <div>
                                         <button
+                                            type="button"
                                             onClick={() => {
                                                 setSelectedStudent(null);
                                                 setStudentIncidents([]);
                                                 setStudentLetters([]);
+                                                navigate('/student-analytics');
                                             }}
-                                            className="rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
+                                            className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:w-auto"
                                         >
-                                            <ArrowLeft size={16} className="mr-2 inline" aria-hidden="true" />
-                                            Back to Directory
+                                            <ArrowLeft size={16} aria-hidden="true" />
+                                            Back to Student Analytics
                                         </button>
-                                    }
-                                />
+                                    </div>
+                                </div>
+
+                                <section className="dashboard-panel">
+                                    <div className="p-4 sm:p-5">
+                                        <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center">
+                                            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-3xl font-bold text-blue-700">
+                                                {selectedStudent?.name?.charAt(0)?.toUpperCase() || 'S'}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <h1 className="truncate text-2xl font-extrabold tracking-tight text-slate-950">
+                                                        {selectedStudent?.name || 'Student Summary'}
+                                                    </h1>
+                                                    {renderStudentStatusPill(selectedStudent?.status)}
+                                                </div>
+                                                <p className="mt-2 text-sm font-medium text-slate-600">
+                                                    Admission No: {selectedStudent?.admissionNo || 'N/A'}
+                                                    <span className="mx-2 text-slate-300">-</span>
+                                                    Class {selectedStudent?.className || 'N/A'} - {selectedStudent?.section || 'N/A'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
 
                                 <UnifiedFilterBar
                                     hasActiveFilters={
@@ -1041,7 +1235,7 @@ const StudentAnalytics = () => {
                                     collapsible
                                     defaultCollapsed
                                 >
-                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-6">
+                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
                                         <label className="min-w-0">
                                             <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Academic Year</span>
                                             <select
@@ -1103,19 +1297,17 @@ const StudentAnalytics = () => {
                                     <DashboardPageSkeleton showHero={false} />
                                 ) : (
                                     <>
-                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-6">
+                                        <div className="student-detail-stats grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
                                             <DashboardStatCard title="Total Incidents" value={studentAnalytics.total} icon={FileText} tone="blue" helper="All filtered incidents" />
                                             <DashboardStatCard title="Open" value={studentAnalytics.open} icon={AlertTriangle} tone="amber" helper="Needs attention" />
                                             <DashboardStatCard title="In Progress" value={studentAnalytics.inProgress} icon={Clock} tone="blue" helper="Currently being handled" />
                                             <DashboardStatCard title="Closed" value={studentAnalytics.closed} icon={CheckCircle} tone="emerald" helper="Resolved cases" />
                                             <DashboardStatCard title="Letters Sent" value={studentAnalytics.generatedLetters} icon={Mail} tone="emerald" helper="Letters completed for this student" />
-                                            <DashboardStatCard title="Letters Pending" value={studentAnalytics.pendingLetters} icon={ShieldCheck} tone="amber" helper="Incident cases without letters" />
                                         </div>
 
-                                        <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+                                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                                             <DashboardWidgetPanel
-                                                className="xl:col-span-8"
-                                            title="Incident Status over Time"
+                                                title="Incident Status over Time"
                                                 description="Daily open, in-progress, and closed counts using the incident timeline date."
                                                 icon={TrendingUp}
                                                 chart={<IncidentStatusTrendChart data={studentAnalytics.statusTrendData} idPrefix="student-status" />}
@@ -1134,7 +1326,6 @@ const StudentAnalytics = () => {
                                             />
 
                                             <DashboardWidgetPanel
-                                                className="xl:col-span-4"
                                                 title="New Incidents by Day"
                                                 description="New incidents per day based on the timeline date."
                                                 icon={AlertTriangle}
@@ -1145,7 +1336,6 @@ const StudentAnalytics = () => {
                                             />
 
                                             <DashboardWidgetPanel
-                                                className="xl:col-span-4"
                                                 title="Letter Status"
                                                 description="Letters generated versus letters still pending for this student."
                                                 icon={Mail}
@@ -1186,7 +1376,6 @@ const StudentAnalytics = () => {
                                             />
 
                                             <DashboardWidgetPanel
-                                                className="xl:col-span-4"
                                                 title="Where Incidents Occurred"
                                                 description="Number of incidents recorded at each school location."
                                                 icon={ShieldCheck}
@@ -1221,7 +1410,6 @@ const StudentAnalytics = () => {
                                             />
 
                                             <DashboardWidgetPanel
-                                                className="xl:col-span-4"
                                                 title="Incidents by Type"
                                                 description="Most frequent incident categories involving this student."
                                                 icon={FileText}
@@ -1247,7 +1435,7 @@ const StudentAnalytics = () => {
                                             />
 
                                             <DashboardWidgetPanel
-                                                className="xl:col-span-12"
+                                                className="lg:col-span-2"
                                                 title="Evidence Records"
                                                 description="Types of evidence captured across this student's incident history."
                                                 icon={ShieldCheck}
