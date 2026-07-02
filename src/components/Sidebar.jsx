@@ -21,6 +21,7 @@ import {
     X,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useConfirm } from './ConfirmProvider';
 import { normalizeRole } from '../utils/roles';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -125,6 +126,7 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const { user, logout } = useAuth();
+    const confirm = useConfirm();
     const desktopMenuRef = useRef(null);
     const mobileMenuRef = useRef(null);
     const scrollPositionsRef = useRef({ desktop: 0, mobile: 0 });
@@ -268,6 +270,22 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
     const visibleReports = useMemo(() => filterByRole(reportsItems), [filterByRole, reportsItems]);
 
     const closeMobile = useCallback(() => setIsMobileOpen(false), []);
+
+    const handleSignOut = useCallback(async () => {
+        const confirmed = await confirm({
+            tone: 'warning',
+            title: 'Are you sure you want to sign out?',
+            description: 'Any unsaved work or drafts from this session will be cleared after signing out.',
+            confirmLabel: 'Sign Out',
+            cancelLabel: 'Cancel',
+        });
+
+        if (!confirmed) return;
+
+        await logout();
+        closeMobile();
+        navigate('/login', { replace: true });
+    }, [closeMobile, confirm, logout, navigate]);
 
     // ── Persistence / sync ─────────────────────────────────────────────────
     useEffect(() => {
@@ -481,10 +499,7 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
                         type="button"
                         title={collapsed ? 'Sign Out' : undefined}
                         aria-label="Sign out"
-                        onClick={() => {
-                            logout();
-                            navigate('/login');
-                        }}
+                        onClick={handleSignOut}
                         className={`flex w-full items-center rounded-xl border border-transparent text-slate-400 transition-all duration-200 hover:border-rose-500/15 hover:bg-rose-500/10 hover:text-rose-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/60 ${
                             collapsed ? 'min-h-[42px] justify-center px-1 py-1' : 'min-h-[42px] gap-3 px-2.5 py-2'
                         }`}

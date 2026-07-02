@@ -57,6 +57,28 @@ const findOptionByValue = (options, value) =>
     options.find((option) => String(getOptionId(option)) === String(value) || getOptionLabel(option) === value);
 
 const createEmptyEvidenceEntry = () => ({ evidenceType: '', file: null, preview: null });
+const buildEvidenceTypeDisplayLabels = (entries = []) => {
+    const totals = new Map();
+
+    entries.forEach((entry) => {
+        const evidenceType = entry?.evidenceType || '';
+        if (!evidenceType) return;
+        totals.set(evidenceType, (totals.get(evidenceType) || 0) + 1);
+    });
+
+    const occurrences = new Map();
+    return entries.map((entry) => {
+        const evidenceType = entry?.evidenceType || '';
+        if (!evidenceType) return '';
+
+        const occurrence = (occurrences.get(evidenceType) || 0) + 1;
+        occurrences.set(evidenceType, occurrence);
+
+        return totals.get(evidenceType) > 1 && occurrence > 1
+            ? `${evidenceType} (${occurrence})`
+            : evidenceType;
+    });
+};
 const createInitialFormData = () => ({
     description: '',
     category: '',
@@ -377,6 +399,10 @@ const CreateIncident = () => {
     const selectedCategory = useMemo(
         () => findOptionByValue(categories, selectedCategoryId || formData.category) || null,
         [categories, formData.category, selectedCategoryId]
+    );
+    const evidenceTypeDisplayLabels = useMemo(
+        () => buildEvidenceTypeDisplayLabels(evidenceEntries),
+        [evidenceEntries]
     );
 
     const sectionFilteredStudents = useMemo(() => {
@@ -2392,7 +2418,10 @@ const CreateIncident = () => {
                                 }
                             >
                                 <div className="grid min-w-0 gap-4 lg:grid-cols-2">
-                                    {evidenceEntries.map((entry, index) => (
+                                    {evidenceEntries.map((entry, index) => {
+                                        const selectedEvidenceTypeLabel = evidenceTypeDisplayLabels[index] || entry.evidenceType;
+
+                                        return (
                                         <div key={`evidence-${index}`} className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4">
                                             <div className="flex items-center justify-between gap-3">
                                                 <p className="text-sm font-semibold text-slate-900">Evidence {index + 1}</p>
@@ -2418,11 +2447,18 @@ const CreateIncident = () => {
                                                         }`}
                                                     >
                                                         <option value="">Select Evidence Type</option>
-                                                        {evidenceTypes.map((type) => (
-                                                            <option key={String(getOptionId(type))} value={getOptionLabel(type)}>
-                                                                {getOptionLabel(type)}
+                                                        {evidenceTypes.map((type) => {
+                                                            const optionLabel = getOptionLabel(type);
+                                                            const displayLabel = optionLabel === entry.evidenceType
+                                                                ? selectedEvidenceTypeLabel
+                                                                : optionLabel;
+
+                                                            return (
+                                                            <option key={String(getOptionId(type))} value={optionLabel}>
+                                                                {displayLabel}
                                                             </option>
-                                                        ))}
+                                                            );
+                                                        })}
                                                     </select>
 
                                                     {isPrivilegedUser && (
@@ -2523,7 +2559,8 @@ const CreateIncident = () => {
                                                 )}
                                             </div>
                                         </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
 
                                 {errors.evidence && <p className="mt-3 text-sm font-medium text-red-600">{errors.evidence}</p>}

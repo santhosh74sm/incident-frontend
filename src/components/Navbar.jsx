@@ -18,6 +18,7 @@ import apiClient from '../config/apiClient';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
 import { useTheme } from '../context/ThemeContext';
+import { useConfirm } from './ConfirmProvider';
 import { useToast } from './ToastProvider';
 import NotificationDropdown from './NotificationDropdown';
 import { isAdminRole, isSuperAdminRole, normalizeRole } from '../utils/roles';
@@ -32,6 +33,7 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
     const { user, logout, restoreAuth } = useAuth();
     const { unreadCount, enabled: notificationsEnabled } = useNotifications();
     const { themeMode, setThemeMode } = useTheme();
+    const confirm = useConfirm();
     const { addToast } = useToast();
     const navigate = useNavigate();
     const [showDropdown, setShowDropdown] = useState(false);
@@ -131,6 +133,22 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
             setSavingProfile(false);
         }
     }, [addToast, currentUserId, profileForm.email, profileForm.name, restoreAuth]);
+
+    const handleSignOut = useCallback(async () => {
+        const confirmed = await confirm({
+            tone: 'warning',
+            title: 'Are you sure you want to sign out?',
+            description: 'Any unsaved work or drafts from this session will be cleared after signing out.',
+            confirmLabel: 'Sign Out',
+            cancelLabel: 'Cancel',
+        });
+
+        if (!confirmed) return;
+
+        await logout();
+        setShowDropdown(false);
+        navigate('/login', { replace: true });
+    }, [confirm, logout, navigate]);
 
     const profileMenuItems = useMemo(() => {
         if (!isAdminRole(user?.role)) {
@@ -393,10 +411,7 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
 
                                             <button
                                                 type="button"
-                                                onClick={() => {
-                                                    logout();
-                                                    navigate('/login');
-                                                }}
+                                                onClick={handleSignOut}
                                                 role="menuitem"
                                                 className="mt-1 flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-sm font-medium text-rose-600 transition-all duration-200 hover:bg-rose-50"
                                             >
