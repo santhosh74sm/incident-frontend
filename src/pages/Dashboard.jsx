@@ -11,7 +11,6 @@ import {
     GraduationCap,
     ShieldCheck,
     TrendingUp,
-    Users,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../config/apiClient';
@@ -389,32 +388,19 @@ const DashboardContent = memo(() => {
                             )}
                         </>
                     )}
-                    meta={(
-                        <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold dark:border-slate-700 dark:bg-slate-800">
-                                {summary.total} total
-                            </span>
-                            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold dark:border-slate-700 dark:bg-slate-800">
-                                {summary.active} active
-                            </span>
-                            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold dark:border-slate-700 dark:bg-slate-800">
-                                {summary.unassigned} unassigned
-                            </span>
-                        </div>
-                    )}
                 />
 
                 {/* ── Stat cards ── */}
                 <section
                     aria-label="Incident statistics"
-                    className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5"
+                    className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4"
                 >
                     <DashboardStatCard
-                        title="Active"
-                        value={summary.active}
+                        title="Total Incidents"
+                        value={summary.total}
                         icon={TrendingUp}
                         tone="blue"
-                        helper="Open + in progress"
+                        helper="All incidents in the All academic year."
                     />
                     <DashboardStatCard
                         title="Open"
@@ -436,13 +422,6 @@ const DashboardContent = memo(() => {
                         icon={CheckCircle}
                         tone="emerald"
                         helper="Resolved"
-                    />
-                    <DashboardStatCard
-                        title="Unassigned"
-                        value={summary.unassigned}
-                        icon={Users}
-                        tone="red"
-                        helper="Needs an owner"
                     />
                 </section>
 
