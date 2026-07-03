@@ -21,5 +21,5 @@ test('renders the staff login screen for unauthenticated users', async () => {
     </QueryClientProvider>
   );
 
-  expect(await screen.findByRole('heading', { name: /sign in/i })).toBeInTheDocument();
+  expect(await screen.findByRole('button', { name: /sign in/i })).toBeInTheDocument();
 });

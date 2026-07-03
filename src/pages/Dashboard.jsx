@@ -227,13 +227,13 @@ const dashboardDataRequests = new Map();
 const STATUS_PRIORITY = { Open: 0, 'In Progress': 1, Closed: 2 };
 
 const fetchDashboardData = (user) => {
-    const requestKey = `${user?._id || user?.id || 'unknown'}:${user?.role || 'unknown'}`;
+    const requestKey = `${user?._id || user?.id || 'unknown'}:${user?.role || 'unknown'}:${user?.currentAcademicYear || 'unknown'}`;
     if (!dashboardDataRequests.has(requestKey)) {
         dashboardDataRequests.set(
             requestKey,
             Promise.all([
-                apiClient.get('/api/incidents', { params: { page: 1, limit: 6 } }),
-                apiClient.get('/api/incidents/summary'),
+                apiClient.get('/api/incidents', { params: { page: 1, limit: 6, academicYear: user?.currentAcademicYear } }),
+                apiClient.get('/api/incidents/summary', { params: { academicYear: user?.currentAcademicYear } }),
             ]).finally(() => {
                 dashboardDataRequests.delete(requestKey);
             })
@@ -306,7 +306,11 @@ const DashboardContent = memo(() => {
         if (!userId) return;
 
         let mounted = true;
-        const requestUser = { _id: userId, role: userRole };
+        const requestUser = {
+            _id: userId,
+            role: userRole,
+            currentAcademicYear: user?.currentAcademicYear,
+        };
 
         const fetchData = async () => {
             try {
@@ -398,6 +402,13 @@ const DashboardContent = memo(() => {
                     title={`Welcome, ${user?.name || 'Admin'}`}
                     description="Here's what's happening with your school incidents today."
                     icon={ShieldCheck}
+                    meta={
+                        user?.currentAcademicYear ? (
+                            <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 dark:border-blue-800/50 dark:bg-blue-950/40 dark:text-blue-300">
+                                Academic Year: {user.currentAcademicYear}
+                            </div>
+                        ) : null
+                    }
                     actions={(
                         <>
                             {canReportIncident && (
