@@ -337,7 +337,7 @@ const DashboardContent = memo(() => {
 
         fetchData();
         return () => { mounted = false; };
-    }, [userId, userRole]);
+    }, [userId, userRole, user?.currentAcademicYear]);
 
     // ── Derived summaries (unchanged calculations) ────────────────────────
     const canReportIncident = isIncidentReporterRole(user?.role);
