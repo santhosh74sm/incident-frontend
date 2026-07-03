@@ -395,7 +395,7 @@ const DashboardContent = memo(() => {
 
                 {/* Hero */}
                 <DashboardHero
-                    title={`Good afternoon, ${user?.name || 'Admin'}!`}
+                    title={`Welcome, ${user?.name || 'Admin'}`}
                     description="Here's what's happening with your school incidents today."
                     icon={ShieldCheck}
                     actions={(
