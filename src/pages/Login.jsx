@@ -7,7 +7,6 @@ import {
     Eye,
     EyeOff,
     FileText,
-    Headphones,
     Loader2,
     Lock,
     LogIn,
@@ -93,17 +92,16 @@ const Login = () => {
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_16%,rgba(37,99,235,0.28),transparent_28rem),radial-gradient(circle_at_82%_12%,rgba(14,165,233,0.18),transparent_24rem),linear-gradient(135deg,#05101f_0%,#071a33_48%,#0b2344_100%)]" />
             <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(rgba(59,130,246,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.10)_1px,transparent_1px)] [background-size:64px_64px]" />
 
-            <div className="relative mx-auto grid min-h-screen w-full max-w-7xl grid-cols-1 px-5 py-5 md:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(420px,480px)] lg:gap-10 lg:py-7 xl:gap-16">
-                <section className="hidden min-w-0 flex-col rounded-2xl border border-white/10 bg-slate-950/30 p-7 text-white shadow-2xl shadow-black/20 backdrop-blur lg:flex xl:p-9">
-                    <header className="flex items-center justify-between">
+            <div className="relative mx-auto grid min-h-screen w-full max-w-7xl grid-cols-1 items-center px-5 py-6 md:px-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(420px,460px)] lg:gap-10 xl:gap-14">
+                <section className="hidden min-h-[min(700px,calc(100dvh-3rem))] min-w-0 flex-col rounded-2xl border border-white/10 bg-slate-950/30 p-7 text-white shadow-2xl shadow-black/20 backdrop-blur lg:flex xl:p-9">
+                    <header className="flex items-center">
                         <div className="flex items-center gap-3">
                             <BrandMark />
                             <span className="text-sm font-semibold">Incident Tracking System</span>
                         </div>
-                        <div className="rounded-full border border-white/15 px-4 py-2 text-xs font-semibold text-slate-200">Need help?</div>
                     </header>
 
-                    <div className="flex flex-1 flex-col justify-center py-12">
+                    <div className="flex flex-1 flex-col justify-center py-8">
                         <div className="inline-flex w-fit items-center gap-2 rounded-full bg-blue-500/10 px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-cyan-300">
                             <ShieldCheck size={15} />
                             Secure Portal
@@ -115,7 +113,7 @@ const Login = () => {
                             Sign in to manage school incidents, reports, uploads, and official follow-up work.
                         </p>
 
-                        <div className="mt-10 grid max-w-xl gap-4">
+                        <div className="mt-9 grid max-w-xl gap-4">
                             <FeatureCard icon={UserCog} title="For Admins">
                                 Manage staff, reports, uploads, and official letters from one secure workspace.
                             </FeatureCard>
@@ -124,26 +122,21 @@ const Login = () => {
                             </FeatureCard>
                         </div>
                     </div>
-
-                    <footer className="border-t border-white/10 pt-5 text-center text-xs text-slate-400">
-                        © 2026 Incident Tracking System. All rights reserved.
-                    </footer>
                 </section>
 
-                <section className="flex min-w-0 items-start justify-center py-4 sm:items-center lg:justify-end">
+                <section className="flex min-w-0 items-center justify-center lg:justify-end">
                     <div className="w-full max-w-[460px]">
-                        <div className="mb-6 flex items-center justify-between text-white lg:hidden">
+                        <div className="mb-5 flex items-center text-white lg:hidden">
                             <div className="flex items-center gap-3">
                                 <BrandMark />
                                 <span className="text-sm font-semibold">Incident Tracking System</span>
                             </div>
-                            <Headphones size={18} className="text-slate-300" />
                         </div>
 
                         <div className="overflow-hidden rounded-2xl border border-white/70 bg-white shadow-2xl shadow-slate-950/25 transition-colors duration-200 dark:border-slate-800 dark:bg-slate-900">
-                            <div className="px-5 pb-5 pt-7 text-center sm:px-8 sm:pt-8">
-                                <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300">
-                                    <ShieldCheck size={28} />
+                            <div className="px-5 pb-4 pt-7 text-center sm:px-8 sm:pt-8">
+                                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300">
+                                    <ShieldCheck size={25} />
                                 </div>
                                 <h2 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-slate-100">Welcome Back!</h2>
                                 <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
@@ -151,7 +144,7 @@ const Login = () => {
                                 </p>
                             </div>
 
-                            <div className="px-5 pb-6 sm:px-8 sm:pb-8">
+                            <div className="px-5 pb-6 sm:px-8 sm:pb-7">
                                 {serverError && (
                                     <div className="mb-5 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 dark:border-rose-500/30 dark:bg-rose-950/30" role="alert" aria-live="polite">
                                         <div className="flex items-start gap-3">
@@ -166,7 +159,7 @@ const Login = () => {
                                     </div>
                                 )}
 
-                                <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate aria-busy={submitting}>
+                                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate aria-busy={submitting}>
                                     <div>
                                         <label htmlFor={emailId} className="mb-2 block text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
                                             Email Address
@@ -257,7 +250,7 @@ const Login = () => {
                                     </button>
                                 </form>
 
-                                <div className="mt-7 border-t border-slate-200 pt-5 dark:border-slate-800">
+                                <div className="mt-6 border-t border-slate-200 pt-5 dark:border-slate-800">
                                     <div className="flex items-center justify-between gap-4 text-sm">
                                         <p className="text-slate-500 dark:text-slate-400">New school?</p>
                                         <Link
@@ -279,3 +272,4 @@ const Login = () => {
 };
 
 export default Login;
+

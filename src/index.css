@@ -221,11 +221,12 @@
   }
 
   .analytics-table {
-    @apply w-full min-w-max text-sm;
+    @apply w-full min-w-max table-auto text-sm;
   }
 
   .analytics-table-scroll {
-    @apply max-h-[70vh] overflow-auto overscroll-contain;
+    @apply max-h-[70vh] overflow-auto overscroll-contain [-webkit-overflow-scrolling:touch];
+    scrollbar-width: thin;
   }
 
   .analytics-table-head {
@@ -237,7 +238,7 @@
   }
 
   .analytics-table-td {
-    @apply break-words px-4 py-3.5 text-sm text-slate-700 dark:text-slate-200;
+    @apply whitespace-nowrap px-4 py-3.5 text-sm text-slate-700 dark:text-slate-200;
   }
 
   .analytics-empty {
@@ -694,6 +695,52 @@
   .analytics-table-td::before {
     content: attr(data-label);
     @apply max-w-[46%] text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400;
+  }
+
+  .analytics-table-native {
+    @apply overflow-hidden;
+  }
+
+  .analytics-table-native .analytics-table-scroll {
+    @apply block max-h-none overflow-x-auto overflow-y-auto overscroll-x-contain pb-2;
+    touch-action: pan-x pan-y;
+  }
+
+  .analytics-table-native .analytics-table {
+    @apply min-w-[720px];
+    display: table;
+    width: max-content;
+  }
+
+  .analytics-table-native .analytics-table thead {
+    display: table-header-group;
+  }
+
+  .analytics-table-native .analytics-table tbody {
+    display: table-row-group;
+  }
+
+  .analytics-table-native .analytics-table tr {
+    display: table-row;
+    margin-bottom: 0;
+    border-width: 0;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+
+  .analytics-table-native .analytics-table th,
+  .analytics-table-native .analytics-table td {
+    display: table-cell;
+    width: auto;
+  }
+
+  .analytics-table-native .analytics-table-td {
+    @apply border-b-0 px-3 py-3 text-left;
+  }
+
+  .analytics-table-native .analytics-table-td::before {
+    content: none;
   }
 
   /* Issued letters table */

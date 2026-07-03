@@ -341,8 +341,8 @@ export const AnalyticsDataTable = ({ columns = [], rows = [], emptyMessage = 'No
     const safeRows = Array.isArray(rows) ? rows : [];
 
     return (
-        <div className="analytics-table-shell">
-            <div className="analytics-table-scroll hidden md:block">
+        <div className="analytics-table-shell analytics-table-native">
+            <div className="analytics-table-scroll">
                 <table className="analytics-table">
                     <thead className="analytics-table-head">
                         <tr>
@@ -376,37 +376,6 @@ export const AnalyticsDataTable = ({ columns = [], rows = [], emptyMessage = 'No
                         )}
                     </tbody>
                 </table>
-            </div>
-
-            <div className="space-y-3 p-3 md:hidden">
-                {safeRows.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
-                        {emptyMessage}
-                    </div>
-                ) : (
-                    safeRows.map((row, rowIndex) => (
-                        <article
-                            key={row?.id || row?._id || `${rowIndex}`}
-                            className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900"
-                        >
-                            {safeColumns.map((column, columnIndex) => (
-                                <div
-                                    key={column.key || column.label}
-                                    className={`grid grid-cols-[minmax(0,1fr)_minmax(5rem,auto)] items-start gap-5 px-4 py-3 ${
-                                        columnIndex % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50/70 dark:bg-slate-900/60'
-                                    } ${columnIndex + 1 === safeColumns.length ? '' : 'border-b border-slate-100 dark:border-slate-800'}`}
-                                >
-                                    <span className="min-w-0 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                                        {column.label}
-                                    </span>
-                                    <div className="min-w-0 justify-self-end text-right text-sm font-semibold text-slate-800 dark:text-slate-100 [&>*]:ml-auto">
-                                        {getCellContent(row, column, rowIndex)}
-                                    </div>
-                                </div>
-                            ))}
-                        </article>
-                    ))
-                )}
             </div>
         </div>
     );
