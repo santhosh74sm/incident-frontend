@@ -383,8 +383,7 @@ const CreateIncident = () => {
     const [scrollPosition, setScrollPosition] = useState(0);
     const [isDraftHydrated, setIsDraftHydrated] = useState(false);
 
-    const [fieldOptions, setFieldOptions] = useState({ handler: [], assigner: [] });
-    const [activeFieldTab, setActiveFieldTab] = useState('handler');
+    const [fieldOptions, setFieldOptions] = useState([]);
     const [editMode, setEditMode] = useState(false);
     const [actionTaken, setActionTaken] = useState('');
     const [statusConfirmModal, setStatusConfirmModal] = useState({
@@ -422,14 +421,8 @@ const CreateIncident = () => {
 
     const fetchFieldOptions = useCallback(async () => {
         try {
-            const [handlerOpts, assignerOpts] = await Promise.all([
-                apiClient.get('/api/field-operation-options?type=handler'),
-                apiClient.get('/api/field-operation-options?type=assigner'),
-            ]);
-            setFieldOptions({
-                handler: Array.isArray(handlerOpts.data) ? handlerOpts.data : [],
-                assigner: Array.isArray(assignerOpts.data) ? assignerOpts.data : [],
-            });
+            const response = await apiClient.get('/api/field-operation-options');
+            setFieldOptions(Array.isArray(response.data) ? response.data : []);
         } catch {
             // Ignore options loading errors on create
         }
@@ -511,7 +504,7 @@ const CreateIncident = () => {
         return [
             ['Select Student', 'Choose student'],
             ['Incident Details', 'Provide incident information'],
-            ['Handler Assignment', 'Assign and set priority'],
+            ['Handled By', 'Record staff member who handled incident'],
             ['Evidence', 'Add supporting evidence'],
             ['Field Operations & Submit', 'Save operations and submit'],
         ].map(([label, helper], index) => ({
@@ -2555,14 +2548,14 @@ const CreateIncident = () => {
                                     {canUseManualTiming && (
                                     <SectionCard
                                         icon={ShieldCheck}
-                                        title={isAdministrationUser ? 'Handler Assignment' : 'Manual Time Setup'}
-                                        description={isAdministrationUser ? 'Assign a handler or configure custom dates.' : 'Configure custom incident dates.'}
+                                        title={isAdministrationUser ? 'Handled By' : 'Manual Time Setup'}
+                                        description={isAdministrationUser ? 'Record the staff member who handled this incident. This field is optional.' : 'Configure custom incident dates.'}
                                         step={3}
                                     >
                                         <div className="space-y-4">
                                             {isAdministrationUser && (
                                                 <div>
-                                                    <label className="mb-2 block text-sm font-semibold text-slate-800">Assigned Handler</label>
+                                                    <label className="mb-2 block text-sm font-semibold text-slate-800">Handled By</label>
                                                     <select
                                                         value={formData.assignedHandler}
                                                         onChange={(event) =>
@@ -2573,7 +2566,7 @@ const CreateIncident = () => {
                                                         }
                                                         className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
                                                     >
-                                                        <option value="">No assignment yet.</option>
+                                                        <option value="">Select staff member (optional)</option>
                                                         {staffList.map((staff) => (
                                                             <option key={staff._id} value={staff._id}>
                                                                 {staff.name}
@@ -2581,7 +2574,7 @@ const CreateIncident = () => {
                                                         ))}
                                                     </select>
                                                     <p className="mt-1.5 text-xs text-slate-500">
-                                                        Assign this incident to a teacher. Leave blank to keep it in the Admin pool.
+                                                        Select the staff member who handled this incident. Leave blank if not applicable.
                                                     </p>
                                                 </div>
                                             )}
@@ -2869,40 +2862,11 @@ const CreateIncident = () => {
                                     }
                                 >
                                     <div className="flex flex-col gap-3">
-                                        {/* Assigner/Handler Toggle & Edit Presets Button */}
+                                        {/* Updated Notes Header Label & Edit Presets Button */}
                                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                            <div className="inline-flex rounded-lg bg-slate-100 p-0.5 self-start">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setActiveFieldTab('handler');
-                                                        setEditMode(false);
-                                                    }}
-                                                    className={`rounded-md px-3 py-1 text-xs font-bold transition ${
-                                                        activeFieldTab === 'handler'
-                                                            ? 'bg-white text-slate-800 shadow-sm'
-                                                            : 'text-slate-500 hover:text-slate-800'
-                                                    }`}
-                                                >
-                                                    Handler Updates
-                                                </button>
-                                                {isAdministrationUser ? (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            setActiveFieldTab('assigner');
-                                                            setEditMode(false);
-                                                        }}
-                                                        className={`rounded-md px-3 py-1 text-xs font-bold transition ${
-                                                            activeFieldTab === 'assigner'
-                                                                ? 'bg-white text-slate-800 shadow-sm'
-                                                                : 'text-slate-500 hover:text-slate-800'
-                                                        }`}
-                                                    >
-                                                        Assigner Actions
-                                                    </button>
-                                                ) : null}
-                                            </div>
+                                            <span className="text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-lg self-start">
+                                                Updated Notes
+                                            </span>
 
                                             <button
                                                 type="button"
@@ -2939,7 +2903,7 @@ const CreateIncident = () => {
                                                         type="button"
                                                         onClick={async () => {
                                                             try {
-                                                                await apiClient.post('/api/field-operation-options', { type: activeFieldTab, label: presetSearch.trim() });
+                                                                await apiClient.post('/api/field-operation-options', { type: 'updated', label: presetSearch.trim() });
                                                                 setPresetSearch('');
                                                                 fetchFieldOptions();
                                                                 addToast('Preset added successfully.', 'success');
@@ -2959,7 +2923,7 @@ const CreateIncident = () => {
                                                 <div className="absolute left-0 right-0 z-50 mt-1 max-h-48 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-lg">
                                                     {(() => {
                                                         const query = presetSearch.toLowerCase().trim();
-                                                        const filtered = (fieldOptions[activeFieldTab] || []).filter(
+                                                        const filtered = (fieldOptions || []).filter(
                                                             (opt) => opt.label.toLowerCase().includes(query)
                                                         );
 

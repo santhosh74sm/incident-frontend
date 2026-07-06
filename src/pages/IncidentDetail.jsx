@@ -317,9 +317,8 @@ const IncidentDetail = () => {
     const [actionLoading, setActionLoading] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
-    const [activeFieldTab, setActiveFieldTab] = useState('handler');
     const [editMode, setEditMode] = useState(false);
-    const [fieldOptions, setFieldOptions] = useState({ handler: [], assigner: [] });
+    const [fieldOptions, setFieldOptions] = useState([]);
     const [newOptionLabel, setNewOptionLabel] = useState('');
     const [generatedLetter, setGeneratedLetter] = useState(null);
     const [progressLoading, setProgressLoading] = useState(false);
@@ -345,15 +344,11 @@ const IncidentDetail = () => {
 
     const fetchFieldOptions = useCallback(async () => {
         try {
-            const [handlerOpts, assignerOpts, evidenceOpts] = await Promise.all([
-                apiClient.get('/api/field-operation-options?type=handler'),
-                apiClient.get('/api/field-operation-options?type=assigner'),
+            const [optsRes, evidenceOpts] = await Promise.all([
+                apiClient.get('/api/field-operation-options'),
                 apiClient.get('/api/evidence-types'),
             ]);
-            setFieldOptions({
-                handler: Array.isArray(handlerOpts.data) ? handlerOpts.data : [],
-                assigner: Array.isArray(assignerOpts.data) ? assignerOpts.data : [],
-            });
+            setFieldOptions(Array.isArray(optsRes.data) ? optsRes.data : []);
             setEvidenceTypes(Array.isArray(evidenceOpts.data) ? evidenceOpts.data : []);
         } catch {
             // Non-fatal
@@ -411,7 +406,7 @@ const IncidentDetail = () => {
     const handleAddOption = async () => {
         if (!newOptionLabel.trim()) return;
         try {
-            await apiClient.post('/api/field-operation-options', { type: activeFieldTab, label: newOptionLabel.trim() });
+            await apiClient.post('/api/field-operation-options', { type: 'updated', label: newOptionLabel.trim() });
             setNewOptionLabel('');
             fetchFieldOptions();
         } catch (err) {
@@ -1208,7 +1203,7 @@ const IncidentDetail = () => {
                             <DashboardPanel className="xl:col-span-12" title="Case Administration" description="" icon={ShieldCheck}>
                                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                                     <DetailField icon={ShieldCheck} label="Reported By" value={incident.reportedBy?.name || 'N/A'} />
-                                    <DetailField icon={UserCheck} label="Assigned Handler"
+                                    <DetailField icon={UserCheck} label="Handled By"
                                         value={resolveHandlerLabel(incident)}
                                     />
                                     <DetailField icon={Calendar} label="Opened" value={formatShortDateTime(getIncidentTimestamp(incident))} />
@@ -1480,13 +1475,12 @@ const IncidentDetail = () => {
                                 ) : null}
 
                                 {showCaseAllocation ? (
-                                    <DashboardPanel title="Assign Investigator" description="Assign a staff member to handle this case." icon={UserPlus}>
+                                    <DashboardPanel title="Handled By" description="Assign a staff member to handle this case." icon={UserPlus}>
                                         <div className="space-y-4">
                                             <div>
-                                                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Select Investigator</label>
                                                 <select className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                                                     value={selectedHandler} onChange={(e) => setSelectedHandler(e.target.value)}>
-                                                    <option value="">Choose investigator...</option>
+                                                    <option value="">Choose Handler</option>
                                                     {staffList.map((staff) => (
                                                         <option key={getRecordId(staff)} value={getRecordId(staff)}>{staff.name}</option>
                                                     ))}
@@ -1496,7 +1490,7 @@ const IncidentDetail = () => {
                                                 disabled={!selectedHandler || actionLoading}
                                                 className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
                                                 {actionLoading ? <Loader2 size={16} className="mr-2 inline animate-spin" /> : null}
-                                                Assign Selected Investigator
+                                                Assign Selected Handler
                                             </button>
                                             <button type="button" onClick={handleAssignToMyself}
                                                 disabled={!userId || actionLoading}
@@ -1508,7 +1502,7 @@ const IncidentDetail = () => {
                                 ) : null}
 
                                 {showAdminCommand ? (
-                                    <DashboardPanel title="Administrative Actions" description="Finalize the case or return it to the handler with a decision note." icon={Lock}>
+                                    <DashboardPanel title="Close Incident" description="Finalize the case or return it to the handler with a decision note." icon={Lock}>
                                         <div className="space-y-4">
                                             <textarea
                                                 className="min-h-[110px] w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
@@ -1542,23 +1536,14 @@ const IncidentDetail = () => {
                                             </button>
                                         )}
                                     >
-                                        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-1">
-                                            <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
-                                                <button type="button" onClick={() => { setActiveFieldTab('handler'); setEditMode(false); }}
-                                                    className={`rounded-xl px-4 py-3 text-sm font-semibold transition ${activeFieldTab === 'handler' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:bg-white/70 hover:text-slate-800'}`}>
-                                                    Handler Updates
-                                                </button>
-                                                {isAdminUser ? (
-                                                    <button type="button" onClick={() => { setActiveFieldTab('assigner'); setEditMode(false); }}
-                                                        className={`rounded-xl px-4 py-3 text-sm font-semibold transition ${activeFieldTab === 'assigner' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:bg-white/70 hover:text-slate-800'}`}>
-                                                        Assigner Actions
-                                                    </button>
-                                                ) : null}
+                                        <div className="space-y-4">
+                                            <div>
+                                                <span className="inline-block text-xs font-bold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg">
+                                                    Updated Notes
+                                                </span>
                                             </div>
-                                        </div>
-                                        <div className="mt-4 space-y-4">
                                             <div className="space-y-2">
-                                                {(fieldOptions[activeFieldTab] || []).map((option) => (
+                                                {(fieldOptions || []).map((option) => (
                                                     <div key={getRecordId(option)}
                                                         className={`group flex items-center gap-3 rounded-2xl border px-3 py-3 transition ${editMode ? 'border-slate-200 bg-slate-50' : 'cursor-pointer border-slate-200 bg-white hover:border-blue-200 hover:bg-blue-50/60'}`}
                                                         onClick={() => { if (!editMode) handleSelectOption(option); }}>
@@ -1571,8 +1556,8 @@ const IncidentDetail = () => {
                                                         <span className="text-sm font-medium text-slate-700">{option.label}</span>
                                                     </div>
                                                 ))}
-                                                {(fieldOptions[activeFieldTab] || []).length === 0 ? (
-                                                    <EmptyStatePanel title="No preset updates yet" description="Add preset options to speed up handler and assigner workflows." />
+                                                {(fieldOptions || []).length === 0 ? (
+                                                    <EmptyStatePanel title="No preset updates yet" description="Add preset options to speed up workflows." />
                                                 ) : null}
                                             </div>
                                             {editMode ? (
