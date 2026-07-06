@@ -91,9 +91,8 @@ const createInitialFormData = () => ({
 });
 
 const createInitialManualSetup = () => ({
-    status: 'Open',
+    status: 'Pending',
     openedAt: null,
-    inProgressAt: null,
     closedAt: null,
 });
 
@@ -1366,10 +1365,6 @@ const CreateIncident = () => {
             return 'Opened date is required.';
         }
 
-        if ((manualSetup.status === 'In Progress' || manualSetup.status === 'Closed') && !manualSetup.inProgressAt?.date) {
-            return 'In-progress date is required for the selected status.';
-        }
-
         if (manualSetup.status === 'Closed' && !manualSetup.closedAt?.date) {
             return 'Closed date is required when the status is Closed.';
         }
@@ -1380,7 +1375,6 @@ const CreateIncident = () => {
     const buildManualTimingPayload = () => ({
         status: manualSetup.status,
         openedAt: manualValueToDayjs(manualSetup.openedAt)?.toISOString(),
-        inProgressAt: manualValueToDayjs(manualSetup.inProgressAt)?.toISOString(),
         closedAt: manualValueToDayjs(manualSetup.closedAt)?.toISOString(),
     });
 
@@ -1551,8 +1545,8 @@ const CreateIncident = () => {
 
                                 <div>
                                     <p className="text-sm font-semibold text-slate-800">Initial Status</p>
-                                    <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                                        {['Open', 'In Progress', 'Closed'].map((status) => {
+                                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                                        {['Pending', 'Closed'].map((status) => {
                                             const isActive = manualSetup.status === status;
                                             return (
                                                 <button
@@ -1591,20 +1585,7 @@ const CreateIncident = () => {
                                         description="When the incident was first reported. The date is required."
                                     />
 
-                                    {(manualSetup.status === 'In Progress' || manualSetup.status === 'Closed') && (
-                                        <ManualDateTimeField
-                                            label="In Progress Timeline"
-                                            required
-                                            value={normalizeManualValue(manualSetup.inProgressAt)}
-                                            onChange={(value) =>
-                                                updateManualSetup((current) => ({
-                                                    ...current,
-                                                    inProgressAt: value,
-                                                }))
-                                            }
-                                            description="When work on the incident began."
-                                        />
-                                    )}
+
 
                                     {manualSetup.status === 'Closed' && (
                                         <ManualDateTimeField
@@ -2425,11 +2406,7 @@ const CreateIncident = () => {
                                                                 <span className="rounded-full bg-white px-3 py-1 ring-1 ring-indigo-200">
                                                                     Opened: {formatManualSummary(manualSetup.openedAt)}
                                                                 </span>
-                                                                {(manualSetup.status === 'In Progress' || manualSetup.status === 'Closed') && (
-                                                                    <span className="rounded-full bg-white px-3 py-1 ring-1 ring-indigo-200">
-                                                                        In Progress: {formatManualSummary(manualSetup.inProgressAt)}
-                                                                    </span>
-                                                                )}
+
                                                                 {manualSetup.status === 'Closed' && (
                                                                     <span className="rounded-full bg-white px-3 py-1 ring-1 ring-indigo-200">
                                                                         Closed: {formatManualSummary(manualSetup.closedAt)}

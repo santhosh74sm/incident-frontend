@@ -53,8 +53,7 @@ import { withFeedback } from '../utils/notifications';
 import { isAdminRole, isTeacherRole } from '../utils/roles';
 
 const STATUS_STYLES = {
-    Open: { badge: 'border-orange-200 bg-orange-50 text-orange-700', tone: 'amber' },
-    'In Progress': { badge: 'border-blue-200 bg-blue-50 text-blue-700', tone: 'blue' },
+    Pending: { badge: 'border-orange-200 bg-orange-50 text-orange-700', tone: 'amber' },
     Closed: { badge: 'border-emerald-200 bg-emerald-50 text-emerald-700', tone: 'emerald' },
 };
 const FIELD_CARD_CLASS =
@@ -870,7 +869,7 @@ const IncidentDetail = () => {
 
     const timelineData = useMemo(() => {
         if (!incident) return [];
-        const status = incident.status || 'Open';
+        const status = incident.status || 'Pending';
         const steps = [];
         const openedTime = getIncidentTimestamp(incident);
         if (openedTime) {
@@ -881,7 +880,7 @@ const IncidentDetail = () => {
             });
         }
         const progressTime = incident.inProgressAt || incident.progressAt;
-        if (progressTime && (status === 'In Progress' || status === 'Closed')) {
+        if (progressTime) {
             steps.push({
                 label: 'Active Investigation', time: progressTime,
                 note: 'The case moved into active handling.',
@@ -981,7 +980,7 @@ const IncidentDetail = () => {
                                         <span className="text-slate-800 dark:text-slate-200">Incident Details</span>
                                     </nav>
                                     <span className={`inline-flex rounded-md border px-2.5 py-1 text-xs font-bold uppercase ${statusStyle.badge}`}>
-                                        {formatDisplayValue(incident.status || 'Open')}
+                                        {formatDisplayValue(incident.status || 'Pending')}
                                     </span>
                                     <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-slate-950 dark:text-slate-100 sm:text-[28px]">
                                         {incident.title || 'Untitled Incident'}
@@ -1112,11 +1111,11 @@ const IncidentDetail = () => {
 
                             <DashboardPanel className="2xl:col-span-4" title="Current Status" description="" icon={incident.status === 'Closed' ? CheckCircle : Clock}>
                                 <div className="flex items-start gap-4">
-                                    <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-full ${incident.status === 'Closed' ? 'bg-emerald-100 text-emerald-600' : incident.status === 'In Progress' ? 'bg-blue-100 text-blue-600' : 'bg-orange-100 text-orange-600'}`}>
+                                    <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-full ${incident.status === 'Closed' ? 'bg-emerald-100 text-emerald-600' : 'bg-orange-100 text-orange-600'}`}>
                                         {incident.status === 'Closed' ? <CheckCircle size={22} /> : <Clock size={22} />}
                                     </div>
                                     <div className="min-w-0">
-                                        <h3 className="text-xl font-extrabold text-slate-950 dark:text-slate-100">{formatDisplayValue(incident.status || 'Open')}</h3>
+                                        <h3 className="text-xl font-extrabold text-slate-950 dark:text-slate-100">{formatDisplayValue(incident.status || 'Pending')}</h3>
                                         <p className="mt-1 text-sm text-slate-500">
                                             {incident.status === 'Closed' ? 'This incident has been resolved and closed.' : 'This incident is currently active.'}
                                         </p>

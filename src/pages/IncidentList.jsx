@@ -43,7 +43,6 @@ const formatDate = formatShortDate;
 const statusPill = (status, overrides = {}) => {
     if (overrides.closureRequested) return 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-950/30 dark:text-emerald-300';
     if (status === 'Closed') return 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-950/30 dark:text-emerald-300';
-    if (status === 'In Progress') return 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-500/40 dark:bg-blue-950/30 dark:text-blue-300';
     return 'border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-500/40 dark:bg-orange-950/30 dark:text-orange-300';
 };
 
@@ -86,7 +85,7 @@ const IncidentList = () => {
     const [readStatusFilter, setReadStatusFilter] = useState('All');
     const [page, setPage] = useState(1);
     const [pagination, setPagination] = useState({ page: 1, total: 0, totalPages: 1 });
-    const [serverSummary, setServerSummary] = useState({ total: 0, open: 0, inProgress: 0, closed: 0, highPriority: 0, unread: 0 });
+    const [serverSummary, setServerSummary] = useState({ total: 0, pending: 0, closed: 0, highPriority: 0, unread: 0 });
     const pageSize = 18;
     const incidentRequestRef = useRef({ controller: null, id: 0 });
 
@@ -181,7 +180,7 @@ const IncidentList = () => {
             const nextIncidents = Array.isArray(data?.data) ? data.data : [];
             setIncidents(nextIncidents);
             setPagination(data?.pagination || { page: 1, total: nextIncidents.length, totalPages: 1 });
-            setServerSummary(summaryData || { total: 0, open: 0, inProgress: 0, closed: 0, highPriority: 0, unread: 0 });
+            setServerSummary(summaryData || { total: 0, pending: 0, closed: 0, highPriority: 0, unread: 0 });
 
             const syncedReadIds = nextIncidents
                 .filter((incident) => incident?.readByCurrentUser === true)
@@ -415,7 +414,7 @@ const IncidentList = () => {
                             )}
                         />
 
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                             <DashboardStatCard
                                 title="Total"
                                 value={summary.total}
@@ -424,18 +423,11 @@ const IncidentList = () => {
                                 helper={hasActiveFilters ? 'Filtered results' : 'All incidents'}
                             />
                             <DashboardStatCard
-                                title="Open"
-                                value={summary.open}
+                                title="Pending"
+                                value={summary.pending || summary.open}
                                 icon={AlertTriangle}
                                 tone="amber"
                                 helper="Awaiting action"
-                            />
-                            <DashboardStatCard
-                                title="In Progress"
-                                value={summary.inProgress}
-                                icon={Clock}
-                                tone="blue"
-                                helper="Being handled"
                             />
                             <DashboardStatCard
                                 title="Closed"
@@ -692,7 +684,7 @@ const IncidentList = () => {
                                                                 ? String(incident.studentsInvolved)
                                                                 : 'N/A';
                                                     const incidentDate = getIncidentTimestamp(incident);
-                                                    const badgeLabel = isClosureRequest ? 'Seal ready' : (incident.status === 'In Progress' ? 'In progress' : incident.status);
+                                                    const badgeLabel = isClosureRequest ? 'Seal ready' : incident.status;
                                                     const incidentId = getRecordId(incident);
                                                     const rowNumber = ((pagination.page || 1) - 1) * pageSize + index + 1;
 
@@ -708,7 +700,6 @@ const IncidentList = () => {
                                                                 <div className="flex items-start gap-2">
                                                                     <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${
                                                                         isClosureRequest || incident.status === 'Closed' ? 'bg-emerald-500' :
-                                                                        incident.status === 'In Progress' ? 'bg-blue-500' :
                                                                         isHighPriority ? 'bg-amber-500' :
                                                                         'bg-orange-500'
                                                                     }`} />
@@ -795,7 +786,7 @@ const IncidentList = () => {
                                                     ? String(incident.studentsInvolved)
                                                     : 'N/A';
                                         const incidentDate = getIncidentTimestamp(incident);
-                                        const badgeLabel = isClosureRequest ? 'Seal ready' : (incident.status === 'In Progress' ? 'In progress' : incident.status);
+                                        const badgeLabel = isClosureRequest ? 'Seal ready' : incident.status;
                                         const CatIcon = categoryIcon(incident.category);
                                         const incidentId = getRecordId(incident);
 
@@ -815,7 +806,6 @@ const IncidentList = () => {
                                                 <div className={`h-1 w-full rounded-t-lg ${
                                                     isClosureRequest ? 'bg-emerald-400' :
                                                     incident.status === 'Closed' ? 'bg-emerald-400' :
-                                                    incident.status === 'In Progress' ? 'bg-blue-400' :
                                                     isHighPriority ? 'bg-amber-400' :
                                                     'bg-orange-300'
                                                 }`} aria-hidden="true" />

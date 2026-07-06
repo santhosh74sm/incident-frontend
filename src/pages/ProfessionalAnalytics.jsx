@@ -18,7 +18,6 @@ import {
     AlertTriangle,
     BarChart3,
     CheckCircle,
-    Clock,
     Download,
     FileText,
     List,
@@ -90,8 +89,7 @@ const AcademicYearStatusTooltip = ({ active, payload, label }) => {
             <div className="space-y-1.5">
                 {[
                     { label: 'Total Incidents', value: row.total, color: CHART_COLORS.neutralPrimary },
-                    { label: 'Open', value: row.open, color: STATUS_COLORS.Open },
-                    { label: 'In progress', value: row.inProgress, color: STATUS_COLORS['In Progress'] },
+                    { label: 'Pending', value: row.pending || row.open, color: STATUS_COLORS.Pending },
                     { label: 'Closed', value: row.closed, color: STATUS_COLORS.Closed },
                 ].map((entry) => (
                     <div key={entry.label} className="flex items-center justify-between gap-4 text-sm">
@@ -218,7 +216,7 @@ const ProfessionalAnalytics = () => {
             if (
                 !data
                 || typeof data !== 'object'
-                || !['total', 'open', 'inProgress', 'closed', 'lettersIssued'].every((key) => Number.isFinite(Number(data[key])))
+                || !['total', 'pending', 'closed', 'lettersIssued'].every((key) => Number.isFinite(Number(data[key])))
                 || !requiredArrays.every((key) => Array.isArray(data[key]))
             ) {
                 throw new Error('Analytics endpoint returned an invalid response.');
@@ -389,20 +387,19 @@ const ProfessionalAnalytics = () => {
         });
         return {
             total: source.total || 0,
-            open: source.open || 0,
-            inProgress: source.inProgress || 0,
+            pending: source.pending || source.open || 0,
+            open: source.pending || source.open || 0,
+            inProgress: 0,
             closed: source.closed || 0,
             lettersIssued: source.lettersIssued || 0,
-            active: source.active || 0,
+            active: source.pending || source.open || 0,
             unassigned: source.unassigned || 0,
             resolutionRate: source.resolutionRate || '0%',
             statusData: (source.statusData || []).map((entry) => ({
                 ...entry,
-                color: entry.name === 'Open'
-                    ? STATUS_COLORS.Open
-                    : entry.name === 'Closed'
-                        ? STATUS_COLORS.Closed
-                        : STATUS_COLORS['In Progress'],
+                color: entry.name === 'Closed'
+                    ? STATUS_COLORS.Closed
+                    : STATUS_COLORS.Pending,
             })),
             statusTrendData: hasTrendBuckets ? aggregatedTrends.statusTrendData : fallbackStatusTrendData,
             creationTrendData: hasTrendBuckets ? aggregatedTrends.creationTrendData : fallbackCreationTrendData,
@@ -546,8 +543,7 @@ const ProfessionalAnalytics = () => {
             const academicYearSheetData = analytics.academicYearData.map((entry) => ({
                 'Academic Year': entry.academicYear,
                 'Total Incidents': entry.total,
-                Open: entry.open,
-                'In Progress': entry.inProgress,
+                Pending: entry.pending || entry.open,
                 Closed: entry.closed,
                 Unresolved: entry.unresolved,
             }));
@@ -672,8 +668,7 @@ const ProfessionalAnalytics = () => {
 
     const statusTrendColumns = [
         { key: 'name', label: 'Period' },
-        { key: 'open', label: 'Open' },
-        { key: 'inProgress', label: 'In progress' },
+        { key: 'pending', label: 'Pending' },
         { key: 'closed', label: 'Closed' },
     ];
 
@@ -695,23 +690,22 @@ const ProfessionalAnalytics = () => {
 
     const workloadColumns = [
         { key: 'name', label: 'Staff Member' },
-        { key: 'open', label: 'Open' },
-        { key: 'inProgress', label: 'In progress' },
+        { key: 'pending', label: 'Pending' },
         { key: 'closed', label: 'Closed' },
         { key: 'total', label: 'Total' },
     ];
 
     const categoryHeatmapColumns = [
         { key: 'label', label: 'Category', render: (row) => formatDisplayValue(row.label) },
-        { key: 'open', label: 'Open' },
-        { key: 'inProgress', label: 'In progress' },
+        { key: 'pending', label: 'Pending' },
         { key: 'closed', label: 'Closed' },
         { key: 'total', label: 'Total' },
     ];
 
     const categoryHeatmapRows = analytics.categoryHeatmap.map((row) => ({
         ...row,
-        total: row.open + row.inProgress + row.closed,
+        pending: row.pending || row.open || 0,
+        total: (row.pending || row.open || 0) + row.closed,
     }));
 
     const categoryColumns = [
@@ -726,14 +720,15 @@ const ProfessionalAnalytics = () => {
 
     const classResolutionColumns = [
         { key: 'className', label: 'Class' },
-        { key: 'open', label: 'Open' },
+        { key: 'pending', label: 'Pending' },
         { key: 'closed', label: 'Closed' },
         { key: 'total', label: 'Total' },
     ];
 
     const classResolutionRows = analytics.classWiseData.map((row) => ({
         ...row,
-        total: row.total ?? row.open + row.closed,
+        pending: row.pending || row.open || 0,
+        total: row.total ?? (row.pending || row.open || 0) + row.closed,
     }));
 
     const locationColumns = [
@@ -883,10 +878,9 @@ const ProfessionalAnalytics = () => {
 
                         {activeTab === 'overview' ? (
                             <>
-                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                                     <DashboardStatCard title="Total Incidents" value={analytics.total} icon={FileText} tone="blue" helper="All incidents in current view" />
-                                    <DashboardStatCard title="Open" value={analytics.open} icon={AlertTriangle} tone="amber" helper="Requires immediate action" />
-                                    <DashboardStatCard title="In Progress" value={analytics.inProgress} icon={Clock} tone="blue" helper="Being handled right now" />
+                                    <DashboardStatCard title="Pending" value={analytics.pending} icon={AlertTriangle} tone="amber" helper="Requires immediate action" />
                                     <DashboardStatCard title="Resolved" value={analytics.closed} icon={CheckCircle} tone="emerald" helper={`Resolution rate ${analytics.resolutionRate}`} />
                                     <DashboardStatCard title="Letters Sent" value={analytics.lettersIssued} icon={TrendingUp} tone="cyan" helper="Letters completed for these incidents" />
                                 </div>
@@ -895,14 +889,13 @@ const ProfessionalAnalytics = () => {
                                     <DashboardWidgetPanel
                                         className="xl:col-span-7"
                                         title="Incident Status over Time"
-                                        description="Shows how counts of open, in-progress, and closed incidents change day by day."
+                                        description="Shows how counts of pending and closed incidents change day by day."
                                         icon={TrendingUp}
                                         chart={<IncidentStatusTrendChart data={analytics.statusTrendData} idPrefix="professional-status" />}
                                         footer={
                                             <LegendList
                                                 items={[
-                                                    { label: 'Open', color: STATUS_COLORS.Open },
-                                                    { label: 'In progress', color: STATUS_COLORS['In Progress'] },
+                                                    { label: 'Pending', color: STATUS_COLORS.Pending },
                                                     { label: 'Closed', color: STATUS_COLORS.Closed },
                                                 ]}
                                             />
@@ -936,8 +929,7 @@ const ProfessionalAnalytics = () => {
                                                         <XAxis dataKey="name" {...compactXAxisProps} />
                                                         <YAxis allowDecimals={false} {...compactYAxisProps} />
                                                         <Tooltip cursor={false} content={<AcademicYearStatusTooltip />} />
-                                                        <Bar dataKey="open" stackId="academic-year-status" fill={STATUS_COLORS.Open} name="Open" radius={[0, 0, 0, 0]} />
-                                                        <Bar dataKey="inProgress" stackId="academic-year-status" fill={STATUS_COLORS['In Progress']} name="In progress" radius={[0, 0, 0, 0]} />
+                                                        <Bar dataKey="pending" stackId="academic-year-status" fill={STATUS_COLORS.Pending} name="Pending" radius={[0, 0, 0, 0]} />
                                                         <Bar dataKey="closed" stackId="academic-year-status" fill={STATUS_COLORS.Closed} name="Closed" radius={[6, 6, 0, 0]}>
                                                             <LabelList dataKey="total" position="top" className="fill-slate-600 text-xs font-semibold" />
                                                         </Bar>
@@ -948,8 +940,7 @@ const ProfessionalAnalytics = () => {
                                         footer={
                                             <LegendList
                                                 items={[
-                                                    { label: 'Open', color: STATUS_COLORS.Open },
-                                                    { label: 'In progress', color: STATUS_COLORS['In Progress'] },
+                                                    { label: 'Pending', color: STATUS_COLORS.Pending },
                                                     { label: 'Closed', color: STATUS_COLORS.Closed },
                                                 ]}
                                             />
@@ -957,8 +948,7 @@ const ProfessionalAnalytics = () => {
                                         tableColumns={[
                                             { key: 'academicYear', label: 'Academic Year' },
                                             { key: 'total', label: 'Total' },
-                                            { key: 'open', label: 'Open' },
-                                            { key: 'inProgress', label: 'In progress' },
+                                            { key: 'pending', label: 'Pending' },
                                             { key: 'closed', label: 'Closed' },
                                             { key: 'unresolved', label: 'Unresolved' },
                                         ]}
@@ -969,7 +959,7 @@ const ProfessionalAnalytics = () => {
                                     <DashboardWidgetPanel
                                         className="xl:col-span-5"
                                         title="Incident Status Mix"
-                                        description="Open, in-progress, and closed incidents as parts of the whole."
+                                        description="Pending and closed incidents as parts of the whole."
                                         icon={BarChart3}
                                         chart={
                                             <ChartSurface height={240}>
@@ -1010,7 +1000,7 @@ const ProfessionalAnalytics = () => {
                                     <DashboardWidgetPanel
                                         className="xl:col-span-7"
                                         title="Workload by Staff Member"
-                                        description="Shows how incidents are divided among staff—for open work, ongoing follow-up, and completed cases."
+                                        description="Shows how incidents are divided among staff—for pending work and completed cases."
                                         icon={Users}
                                         chart={
                                             analytics.staffWorkload.length === 0 ? (
@@ -1026,8 +1016,7 @@ const ProfessionalAnalytics = () => {
                                                         <XAxis dataKey="name" axisLine={false} tickLine={false} {...compactXAxisProps} />
                                                         <YAxis tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
                                                         <ChartTooltip />
-                                                        <Bar dataKey="open" stackId="workload" fill={STATUS_COLORS.Open} radius={[6, 6, 0, 0]} name="Open" />
-                                                        <Bar dataKey="inProgress" stackId="workload" fill={STATUS_COLORS['In Progress']} name="In progress" />
+                                                        <Bar dataKey="pending" stackId="workload" fill={STATUS_COLORS.Pending} radius={[6, 6, 0, 0]} name="Pending" />
                                                         <Bar dataKey="closed" stackId="workload" fill={STATUS_COLORS.Closed} radius={[6, 6, 0, 0]} name="Closed">
                                                             <LabelList dataKey="total" position="top" fill={CHART_THEME.label} fontSize={12} />
                                                         </Bar>
@@ -1045,14 +1034,13 @@ const ProfessionalAnalytics = () => {
                                     <DashboardWidgetPanel
                                         className="xl:col-span-6"
                                         title="Category Summary (Grid View)"
-                                        description="See how often each incident type appears while open, in progress, or already closed."
+                                        description="See how often each incident type appears while pending or already closed."
                                         icon={BarChart3}
                                         chart={
                                             <CategoryHeatmap
-                                                rows={analytics.categoryHeatmap}
+                                                rows={categoryHeatmapRows}
                                                 columns={[
-                                                    { key: 'open', label: 'Open', rgb: '249, 115, 22' },
-                                                    { key: 'inProgress', label: 'In progress', rgb: '59, 130, 246' },
+                                                    { key: 'pending', label: 'Pending', rgb: '249, 115, 22' },
                                                     { key: 'closed', label: 'Closed', rgb: '34, 197, 94' },
                                                 ]}
                                             />
@@ -1128,7 +1116,7 @@ const ProfessionalAnalytics = () => {
                                                     items={analytics.evidenceData.slice(0, 6).map((entry, index) => ({
                                                         label: entry.name,
                                                         value: entry.count,
-                                                        color: [CHART_COLORS.evidence, STATUS_COLORS['In Progress'], STATUS_COLORS.Closed, STATUS_COLORS.Open, CHART_COLORS.category, CHART_COLORS.neutralPrimary][index % 6],
+                                                        color: [CHART_COLORS.evidence, STATUS_COLORS.Closed, STATUS_COLORS.Pending, CHART_COLORS.category, CHART_COLORS.neutralPrimary][index % 5],
                                                     }))}
                                                 />
                                             ) : null
@@ -1141,7 +1129,7 @@ const ProfessionalAnalytics = () => {
                                     <DashboardWidgetPanel
                                         className="xl:col-span-6"
                                         title="Class Resolution Snapshot"
-                                        description="Open versus closed cases by class for fast intervention targeting."
+                                        description="Pending versus closed cases by class for fast intervention targeting."
                                         icon={TrendingUp}
                                         chart={
                                             <ChartSurface height={280}>
@@ -1151,8 +1139,8 @@ const ProfessionalAnalytics = () => {
                                                     <XAxis dataKey="className" axisLine={false} tickLine={false} {...compactXAxisProps} />
                                                     <YAxis tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
                                                     <ChartTooltip />
-                                                    <Bar dataKey="open" fill={STATUS_COLORS.Open} radius={[6, 6, 0, 0]} name="Open">
-                                                        <LabelList dataKey="open" position="top" fill={CHART_THEME.label} fontSize={12} />
+                                                    <Bar dataKey="pending" fill={STATUS_COLORS.Pending} radius={[6, 6, 0, 0]} name="Pending">
+                                                        <LabelList dataKey="pending" position="top" fill={CHART_THEME.label} fontSize={12} />
                                                     </Bar>
                                                     <Bar dataKey="closed" fill={STATUS_COLORS.Closed} radius={[6, 6, 0, 0]} name="Closed">
                                                         <LabelList dataKey="closed" position="top" fill={CHART_THEME.label} fontSize={12} />

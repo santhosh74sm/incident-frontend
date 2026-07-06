@@ -29,8 +29,7 @@ export const formatActivityRecordLabel = (type) => {
 };
 
 export const STATUS_OPTIONS = [
-    { id: 'Open', label: 'Open' },
-    { id: 'In Progress', label: 'In progress' },
+    { id: 'Pending', label: 'Pending' },
     { id: 'Closed', label: 'Closed' },
 ];
 export const ALL_ACADEMIC_YEARS_VALUE = 'all';
@@ -60,8 +59,7 @@ export const buildAcademicYearOptions = (academicYears = [], currentAcademicYear
 };
 
 export const STATUS_COLORS = {
-    Open: '#f97316',
-    'In Progress': '#3b82f6',
+    Pending: '#f97316',
     Closed: '#22c55e',
 };
 
@@ -237,7 +235,6 @@ export const resolveHandlerLabel = (incident) => {
 
 export const toneForStatus = (status) => {
     if (status === 'Closed') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-    if (status === 'In Progress') return 'bg-blue-50 text-blue-700 border-blue-200';
     return 'bg-orange-50 text-orange-700 border-orange-200';
 };
 
@@ -292,10 +289,8 @@ export const buildDashboardActivityFeed = (incidents = [], { icons = {} } = {}) 
             icon:
                 incident.status === 'Closed'
                     ? icons.closed
-                    : incident.status === 'In Progress'
-                      ? icons.inProgress
-                      : icons.open,
-            tone: incident.status === 'Closed' ? 'emerald' : incident.status === 'In Progress' ? 'blue' : 'amber',
+                    : icons.open,
+            tone: incident.status === 'Closed' ? 'emerald' : 'amber',
         }));
 
 export const buildAnalyticsActivityFeed = (items, { ActivityIcon } = {}) =>
@@ -634,8 +629,7 @@ export const buildStatusTrendSeries = ({ items = [], dateRange = { start: '', en
         project: ({ label, fullLabel, bucketItems }) => ({
             name: label,
             fullDate: fullLabel,
-            open: bucketItems.filter((incident) => incident.status === 'Open').length,
-            inProgress: bucketItems.filter((incident) => incident.status === 'In Progress').length,
+            pending: bucketItems.filter((incident) => incident.status === 'Pending').length,
             closed: bucketItems.filter((incident) => incident.status === 'Closed').length,
         }),
     });
@@ -675,8 +669,7 @@ export const buildTrendSeriesFromBuckets = ({ buckets = [], dateRange = { start:
         const shared = { name: formatDayBucketLabel(cursor), fullDate: formatDayBucketTitle(cursor) };
         statusTrendData.push({
             ...shared,
-            open: Number(bucket.open || 0),
-            inProgress: Number(bucket.inProgress || 0),
+            pending: Number(bucket.pending || bucket.open || 0),
             closed: Number(bucket.closed || 0),
         });
         creationTrendData.push({ ...shared, created: Number(bucket.created || 0) });

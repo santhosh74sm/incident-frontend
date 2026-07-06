@@ -24,13 +24,9 @@ export const IncidentStatusTrendChart = memo(({ data = [], height = 320, idPrefi
             <ResponsiveContainer width="100%" height="100%" minWidth={1}>
                 <AreaChart data={data} margin={{ top: 10, right: 8, left: -16, bottom: compactChart ? 34 : 0 }}>
                     <defs>
-                        <linearGradient id={`${idPrefix}-open`} x1="0" x2="0" y1="0" y2="1">
-                            <stop offset="5%" stopColor={STATUS_COLORS.Open} stopOpacity={0.18} />
-                            <stop offset="95%" stopColor={STATUS_COLORS.Open} stopOpacity={0.02} />
-                        </linearGradient>
-                        <linearGradient id={`${idPrefix}-progress`} x1="0" x2="0" y1="0" y2="1">
-                            <stop offset="5%" stopColor={STATUS_COLORS['In Progress']} stopOpacity={0.16} />
-                            <stop offset="95%" stopColor={STATUS_COLORS['In Progress']} stopOpacity={0.02} />
+                        <linearGradient id={`${idPrefix}-pending`} x1="0" x2="0" y1="0" y2="1">
+                            <stop offset="5%" stopColor={STATUS_COLORS.Pending} stopOpacity={0.18} />
+                            <stop offset="95%" stopColor={STATUS_COLORS.Pending} stopOpacity={0.02} />
                         </linearGradient>
                         <linearGradient id={`${idPrefix}-closed`} x1="0" x2="0" y1="0" y2="1">
                             <stop offset="5%" stopColor={STATUS_COLORS.Closed} stopOpacity={0.16} />
@@ -44,8 +40,7 @@ export const IncidentStatusTrendChart = memo(({ data = [], height = 320, idPrefi
                         cursor={{ stroke: '#cbd5e1', strokeDasharray: '4 4' }}
                         labelFormatter={(_, payload) => payload?.[0]?.payload?.fullDate || 'Timeline Date'}
                     />
-                    <Area type="monotone" dataKey="open" stroke={STATUS_COLORS.Open} fill={`url(#${idPrefix}-open)`} strokeWidth={3} name="Open" activeDot={{ r: 6 }} />
-                    <Area type="monotone" dataKey="inProgress" stroke={STATUS_COLORS['In Progress']} fill={`url(#${idPrefix}-progress)`} strokeWidth={3} name="In progress" activeDot={{ r: 6 }} />
+                    <Area type="monotone" dataKey="pending" stroke={STATUS_COLORS.Pending} fill={`url(#${idPrefix}-pending)`} strokeWidth={3} name="Pending" activeDot={{ r: 6 }} />
                     <Area type="monotone" dataKey="closed" stroke={STATUS_COLORS.Closed} fill={`url(#${idPrefix}-closed)`} strokeWidth={3} name="Closed" activeDot={{ r: 6 }} />
                 </AreaChart>
             </ResponsiveContainer>

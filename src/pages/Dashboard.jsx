@@ -5,7 +5,6 @@ import {
     AlertCircle,
     ArrowRight,
     CheckCircle,
-    Clock,
     Eye,
     FileText,
     GraduationCap,
@@ -199,7 +198,7 @@ const LifecycleOverviewPanel = memo(({ rows }) => (
             <div
                 className="mx-auto grid h-36 w-36 place-items-center rounded-full"
                 style={{
-                    background: `conic-gradient(#f97316 0 ${rows[0]?.share || '0%'}, #3b82f6 ${rows[0]?.share || '0%'} ${Number.parseFloat(rows[0]?.share || 0) + Number.parseFloat(rows[1]?.share || 0)}%, #10b981 ${Number.parseFloat(rows[0]?.share || 0) + Number.parseFloat(rows[1]?.share || 0)}% 100%)`,
+                    background: `conic-gradient(#f97316 0 ${rows[0]?.share || '0%'}, #10b981 ${rows[0]?.share || '0%'} 100%)`,
                 }}
                 aria-label="Incident breakdown chart"
             >
@@ -224,7 +223,7 @@ const LifecycleOverviewPanel = memo(({ rows }) => (
 // ─── Module-level request dedup map (unchanged) ────────────────────────────────
 
 const dashboardDataRequests = new Map();
-const STATUS_PRIORITY = { Open: 0, 'In Progress': 1, Closed: 2 };
+const STATUS_PRIORITY = { Pending: 0, Closed: 1 };
 
 const fetchDashboardData = (user) => {
     const requestKey = `${user?._id || user?.id || 'unknown'}:${user?.role || 'unknown'}:${user?.currentAcademicYear || 'unknown'}`;
@@ -273,9 +272,7 @@ const DashboardContent = memo(() => {
                         className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
                             row.status === 'Closed'
                                 ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/50 dark:bg-emerald-950/40 dark:text-emerald-300'
-                                : row.status === 'In Progress'
-                                    ? 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800/50 dark:bg-blue-950/40 dark:text-blue-300'
-                                    : 'border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-800/50 dark:bg-orange-950/40 dark:text-orange-300'
+                                : 'border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-800/50 dark:bg-orange-950/40 dark:text-orange-300'
                         }`}
                     >
                         {row.status}
@@ -365,7 +362,7 @@ const DashboardContent = memo(() => {
                     id:      incident._id,
                     title:   formatDisplayValue(incident.title || 'Untitled incident'),
                     student: incident.studentDetails?.name || incident.studentsInvolved?.[0] || 'Student unavailable',
-                    status:  formatDisplayValue(incident.status || 'Open'),
+                    status:  formatDisplayValue(incident.status || 'Pending'),
                     opened:  formatShortDateTime(getIncidentTimestamp(incident)),
                     handler: resolveHandlerLabel(incident),
                 })),
@@ -375,9 +372,8 @@ const DashboardContent = memo(() => {
     const lifecycleRows = useMemo(() => {
         const total = summary.total || 1;
         return [
-            { id: 'open',     label: 'Open',        count: summary.open,       share: `${Math.round((summary.open / total) * 100)}%`,       tone: 'amber'   },
-            { id: 'progress', label: 'In progress',  count: summary.inProgress, share: `${Math.round((summary.inProgress / total) * 100)}%`, tone: 'blue'    },
-            { id: 'closed',   label: 'Closed',       count: summary.closed,     share: `${Math.round((summary.closed / total) * 100)}%`,     tone: 'emerald' },
+            { id: 'pending',  label: 'Pending',     count: summary.pending || summary.open,   share: `${Math.round(((summary.pending || summary.open) / total) * 100)}%`, tone: 'amber'   },
+            { id: 'closed',   label: 'Closed',      count: summary.closed,                    share: `${Math.round((summary.closed / total) * 100)}%`,                    tone: 'emerald' },
         ];
     }, [summary]);
 
@@ -436,7 +432,7 @@ const DashboardContent = memo(() => {
                 {/* ── Stat cards ── */}
                 <section
                     aria-label="Incident statistics"
-                    className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
+                    className="grid grid-cols-1 gap-4 sm:grid-cols-3"
                 >
                     <DashboardStatCard
                         title="Total Incidents"
@@ -446,18 +442,11 @@ const DashboardContent = memo(() => {
                         helper="All incidents this academic year"
                     />
                     <DashboardStatCard
-                        title="Open Incidents"
-                        value={summary.open}
+                        title="Pending Incidents"
+                        value={summary.pending || summary.open}
                         icon={AlertCircle}
                         tone="amber"
-                        helper="Awaiting first action"
-                    />
-                    <DashboardStatCard
-                        title="In Progress"
-                        value={summary.inProgress}
-                        icon={Clock}
-                        tone="blue"
-                        helper="Currently being handled"
+                        helper="Awaiting action"
                     />
                     <DashboardStatCard
                         title="Closed Incidents"
@@ -509,9 +498,7 @@ const DashboardContent = memo(() => {
                                                 className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold ${
                                                     row.status === 'Closed'
                                                         ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                                                        : row.status === 'In Progress'
-                                                            ? 'border-blue-200 bg-blue-50 text-blue-700'
-                                                            : 'border-orange-200 bg-orange-50 text-orange-700'
+                                                        : 'border-orange-200 bg-orange-50 text-orange-700'
                                                 }`}
                                             >
                                                 {row.status}

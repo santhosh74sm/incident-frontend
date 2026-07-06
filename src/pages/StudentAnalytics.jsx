@@ -18,7 +18,6 @@ import {
     AlertTriangle,
     ArrowLeft,
     CheckCircle,
-    Clock,
     Eye,
     Download,
     FileText,
@@ -416,8 +415,7 @@ const StudentAnalytics = () => {
 
     const studentAnalytics = useMemo(() => {
         const total = filteredIncidentSet.length;
-        const open = filteredIncidentSet.filter((incident) => incident.status === 'Open').length;
-        const inProgress = filteredIncidentSet.filter((incident) => incident.status === 'In Progress').length;
+        const pending = filteredIncidentSet.filter((incident) => incident.status === 'Pending' || incident.status === 'Open' || incident.status === 'In Progress').length;
         const closed = filteredIncidentSet.filter((incident) => incident.status === 'Closed').length;
 
         const incidentDetails = filteredIncidentSet.map((incident) => ({
@@ -434,15 +432,15 @@ const StudentAnalytics = () => {
 
         return {
             total,
-            open,
-            inProgress,
+            pending,
+            open: pending,
+            inProgress: 0,
             closed,
             generatedLetters,
             pendingLetters,
             incidentDetails,
             statusData: [
-                { name: 'Open', value: open, color: STATUS_COLORS.Open },
-                { name: 'In progress', value: inProgress, color: STATUS_COLORS['In Progress'] },
+                { name: 'Pending', value: pending, color: STATUS_COLORS.Pending },
                 { name: 'Closed', value: closed, color: STATUS_COLORS.Closed },
             ],
             letterSummaryData: [
@@ -800,8 +798,7 @@ const StudentAnalytics = () => {
 
     const statusTrendColumns = [
         { key: 'name', label: 'Period' },
-        { key: 'open', label: 'Open' },
-        { key: 'inProgress', label: 'In progress' },
+        { key: 'pending', label: 'Pending' },
         { key: 'closed', label: 'Closed' },
     ];
 
@@ -1297,10 +1294,9 @@ const StudentAnalytics = () => {
                                     <DashboardPageSkeleton showHero={false} />
                                 ) : (
                                     <>
-                                        <div className="student-detail-stats grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
+                                        <div className="student-detail-stats grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
                                             <DashboardStatCard title="Total Incidents" value={studentAnalytics.total} icon={FileText} tone="blue" helper="All filtered incidents" />
-                                            <DashboardStatCard title="Open" value={studentAnalytics.open} icon={AlertTriangle} tone="amber" helper="Needs attention" />
-                                            <DashboardStatCard title="In Progress" value={studentAnalytics.inProgress} icon={Clock} tone="blue" helper="Currently being handled" />
+                                            <DashboardStatCard title="Pending" value={studentAnalytics.pending} icon={AlertTriangle} tone="amber" helper="Needs attention" />
                                             <DashboardStatCard title="Closed" value={studentAnalytics.closed} icon={CheckCircle} tone="emerald" helper="Resolved cases" />
                                             <DashboardStatCard title="Letters Sent" value={studentAnalytics.generatedLetters} icon={Mail} tone="emerald" helper="Letters completed for this student" />
                                         </div>
@@ -1308,14 +1304,13 @@ const StudentAnalytics = () => {
                                         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                                             <DashboardWidgetPanel
                                                 title="Incident Status over Time"
-                                                description="Daily open, in-progress, and closed counts using the incident timeline date."
+                                                description="Daily pending and closed counts using the incident timeline date."
                                                 icon={TrendingUp}
                                                 chart={<IncidentStatusTrendChart data={studentAnalytics.statusTrendData} idPrefix="student-status" />}
                                                 footer={
                                                     <LegendList
                                                         items={[
-                                                            { label: 'Open', color: STATUS_COLORS.Open },
-                                                            { label: 'In progress', color: STATUS_COLORS['In Progress'] },
+                                                            { label: 'Pending', color: STATUS_COLORS.Pending },
                                                             { label: 'Closed', color: STATUS_COLORS.Closed },
                                                         ]}
                                                     />
