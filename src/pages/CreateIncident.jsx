@@ -394,6 +394,9 @@ const CreateIncident = () => {
         error: null,
     });
 
+    const [showPreviewModal, setShowPreviewModal] = useState(false);
+    const [previewSubmitContext, setPreviewSubmitContext] = useState(null);
+
     const [presetSearch, setPresetSearch] = useState('');
     const [showPresetDropdown, setShowPresetDropdown] = useState(false);
     const [fieldOpsCollapsed, setFieldOpsCollapsed] = useState(false);
@@ -1435,7 +1438,7 @@ const CreateIncident = () => {
                 choice
             );
             const response = await apiClient.post(`/api/incidents`, data, {
-                headers: { ...config.headers, 'Content-Type': 'multipart/form-data' },
+                headers: { ...config.headers },
                 withCredentials: true,
                 onUploadProgress: (progressEvent) => {
                     if (progressEvent.total) {
@@ -1509,34 +1512,15 @@ const CreateIncident = () => {
         await submitIncident(false, payload);
     };
 
-    const handleSubmit = async (event) => {
-        event.preventDefault();
-        setErrors({});
+    const handleContinueSubmit = async () => {
+        setShowPreviewModal(false);
+        const { manualTimingPayload, matchingTemplate } = previewSubmitContext || {};
 
-        if (!validate()) return;
-
-        const matchingTemplate =
-            categoryTemplateStatus.checkedCategory === formData.category
-                ? categoryTemplateStatus.templates
-                : await checkLetterTemplate(formData.category);
-
-        if (manualTiming) {
-            const manualError = validateManualSetup();
-            if (manualError || !isManualTimeFinalized) {
-                if (manualError) {
-                    setErrors((currentErrors) => ({ ...currentErrors, manualTiming: manualError }));
-                }
-                openManualSetupModal('submit');
-                return;
-            }
-
-            const manualTimingPayload = buildManualTimingPayload();
-
+        if (manualTimingPayload) {
             if (hasAvailableLetterTemplate(matchingTemplate)) {
                 openLetterPermission(matchingTemplate, manualTimingPayload);
                 return;
             }
-
             await submitIncident(false, manualTimingPayload);
             return;
         }
@@ -1547,6 +1531,34 @@ const CreateIncident = () => {
         }
 
         await submitIncident(false);
+    };
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        setErrors({});
+
+        if (!validate()) return;
+
+        let manualTimingPayload = null;
+        if (manualTiming) {
+            const manualError = validateManualSetup();
+            if (manualError || !isManualTimeFinalized) {
+                if (manualError) {
+                    setErrors((currentErrors) => ({ ...currentErrors, manualTiming: manualError }));
+                }
+                openManualSetupModal('submit');
+                return;
+            }
+            manualTimingPayload = buildManualTimingPayload();
+        }
+
+        const matchingTemplate =
+            categoryTemplateStatus.checkedCategory === formData.category
+                ? categoryTemplateStatus.templates
+                : await checkLetterTemplate(formData.category);
+
+        setPreviewSubmitContext({ manualTimingPayload, matchingTemplate });
+        setShowPreviewModal(true);
     };
 
     const handleViewStudentDetails = () => {
@@ -1833,6 +1845,235 @@ const CreateIncident = () => {
                                         Cancel
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {showPreviewModal && (
+                    <div className="fixed inset-0 z-[110] flex min-h-[100dvh] items-center justify-center bg-slate-950/60 p-3 backdrop-blur-sm sm:p-4">
+                        <div className="my-auto max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl flex flex-col">
+                            {/* Header */}
+                            <div className="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50/50 px-6 py-4 flex items-center gap-3 shrink-0">
+                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
+                                    <Send className="h-5 w-5 text-indigo-600" />
+                                </div>
+                                <div className="min-w-0">
+                                    <h3 className="text-lg font-bold text-slate-900 truncate">Incident Preview & Review</h3>
+                                    <p className="mt-0.5 text-xs text-slate-500 truncate">
+                                        Please review all entered details before finalizing submission.
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Content */}
+                            <div className="p-6 overflow-y-auto space-y-6">
+                                <div className="grid gap-6 md:grid-cols-2">
+                                    {/* Left Column: Student & Incident */}
+                                    <div className="space-y-6">
+                                        {/* Student Details Card */}
+                                        <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
+                                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Student Info</h4>
+                                            <div className="space-y-2">
+                                                {selectedStudent?.name && (
+                                                    <div>
+                                                        <span className="block text-[10px] uppercase font-bold text-slate-400">Name</span>
+                                                        <span className="text-sm font-semibold text-slate-800">{selectedStudent.name}</span>
+                                                    </div>
+                                                )}
+                                                {selectedStudent?.admissionNo && (
+                                                    <div>
+                                                        <span className="block text-[10px] uppercase font-bold text-slate-400">Admission No</span>
+                                                        <span className="text-sm font-semibold text-slate-700">{selectedStudent.admissionNo}</span>
+                                                    </div>
+                                                )}
+                                                {(selectedStudent?.class || selectedStudent?.className || formData?.class) && (
+                                                    <div>
+                                                        <span className="block text-[10px] uppercase font-bold text-slate-400">Class</span>
+                                                        <span className="text-sm font-semibold text-slate-700">
+                                                            {selectedStudent?.className || selectedStudent?.class || formData?.class}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                {(selectedStudent?.section || formData?.section) && (
+                                                    <div>
+                                                        <span className="block text-[10px] uppercase font-bold text-slate-400">Section</span>
+                                                        <span className="text-sm font-semibold text-slate-700">
+                                                            {selectedStudent?.section || formData?.section}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Incident Details Card */}
+                                        <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
+                                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Incident Info</h4>
+                                            <div className="space-y-2">
+                                                {formData.category && (
+                                                    <div>
+                                                        <span className="block text-[10px] uppercase font-bold text-slate-400">Category</span>
+                                                        <span className="text-sm font-semibold text-slate-800">
+                                                            {categories.find(c => c._id === formData.category || c.name === formData.category)?.name || formData.category}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                {formData.location && (
+                                                    <div>
+                                                        <span className="block text-[10px] uppercase font-bold text-slate-400">Location</span>
+                                                        <span className="text-sm font-semibold text-slate-700">
+                                                            {locations.find(l => l._id === formData.location || l.name === formData.location)?.name || formData.location}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                <div>
+                                                    <span className="block text-[10px] uppercase font-bold text-slate-400">Priority</span>
+                                                    <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                                                        formData.isHighPriority
+                                                            ? 'bg-rose-100 text-rose-700 ring-1 ring-rose-200'
+                                                            : 'bg-slate-100 text-slate-700 ring-1 ring-slate-200'
+                                                    }`}>
+                                                        {formData.isHighPriority ? 'High Priority' : 'Standard'}
+                                                    </span>
+                                                </div>
+                                                {formData.description && (
+                                                    <div>
+                                                        <span className="block text-[10px] uppercase font-bold text-slate-400">Description</span>
+                                                        <p className="text-xs text-slate-600 whitespace-pre-wrap mt-0.5 line-clamp-4">
+                                                            {formData.description}
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Right Column: Handled By, Field Ops, Evidence, Other */}
+                                    <div className="space-y-6">
+                                        {/* Handled By */}
+                                        {(() => {
+                                            const handler = staffList.find(s => s._id === formData.assignedHandler || s.name === formData.assignedHandler)?.name;
+                                            if (!handler) return null;
+                                            return (
+                                                <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
+                                                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Handled By</h4>
+                                                    <span className="text-sm font-semibold text-slate-800">{handler}</span>
+                                                </div>
+                                            );
+                                        })()}
+
+                                        {/* Field Operations Card */}
+                                        {(() => {
+                                            const lines = (actionTaken || '').split('\n');
+                                            const presetLines = lines.filter(line => line.trim().startsWith('-')).map(line => line.replace(/^-\s*/, '').trim()).filter(Boolean);
+                                            const customLines = lines.filter(line => !line.trim().startsWith('-')).join('\n').trim();
+                                            
+                                            if (presetLines.length === 0 && !customLines) return null;
+
+                                            return (
+                                                <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
+                                                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Field Operations</h4>
+                                                    <div className="space-y-2">
+                                                        {presetLines.length > 0 && (
+                                                            <div>
+                                                                <span className="block text-[10px] uppercase font-bold text-slate-400">Selected Presets</span>
+                                                                <div className="flex flex-wrap gap-1.5 mt-1">
+                                                                    {presetLines.map((preset, idx) => (
+                                                                        <span key={idx} className="inline-flex rounded-lg bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-800 border border-emerald-100">
+                                                                            {preset}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                        {customLines && (
+                                                            <div>
+                                                                <span className="block text-[10px] uppercase font-bold text-slate-400">Custom Note</span>
+                                                                <p className="text-xs text-slate-600 whitespace-pre-wrap mt-0.5 line-clamp-3">
+                                                                    {customLines}
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
+
+                                        {/* Evidence Card */}
+                                        {(() => {
+                                            const files = evidenceEntries.filter(e => e.file);
+                                            if (files.length === 0) return null;
+                                            return (
+                                                <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
+                                                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Evidence ({files.length} file(s))</h4>
+                                                    <ul className="space-y-1.5 max-h-24 overflow-y-auto pr-1">
+                                                        {files.map((entry, idx) => (
+                                                            <li key={idx} className="text-xs text-slate-600 flex items-center justify-between gap-2 border-b border-slate-100 last:border-b-0 pb-1">
+                                                                <span className="font-semibold text-slate-800 truncate max-w-[150px]">{entry.file.name}</span>
+                                                                {entry.evidenceType && (
+                                                                    <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[9px] text-slate-500 font-bold shrink-0">{entry.evidenceType}</span>
+                                                                )}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            );
+                                        })()}
+
+                                        {/* Other Details Card */}
+                                        <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
+                                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Other Details</h4>
+                                            <div className="grid grid-cols-2 gap-2 text-xs">
+                                                {(selectedStudent?.academicYear || user?.currentAcademicYear) && (
+                                                    <div>
+                                                        <span className="block text-[9px] uppercase font-bold text-slate-400">Academic Year</span>
+                                                        <span className="font-semibold text-slate-700">{selectedStudent?.academicYear || user?.currentAcademicYear}</span>
+                                                    </div>
+                                                )}
+                                                {user?.schoolName && (
+                                                    <div>
+                                                        <span className="block text-[9px] uppercase font-bold text-slate-400">Workspace</span>
+                                                        <span className="font-semibold text-slate-700 truncate block max-w-[120px]">{user.schoolName}</span>
+                                                    </div>
+                                                )}
+                                                <div>
+                                                    <span className="block text-[9px] uppercase font-bold text-slate-400">Incident Date</span>
+                                                    <span className="font-semibold text-slate-700">
+                                                        {manualTiming ? manualSetup.openedAt.date : dayjs().format('YYYY-MM-DD')}
+                                                    </span>
+                                                </div>
+                                                {(() => {
+                                                    const time = manualTiming ? manualSetup.openedAt.time : dayjs().format('hh:mm A');
+                                                    if (!time) return null;
+                                                    return (
+                                                        <div>
+                                                            <span className="block text-[9px] uppercase font-bold text-slate-400">Incident Time</span>
+                                                            <span className="font-semibold text-slate-700">{time}</span>
+                                                        </div>
+                                                    );
+                                                })()}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="border-t border-slate-200 bg-slate-50 px-6 py-4 flex items-center justify-end gap-3 rounded-b-2xl shrink-0">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPreviewModal(false)}
+                                    className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                                >
+                                    Back to Edit
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleContinueSubmit}
+                                    className="rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm shadow-indigo-500/20 transition hover:bg-indigo-700"
+                                >
+                                    Continue
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -2549,7 +2790,7 @@ const CreateIncident = () => {
                                     <SectionCard
                                         icon={ShieldCheck}
                                         title={isAdministrationUser ? 'Handled By' : 'Manual Time Setup'}
-                                        description={isAdministrationUser ? 'Record the staff member who handled this incident. This field is optional.' : 'Configure custom incident dates.'}
+                                        description={isAdministrationUser ? 'Staff Who Dealt With The Incident.' : 'Configure custom incident dates.'}
                                         step={3}
                                     >
                                         <div className="space-y-4">
@@ -2986,7 +3227,7 @@ const CreateIncident = () => {
                                 </SectionCard>
                             )}
 
-                            <div className="sticky bottom-0 z-40 -mx-3 -mb-3 lg:-mx-4 lg:-mb-4 bg-white/95 border-t border-slate-200 px-4 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] backdrop-blur flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-b-lg">
+                            <div className="sticky bottom-0 z-40 -mx-3 -mb-3 lg:-mx-4 lg:-mb-4 bg-white/95 border-t border-slate-200 px-4 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] backdrop-blur flex flex-row items-center justify-end gap-3 rounded-b-lg">
                                 {uploadProgress > 0 && uploadProgress < 100 && (
                                     <div className="absolute top-0 left-0 right-0 h-1 overflow-hidden bg-slate-100">
                                         <div
@@ -2996,32 +3237,8 @@ const CreateIncident = () => {
                                     </div>
                                 )}
 
-                                {/* Compact Enterprise Summary Bar */}
-                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="font-bold text-slate-400">STUDENT:</span>
-                                        <span className="font-semibold text-slate-800 truncate max-w-[120px] sm:max-w-none">
-                                            {selectedStudent ? selectedStudent.name : 'None selected'}
-                                        </span>
-                                    </div>
-                                    <span className="hidden sm:inline text-slate-300">|</span>
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="font-bold text-slate-400">CATEGORY:</span>
-                                        <span className="font-semibold text-slate-800">
-                                            {formData.category || 'None selected'}
-                                        </span>
-                                    </div>
-                                    <span className="hidden sm:inline text-slate-300">|</span>
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="font-bold text-slate-400">EVIDENCE:</span>
-                                        <span className="font-semibold text-slate-800">
-                                            {evidenceEntries.filter((entry) => entry.evidenceType && entry.file).length} File(s)
-                                        </span>
-                                    </div>
-                                </div>
-
                                 {/* Action Buttons */}
-                                <div className="flex flex-wrap gap-2 sm:justify-end shrink-0">
+                                <div className="flex flex-wrap gap-2 justify-end shrink-0">
                                     <button
                                         type="button"
                                         onClick={handleSaveDraft}

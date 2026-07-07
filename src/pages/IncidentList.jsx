@@ -555,7 +555,7 @@ const IncidentList = () => {
                                     <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
                                         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Scope</p>
                                         <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">{user?.name}</p>
-                                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Teacher view is locked to your assignments.</p>
+                                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Teacher view is locked to your Handled.</p>
                                     </div>
                                 )}
                                 <UnifiedMultiSelect
