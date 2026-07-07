@@ -996,7 +996,7 @@ const IncidentDetail = () => {
                                             setDescriptionEditing(true);
                                         }}
                                             className="inline-flex min-h-[40px] items-center gap-2 rounded-lg border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
-                                            <FileText size={16} />Edit Incident
+                                            <FileText size={16} />Edit Description
                                         </button>
                                     ) : null}
                                     <button type="button" onClick={handleExportReport} disabled={isExporting}

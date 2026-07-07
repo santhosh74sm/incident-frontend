@@ -484,39 +484,7 @@ const CreateIncident = () => {
         () => buildEvidenceTypeDisplayLabels(evidenceEntries),
         [evidenceEntries]
     );
-    const wizardSteps = useMemo(() => {
-        const studentComplete = Boolean(selectedStudent?._id);
-        const incidentDetailsComplete = Boolean(formData.category);
-        const handlerComplete = canUseManualTiming
-            ? Boolean(!manualTiming || isManualTimeFinalized)
-            : true;
-        const evidenceTouched = evidenceEntries.some((entry) => entry.evidenceType || entry.file);
-        const evidenceComplete = !evidenceTouched || evidenceEntries.every((entry) => {
-            if (!entry.evidenceType && !entry.file) return true;
-            return Boolean(entry.evidenceType && entry.file);
-        });
-        const completed = [
-            studentComplete,
-            studentComplete && incidentDetailsComplete,
-            studentComplete && incidentDetailsComplete && handlerComplete,
-            studentComplete && incidentDetailsComplete && handlerComplete && evidenceComplete,
-            false,
-        ];
-        const activeIndex = completed.findIndex((isComplete) => !isComplete);
 
-        return [
-            ['Select Student', 'Choose student'],
-            ['Incident Details', 'Provide incident information'],
-            ['Handled By', 'Record staff member who handled incident'],
-            ['Evidence', 'Add supporting evidence'],
-            ['Field Operations & Submit', 'Save operations and submit'],
-        ].map(([label, helper], index) => ({
-            label,
-            helper,
-            complete: completed[index],
-            active: index === (activeIndex === -1 ? 4 : activeIndex),
-        }));
-    }, [canUseManualTiming, evidenceEntries, formData.category, isManualTimeFinalized, manualTiming, selectedStudent]);
 
     const sectionFilteredStudents = useMemo(() => {
         if (!formData.section) return students;
@@ -2312,31 +2280,6 @@ const CreateIncident = () => {
                                 </div>
                             </div>
 
-                            <div className="create-stepper grid gap-0 border-t border-slate-200 bg-white sm:grid-cols-5">
-                                {wizardSteps.map((step, index) => (
-                                    <div
-                                        key={step.label}
-                                        className={`relative flex min-w-0 items-center gap-3 border-b border-slate-100 px-4 py-3 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0 ${
-                                            step.active ? 'bg-blue-50/60' : step.complete ? 'bg-emerald-50/40' : ''
-                                        }`}
-                                        aria-current={step.active ? 'step' : undefined}
-                                    >
-                                        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-black ${
-                                            step.complete
-                                                ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-500/20'
-                                                : step.active
-                                                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/30'
-                                                    : 'bg-slate-100 text-slate-600'
-                                        }`}>
-                                            {step.complete ? <Check className="h-4 w-4" /> : index + 1}
-                                        </span>
-                                        <span className="min-w-0">
-                                            <span className={`block truncate text-sm font-bold ${step.active ? 'text-blue-900' : step.complete ? 'text-emerald-900' : 'text-slate-700'}`}>{step.label}</span>
-                                            <span className="mt-0.5 hidden truncate text-xs text-slate-500 md:block">{step.helper}</span>
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
                         </section>
 
                         <form ref={formRef} onSubmit={handleSubmit} className="space-y-4" noValidate>

@@ -182,19 +182,12 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
             <div className="pl-14 sm:pl-16 lg:pl-0">
                 <div className="h-[52px]">
                     <div className="flex h-full min-w-0 items-center justify-between gap-3">
-                        <button
-                            type="button"
-                            onClick={openCommandPalette}
-                            className="hidden min-h-[44px] min-w-[220px] items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 text-left text-slate-900 shadow-sm transition-all duration-200 hover:border-slate-300 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 lg:flex"
-                            aria-label="Open workspace search"
-                            title="Workspace"
+                        <div
+                            className="hidden h-9 items-center gap-1.5 bg-transparent px-1 text-slate-700 dark:text-slate-300 cursor-default select-none lg:flex"
                         >
-                            <span className="flex min-w-0 items-center gap-3">
-                                <Building2 size={17} className="shrink-0 text-slate-500" />
-                                <span className="truncate text-sm font-semibold">{normalizedRole || 'User'} Workspace</span>
-                            </span>
-                            <ChevronDown size={15} className="shrink-0 text-slate-500" />
-                        </button>
+                            <Building2 size={16} className="shrink-0 text-slate-500 dark:text-slate-400" />
+                            <span className="text-sm font-medium">{normalizedRole || 'User'} Workspace</span>
+                        </div>
 
                         <button
                             type="button"

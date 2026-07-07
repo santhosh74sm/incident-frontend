@@ -889,16 +889,7 @@ const StudentAnalytics = () => {
                                             </button>
                                         </div>
                                     )}
-                                    meta={
-                                        <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
-                                            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5">
-                                                {studentDirectorySummary.total} student{studentDirectorySummary.total === 1 ? '' : 's'} in current result
-                                            </span>
-                                            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5">
-                                                {filterOptions.classes.length} classes in use
-                                            </span>
-                                        </div>
-                                    }
+
                                 />
 
                                 <div className="inline-flex rounded-2xl border border-slate-200 bg-white p-1 shadow-sm dark:border-slate-800 dark:bg-slate-900">
