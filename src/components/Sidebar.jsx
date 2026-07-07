@@ -145,7 +145,7 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
                 roles: ['Super Admin', 'Admin', 'Teacher'],
             },
             {
-                title: 'All Incidents',
+                title: 'View Incidents',
                 icon: AlertCircle,
                 path: '/incidents',
                 preload: () => import('../pages/IncidentList'),
