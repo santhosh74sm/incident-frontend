@@ -52,6 +52,7 @@ import {
     CHART_COLORS,
     formatShare,
     resolveHandlerLabel,
+    resolveUserLabel,
     STATUS_COLORS,
     STATUS_OPTIONS,
     buildCreationTrendSeries,
@@ -70,7 +71,7 @@ import {
 } from '../utils/analytics';
 import { downloadWorkbook } from '../utils/downloadFiles';
 import { withFeedback } from '../utils/notifications';
-import { isAdminRole, isTeacherRole } from '../utils/roles';
+import { isTeacherRole } from '../utils/roles';
 
 const slugifyExportPart = (value, fallback = 'all') => {
     const clean = String(value || fallback).trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 80);
@@ -168,18 +169,15 @@ const ProfessionalAnalytics = () => {
     );
 
     const allStaffOptions = useMemo(
-        // Single unified "Administration" entry for all admin accounts; teachers listed individually.
-        () => ['Admin', ...staffList.filter((staff) => !isAdminRole(staff.role)).map((staff) => staff.name)],
+        () => staffList.map((staff) => resolveUserLabel(staff)),
         [staffList]
     );
 
     const buildRequestParams = useCallback(() => {
         const allSelected = allStaffOptions.length > 0 && selectedStaff.length === allStaffOptions.length;
-        const administrationSelected = selectedStaff.includes('Admin');
         const staffIds = selectedStaff.length > 0 && !allSelected
             ? staffList
-                .filter((staff) => !isAdminRole(staff.role))
-                .filter((staff) => selectedStaff.includes(staff.name))
+                .filter((staff) => selectedStaff.includes(resolveUserLabel(staff)))
                 .map((staff) => staff._id)
             : [];
         const params = buildIncidentFilterParams({
@@ -191,7 +189,7 @@ const ProfessionalAnalytics = () => {
             locations: filters.locations,
             evidenceTypes: filters.evidence,
             staffIds,
-            includeAdminRole: selectedStaff.length > 0 && !allSelected && administrationSelected,
+            includeAdminRole: false,
             includeUnassigned: false,
         });
         if (academicYear) params.set('academicYear', academicYear);
@@ -507,7 +505,7 @@ const ProfessionalAnalytics = () => {
                     'Progress Log': formatProgressLogForExport(incident.progressLogs),
                     Location: incident.location || 'N/A',
                     Evidence: (incident.evidence || []).map((entry) => entry?.evidenceType).filter(Boolean).join(', ') || 'None',
-                    Reporter: incident.reportedBy?.name || 'Unknown',
+                    Reporter: resolveUserLabel(incident.reportedBy, 'Unknown'),
                     Handler: resolveHandlerLabel(incident),
                     Status: incident.status || 'N/A',
                     Opened: formatShortDate(getIncidentTimestamp(incident)),
@@ -637,7 +635,7 @@ const ProfessionalAnalytics = () => {
                     <span className="text-xs text-slate-400">None</span>
                 ),
         },
-        { key: 'reporter', label: 'Reporter', render: (row) => row.reportedBy?.name || 'Unknown' },
+        { key: 'reporter', label: 'Reporter', render: (row) => resolveUserLabel(row.reportedBy, 'Unknown') },
         { key: 'handler', label: 'Handler', render: (row) => resolveHandlerLabel(row) },
         {
             key: 'status',

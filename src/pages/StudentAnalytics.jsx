@@ -73,6 +73,7 @@ import {
     toneForStatus,
     withUnknownOption,
     formatDisplayValue,
+    resolveUserLabel,
 } from '../utils/analytics';
 import { downloadBlob, downloadWorkbook } from '../utils/downloadFiles';
 import { withFeedback } from '../utils/notifications';
@@ -420,8 +421,8 @@ const StudentAnalytics = () => {
 
         const incidentDetails = filteredIncidentSet.map((incident) => ({
             ...incident,
-            reportedBy: incident.reportedBy?.name || 'Unknown',
-            assignedHandler: incident.assignedHandler?.name || 'Unassigned',
+            reportedBy: resolveUserLabel(incident.reportedBy, 'Unknown'),
+            assignedHandler: resolveUserLabel(incident.assignedHandler, 'Unassigned'),
         }));
 
         const generatedLetters = incidentDetails.filter((incident) => {

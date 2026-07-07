@@ -41,7 +41,7 @@ import {
     DashboardPanel,
     EmptyStatePanel,
 } from '../components/analytics/DashboardPrimitives';
-import { formatShortDate, formatShortDateTime, getIncidentTimestamp, resolveHandlerLabel, formatDisplayValue } from '../utils/analytics';
+import { formatShortDate, formatShortDateTime, getIncidentTimestamp, resolveHandlerLabel, formatDisplayValue, resolveUserLabel } from '../utils/analytics';
 import {
     migrateIncidentStorageForUser,
     readUserList,
@@ -1044,7 +1044,7 @@ const IncidentDetail = () => {
                         <div className="incident-summary-grid grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
                             <DetailField icon={Calendar} label="Incident Date" value={formatShortDateTime(getIncidentTimestamp(incident))} />
                             <DetailField icon={FileText} label="Category" value={formatDisplayValue(incident.category || 'N/A')} />
-                            <DetailField icon={Users} label="Reported By" value={incident.reportedBy?.name || 'N/A'} />
+                            <DetailField icon={Users} label="Reported By" value={resolveUserLabel(incident.reportedBy)} />
                             <DetailField icon={UserCheck} label="Assigned To" value={resolveHandlerLabel(incident)} />
                             <DetailField icon={Calendar} label="Opened On" value={formatShortDateTime(getIncidentTimestamp(incident))} />
                         </div>
@@ -1118,7 +1118,7 @@ const IncidentDetail = () => {
                                 </div>
                                 <div className="mt-5 space-y-4 text-sm">
                                     <DetailField icon={Calendar} label={incident.status === 'Closed' ? 'Closed On' : 'Opened On'} value={formatShortDateTime(incident.closedAt || getIncidentTimestamp(incident))} />
-                                    <DetailField icon={UserCheck} label={incident.status === 'Closed' ? 'Closed By' : 'Assigned To'} value={resolveHandlerLabel(incident)} />
+                                    <DetailField icon={UserCheck} label={incident.status === 'Closed' ? 'Closed By' : 'Assigned To'} value={incident.status === 'Closed' ? resolveUserLabel(incident.closedBy, resolveHandlerLabel(incident)) : resolveHandlerLabel(incident)} />
                                     {incident.actionTaken ? (
                                         <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
                                             <p className="font-semibold">Resolution</p>
@@ -1202,7 +1202,7 @@ const IncidentDetail = () => {
 
                             <DashboardPanel className="xl:col-span-12" title="Case Administration" description="" icon={ShieldCheck}>
                                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                                    <DetailField icon={ShieldCheck} label="Reported By" value={incident.reportedBy?.name || 'N/A'} />
+                                    <DetailField icon={ShieldCheck} label="Reported By" value={resolveUserLabel(incident.reportedBy)} />
                                     <DetailField icon={UserCheck} label="Handled By"
                                         value={resolveHandlerLabel(incident)}
                                     />
@@ -1482,7 +1482,7 @@ const IncidentDetail = () => {
                                                     value={selectedHandler} onChange={(e) => setSelectedHandler(e.target.value)}>
                                                     <option value="">Choose Handler</option>
                                                     {staffList.map((staff) => (
-                                                        <option key={getRecordId(staff)} value={getRecordId(staff)}>{staff.name}</option>
+                                                        <option key={getRecordId(staff)} value={getRecordId(staff)}>{resolveUserLabel(staff)}</option>
                                                     ))}
                                                 </select>
                                             </div>

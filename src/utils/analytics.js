@@ -225,12 +225,18 @@ export const getLetterTimelineTimestamp = (letter) =>
     letter?.generatedAt ||
     null;
 
+export const resolveUserLabel = (user, fallback = 'Unknown User') => {
+    if (!user) return fallback;
+    if (typeof user === 'object' && user !== null) {
+        return user.name || fallback;
+    }
+    return typeof user === 'string' ? user : fallback;
+};
+
 export const resolveHandlerLabel = (incident) => {
     const handler = incident?.assignedHandler;
-    if (!handler) return 'Admin';
-    const role = handler.role || '';
-    if (['Super Admin', 'Admin', 'super_admin', 'admin'].includes(role)) return 'Admin';
-    return handler.name || 'Admin';
+    if (!handler) return 'Unknown User';
+    return resolveUserLabel(handler, 'Unknown User');
 };
 
 export const toneForStatus = (status) => {

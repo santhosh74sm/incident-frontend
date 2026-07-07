@@ -298,47 +298,50 @@ const NotificationSection = ({ title, count, items, onItemClick }) => {
 
                                         {admissionNumber ? (
                                             <span className={`${chipClassName} border-blue-100 bg-blue-50 text-blue-700 dark:border-blue-500/30 dark:bg-blue-950/40 dark:text-blue-300`}>
-                                                <span className="truncate">Admission Number: {admissionNumber}</span>
-                                            </span>
-                                        ) : null}
+                                                 <span className="truncate">Admission Number: {admissionNumber}</span>
+                                             </span>
+                                         ) : null}
 
-                                        {classSection ? (
-                                            <span className={`${chipClassName} border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300`}>
-                                                <span className="truncate">{classSection}</span>
-                                            </span>
-                                        ) : null}
+                                         {classSection ? (
+                                             <span className={`${chipClassName} border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300`}>
+                                                 <span className="truncate">{classSection}</span>
+                                             </span>
+                                         ) : null}
 
-                                        {status ? (
-                                            <span className={`${chipClassName} border-emerald-100 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/30 dark:text-emerald-300`}>
-                                                <span className="truncate">{formatDisplayValue(status)}</span>
-                                            </span>
-                                        ) : null}
+                                         {status ? (
+                                             <span className={`${chipClassName} border-emerald-100 bg-emerald-50 text-emerald-700 dark:border-emerald-200 dark:bg-emerald-50 text-emerald-700`}>
+                                                 <span className="truncate">{formatDisplayValue(status)}</span>
+                                             </span>
+                                         ) : null}
 
-                                        {category ? (
-                                            <span className={`${chipClassName} border-amber-100 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/30 dark:text-amber-300`}>
-                                                <span className="truncate">{formatDisplayValue(category)}</span>
-                                            </span>
-                                        ) : null}
-                                    </div>
+                                         {category ? (
+                                             <span className={`${chipClassName} border-amber-100 bg-amber-50 text-amber-700 dark:border-amber-200 dark:bg-amber-50 text-amber-700`}>
+                                                 <span className="truncate">{formatDisplayValue(category)}</span>
+                                             </span>
+                                         ) : null}
+                                     </div>
 
-                                    <p className="mt-2 truncate border-t border-slate-100 pt-2 text-[11px] text-slate-400 dark:border-slate-800 dark:text-slate-500" title={notification?.performedByName || 'System'}>
-                                        By {notification?.performedByName || 'System'}
-                                    </p>
-                                </div>
-                            </button>
-                        </li>
-                    );
-                })}
-            </ul>
-        </section>
-    );
-};
+                                     {(() => {
+                                         const displayLabel = notification?.performedByName || 'System';
+                                         return (
+                                             <p className="mt-2 truncate border-t border-slate-100 pt-2 text-[11px] text-slate-400 dark:border-slate-800 dark:text-slate-500" title={displayLabel}>
+                                                 By {displayLabel}
+                                             </p>
+                                         );
+                                     })()}
+                                 </div>
+                             </button>
+                         </li>
+                     );
+                 })}
+             </ul>
+         </section>
+     );
+ };
 
-// ─── NotificationDropdown ─────────────────────────────────────────────────────
-
-const NotificationDropdown = ({ onClose }) => {
-    const navigate  = useNavigate();
-    const { user }  = useAuth();
+ const NotificationDropdown = ({ onClose }) => {
+     const navigate  = useNavigate();
+     const { user }  = useAuth();
     const isMobile  = useIsMobile();
 
     const {

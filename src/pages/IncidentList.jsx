@@ -26,7 +26,7 @@ import {
     DashboardStatCard,
     EmptyStatePanel,
 } from '../components/analytics/DashboardPrimitives';
-import { buildAcademicYearOptions, buildIncidentFilterParams, formatShortDate, getIncidentTimestamp, resolveHandlerLabel, STATUS_OPTIONS, formatDisplayValue } from '../utils/analytics';
+import { buildAcademicYearOptions, buildIncidentFilterParams, formatShortDate, getIncidentTimestamp, resolveHandlerLabel, STATUS_OPTIONS, formatDisplayValue, resolveUserLabel } from '../utils/analytics';
 import apiClient from '../config/apiClient';
 import {
     migrateIncidentStorageForUser,
@@ -106,12 +106,9 @@ const IncidentList = () => {
         setPriorityIncidents(readUserList('priorityIncidents', userId));
     }, [userId]);
 
-    const allStaffOptions = useMemo(
-        // Show a single unified "Administration" entry for all admin accounts;
-        // teachers are listed individually by name.
-        () => ['Admin', ...staffList.filter((staff) => !isAdminRole(staff.role)).map((staff) => staff.name)],
-        [staffList]
-    );
+    const allStaffOptions = useMemo(() => {
+        return staffList.map((staff) => resolveUserLabel(staff));
+    }, [staffList]);
     const academicYearOptions = useMemo(
         () => buildAcademicYearOptions(academicYears, currentAcademicYear),
         [academicYears, currentAcademicYear]
@@ -133,14 +130,15 @@ const IncidentList = () => {
 
             if (!options?.reset) {
                 const allSelected = allStaffOptions.length > 0 && selectedStaff.length === allStaffOptions.length;
-                const administrationSelected = selectedStaff.includes('Admin');
-                const selectedTeacherIds =
-                    selectedStaff.length > 0 && !allSelected
-                        ? staffList
-                        .filter((staff) => !isAdminRole(staff.role))
-                            .filter((staff) => selectedStaff.includes(staff.name))
-                            .map((staff) => getRecordId(staff))
-                        : [];
+                const selectedStaffIds = [];
+                if (selectedStaff.length > 0 && !allSelected) {
+                    selectedStaff.forEach((label) => {
+                        const matchedStaff = staffList.find((s) => resolveUserLabel(s) === label);
+                        if (matchedStaff) {
+                            selectedStaffIds.push(getRecordId(matchedStaff));
+                        }
+                    });
+                }
 
                 const params = buildIncidentFilterParams({
                     dateRange: { start: dateRange.start, end: dateRange.end },
@@ -148,10 +146,8 @@ const IncidentList = () => {
                     classes: classFilter,
                     sections: sectionFilter,
                     types: categoryFilter,
-                    staffIds: selectedTeacherIds,
-                    // includeAdminRole: true fetches all incidents for ANY admin user
-                    // (null handler + every admin userId), not just unassigned ones.
-                    includeAdminRole: selectedStaff.length > 0 && !allSelected && administrationSelected,
+                    staffIds: selectedStaffIds,
+                    includeAdminRole: false,
                     includeUnassigned: false,
                 });
 
@@ -731,7 +727,15 @@ const IncidentList = () => {
                                                             </td>
                                                             <td className="px-4 py-3.5">
                                                                 <div className="flex items-center gap-2">
-                                                                    <span className="grid h-6 w-6 place-items-center rounded-full bg-blue-600 text-[11px] font-bold text-white">A</span>
+                                                                    {(() => {
+                                                                        const handlerName = resolveHandlerLabel(incident);
+                                                                        const letter = handlerName && handlerName !== 'Unassigned' && handlerName !== 'Unknown User' ? handlerName.charAt(0).toUpperCase() : 'U';
+                                                                        return (
+                                                                            <span className="grid h-6 w-6 place-items-center rounded-full bg-blue-600 text-[11px] font-bold text-white">
+                                                                                {letter}
+                                                                            </span>
+                                                                        );
+                                                                    })()}
                                                                     <span className="font-medium text-slate-700 dark:text-slate-200">{resolveHandlerLabel(incident)}</span>
                                                                 </div>
                                                             </td>

@@ -33,7 +33,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../config/apiClient';
 import { isAdminRole, isTeacherRole } from '../utils/roles';
-import { formatDisplayValue } from '../utils/analytics';
+import { formatDisplayValue, resolveUserLabel } from '../utils/analytics';
 import useFocusFirstInvalid from '../hooks/useFocusFirstInvalid';
 import {
     clearCreateIncidentDraft,
@@ -1952,12 +1952,13 @@ const CreateIncident = () => {
                                     <div className="space-y-6">
                                         {/* Handled By */}
                                         {(() => {
-                                            const handler = staffList.find(s => s._id === formData.assignedHandler || s.name === formData.assignedHandler)?.name;
-                                            if (!handler) return null;
+                                            const staff = staffList.find(s => s._id === formData.assignedHandler || s.name === formData.assignedHandler);
+                                            if (!staff) return null;
+                                            const label = resolveUserLabel(staff);
                                             return (
                                                 <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
                                                     <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Handled By</h4>
-                                                    <span className="text-sm font-semibold text-slate-800">{handler}</span>
+                                                    <span className="text-sm font-semibold text-slate-800">{label}</span>
                                                 </div>
                                             );
                                         })()}
@@ -2807,15 +2808,15 @@ const CreateIncident = () => {
                                                         }
                                                         className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
                                                     >
-                                                        <option value="">Select staff member (optional)</option>
+                                                        <option value="">Select staff member</option>
                                                         {staffList.map((staff) => (
                                                             <option key={staff._id} value={staff._id}>
-                                                                {staff.name}
+                                                                {resolveUserLabel(staff)}
                                                             </option>
                                                         ))}
                                                     </select>
                                                     <p className="mt-1.5 text-xs text-slate-500">
-                                                        Select the staff member who handled this incident. Leave blank if not applicable.
+                                                        Select the staff member who handled this incident. (Defaults to a school Admin if left blank)
                                                     </p>
                                                 </div>
                                             )}
