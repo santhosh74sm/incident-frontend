@@ -235,8 +235,10 @@ export const resolveUserLabel = (user, fallback = 'Unknown User') => {
 
 export const resolveHandlerLabel = (incident) => {
     const handler = incident?.assignedHandler;
-    if (!handler) return 'Unknown User';
-    return resolveUserLabel(handler, 'Unknown User');
+    if (handler) {
+        return resolveUserLabel(handler, 'Unknown User');
+    }
+    return resolveUserLabel(incident?.reportedBy, 'Unknown User');
 };
 
 export const toneForStatus = (status) => {

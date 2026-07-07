@@ -58,7 +58,7 @@ const quickActionItems = [
         sub  : 'Start a new incident record.',
         link : '/create-incident',
         type : 'command',
-        roles: ['Admin', 'Teacher'],
+        roles: ['Super Admin', 'Admin', 'Teacher'],
     },
     {
         title: 'View Incident List',

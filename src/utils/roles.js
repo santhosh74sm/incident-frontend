@@ -14,6 +14,6 @@ export const isSuperAdminRole = (role) => normalizeRole(role) === 'Super Admin';
 
 export const isTeacherRole = (role) => normalizeRole(role) === 'Teacher';
 
-export const isIncidentReporterRole = (role) => ['Admin', 'Teacher'].includes(normalizeRole(role));
+export const isIncidentReporterRole = (role) => ['Super Admin', 'Admin', 'Teacher'].includes(normalizeRole(role));
 
 export const isSchoolUserRole = (role) => ['Super Admin', 'Admin', 'Teacher'].includes(normalizeRole(role));

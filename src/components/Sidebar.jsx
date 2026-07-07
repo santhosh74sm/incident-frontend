@@ -156,7 +156,7 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
                 icon: PlusCircle,
                 path: '/create-incident',
                 preload: () => import('../pages/CreateIncident'),
-                roles: ['Admin', 'Teacher'],
+                roles: ['Super Admin', 'Admin', 'Teacher'],
             },
         ],
         []

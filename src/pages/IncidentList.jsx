@@ -35,7 +35,7 @@ import {
     writeUserList,
 } from '../utils/userStorage';
 import { getRecordId } from '../utils/ids';
-import { isAdminRole, isSuperAdminRole, isTeacherRole } from '../utils/roles';
+import { isAdminRole, isSuperAdminRole } from '../utils/roles';
 
 const READ_STATUS_OPTIONS = ['All', 'Unread', 'Read'];
 const formatDate = formatShortDate;
@@ -538,22 +538,14 @@ const IncidentList = () => {
                                         ))}
                                     </select>
                                 </label>
-                                {!isTeacherRole(user?.role) ? (
-                                    <UnifiedMultiSelect
-                                        label="Staff Members"
-                                        options={allStaffOptions}
-                                        selected={selectedStaff}
-                                        onChange={setSelectedStaff}
-                                        placeholder="All staff"
-                                        searchPlaceholder="Search staff…"
-                                    />
-                                ) : (
-                                    <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
-                                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Scope</p>
-                                        <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">{user?.name}</p>
-                                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Teacher view is locked to your Handled.</p>
-                                    </div>
-                                )}
+                                <UnifiedMultiSelect
+                                    label="Staff Members"
+                                    options={allStaffOptions}
+                                    selected={selectedStaff}
+                                    onChange={setSelectedStaff}
+                                    placeholder="All staff"
+                                    searchPlaceholder="Search staff…"
+                                />
                                 <UnifiedMultiSelect
                                     label="Incident Category"
                                     options={categoryList}

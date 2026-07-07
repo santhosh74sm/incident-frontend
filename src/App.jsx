@@ -142,7 +142,7 @@ const AuthenticatedRoutePreloader = () => {
       pageImports.CommandPalette,
     ];
 
-    if (['Admin', 'Teacher'].includes(role)) {
+    if (['Super Admin', 'Admin', 'Teacher'].includes(role)) {
       imports.push(pageImports.CreateIncident);
     }
 

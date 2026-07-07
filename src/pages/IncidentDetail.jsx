@@ -856,11 +856,9 @@ const IncidentDetail = () => {
 
     const isHandler = useMemo(() => {
         if (!incident || !user) return false;
-        if (isAdminRole(user.role)) return true;
-        if (!isTeacherRole(user.role)) return false;
-        return [incident.reportedBy, incident.assignedHandler]
-            .some((owner) => getRecordId(owner) === userId);
-    }, [incident, user, userId]);
+        if (isAdminRole(user.role) || isTeacherRole(user.role)) return true;
+        return false;
+    }, [incident, user]);
 
     const timelineData = useMemo(() => {
         if (!incident) return [];
@@ -910,7 +908,7 @@ const IncidentDetail = () => {
     const showClosureRequestedAlert = Boolean(incident?.closureRequested && incident?.status !== 'Closed');
     const isAdminUser = isAdminRole(user?.role);
     const canManageIncident = isAdminUser || isTeacherRole(user?.role);
-    const showCaseAllocation = Boolean(isAdminUser && incident?.status !== 'Closed');
+    const showCaseAllocation = Boolean(canManageIncident && incident?.status !== 'Closed');
     const showAdminCommand = Boolean(isAdminUser && incident?.status !== 'Closed');
     const showFieldUpdates = Boolean(
         isHandler &&

@@ -2759,7 +2759,7 @@ const CreateIncident = () => {
                                                         ))}
                                                     </select>
                                                     <p className="mt-1.5 text-xs text-slate-500">
-                                                        Select the staff member who handled this incident. (Defaults to a school Admin if left blank)
+                                                        Select the staff member who handled this incident. (If left blank, the incident will automatically be assigned to you.)
                                                     </p>
                                                 </div>
                                             )}
