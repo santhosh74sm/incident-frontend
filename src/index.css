@@ -578,7 +578,7 @@
     @apply text-2xl;
   }
 
-  .school-analytics .dashboard-stat-card p.mt-2 {
+  .school-analytics .dashboard-stat-card .dashboard-stat-helper {
     @apply mt-1 text-xs leading-4;
   }
 
@@ -631,7 +631,7 @@
     @apply min-h-[92px] rounded-lg p-3;
   }
 
-  .student-analytics .dashboard-stat-card p.mt-2 {
+  .student-analytics .dashboard-stat-card .dashboard-stat-helper {
     @apply hidden;
   }
 

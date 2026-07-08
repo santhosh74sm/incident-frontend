@@ -229,7 +229,7 @@ export const DashboardStatCard = ({ title, value, icon: Icon, tone = 'blue', hel
                 <div className="min-w-0 flex-1">
                     <p className="dashboard-kicker">{title}</p>
                     <p className="dashboard-stat-value">{value}</p>
-                    {helper ? <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{helper}</p> : null}
+                    {helper ? <p className="dashboard-stat-helper mt-2 text-sm text-slate-600 dark:text-slate-400">{helper}</p> : null}
                     {footer ? <div className="mt-4 text-sm font-semibold">{footer}</div> : null}
                 </div>
             </div>
