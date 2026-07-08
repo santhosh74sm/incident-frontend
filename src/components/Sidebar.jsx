@@ -172,14 +172,14 @@ const Sidebar = memo(({ onDesktopCollapsedChange }) => {
                 roles: ['Super Admin', 'Admin'],
             },
             {
-                title: 'Student Upload',
+                title: 'New Student Upload',
                 icon: GraduationCap,
                 path: '/upload-students',
                 preload: () => import('../pages/StudentUpload'),
                 roles: ['Super Admin', 'Admin'],
             },
             {
-                title: 'Incident Upload',
+                title: 'New Incident Upload',
                 icon: Upload,
                 path: '/upload-incidents',
                 preload: () => import('../pages/BulkUpload'),
