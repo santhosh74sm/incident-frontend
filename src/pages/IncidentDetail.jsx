@@ -457,14 +457,14 @@ const IncidentDetail = () => {
     }, [id, userId]);
 
     const fetchStaff = useCallback(async () => {
-        if (!isAdminRole(user?.role) || !userId) return;
+        if (!userId) return;
         try {
             const { data } = await apiClient.get('/api/auth/users/investigators');
             setStaffList(Array.isArray(data) ? data : []);
         } catch {
             setStaffList([]);
         }
-    }, [user?.role, userId]);
+    }, [userId]);
 
     const fetchGeneratedLetter = useCallback(async () => {
         if (!id || !userId || !isValidMongoObjectId(id)) return;

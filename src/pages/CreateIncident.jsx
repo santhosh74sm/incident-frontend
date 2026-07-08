@@ -1310,8 +1310,6 @@ const CreateIncident = () => {
     const buildIncidentPayload = (shouldGenerateLetter, manualTimingPayload = null, statusChoice = 'Pending') => {
         const data = new FormData();
         Object.keys(formData).forEach((key) => {
-            // Teachers cannot assign handlers — strip the field before sending.
-            if (key === 'assignedHandler' && !isAdministrationUser) return;
             data.append(key, formData[key] ?? '');
         });
 
@@ -2733,36 +2731,34 @@ const CreateIncident = () => {
                                     {canUseManualTiming && (
                                     <SectionCard
                                         icon={ShieldCheck}
-                                        title={isAdministrationUser ? 'Handled By' : 'Manual Time Setup'}
-                                        description={isAdministrationUser ? 'Staff Who Dealt With The Incident.' : 'Configure custom incident dates.'}
+                                        title="Handled By"
+                                        description="Staff Who Dealt With The Incident."
                                         step={3}
                                     >
                                         <div className="space-y-4">
-                                            {isAdministrationUser && (
-                                                <div>
-                                                    <label className="mb-2 block text-sm font-semibold text-slate-800">Handled By</label>
-                                                    <select
-                                                        value={formData.assignedHandler}
-                                                        onChange={(event) =>
-                                                            setFormData((current) => ({
-                                                                ...current,
-                                                                assignedHandler: event.target.value,
-                                                            }))
-                                                        }
-                                                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                                                    >
-                                                        <option value="">Select staff member</option>
-                                                        {staffList.map((staff) => (
-                                                            <option key={staff._id} value={staff._id}>
-                                                                {resolveUserLabel(staff)}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                    <p className="mt-1.5 text-xs text-slate-500">
-                                                        Select the staff member who handled this incident. (If left blank, the incident will automatically be assigned to you.)
-                                                    </p>
-                                                </div>
-                                            )}
+                                            <div>
+                                                <label className="mb-2 block text-sm font-semibold text-slate-800">Handled By</label>
+                                                <select
+                                                    value={formData.assignedHandler}
+                                                    onChange={(event) =>
+                                                        setFormData((current) => ({
+                                                            ...current,
+                                                            assignedHandler: event.target.value,
+                                                        }))
+                                                    }
+                                                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                                                >
+                                                    <option value="">Select staff member</option>
+                                                    {staffList.map((staff) => (
+                                                        <option key={staff._id} value={staff._id}>
+                                                            {resolveUserLabel(staff)}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                <p className="mt-1.5 text-xs text-slate-500">
+                                                    Select the staff member who handled this incident. (If left blank, the incident will automatically be assigned to you.)
+                                                </p>
+                                            </div>
 
                                             <div
                                                     className={`rounded-xl border p-4 ${
