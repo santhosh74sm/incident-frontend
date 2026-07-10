@@ -314,21 +314,8 @@ const IncidentList = () => {
     }, [readIncidents]);
 
     const filteredIncidents = useMemo(() => {
-        let list = [...incidents];
-
-        list.sort((a, b) => {
-            const aPriority = isPriority(a) || isUnread(a);
-            const bPriority = isPriority(b) || isUnread(b);
-            if (aPriority && !bPriority) return -1;
-            if (!aPriority && bPriority) return 1;
-
-            const aDate = new Date(getIncidentTimestamp(a) || 0).getTime();
-            const bDate = new Date(getIncidentTimestamp(b) || 0).getTime();
-            return bDate - aDate;
-        });
-
-        return list;
-    }, [incidents, isPriority, isUnread]);
+        return incidents;
+    }, [incidents]);
 
     const hasActiveFilters = Boolean(
         statusFilter.length > 0 ||
