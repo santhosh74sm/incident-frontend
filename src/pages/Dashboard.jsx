@@ -396,15 +396,24 @@ const DashboardContent = memo(() => {
                 {/* Hero */}
                 <DashboardHero
                     title={`Welcome, ${user?.name || 'Admin'}`}
-                    description="Here's what's happening with your school incidents today."
                     icon={ShieldCheck}
                     meta={
-                        user?.currentAcademicYear ? (
-                            <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 dark:border-blue-800/50 dark:bg-blue-950/40 dark:text-blue-300">
-                                Academic Year: {user.currentAcademicYear}
+                        (user?.schoolName || user?.currentAcademicYear) ? (
+                            <div className="max-w-full min-w-0 space-y-1.5 text-center">
+                                {user?.schoolName ? (
+                                    <p className="break-words text-base font-bold text-slate-800 dark:text-slate-100 sm:text-lg">
+                                        {user.schoolName}
+                                    </p>
+                                ) : null}
+                                {user?.currentAcademicYear ? (
+                                    <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">
+                                        Academic Year: {user.currentAcademicYear}
+                                    </p>
+                                ) : null}
                             </div>
                         ) : null
                     }
+                    metaClassName="justify-center"
                     actions={(
                         <>
                             {canReportIncident && (
@@ -457,9 +466,9 @@ const DashboardContent = memo(() => {
                     />
                 </section>
 
-                {/* ── Main body: table + side panels ── */}
+                {/* ── Main body: recent incidents + breakdown ── */}
                 <section
-                    aria-label="Recent incidents and actions"
+                    aria-label="Recent incidents and breakdown"
                     className="grid grid-cols-1 gap-4 xl:grid-cols-12"
                 >
                     {/* Recent incidents table */}
@@ -523,10 +532,12 @@ const DashboardContent = memo(() => {
 
                     {/* Right column */}
                     <div className="flex flex-col gap-4 xl:col-span-5">
-                        <QuickActionsPanel canAccessAnalytics={canAccessAnalytics} canReportIncident={canReportIncident} />
                         <LifecycleOverviewPanel rows={lifecycleRows} />
                     </div>
                 </section>
+
+                {/* Quick Actions must remain the final dashboard section. */}
+                <QuickActionsPanel canAccessAnalytics={canAccessAnalytics} canReportIncident={canReportIncident} />
 
             </div>
         </div>

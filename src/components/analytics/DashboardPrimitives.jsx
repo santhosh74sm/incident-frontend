@@ -190,7 +190,7 @@ export const ChartSurface = memo(({ height = 400, className = '', children }) =>
     );
 });
 
-export const DashboardHero = ({ eyebrow, title, description, icon: Icon, actions = null, meta = null }) => (
+export const DashboardHero = ({ eyebrow, title, description, icon: Icon, actions = null, meta = null, metaClassName = '' }) => (
     <section className="dashboard-hero">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start">
@@ -206,12 +206,12 @@ export const DashboardHero = ({ eyebrow, title, description, icon: Icon, actions
                         </span>
                     ) : null}
                     <h1 className="text-2xl font-extrabold tracking-tight text-slate-950 dark:text-slate-100 sm:text-[28px]">{title}</h1>
-                    <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-400">{description}</p>
+                    {description ? <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-400">{description}</p> : null}
                 </div>
             </div>
             {actions ? <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:flex-wrap">{actions}</div> : null}
         </div>
-        {meta ? <div className="mt-4 flex flex-wrap items-center gap-2">{meta}</div> : null}
+        {meta ? <div className={`mt-4 flex flex-wrap items-center gap-2 ${metaClassName}`}>{meta}</div> : null}
     </section>
 );
 

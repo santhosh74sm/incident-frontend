@@ -4,10 +4,12 @@ import apiClient from '../config/apiClient';
 import { DashboardHero, DashboardPanel } from '../components/analytics/DashboardPrimitives';
 import { useToast } from '../components/ToastProvider';
 import { useConfirm } from '../components/ConfirmProvider';
+import { useAuth } from '../context/AuthContext';
 
 const AcademicYearManagement = () => {
     const { addToast } = useToast();
     const confirm = useConfirm();
+    const { restoreAuth } = useAuth();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [reversing, setReversing] = useState(false);
@@ -72,6 +74,7 @@ const AcademicYearManagement = () => {
         try {
             const { data } = await apiClient.put('/api/auth/academic-year', {});
             setCurrentAcademicYear(data.currentAcademicYear);
+            await restoreAuth({ silent: true });
             addToast('Academic Year updated successfully. Student promotion completed.', 'success');
         } catch (error) {
             addToast('Academic Year change failed. No changes were saved.', 'error');
@@ -110,6 +113,7 @@ const AcademicYearManagement = () => {
             clearRollbackTimers();
             setRollbackProgress('');
             setCurrentAcademicYear(data.currentAcademicYear);
+            await restoreAuth({ silent: true });
             addToast('Academic Year has been successfully restored. Previous Academic Year is now active. All student promotions have been reversed successfully.', 'success');
         } catch (error) {
             clearRollbackTimers();

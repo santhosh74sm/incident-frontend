@@ -23,22 +23,28 @@ const sanitizeUser = (value) => {
     return user;
 };
 
-const fetchCurrentUser = (signal) => {
-    if (!restoreAuthRequest) {
-        restoreAuthRequest = apiClient
+const fetchCurrentUser = (signal, authRevision) => {
+    if (!restoreAuthRequest || restoreAuthRequest.authRevision !== authRevision) {
+        const request = apiClient
             .get('/api/auth/me', {
                 __skipAuthLogout: true,
+                // This request is already coalesced below for one auth session.
+                // It must never reuse a completed response from a prior session.
+                __skipDedupe: true,
                 signal,
                 headers: {
                     'Cache-Control': 'no-store',
                 },
             })
             .finally(() => {
-                restoreAuthRequest = null;
+                if (restoreAuthRequest?.promise === request) {
+                    restoreAuthRequest = null;
+                }
             });
+        restoreAuthRequest = { authRevision, promise: request };
     }
 
-    return restoreAuthRequest;
+    return restoreAuthRequest.promise;
 };
 
 export const AuthProvider = memo(({ children }) => {
@@ -47,12 +53,14 @@ export const AuthProvider = memo(({ children }) => {
     const [authReady, setAuthReady] = useState(false);
     const [authRestoreError, setAuthRestoreError] = useState(null);
     const userRef = useRef(null);
+    const authRevisionRef = useRef(0);
 
     useEffect(() => {
         userRef.current = user;
     }, [user]);
 
     const restoreAuth = useCallback(async ({ silent = false } = {}) => {
+        const authRevision = authRevisionRef.current;
         if (!silent) setLoading(true);
         const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
         const timeout = window.setTimeout(() => {
@@ -60,13 +68,15 @@ export const AuthProvider = memo(({ children }) => {
         }, AUTH_RESTORE_TIMEOUT_MS);
 
         try {
-            const { data } = await fetchCurrentUser(controller?.signal);
+            const { data } = await fetchCurrentUser(controller?.signal, authRevision);
+            if (authRevisionRef.current !== authRevision) return userRef.current;
             resetAuthEventGuard();
             setAuthRestoreError(null);
             const safeUser = sanitizeUser(data);
             setUser(safeUser);
             return safeUser;
         } catch (error) {
+            if (authRevisionRef.current !== authRevision) return userRef.current;
             if (error.response?.status === 401) {
                 clearLegacyAuthState();
                 setAuthRestoreError(null);
@@ -78,6 +88,7 @@ export const AuthProvider = memo(({ children }) => {
             return userRef.current;
         } finally {
             window.clearTimeout(timeout);
+            if (authRevisionRef.current !== authRevision) return;
             setAuthReady(true);
             if (!silent) setLoading(false);
         }
@@ -91,6 +102,7 @@ export const AuthProvider = memo(({ children }) => {
         });
 
         const handleLogout = () => {
+            authRevisionRef.current += 1;
             void clearAllCreateIncidentDrafts();
             clearLegacyAuthState();
             setAuthRestoreError(null);
@@ -108,6 +120,7 @@ export const AuthProvider = memo(({ children }) => {
     }, [restoreAuth]);
 
     const login = useCallback((userData) => {
+        authRevisionRef.current += 1;
         resetAuthEventGuard();
         setAuthRestoreError(null);
         setUser(sanitizeUser(userData));
@@ -115,6 +128,9 @@ export const AuthProvider = memo(({ children }) => {
     }, []);
 
     const logout = useCallback(async () => {
+        // Invalidate an earlier /me request before awaiting network cleanup so
+        // it cannot restore a previous workspace while sign-out is in flight.
+        authRevisionRef.current += 1;
         try {
             await apiClient.post('/api/auth/logout', {}, { __skipAuthLogout: true });
         } catch {
