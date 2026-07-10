@@ -15,11 +15,11 @@ const isStrongPassword = (password) =>
 // ─── Password strength (UI only, does NOT affect validation) ──────────────────
 
 const STRENGTH_CONFIG = [
-    { label: '',       barColor: 'bg-slate-200 dark:bg-slate-700', textColor: '' },
-    { label: 'Weak',   barColor: 'bg-rose-500',    textColor: 'text-rose-600 dark:text-rose-400' },
-    { label: 'Fair',   barColor: 'bg-amber-500',   textColor: 'text-amber-600 dark:text-amber-400' },
-    { label: 'Good',   barColor: 'bg-blue-500',    textColor: 'text-blue-600 dark:text-blue-400' },
-    { label: 'Strong', barColor: 'bg-emerald-500', textColor: 'text-emerald-600 dark:text-emerald-400' },
+    { label: '',       barColor: 'bg-slate-200 ', textColor: '' },
+    { label: 'Weak',   barColor: 'bg-rose-500',    textColor: 'text-rose-600 ' },
+    { label: 'Fair',   barColor: 'bg-amber-500',   textColor: 'text-amber-600 ' },
+    { label: 'Good',   barColor: 'bg-blue-500',    textColor: 'text-blue-600 ' },
+    { label: 'Strong', barColor: 'bg-emerald-500', textColor: 'text-emerald-600 ' },
 ];
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -29,13 +29,13 @@ const Requirement = ({ met, label }) => (
         {met ? (
             <CheckCircle2 size={13} className="shrink-0 text-emerald-500" aria-hidden />
         ) : (
-            <XCircle size={13} className="shrink-0 text-slate-300 dark:text-slate-600" aria-hidden />
+            <XCircle size={13} className="shrink-0 text-slate-300 " aria-hidden />
         )}
         <span
             className={`text-xs transition-colors duration-200 ${
                 met
-                    ? 'font-medium text-emerald-700 dark:text-emerald-400'
-                    : 'text-slate-500 dark:text-slate-400'
+                    ? 'font-medium text-emerald-700 '
+                    : 'text-slate-500 '
             }`}
         >
             {label}
@@ -56,7 +56,7 @@ const PasswordStrengthBar = ({ password }) => {
                         <div
                             key={level}
                             className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${
-                                strength >= level ? cfg.barColor : 'bg-slate-200 dark:bg-slate-700'
+                                strength >= level ? cfg.barColor : 'bg-slate-200 '
                             }`}
                         />
                     ))}
@@ -87,7 +87,7 @@ const PasswordField = ({ id, label, value, onChange, placeholder, visible, onTog
         <div className="space-y-1.5">
             <label
                 htmlFor={id}
-                className="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400"
+                className="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 "
             >
                 {label}
             </label>
@@ -106,13 +106,13 @@ const PasswordField = ({ id, label, value, onChange, placeholder, visible, onTog
                     minLength={minLength}
                     required
                     aria-invalid={invalid}
-                    className="min-h-[48px] w-full rounded-xl border border-slate-200 bg-white pl-10 pr-12 py-3 text-sm text-slate-900 shadow-sm transition-all duration-200 placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:hover:border-slate-600 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
+                    className="min-h-[48px] w-full rounded-xl border border-slate-200 bg-white pl-10 pr-12 py-3 text-sm text-slate-900 shadow-sm transition-all duration-200 placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 "
                 />
 
                 <button
                     type="button"
                     onClick={onToggle}
-                    className="absolute right-3 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition-colors duration-200 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                    className="absolute right-3 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition-colors duration-200 hover:bg-slate-100 hover:text-slate-700 "
                     aria-label={visible ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`}
                 >
                     <ToggleIcon size={16} aria-hidden />
@@ -185,7 +185,7 @@ const ForceChangePassword = () => {
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-slate-100 p-4 dark:bg-slate-950">
+        <div className="flex min-h-screen items-center justify-center bg-slate-100 p-4 ">
             <div className="w-full max-w-md">
 
                 {/* ── Trust header ──────────────────────────────────────────── */}
@@ -193,10 +193,10 @@ const ForceChangePassword = () => {
                     <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-500/30">
                         <ShieldCheck size={26} aria-hidden />
                     </div>
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 ">
                         Update Your Password
                     </h1>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+                    <p className="mt-2 text-sm leading-relaxed text-slate-500 ">
                         Set a secure new password.
                     </p>
                 </div>
@@ -205,7 +205,7 @@ const ForceChangePassword = () => {
                 <form
                     ref={formRef}
                     onSubmit={submit}
-                    className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+                    className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm "
                     noValidate
                 >
                     {/* Error alert */}
@@ -213,7 +213,7 @@ const ForceChangePassword = () => {
                         <div
                             role="alert"
                             aria-live="assertive"
-                            className="mb-5 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-950/40 dark:text-red-400"
+                            className="mb-5 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 "
                         >
                             <XCircle size={16} className="mt-0.5 shrink-0" aria-hidden />
                             <span>{error}</span>
@@ -238,11 +238,11 @@ const ForceChangePassword = () => {
 
                         {/* Strength meter + requirement checklist */}
                         {newPassword ? (
-                            <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950/60">
+                            <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 ">
                                 <PasswordStrengthBar password={newPassword} />
                             </div>
                         ) : (
-                            <p className="text-xs text-slate-500 dark:text-slate-400">{PASSWORD_POLICY_TEXT}</p>
+                            <p className="text-xs text-slate-500 ">{PASSWORD_POLICY_TEXT}</p>
                         )}
 
                         {/* Confirm password */}
@@ -265,8 +265,8 @@ const ForceChangePassword = () => {
                                     aria-live="polite"
                                     className={`flex items-center gap-1.5 text-xs font-medium transition-colors duration-200 ${
                                         passwordsMatch
-                                            ? 'text-emerald-600 dark:text-emerald-400'
-                                            : 'text-rose-600 dark:text-rose-400'
+                                            ? 'text-emerald-600 '
+                                            : 'text-rose-600 '
                                     }`}
                                 >
                                     {passwordsMatch ? (
@@ -294,7 +294,7 @@ const ForceChangePassword = () => {
                 </form>
 
                 {/* Footer trust note */}
-                <p className="mt-4 text-center text-xs text-slate-500 dark:text-slate-400">
+                <p className="mt-4 text-center text-xs text-slate-500 ">
                     Your password is encrypted and never stored in plain text.
                 </p>
             </div>

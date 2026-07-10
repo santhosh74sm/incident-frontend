@@ -43,23 +43,23 @@ class DashboardErrorBoundary extends React.Component {
     render() {
         if (this.state.hasError) {
             return (
-                <div className="min-h-screen bg-[#f6f8fc] p-4 text-slate-800 dark:bg-slate-950 lg:p-6">
-                    <div className="mx-auto max-w-[1560px] rounded-2xl border border-red-200 bg-white p-8 shadow-sm dark:border-red-900/30 dark:bg-slate-900">
+                <div className="min-h-screen bg-[#f6f8fc] p-4 text-slate-800 lg:p-6">
+                    <div className="mx-auto max-w-[1560px] rounded-2xl border border-red-200 bg-white p-8 shadow-sm ">
                         <div className="flex items-start gap-4">
-                            <div className="rounded-xl bg-red-50 p-3 text-red-600 dark:bg-red-950/40">
+                            <div className="rounded-xl bg-red-50 p-3 text-red-600 ">
                                 <AlertCircle size={20} aria-hidden="true" />
                             </div>
                             <div>
-                                <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                                <h1 className="text-lg font-bold text-slate-900 ">
                                     Dashboard Temporarily Unavailable
                                 </h1>
-                                <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600 dark:text-slate-400">
+                                <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600 ">
                                     A dashboard section failed to render. All other workspace routes remain available.
                                 </p>
                                 <button
                                     type="button"
                                     onClick={() => this.setState({ hasError: false })}
-                                    className="mt-4 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
+                                    className="mt-4 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 "
                                 >
                                     Try Again
                                 </button>
@@ -77,10 +77,10 @@ class DashboardErrorBoundary extends React.Component {
 // ─── Quick Actions Panel ──────────────────────────────────────────────────────
 
 const QUICK_ACTION_TONES = {
-    blue:    { hover: 'hover:border-blue-200 hover:bg-blue-50/80 dark:hover:border-blue-800/60 dark:hover:bg-blue-950/30',    icon: 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300'    },
-    slate:   { hover: 'hover:border-slate-300 hover:bg-white dark:hover:border-slate-600 dark:hover:bg-slate-800/60',          icon: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'   },
-    orange:  { hover: 'hover:border-orange-200 hover:bg-orange-50/80 dark:hover:border-orange-800/50 dark:hover:bg-orange-950/30', icon: 'bg-orange-100 text-orange-700 dark:bg-orange-950/50 dark:text-orange-300' },
-    emerald: { hover: 'hover:border-emerald-200 hover:bg-emerald-50/80 dark:hover:border-emerald-800/50 dark:hover:bg-emerald-950/30', icon: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300' },
+    blue:    { hover: 'hover:border-blue-200 hover:bg-blue-50/80 ',    icon: 'bg-blue-100 text-blue-700 '    },
+    slate:   { hover: 'hover:border-slate-300 hover:bg-white ',          icon: 'bg-slate-100 text-slate-700 '   },
+    orange:  { hover: 'hover:border-orange-200 hover:bg-orange-50/80 ', icon: 'bg-orange-100 text-orange-700 ' },
+    emerald: { hover: 'hover:border-emerald-200 hover:bg-emerald-50/80 ', icon: 'bg-emerald-100 text-emerald-700 ' },
 };
 
 const QuickActionCard = memo(({ to, tone, icon: Icon, title, description }) => {
@@ -88,7 +88,7 @@ const QuickActionCard = memo(({ to, tone, icon: Icon, title, description }) => {
     return (
         <Link
             to={to}
-            className={`group flex min-h-[92px] flex-col justify-between rounded-lg border border-slate-200 bg-white p-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-900/60 sm:min-h-[124px] sm:p-4 ${t.hover}`}
+            className={`group flex min-h-[92px] flex-col justify-between rounded-lg border border-slate-200 bg-white p-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(15,23,42,0.08)] sm:min-h-[124px] sm:p-4 ${t.hover}`}
         >
             <div className="flex items-center justify-between">
                 <div className={`rounded-lg p-2.5 sm:p-3 ${t.icon}`}>
@@ -101,8 +101,8 @@ const QuickActionCard = memo(({ to, tone, icon: Icon, title, description }) => {
                 />
             </div>
             <div>
-                <p className="text-sm font-bold text-slate-950 dark:text-slate-100">{title}</p>
-                <p className="mt-1 text-xs leading-4 text-slate-500 dark:text-slate-400 sm:mt-1.5 sm:leading-5">{description}</p>
+                <p className="text-sm font-bold text-slate-950 ">{title}</p>
+                <p className="mt-1 text-xs leading-4 text-slate-500 sm:mt-1.5 sm:leading-5">{description}</p>
             </div>
         </Link>
     );
@@ -167,15 +167,15 @@ const LifecycleRow = memo(({ row }) => {
     return (
         <div>
             <div className="mb-2 flex items-center justify-between gap-4 text-sm">
-                <span className="flex items-center gap-2 font-medium text-slate-700 dark:text-slate-200">
+                <span className="flex items-center gap-2 font-medium text-slate-700 ">
                     <span className={`h-2.5 w-2.5 rounded-full ${barColor}`} />
                     {row.label}
                 </span>
-                <span className="shrink-0 text-sm font-medium text-slate-500 dark:text-slate-300">
+                <span className="shrink-0 text-sm font-medium text-slate-500 ">
                     {row.count} ({row.share})
                 </span>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+            <div className="h-2 overflow-hidden rounded-full bg-slate-100 ">
                 <div
                     className={`h-full rounded-full transition-all duration-500 ${barColor}`}
                     style={{ width: row.share }}
@@ -202,9 +202,9 @@ const LifecycleOverviewPanel = memo(({ rows }) => (
                 }}
                 aria-label="Incident breakdown chart"
             >
-                <div className="grid h-24 w-24 place-items-center rounded-full bg-white text-center shadow-inner dark:bg-slate-900">
+                <div className="grid h-24 w-24 place-items-center rounded-full bg-white text-center shadow-inner ">
                     <div>
-                        <p className="text-2xl font-extrabold leading-none text-slate-950 dark:text-slate-100">
+                        <p className="text-2xl font-extrabold leading-none text-slate-950 ">
                             {rows.reduce((sum, row) => sum + Number(row.count || 0), 0)}
                         </p>
                         <p className="mt-1 text-xs text-slate-500">Total</p>
@@ -271,8 +271,8 @@ const DashboardContent = memo(() => {
                     <span
                         className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
                             row.status === 'Closed'
-                                ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/50 dark:bg-emerald-950/40 dark:text-emerald-300'
-                                : 'border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-800/50 dark:bg-orange-950/40 dark:text-orange-300'
+                                ? 'border-emerald-200 bg-emerald-50 text-emerald-700 '
+                                : 'border-orange-200 bg-orange-50 text-orange-700 '
                         }`}
                     >
                         {row.status}
@@ -287,7 +287,7 @@ const DashboardContent = memo(() => {
                 render: (row) => (
                     <button
                         onClick={() => handleViewIncident(row.id)}
-                        className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-950/40"
+                        className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-50 "
                     >
                         <Eye size={13} aria-hidden="true" />
                         View Details
@@ -380,7 +380,7 @@ const DashboardContent = memo(() => {
     // ── Loading state ─────────────────────────────────────────────────────
     if (loading) {
         return (
-            <div className="min-h-screen bg-[#f6f8fc] p-4 text-slate-800 dark:bg-slate-950 lg:p-6">
+            <div className="min-h-screen bg-[#f6f8fc] p-4 text-slate-800 lg:p-6">
                 <div className="mx-auto max-w-[1560px]">
                     <DashboardPageSkeleton />
                 </div>
@@ -390,7 +390,7 @@ const DashboardContent = memo(() => {
 
     // ── Render ─────────────────────────────────────────────────────────────
     return (
-        <div className="min-h-screen bg-[#f6f8fc] p-4 text-slate-800 dark:bg-slate-950 lg:p-7">
+        <div className="min-h-screen bg-[#f6f8fc] p-4 text-slate-800 lg:p-7">
             <div className="mx-auto max-w-[1560px] space-y-5">
 
                 {/* Hero */}
@@ -401,12 +401,12 @@ const DashboardContent = memo(() => {
                         (user?.schoolName || user?.currentAcademicYear) ? (
                             <div className="max-w-full min-w-0 space-y-1.5 text-center">
                                 {user?.schoolName ? (
-                                    <p className="break-words text-base font-bold text-slate-800 dark:text-slate-100 sm:text-lg">
+                                    <p className="break-words text-base font-bold text-slate-800 sm:text-lg">
                                         {user.schoolName}
                                     </p>
                                 ) : null}
                                 {user?.currentAcademicYear ? (
-                                    <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">
+                                    <p className="text-sm font-semibold text-blue-700 ">
                                         Academic Year: {user.currentAcademicYear}
                                     </p>
                                 ) : null}
@@ -480,7 +480,7 @@ const DashboardContent = memo(() => {
                         actions={(
                             <Link
                                 to="/incidents"
-                                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 "
                             >
                                 View All
                                 <ArrowRight size={13} aria-hidden="true" />

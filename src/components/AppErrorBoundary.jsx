@@ -24,10 +24,10 @@ class AppErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-6 text-center dark:bg-slate-950">
-          <div className="max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Something Went Wrong</h1>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+        <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-6 text-center ">
+          <div className="max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm ">
+            <h1 className="text-xl font-semibold text-slate-900 ">Something Went Wrong</h1>
+            <p className="mt-2 text-sm text-slate-600 ">
               The page hit an unexpected error. You can retry or return to the dashboard.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
@@ -40,7 +40,7 @@ class AppErrorBoundary extends React.Component {
               </button>
               <a
                 href="/dashboard"
-                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 "
               >
                 Go to Dashboard
               </a>

@@ -26,11 +26,11 @@ const formatLabel = (key) =>
 const SummaryGrid = ({ summary }) => (
     <div className="grid min-w-0 gap-3 sm:grid-cols-2">
         {Object.entries(summary || {}).map(([key, value]) => (
-            <div key={key} className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-950/70">
-                <p className="break-words text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
+            <div key={key} className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 ">
+                <p className="break-words text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 ">
                     {formatLabel(key)}
                 </p>
-                <p className="mt-2 break-words text-2xl font-bold text-slate-900 dark:text-slate-100 sm:text-3xl">{value}</p>
+                <p className="mt-2 break-words text-2xl font-bold text-slate-900 sm:text-3xl">{value}</p>
             </div>
         ))}
     </div>
@@ -157,21 +157,21 @@ const BulkDeleteModal = ({ moduleName, mode, ids, source, status, onClose, onCom
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="bulk-delete-title"
-                className="flex max-h-[100dvh] w-full min-w-0 flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:max-h-[min(92vh,760px)] sm:max-w-2xl sm:rounded-3xl"
+                className="flex max-h-[100dvh] w-full min-w-0 flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-2xl sm:max-h-[min(92vh,760px)] sm:max-w-2xl sm:rounded-3xl"
             >
-                <div className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-100 px-4 py-4 dark:border-slate-800 sm:px-6 sm:py-5">
+                <div className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-100 px-4 py-4 sm:px-6 sm:py-5">
                     <div className="min-w-0">
-                        <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">
+                        <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-red-700 ">
                             <AlertTriangle className="h-3.5 w-3.5" />
                             <span className="truncate">Super Admin Only</span>
                         </div>
-                        <h2 id="bulk-delete-title" className="mt-3 break-words text-lg font-semibold text-slate-900 dark:text-slate-100 sm:text-xl">{title}</h2>
+                        <h2 id="bulk-delete-title" className="mt-3 break-words text-lg font-semibold text-slate-900 sm:text-xl">{title}</h2>
                     </div>
                     <button
                         type="button"
                         onClick={onClose}
                         disabled={executing}
-                        className="shrink-0 rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                        className="shrink-0 rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50 "
                     >
                         <X className="h-5 w-5" />
                     </button>
@@ -186,26 +186,26 @@ const BulkDeleteModal = ({ moduleName, mode, ids, source, status, onClose, onCom
                         <>
                             <SummaryGrid summary={preview?.summary} />
 
-                            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-800 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-100">
+                            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-800 ">
                                 This permanently deletes every record in scope in batches of 50. Type{' '}
                                 <span className="break-words font-bold">{requiredPhrase}</span> to confirm.
                             </div>
 
                             {!result ? (
                                 <div>
-                                    <label className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+                                    <label className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 ">
                                         Confirmation
                                     </label>
                                     <input
                                         value={confirmation}
                                         onChange={(event) => setConfirmation(event.target.value)}
                                         disabled={executing}
-                                        className="mt-2 w-full min-w-0 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-red-400 focus:ring-4 focus:ring-red-100 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-red-500/20"
+                                        className="mt-2 w-full min-w-0 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-red-400 focus:ring-4 focus:ring-red-100 disabled:opacity-60 "
                                         placeholder={requiredPhrase}
                                     />
                                 </div>
                             ) : (
-                                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">
+                                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 ">
                                     Deleted {result.deleted}. Failed {result.failed}. Duration {Math.round((result.durationMs || 0) / 1000)}s.
                                 </div>
                             )}
@@ -213,12 +213,12 @@ const BulkDeleteModal = ({ moduleName, mode, ids, source, status, onClose, onCom
                     )}
                 </div>
 
-                <div className="flex shrink-0 flex-col-reverse gap-3 border-t border-slate-100 bg-white px-4 py-4 dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:justify-end sm:px-6 sm:py-5">
+                <div className="flex shrink-0 flex-col-reverse gap-3 border-t border-slate-100 bg-white px-4 py-4 sm:flex-row sm:justify-end sm:px-6 sm:py-5">
                     <button
                         type="button"
                         onClick={onClose}
                         disabled={executing}
-                        className="inline-flex w-full items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 sm:w-auto"
+                        className="inline-flex w-full items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50 sm:w-auto"
                     >
                         {result ? 'Close' : 'Cancel'}
                     </button>
@@ -253,7 +253,7 @@ const BulkDeleteControls = ({ moduleName, filteredIds, allCount, source, status,
                     type="button"
                     onClick={() => setModal({ mode: 'filtered', ids: normalizedIds, source })}
                     disabled={!hasFilteredScope}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-500/40 dark:bg-slate-900 dark:text-red-200 dark:hover:bg-red-500/10 sm:w-auto"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                 >
                     <Trash2 className="h-4 w-4" />
                     Delete Selected Records

@@ -596,7 +596,7 @@ const StudentAnalytics = () => {
         <button
             type="button"
             onClick={() => toggleStudentSummarySort(key)}
-            className="inline-flex items-center gap-1 font-semibold text-slate-600 transition hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-slate-300 dark:hover:text-blue-300"
+            className="inline-flex items-center gap-1 font-semibold text-slate-600 transition hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 "
             aria-label={`Sort by ${label}`}
         >
             {label}
@@ -675,7 +675,7 @@ const StudentAnalytics = () => {
 
     if (loading && !selectedStudent && students.length === 0) {
         return (
-            <div className="flex min-h-screen bg-slate-100 dark:bg-slate-950">
+            <div className="flex min-h-screen bg-slate-100 ">
                 <div className="flex min-w-0 flex-1 flex-col">
                     <main className="flex-1 overflow-y-auto p-4 lg:p-6">
                         <div className="mx-auto max-w-[1600px]">
@@ -696,7 +696,7 @@ const StudentAnalytics = () => {
                 <button
                     type="button"
                     onClick={() => openStudentSummary(row)}
-                    className="font-semibold text-blue-700 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
+                    className="font-semibold text-blue-700 hover:text-blue-900 "
                 >
                     {row.name || 'Unknown Student'}
                 </button>
@@ -866,7 +866,7 @@ const StudentAnalytics = () => {
     };
 
     return (
-        <div className="student-analytics flex min-h-screen bg-slate-100 dark:bg-slate-950">
+        <div className="student-analytics flex min-h-screen bg-slate-100 ">
             <div className="flex min-w-0 flex-1 flex-col">
                 <main className="flex-1 overflow-y-auto p-4 lg:p-6">
                     <div className="mx-auto max-w-[1600px] space-y-6">
@@ -892,7 +892,7 @@ const StudentAnalytics = () => {
 
                                 />
 
-                                <div className="inline-flex rounded-2xl border border-slate-200 bg-white p-1 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                                <div className="inline-flex rounded-2xl border border-slate-200 bg-white p-1 shadow-sm ">
                                     {[
                                         { key: 'active', label: 'Active Students' },
                                         { key: 'passedOut', label: 'Passed Out Students' },
@@ -909,7 +909,7 @@ const StudentAnalytics = () => {
                                             className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
                                                 activeSummaryTab === tab.key
                                                     ? 'bg-blue-600 text-white shadow-sm'
-                                                    : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'
+                                                    : 'text-slate-600 hover:bg-slate-50 '
                                             }`}
                                         >
                                             {tab.label}
@@ -936,7 +936,7 @@ const StudentAnalytics = () => {
                                             <select
                                                 value={academicYear}
                                                 onChange={(event) => setAcademicYear(event.target.value)}
-                                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-600 focus-visible:outline-none"
+                                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus-visible:outline-none"
                                             >
                                                 {academicYearOptions.map((option) => (
                                                     <option key={option.value} value={option.value}>{option.label}</option>
@@ -952,7 +952,7 @@ const StudentAnalytics = () => {
                                                     value={searchTerm}
                                                     onChange={(event) => setSearchTerm(event.target.value)}
                                                     placeholder="Name or admission number…"
-                                                    className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:hover:border-slate-600 focus-visible:outline-none"
+                                                    className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus-visible:outline-none"
                                                 />
                                             </div>
                                         </div>
@@ -961,7 +961,7 @@ const StudentAnalytics = () => {
                                             <select
                                                 value={classFilter}
                                                 onChange={(event) => setClassFilter(event.target.value)}
-                                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-600 focus-visible:outline-none"
+                                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus-visible:outline-none"
                                             >
                                                 <option value="">All classes</option>
                                                 {filterOptions.classes.map((option) => (
@@ -976,7 +976,7 @@ const StudentAnalytics = () => {
                                             <select
                                                 value={sectionFilter}
                                                 onChange={(event) => setSectionFilter(event.target.value)}
-                                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-600 focus-visible:outline-none"
+                                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus-visible:outline-none"
                                             >
                                                 <option value="">All sections</option>
                                                 {filterOptions.sections.map((option) => (

@@ -248,17 +248,17 @@ const pickPreferredLanguage = (template) => {
 
 const MetricCard = ({ label, value, description, tone = 'slate' }) => {
     const tones = {
-        slate: 'border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100',
-        blue: 'border-blue-200 bg-blue-50 text-blue-900 dark:border-blue-500/30 dark:bg-blue-950/30 dark:text-blue-100',
-        indigo: 'border-indigo-200 bg-indigo-50 text-indigo-900 dark:border-indigo-500/30 dark:bg-indigo-950/30 dark:text-indigo-100',
-        emerald: 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-500/30 dark:bg-emerald-950/30 dark:text-emerald-100',
+        slate: 'border-slate-200 bg-slate-50 text-slate-900 ',
+        blue: 'border-blue-200 bg-blue-50 text-blue-900 ',
+        indigo: 'border-indigo-200 bg-indigo-50 text-indigo-900 ',
+        emerald: 'border-emerald-200 bg-emerald-50 text-emerald-900 ',
     };
 
     return (
         <div className={`rounded-2xl border p-4 ${tones[tone] || tones.slate}`}>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{label}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 ">{label}</p>
             <p className="mt-3 text-3xl font-bold">{value}</p>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{description}</p>
+            <p className="mt-1 text-sm text-slate-600 ">{description}</p>
         </div>
     );
 };
@@ -267,8 +267,8 @@ const VariantBadge = ({ template, language }) => {
     const meta = getVariantMeta(template, language);
     const label = meta.hasDocx ? 'UPLOADED' : 'MISSING';
     const badgeClassName = meta.hasDocx
-        ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-950/30 dark:text-emerald-100'
-        : 'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-500/30 dark:bg-rose-950/30 dark:text-rose-100';
+        ? 'border-emerald-200 bg-emerald-50 text-emerald-800 '
+        : 'border-rose-200 bg-rose-50 text-rose-800 ';
 
     return (
         <div className={`flex items-center justify-between rounded-2xl border px-3 py-2.5 ${badgeClassName}`}>
@@ -288,26 +288,26 @@ const TemplateCard = ({ template, selected, onSelect }) => (
         aria-pressed={selected}
         className={`w-full rounded-3xl border p-5 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
             selected
-                ? 'border-indigo-300 bg-indigo-50 shadow-lg shadow-indigo-100/60 dark:border-indigo-500/40 dark:bg-indigo-950/30 dark:shadow-indigo-950/20'
-                : 'border-slate-200 bg-white shadow-sm hover:border-slate-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700'
+                ? 'border-indigo-300 bg-indigo-50 shadow-lg shadow-indigo-100/60 '
+                : 'border-slate-200 bg-white shadow-sm hover:border-slate-300 hover:shadow-md '
         }`}
     >
         <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Template</p>
-                <h3 className="mt-2 truncate text-lg font-semibold text-slate-900 dark:text-slate-50">{template.title}</h3>
-                <p className="mt-1 text-sm font-medium text-blue-700 dark:text-blue-300">{template.incidentCategory}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 ">Template</p>
+                <h3 className="mt-2 truncate text-lg font-semibold text-slate-900 ">{template.title}</h3>
+                <p className="mt-1 text-sm font-medium text-blue-700 ">{template.incidentCategory}</p>
             </div>
             <span
                 className={`inline-flex rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${
-                    selected ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                    selected ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 '
                 }`}
             >
                 {selected ? 'Active' : 'Ready'}
             </span>
         </div>
 
-        <p className="mt-4 min-h-[2.75rem] text-sm leading-6 text-slate-600 dark:text-slate-300">
+        <p className="mt-4 min-h-[2.75rem] text-sm leading-6 text-slate-600 ">
             {template.description || 'No short description has been added yet.'}
         </p>
 
@@ -316,9 +316,9 @@ const TemplateCard = ({ template, selected, onSelect }) => (
             <VariantBadge template={template} language="ta" />
         </div>
 
-        <div className="mt-5 flex items-center justify-between border-t border-slate-200 pt-4 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
+        <div className="mt-5 flex items-center justify-between border-t border-slate-200 pt-4 text-xs text-slate-500 ">
             <span>Updated {formatDate(template.updatedAt || template.createdAt)}</span>
-            <span className="font-semibold text-slate-700 dark:text-slate-200">Open Workspace</span>
+            <span className="font-semibold text-slate-700 ">Open Workspace</span>
         </div>
     </button>
 );
@@ -326,8 +326,8 @@ const TemplateCard = ({ template, selected, onSelect }) => (
 const WorkspaceActionButton = ({ icon: Icon, children, variant = 'secondary', ...props }) => {
     const variants = {
         primary: 'border-indigo-700 bg-indigo-600 text-white hover:bg-indigo-700 focus-visible:ring-indigo-500',
-        secondary: 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 focus-visible:ring-slate-400',
-        danger: 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 dark:border-rose-500/30 dark:bg-rose-950/30 dark:text-rose-200 dark:hover:bg-rose-950/50 focus-visible:ring-rose-400',
+        secondary: 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 focus-visible:ring-slate-400',
+        danger: 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 focus-visible:ring-rose-400',
     };
 
     return (
@@ -351,11 +351,11 @@ const PreviewPanel = ({
 }) => {
     if (!template) {
         return (
-            <div className="flex min-h-[560px] items-center justify-center rounded-[28px] border border-dashed border-slate-300 bg-slate-50 p-8 text-center dark:border-slate-700 dark:bg-slate-900">
+            <div className="flex min-h-[560px] items-center justify-center rounded-[28px] border border-dashed border-slate-300 bg-slate-50 p-8 text-center ">
                 <div className="max-w-md">
                     <LayoutGrid className="mx-auto h-12 w-12 text-slate-300" />
-                    <h3 className="mt-5 text-xl font-semibold text-slate-900 dark:text-slate-50">Choose a Letter File</h3>
-                    <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                    <h3 className="mt-5 text-xl font-semibold text-slate-900 ">Choose a Letter File</h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-500 ">
                         Pick a card on the left to see language coverage, upload a Word file for each language, and preview the letter.
                     </p>
                 </div>
@@ -367,13 +367,13 @@ const PreviewPanel = ({
 
     if (!variant.hasDocx) {
         return (
-            <div className="flex min-h-[560px] items-center justify-center rounded-[28px] border border-dashed border-slate-300 bg-slate-50 p-8 text-center dark:border-slate-700 dark:bg-slate-900">
+            <div className="flex min-h-[560px] items-center justify-center rounded-[28px] border border-dashed border-slate-300 bg-slate-50 p-8 text-center ">
                 <div className="max-w-md">
                     <Languages className="mx-auto h-12 w-12 text-slate-300" />
-                    <h3 className="mt-5 text-xl font-semibold text-slate-900 dark:text-slate-50">
+                    <h3 className="mt-5 text-xl font-semibold text-slate-900 ">
                         {LANGUAGE_META[language].label} letter file is missing.
                     </h3>
-                    <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                    <p className="mt-2 text-sm leading-6 text-slate-500 ">
                         {variant.hasVersion
                             ? 'This language was set up earlier, but the file is missing right now. Upload a new Word (.docx) file to continue.'
                             : 'This language does not have a letter file yet. Upload a Word (.docx) file when you are ready.'}
@@ -393,10 +393,10 @@ const PreviewPanel = ({
 
     if (previewState.loading) {
         return (
-            <div className="flex min-h-[560px] items-center justify-center rounded-[28px] border border-slate-200 bg-white p-8 dark:border-slate-800 dark:bg-slate-900">
+            <div className="flex min-h-[560px] items-center justify-center rounded-[28px] border border-slate-200 bg-white p-8 ">
                 <div className="text-center">
                     <Loader2 className="mx-auto h-10 w-10 animate-spin text-indigo-500" />
-                    <p className="mt-4 text-sm font-medium text-slate-600 dark:text-slate-300">Preparing letter preview…</p>
+                    <p className="mt-4 text-sm font-medium text-slate-600 ">Preparing letter preview…</p>
                 </div>
             </div>
         );
@@ -404,11 +404,11 @@ const PreviewPanel = ({
 
     if (previewState.error) {
         return (
-            <div className="flex min-h-[560px] items-center justify-center rounded-[28px] border border-rose-200 bg-rose-50 p-8 text-center dark:border-rose-500/30 dark:bg-rose-950/30">
+            <div className="flex min-h-[560px] items-center justify-center rounded-[28px] border border-rose-200 bg-rose-50 p-8 text-center ">
                 <div className="max-w-lg">
                     <AlertTriangle className="mx-auto h-12 w-12 text-rose-500" />
-                    <h3 className="mt-5 text-xl font-semibold text-rose-900 dark:text-rose-100">Preview Unavailable</h3>
-                    <p className="mt-2 text-sm leading-6 text-rose-700 dark:text-rose-200">{previewState.error}</p>
+                    <h3 className="mt-5 text-xl font-semibold text-rose-900 ">Preview Unavailable</h3>
+                    <p className="mt-2 text-sm leading-6 text-rose-700 ">{previewState.error}</p>
                     <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                         <WorkspaceActionButton icon={RefreshCw} onClick={onRetry}>
                         Try Again
@@ -423,25 +423,25 @@ const PreviewPanel = ({
     }
 
     return (
-        <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-900">
-            <div className="border-b border-slate-200 bg-slate-50 px-6 py-4 dark:border-slate-800 dark:bg-slate-950/60">
+        <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.08)] ">
+            <div className="border-b border-slate-200 bg-slate-50 px-6 py-4 ">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Preview</p>
-                        <h3 className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-50">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 ">Preview</p>
+                        <h3 className="mt-1 text-lg font-semibold text-slate-900 ">
                             {template.title} - {LANGUAGE_META[language].label}
                         </h3>
                     </div>
                     {previewState.imageWarning ? (
-                        <div className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/30 dark:text-amber-200">
+                        <div className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ">
                             Letters with many images may look slightly different here than in Word.
                         </div>
                     ) : null}
                 </div>
             </div>
 
-            <div className="bg-slate-100/80 p-4 dark:bg-slate-950 lg:p-8">
-                <div className="mx-auto min-h-[520px] max-w-[840px] rounded-[24px] border border-slate-200 bg-white px-6 py-8 shadow-sm dark:border-slate-700 dark:bg-slate-900 lg:px-12">
+            <div className="bg-slate-100/80 p-4 lg:p-8">
+                <div className="mx-auto min-h-[520px] max-w-[840px] rounded-[24px] border border-slate-200 bg-white px-6 py-8 shadow-sm lg:px-12">
                     <div
                         className="doc-preview-container"
                         dangerouslySetInnerHTML={{ __html: previewState.html }}
@@ -459,38 +459,38 @@ const DetailsCard = ({ template }) => {
     const tamilVariant = getVariantMeta(template, 'ta');
 
     return (
-        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm ">
             <div className="flex items-center gap-3">
-                <div className="rounded-2xl border border-blue-200 bg-blue-50 p-2 text-blue-700 dark:border-blue-500/30 dark:bg-blue-950/30 dark:text-blue-300">
+                <div className="rounded-2xl border border-blue-200 bg-blue-50 p-2 text-blue-700 ">
                     <Globe2 className="h-5 w-5" aria-hidden="true" />
                 </div>
                 <div>
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Letter File Details</h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Information shown here matches what staff see when letters are created.</p>
+                    <h3 className="text-lg font-semibold text-slate-900 ">Letter File Details</h3>
+                    <p className="text-sm text-slate-500 ">Information shown here matches what staff see when letters are created.</p>
                 </div>
             </div>
 
             <dl className="mt-5 space-y-4">
-                <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-950/70">
-                    <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Incident Category</dt>
-                    <dd className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">{template.incidentCategory}</dd>
+                <div className="rounded-2xl bg-slate-50 p-4 ">
+                    <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 ">Incident Category</dt>
+                    <dd className="mt-2 text-sm font-semibold text-slate-900 ">{template.incidentCategory}</dd>
                 </div>
-                <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-950/70">
-                    <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Created</dt>
-                    <dd className="mt-2 flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+                <div className="rounded-2xl bg-slate-50 p-4 ">
+                    <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 ">Created</dt>
+                    <dd className="mt-2 flex items-center gap-2 text-sm font-medium text-slate-700 ">
                         <CalendarDays className="h-4 w-4 text-slate-400" />
                         {formatDate(template.createdAt)}
                     </dd>
                 </div>
-                <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-950/70">
-                    <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">English File</dt>
-                    <dd className="mt-2 text-sm text-slate-700 dark:text-slate-200">
+                <div className="rounded-2xl bg-slate-50 p-4 ">
+                    <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 ">English File</dt>
+                    <dd className="mt-2 text-sm text-slate-700 ">
                         {englishVariant.file?.originalName || 'Missing'}
                     </dd>
                 </div>
-                <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-950/70">
-                    <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Tamil File</dt>
-                    <dd className="mt-2 text-sm text-slate-700 dark:text-slate-200">
+                <div className="rounded-2xl bg-slate-50 p-4 ">
+                    <dt className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 ">Tamil File</dt>
+                    <dd className="mt-2 text-sm text-slate-700 ">
                         {tamilVariant.file?.originalName || 'Missing'}
                     </dd>
                 </div>
@@ -500,16 +500,16 @@ const DetailsCard = ({ template }) => {
 };
 
 const PlaceholderLibrary = ({ onCopyAll, onDownloadGuide, onCopyTag }) => (
-    <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm ">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
                 <div className="flex items-center gap-3">
-                    <div className="rounded-2xl border border-indigo-200 bg-indigo-50 p-2 text-indigo-700 dark:border-indigo-500/30 dark:bg-indigo-950/30 dark:text-indigo-300">
+                    <div className="rounded-2xl border border-indigo-200 bg-indigo-50 p-2 text-indigo-700 ">
                         <Sparkles className="h-5 w-5" aria-hidden="true" />
                     </div>
                     <div>
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Available Template Fields</h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">Copy each field exactly as shown into your Word (.docx) file. The system fills them in when a letter is generated.</p>
+                        <h3 className="text-lg font-semibold text-slate-900 ">Available Template Fields</h3>
+                        <p className="text-sm text-slate-500 ">Copy each field exactly as shown into your Word (.docx) file. The system fills them in when a letter is generated.</p>
                     </div>
                 </div>
             </div>
@@ -527,21 +527,21 @@ const PlaceholderLibrary = ({ onCopyAll, onDownloadGuide, onCopyTag }) => (
         <div className="mt-5 space-y-5">
             {TAG_GROUPS.map((group) => (
                 <div key={group.category}>
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{group.category}</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 ">{group.category}</p>
                     <div className="mt-3 space-y-2">
                         {group.items.map((item) => (
                             <div
                                 key={item.tag}
-                                className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950/70 sm:flex-row sm:items-center sm:justify-between"
+                                className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
                             >
                                 <div className="min-w-0">
-                                    <p className="font-mono text-sm font-semibold text-slate-900 dark:text-slate-100">{item.tag}</p>
-                                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{item.description}</p>
+                                    <p className="font-mono text-sm font-semibold text-slate-900 ">{item.tag}</p>
+                                    <p className="mt-1 text-sm text-slate-500 ">{item.description}</p>
                                 </div>
                                 <button
                                     type="button"
                                     onClick={() => onCopyTag(item.tag)}
-                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 "
                                 >
                                     <Copy className="h-4 w-4" />
                                     Copy
@@ -564,16 +564,16 @@ const CreateTemplateModal = ({
     onSubmit,
 }) => (
     <div className="fixed inset-0 z-[100] flex min-h-[100dvh] items-center justify-center overflow-y-auto bg-slate-950/55 p-3 backdrop-blur-sm sm:p-4">
-        <div className="my-auto max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-xl overflow-y-auto rounded-[24px] border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:rounded-3xl">
-            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5 dark:border-slate-800">
+        <div className="my-auto max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-xl overflow-y-auto rounded-[24px] border border-slate-200 bg-white shadow-2xl sm:rounded-3xl">
+            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5 ">
                 <div>
-                    <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50">Add New Template</h2>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Enter the details below. You can upload Word files after creating the template.</p>
+                    <h2 className="text-xl font-semibold text-slate-900 ">Add New Template</h2>
+                    <p className="mt-1 text-sm text-slate-500 ">Enter the details below. You can upload Word files after creating the template.</p>
                 </div>
                 <button
                     type="button"
                     onClick={onClose}
-                    className="rounded-2xl border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                    className="rounded-2xl border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 "
                 >
                     <X className="h-5 w-5" />
                 </button>
@@ -581,24 +581,24 @@ const CreateTemplateModal = ({
 
             <div className="space-y-5 px-6 py-6">
                 <label className="block">
-                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Template Title</span>
+                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 ">Template Title</span>
                 <input
                 type="text"
                 aria-invalid={formState.error === 'Please enter a title.'}
                 value={formState.title}
                 onChange={(event) => onChange('title', event.target.value)}
                     placeholder="Enter template title"
-                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-indigo-400/20"
+                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 "
                     />
                 </label>
 
                 <label className="block">
-                    <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Incident Category</span>
+                    <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 ">Incident Category</span>
                     <select
                         aria-invalid={formState.error === 'Please choose an incident category.'}
                         value={formState.incidentCategory}
                         onChange={(event) => onChange('incidentCategory', event.target.value)}
-                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:focus:ring-indigo-400/20"
+                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 "
                     >
                         <option value="">Select a category</option>
                         {categories.map((category) => (
@@ -610,28 +610,28 @@ const CreateTemplateModal = ({
                 </label>
 
                 <label className="block">
-                    <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Description</span>
+                    <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 ">Description</span>
                     <textarea
                         rows={4}
                         value={formState.description}
                         onChange={(event) => onChange('description', event.target.value)}
                         placeholder="Optional notes for staff who manage this letter file."
-                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-indigo-400/20"
+                        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 "
                     />
                 </label>
 
                 {formState.error ? (
-                    <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700 dark:border-rose-500/30 dark:bg-rose-950/30 dark:text-rose-200">
+                    <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700 ">
                         {formState.error}
                     </div>
                 ) : null}
             </div>
 
-            <div className="flex flex-col gap-3 border-t border-slate-200 px-6 py-5 dark:border-slate-800 sm:flex-row sm:justify-end">
+            <div className="flex flex-col gap-3 border-t border-slate-200 px-6 py-5 sm:flex-row sm:justify-end">
                 <button
                     type="button"
                     onClick={onClose}
-                    className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                    className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 "
                 >
                     Cancel
                 </button>
@@ -668,18 +668,18 @@ const UploadVariantModal = ({ template, language, uploading, onClose, onUpload }
 
     return (
         <div className="fixed inset-0 z-[100] flex min-h-[100dvh] items-center justify-center overflow-y-auto bg-slate-950/55 p-3 backdrop-blur-sm sm:p-4">
-            <div className="my-auto max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-lg overflow-y-auto rounded-[24px] border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:rounded-3xl">
-                <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5 dark:border-slate-800">
+            <div className="my-auto max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-lg overflow-y-auto rounded-[24px] border border-slate-200 bg-white shadow-2xl sm:rounded-3xl">
+                <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5 ">
                     <div>
-                        <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50">
+                        <h2 className="text-xl font-semibold text-slate-900 ">
                             Upload {LANGUAGE_META[language].label} Letter File
                         </h2>
-                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{template?.title}</p>
+                        <p className="mt-1 text-sm text-slate-500 ">{template?.title}</p>
                     </div>
                     <button
                         type="button"
                         onClick={onClose}
-                        className="rounded-2xl border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                        className="rounded-2xl border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 "
                         aria-label="Close upload dialog"
                     >
                         <X className="h-5 w-5" />
@@ -692,8 +692,8 @@ const UploadVariantModal = ({ template, language, uploading, onClose, onUpload }
                         onClick={() => fileInputRef.current?.click()}
                         className={`flex w-full flex-col items-center justify-center rounded-3xl border-2 border-dashed px-6 py-12 text-center transition ${
                             selectedFile
-                                ? 'border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-950/30 dark:text-emerald-100'
-                                : 'border-slate-300 bg-slate-50 text-slate-600 hover:border-indigo-400 hover:bg-indigo-50 dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-300 dark:hover:border-indigo-500/50 dark:hover:bg-indigo-950/30'
+                                ? 'border-emerald-300 bg-emerald-50 text-emerald-800 '
+                                : 'border-slate-300 bg-slate-50 text-slate-600 hover:border-indigo-400 hover:bg-indigo-50 '
                         }`}
                     >
                         <Upload className="h-10 w-10" />
@@ -714,17 +714,17 @@ const UploadVariantModal = ({ template, language, uploading, onClose, onUpload }
                     />
 
                     {error ? (
-                        <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700 dark:border-rose-500/30 dark:bg-rose-950/30 dark:text-rose-200">
+                        <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700 ">
                             {error}
                         </div>
                     ) : null}
                 </div>
 
-                <div className="flex flex-col gap-3 border-t border-slate-200 px-6 py-5 dark:border-slate-800 sm:flex-row sm:justify-end">
+                <div className="flex flex-col gap-3 border-t border-slate-200 px-6 py-5 sm:flex-row sm:justify-end">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                        className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 "
                     >
                         Cancel
                     </button>
@@ -745,23 +745,23 @@ const UploadVariantModal = ({ template, language, uploading, onClose, onUpload }
 
 const ConfirmModal = ({ title, description, confirmLabel, busy, onClose, onConfirm }) => (
     <div className="fixed inset-0 z-[100] flex min-h-[100dvh] items-center justify-center overflow-y-auto bg-slate-950/55 p-3 backdrop-blur-sm sm:p-4">
-        <div className="my-auto max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-md overflow-y-auto rounded-[24px] border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:rounded-3xl">
-            <div className="border-b border-slate-200 px-6 py-5 dark:border-slate-800">
+        <div className="my-auto max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-md overflow-y-auto rounded-[24px] border border-slate-200 bg-white shadow-2xl sm:rounded-3xl">
+            <div className="border-b border-slate-200 px-6 py-5 ">
                 <div className="flex items-center gap-3">
                     <div className="rounded-2xl border border-rose-200 bg-rose-50 p-2 text-rose-700">
                         <Trash2 className="h-5 w-5" />
                     </div>
-                    <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50">{title}</h2>
+                    <h2 className="text-xl font-semibold text-slate-900 ">{title}</h2>
                 </div>
             </div>
             <div className="px-6 py-6">
-                <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">{description}</p>
+                <p className="text-sm leading-6 text-slate-600 ">{description}</p>
             </div>
-            <div className="flex flex-col gap-3 border-t border-slate-200 px-6 py-5 dark:border-slate-800 sm:flex-row sm:justify-end">
+            <div className="flex flex-col gap-3 border-t border-slate-200 px-6 py-5 sm:flex-row sm:justify-end">
                 <button
                     type="button"
                     onClick={onClose}
-                    className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                    className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 "
                 >
                     Cancel
                 </button>
@@ -1159,14 +1159,14 @@ const LetterTemplates = () => {
 
     if (!isSchoolUserRole(user?.role)) {
         return (
-            <div className="flex min-h-screen items-center justify-center bg-slate-100 p-6 text-slate-700 dark:bg-slate-950 dark:text-slate-200">
+            <div className="flex min-h-screen items-center justify-center bg-slate-100 p-6 text-slate-700 ">
                 Staff access is required to manage official letters.
             </div>
         );
     }
 
     return (
-        <div className="flex min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+        <div className="flex min-h-screen bg-slate-100 text-slate-900 ">
             <style>{DOCX_PREVIEW_STYLES}</style>
 
             <div className="flex min-w-0 flex-1 flex-col">
@@ -1238,11 +1238,11 @@ const LetterTemplates = () => {
 
                         <section className="grid gap-6 2xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
                             <div className="space-y-6">
-                                <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                                <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm ">
                                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                                         <div>
-                                            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">All Templates</h2>
-                                            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                            <h2 className="text-lg font-semibold text-slate-900 ">All Templates</h2>
+                                            <p className="mt-1 text-sm text-slate-500 ">
                                                 Each card shows which languages have a Word file uploaded.
                                             </p>
                                         </div>
@@ -1253,24 +1253,24 @@ const LetterTemplates = () => {
                                                 value={searchTerm}
                                                 onChange={(event) => setSearchTerm(event.target.value)}
                                                 placeholder="Search by title, category, or description…"
-                                                className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-indigo-400/20"
+                                                className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 "
                                             />
                                         </div>
                                     </div>
                                 </section>
 
                                 {loading ? (
-                                    <div className="flex min-h-[420px] items-center justify-center rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                                    <div className="flex min-h-[420px] items-center justify-center rounded-3xl border border-slate-200 bg-white shadow-sm ">
                                         <div className="text-center">
                                             <Loader2 className="mx-auto h-10 w-10 animate-spin text-indigo-500" />
-                                            <p className="mt-4 text-sm font-medium text-slate-600 dark:text-slate-300">Loading letter files…</p>
+                                            <p className="mt-4 text-sm font-medium text-slate-600 ">Loading letter files…</p>
                                         </div>
                                     </div>
                                 ) : filteredTemplates.length === 0 ? (
-                                    <div className="rounded-3xl border border-slate-200 bg-white px-6 py-16 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                                    <div className="rounded-3xl border border-slate-200 bg-white px-6 py-16 text-center shadow-sm ">
                                         <FileText className="mx-auto h-12 w-12 text-slate-300" />
-                                        <h3 className="mt-5 text-xl font-semibold text-slate-900 dark:text-slate-50">No templates match your search.</h3>
-                                        <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                                        <h3 className="mt-5 text-xl font-semibold text-slate-900 ">No templates match your search.</h3>
+                                        <p className="mt-2 text-sm leading-6 text-slate-500 ">
                                             Try different words in the search box, or add a new template for a category that is not covered yet.
                                         </p>
                                     </div>
@@ -1289,17 +1289,17 @@ const LetterTemplates = () => {
                             </div>
 
                             <div className="space-y-6">
-                                <section className="rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                                    <div className="border-b border-slate-200 px-5 py-5 dark:border-slate-800 sm:px-6">
+                                <section className="rounded-3xl border border-slate-200 bg-white shadow-sm ">
+                                    <div className="border-b border-slate-200 px-5 py-5 sm:px-6">
                                         <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
                                             <div>
-                                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 ">
                                                     Template Workspace
                                                 </p>
-                                                <h2 className="mt-2 text-2xl font-semibold text-slate-900 dark:text-slate-50">
+                                                <h2 className="mt-2 text-2xl font-semibold text-slate-900 ">
                                                     {selectedTemplate?.title || 'Choose a Template'}
                                                 </h2>
-                                                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                                                <p className="mt-2 text-sm text-slate-500 ">
                                                     {selectedTemplate
                                                         ? `${selectedTemplate.incidentCategory} — preview, upload, and download each language from here.`
                                                         : 'Select a template on the left to preview and manage its language files here.'}
@@ -1319,7 +1319,7 @@ const LetterTemplates = () => {
                                                             className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
                                                                 isActive
                                                                     ? 'border-indigo-600 bg-indigo-600 text-white'
-                                                                    : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
+                                                                    : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 '
                                                             }`}
                                                         >
                                                             <Languages className="h-4 w-4" aria-hidden="true" />
@@ -1331,8 +1331,8 @@ const LetterTemplates = () => {
                                                                             ? 'bg-emerald-400/30 text-emerald-100'
                                                                             : 'bg-rose-400/30 text-rose-100'
                                                                         : variant.hasDocx
-                                                                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200'
-                                                                            : 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-200'
+                                                                            ? 'bg-emerald-100 text-emerald-700 '
+                                                                            : 'bg-rose-100 text-rose-700 '
                                                                 }`}
                                                             >
                                                                 {variant.hasDocx ? 'Uploaded' : 'Missing'}

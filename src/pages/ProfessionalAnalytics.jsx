@@ -83,8 +83,8 @@ const AcademicYearStatusTooltip = ({ active, payload, label }) => {
     const row = payload[0]?.payload || {};
 
     return (
-        <div className="rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-xl backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+        <div className="rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-xl backdrop-blur ">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 ">
                 {row.academicYear || label || 'Academic Year'}
             </p>
             <div className="space-y-1.5">
@@ -96,9 +96,9 @@ const AcademicYearStatusTooltip = ({ active, payload, label }) => {
                     <div key={entry.label} className="flex items-center justify-between gap-4 text-sm">
                         <div className="flex items-center gap-2">
                             <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
-                            <span className="text-slate-600 dark:text-slate-300">{entry.label}</span>
+                            <span className="text-slate-600 ">{entry.label}</span>
                         </div>
-                        <span className="font-semibold text-slate-900 dark:text-slate-100">
+                        <span className="font-semibold text-slate-900 ">
                             {Number(entry.value || 0).toLocaleString('en-US')}
                         </span>
                     </div>

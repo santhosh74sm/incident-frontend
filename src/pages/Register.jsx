@@ -28,10 +28,10 @@ import { getPasswordStrength, PASSWORD_POLICY_TEXT, registerSchema } from '../li
 import useFocusFirstInvalid from '../hooks/useFocusFirstInvalid';
 
 const INPUT_CLASS_NAME =
-    'h-12 w-full rounded-lg border border-slate-200 bg-white px-4 pl-11 pr-12 text-sm text-slate-800 shadow-sm outline-none transition-all duration-200 placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:hover:border-slate-600 dark:focus:border-blue-400 dark:focus:ring-blue-400/20';
+    'h-12 w-full rounded-lg border border-slate-200 bg-white px-4 pl-11 pr-12 text-sm text-slate-800 shadow-sm outline-none transition-all duration-200 placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 ';
 
 const INPUT_ERROR_CLASS_NAME =
-    'h-12 w-full rounded-lg border border-rose-300 bg-rose-50/60 px-4 pl-11 pr-12 text-sm text-slate-800 shadow-sm outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-rose-400 focus:bg-white focus:ring-4 focus:ring-rose-500/15 dark:border-rose-500/50 dark:bg-rose-950/30 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:bg-rose-950/40 dark:focus:ring-rose-400/20';
+    'h-12 w-full rounded-lg border border-rose-300 bg-rose-50/60 px-4 pl-11 pr-12 text-sm text-slate-800 shadow-sm outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-rose-400 focus:bg-white focus:ring-4 focus:ring-rose-500/15 ';
 
 const getFriendlyRegisterError = (message) => {
     const value = String(message || '').toLowerCase();
@@ -61,12 +61,12 @@ const FeaturePoint = ({ icon: Icon, title, children }) => (
 );
 
 const FormSection = ({ icon: Icon, title, children }) => (
-    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 ">
                 <Icon size={18} />
             </div>
-            <h3 className="text-sm font-bold text-slate-950 dark:text-slate-100">{title}</h3>
+            <h3 className="text-sm font-bold text-slate-950 ">{title}</h3>
         </div>
         <div className="mt-5 grid gap-5">{children}</div>
     </section>
@@ -126,7 +126,7 @@ const Register = () => {
     const submitting = isSubmitting || registerMutation.isPending;
 
     return (
-        <main className="relative min-h-screen overflow-x-hidden bg-[#071426] text-slate-900 dark:bg-slate-950">
+        <main className="relative min-h-screen overflow-x-hidden bg-[#071426] text-slate-900 ">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(37,99,235,0.30),transparent_28rem),radial-gradient(circle_at_86%_12%,rgba(14,165,233,0.18),transparent_25rem),linear-gradient(135deg,#05101f_0%,#071a33_48%,#0b2344_100%)]" />
             <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(rgba(59,130,246,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.10)_1px,transparent_1px)] [background-size:64px_64px]" />
 
@@ -177,13 +177,13 @@ const Register = () => {
                             <span className="text-sm font-semibold">Incident Tracking System</span>
                         </div>
 
-                        <div className="overflow-hidden rounded-2xl border border-white/70 bg-white shadow-2xl shadow-slate-950/25 transition-colors duration-200 dark:border-slate-800 dark:bg-slate-900">
-                            <div className="border-b border-slate-200 px-5 py-6 dark:border-slate-800 sm:px-8">
-                                <div className="inline-flex rounded-full bg-blue-50 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-blue-700 dark:bg-blue-500/10 dark:text-blue-300">
+                        <div className="overflow-hidden rounded-2xl border border-white/70 bg-white shadow-2xl shadow-slate-950/25 transition-colors duration-200 ">
+                            <div className="border-b border-slate-200 px-5 py-6 sm:px-8">
+                                <div className="inline-flex rounded-full bg-blue-50 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-blue-700 ">
                                     Create Workspace
                                 </div>
-                                <h2 className="mt-4 text-2xl font-bold tracking-tight text-slate-950 dark:text-slate-100">Let's Get Started!</h2>
-                                <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                                <h2 className="mt-4 text-2xl font-bold tracking-tight text-slate-950 ">Let's Get Started!</h2>
+                                <p className="mt-2 text-sm leading-6 text-slate-500 ">
                                     Fill in the details to create your school workspace.
                                 </p>
                             </div>
@@ -192,14 +192,14 @@ const Register = () => {
                                 {!success ? (
                                     <>
                                         {serverError && (
-                                            <div className="mb-5 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 dark:border-rose-500/30 dark:bg-rose-950/30" role="alert" aria-live="polite">
+                                            <div className="mb-5 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 " role="alert" aria-live="polite">
                                                 <div className="flex items-start gap-3">
-                                                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-200">
+                                                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-rose-100 text-rose-600 ">
                                                         <AlertCircle size={17} />
                                                     </div>
                                                     <div>
-                                                        <p className="text-sm font-semibold text-rose-800 dark:text-rose-100">Registration Issue</p>
-                                                        <p className="mt-0.5 text-sm leading-6 text-rose-700 dark:text-rose-200">{serverError}</p>
+                                                        <p className="text-sm font-semibold text-rose-800 ">Registration Issue</p>
+                                                        <p className="mt-0.5 text-sm leading-6 text-rose-700 ">{serverError}</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -208,7 +208,7 @@ const Register = () => {
                                         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate aria-busy={submitting}>
                                             <FormSection icon={School} title="School Information">
                                                 <div>
-                                                    <label htmlFor={schoolNameId} className="mb-2 block text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                                                    <label htmlFor={schoolNameId} className="mb-2 block text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500 ">
                                                         School Name
                                                     </label>
                                                     <div className="relative">
@@ -226,12 +226,12 @@ const Register = () => {
                                                         />
                                                     </div>
                                                     {errors.schoolName && (
-                                                        <p id={`${schoolNameId}-error`} className="mt-1.5 text-xs font-medium text-rose-600 dark:text-rose-300">{errors.schoolName.message}</p>
+                                                        <p id={`${schoolNameId}-error`} className="mt-1.5 text-xs font-medium text-rose-600 ">{errors.schoolName.message}</p>
                                                     )}
                                                 </div>
 
                                                 <div>
-                                                    <label htmlFor={emailId} className="mb-2 block text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                                                    <label htmlFor={emailId} className="mb-2 block text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500 ">
                                                         Official Email
                                                     </label>
                                                     <div className="relative">
@@ -249,12 +249,12 @@ const Register = () => {
                                                         />
                                                     </div>
                                                     {errors.email && (
-                                                        <p id={`${emailId}-error`} className="mt-1.5 text-xs font-medium text-rose-600 dark:text-rose-300">{errors.email.message}</p>
+                                                        <p id={`${emailId}-error`} className="mt-1.5 text-xs font-medium text-rose-600 ">{errors.email.message}</p>
                                                     )}
                                                 </div>
 
                                                 <div>
-                                                    <label htmlFor={academicYearId} className="mb-2 block text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                                                    <label htmlFor={academicYearId} className="mb-2 block text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500 ">
                                                         Academic Year
                                                     </label>
                                                     <div className="relative">
@@ -271,14 +271,14 @@ const Register = () => {
                                                         />
                                                     </div>
                                                     {errors.academicYear && (
-                                                        <p id={`${academicYearId}-error`} className="mt-1.5 text-xs font-medium text-rose-600 dark:text-rose-300">{errors.academicYear.message}</p>
+                                                        <p id={`${academicYearId}-error`} className="mt-1.5 text-xs font-medium text-rose-600 ">{errors.academicYear.message}</p>
                                                     )}
                                                 </div>
                                             </FormSection>
 
                                             <FormSection icon={Users} title="Account Information">
                                                 <div>
-                                                    <label htmlFor={nameId} className="mb-2 block text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                                                    <label htmlFor={nameId} className="mb-2 block text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500 ">
                                                         Super Admin Name
                                                     </label>
                                                     <div className="relative">
@@ -296,13 +296,13 @@ const Register = () => {
                                                         />
                                                     </div>
                                                     {errors.superAdminName && (
-                                                        <p id={`${nameId}-error`} className="mt-1.5 text-xs font-medium text-rose-600 dark:text-rose-300">{errors.superAdminName.message}</p>
+                                                        <p id={`${nameId}-error`} className="mt-1.5 text-xs font-medium text-rose-600 ">{errors.superAdminName.message}</p>
                                                     )}
                                                 </div>
 
                                                 <div className="grid gap-5 md:grid-cols-2">
                                                     <div>
-                                                        <label htmlFor={passwordId} className="mb-2 block text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                                                        <label htmlFor={passwordId} className="mb-2 block text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500 ">
                                                             Password
                                                         </label>
                                                         <div className="relative">
@@ -322,19 +322,19 @@ const Register = () => {
                                                                 type="button"
                                                                 onClick={() => setShowPassword((v) => !v)}
                                                                 disabled={submitting}
-                                                                className="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition-all duration-200 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                                                                className="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition-all duration-200 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 "
                                                                 aria-label={showPassword ? 'Hide password' : 'Show password'}
                                                             >
                                                                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                                             </button>
                                                         </div>
                                                         {errors.password && (
-                                                            <p id={`${passwordId}-error`} className="mt-1.5 text-xs font-medium text-rose-600 dark:text-rose-300">{errors.password.message}</p>
+                                                            <p id={`${passwordId}-error`} className="mt-1.5 text-xs font-medium text-rose-600 ">{errors.password.message}</p>
                                                         )}
                                                     </div>
 
                                                     <div>
-                                                        <label htmlFor={confirmPasswordId} className="mb-2 block text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                                                        <label htmlFor={confirmPasswordId} className="mb-2 block text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500 ">
                                                             Confirm Password
                                                         </label>
                                                         <div className="relative">
@@ -354,24 +354,24 @@ const Register = () => {
                                                                 type="button"
                                                                 onClick={() => setShowConfirmPassword((v) => !v)}
                                                                 disabled={submitting}
-                                                                className="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition-all duration-200 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                                                                className="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition-all duration-200 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 "
                                                                 aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
                                                             >
                                                                 {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                                             </button>
                                                         </div>
                                                         {errors.confirmPassword && (
-                                                            <p id={`${confirmPasswordId}-error`} className="mt-1.5 text-xs font-medium text-rose-600 dark:text-rose-300">{errors.confirmPassword.message}</p>
+                                                            <p id={`${confirmPasswordId}-error`} className="mt-1.5 text-xs font-medium text-rose-600 ">{errors.confirmPassword.message}</p>
                                                         )}
                                                     </div>
                                                 </div>
 
-                                                <div id={`${passwordId}-hint`} className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950/50">
-                                                    <div className="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800" aria-hidden="true">
+                                                <div id={`${passwordId}-hint`} className="rounded-lg border border-slate-200 bg-slate-50 p-3 ">
+                                                    <div className="h-2 overflow-hidden rounded-full bg-slate-200 " aria-hidden="true">
                                                         <div className={`h-full rounded-full transition-all duration-200 ${passwordStrength.bar}`} />
                                                     </div>
                                                     <p className={`mt-2 text-xs font-semibold ${passwordStrength.text}`}>Password strength: {passwordStrength.label}</p>
-                                                    <p className="mt-2 flex items-start gap-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                                                    <p className="mt-2 flex items-start gap-2 text-xs leading-5 text-slate-500 ">
                                                         <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-500" size={14} />
                                                         {PASSWORD_POLICY_TEXT}
                                                     </p>
@@ -381,7 +381,7 @@ const Register = () => {
                                             <button
                                                 type="submit"
                                                 disabled={submitting}
-                                                className="inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 dark:focus-visible:ring-blue-400 dark:focus-visible:ring-offset-slate-900"
+                                                className="inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 "
                                             >
                                                 {submitting ? (
                                                     <>
@@ -397,18 +397,18 @@ const Register = () => {
                                             </button>
                                         </form>
 
-                                        <div className="mt-6 flex flex-col gap-4 border-t border-slate-200 pt-5 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
+                                        <div className="mt-6 flex flex-col gap-4 border-t border-slate-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
                                             <button
                                                 type="button"
                                                 onClick={() => navigate('/login')}
-                                                className="inline-flex items-center gap-2 rounded-lg text-sm font-semibold text-slate-600 transition-all duration-200 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-slate-300 dark:hover:text-slate-100"
+                                                className="inline-flex items-center gap-2 rounded-lg text-sm font-semibold text-slate-600 transition-all duration-200 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 "
                                             >
                                                 <ArrowLeft size={16} />
                                                 Back to Login
                                             </button>
                                             <Link
                                                 to="/login"
-                                                className="inline-flex items-center gap-2 rounded-lg text-sm font-semibold text-blue-700 transition-all duration-200 hover:text-blue-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-blue-300 dark:hover:text-blue-200"
+                                                className="inline-flex items-center gap-2 rounded-lg text-sm font-semibold text-blue-700 transition-all duration-200 hover:text-blue-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 "
                                             >
                                                 Already have an account?
                                                 <ArrowRight size={16} />
@@ -417,14 +417,14 @@ const Register = () => {
                                     </>
                                 ) : (
                                     <div className="py-12 text-center">
-                                        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 shadow-inner dark:bg-emerald-500/10 dark:text-emerald-300">
+                                        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 shadow-inner ">
                                             <CheckCircle2 size={40} />
                                         </div>
-                                        <h3 className="mt-6 text-2xl font-semibold text-slate-900 dark:text-slate-100">School Workspace Created</h3>
-                                        <p className="mt-3 text-sm leading-7 text-slate-600 dark:text-slate-300">
+                                        <h3 className="mt-6 text-2xl font-semibold text-slate-900 ">School Workspace Created</h3>
+                                        <p className="mt-3 text-sm leading-7 text-slate-600 ">
                                             Your school workspace is ready. You can now start using the system.
                                         </p>
-                                        <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/30 dark:text-emerald-100">
+                                        <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 ">
                                             <Loader2 className="animate-spin" size={16} />
                                             Redirecting...
                                         </div>

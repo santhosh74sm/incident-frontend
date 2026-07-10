@@ -65,8 +65,8 @@ const getActionPresentation = (actionName = '') => {
         return {
             tone: 'DELETED',
             icon: Trash2,
-            badgeClass: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-200 dark:border-rose-500/30',
-            iconClass: 'text-rose-600 bg-rose-50 border-rose-200 dark:text-rose-200 dark:bg-rose-950/40 dark:border-rose-500/30',
+            badgeClass: 'bg-rose-50 text-rose-700 border-rose-200 ',
+            iconClass: 'text-rose-600 bg-rose-50 border-rose-200 ',
         };
     }
 
@@ -74,8 +74,8 @@ const getActionPresentation = (actionName = '') => {
         return {
             tone: 'MANUAL',
             icon: Hand,
-            badgeClass: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-200 dark:border-amber-500/30',
-            iconClass: 'text-amber-600 bg-amber-50 border-amber-200 dark:text-amber-200 dark:bg-amber-950/40 dark:border-amber-500/30',
+            badgeClass: 'bg-amber-50 text-amber-700 border-amber-200 ',
+            iconClass: 'text-amber-600 bg-amber-50 border-amber-200 ',
         };
     }
 
@@ -83,8 +83,8 @@ const getActionPresentation = (actionName = '') => {
         return {
             tone: normalized.includes('generate') ? 'GENERATED' : 'UPDATED',
             icon: PencilLine,
-            badgeClass: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-200 dark:border-blue-500/30',
-            iconClass: 'text-blue-600 bg-blue-50 border-blue-200 dark:text-blue-200 dark:bg-blue-950/40 dark:border-blue-500/30',
+            badgeClass: 'bg-blue-50 text-blue-700 border-blue-200 ',
+            iconClass: 'text-blue-600 bg-blue-50 border-blue-200 ',
         };
     }
 
@@ -92,16 +92,16 @@ const getActionPresentation = (actionName = '') => {
         return {
             tone: 'CREATED',
             icon: FilePlus,
-            badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-200 dark:border-emerald-500/30',
-            iconClass: 'text-emerald-600 bg-emerald-50 border-emerald-200 dark:text-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-500/30',
+            badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200 ',
+            iconClass: 'text-emerald-600 bg-emerald-50 border-emerald-200 ',
         };
     }
 
     return {
         tone: 'ACTIVITY',
         icon: ShieldCheck,
-        badgeClass: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700',
-        iconClass: 'text-slate-600 bg-slate-50 border-slate-200 dark:text-slate-200 dark:bg-slate-800 dark:border-slate-700',
+        badgeClass: 'bg-slate-100 text-slate-700 border-slate-200 ',
+        iconClass: 'text-slate-600 bg-slate-50 border-slate-200 ',
     };
 };
 
@@ -146,8 +146,8 @@ const MetadataField = ({ label, value, depth = 0 }) => {
     if (primitive !== null) {
         return (
             <div className={`grid gap-1 ${depth === 0 ? 'sm:grid-cols-[180px_minmax(0,1fr)]' : 'sm:grid-cols-[140px_minmax(0,1fr)]'}`}>
-                <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{formatLabel(label)}</dt>
-                <dd className="text-sm text-slate-700 break-words dark:text-slate-200">{primitive}</dd>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500 ">{formatLabel(label)}</dt>
+                <dd className="text-sm text-slate-700 break-words ">{primitive}</dd>
             </div>
         );
     }
@@ -155,10 +155,10 @@ const MetadataField = ({ label, value, depth = 0 }) => {
     if (Array.isArray(value)) {
         return (
             <div className="space-y-3">
-                <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{formatLabel(label)}</dt>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500 ">{formatLabel(label)}</dt>
                 <dd className="space-y-2">
                     {value.map((item, index) => (
-                        <div key={`${label}-${index}`} className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950/70">
+                        <div key={`${label}-${index}`} className="rounded-xl border border-slate-200 bg-slate-50 p-3 ">
                             {isPlainObject(item) ? (
                                 <dl className="space-y-3">
                                     {Object.entries(item).map(([nestedKey, nestedValue]) => (
@@ -171,7 +171,7 @@ const MetadataField = ({ label, value, depth = 0 }) => {
                                     ))}
                                 </dl>
                             ) : (
-                                <p className="text-sm text-slate-700 dark:text-slate-200">{formatPrimitiveValue(item)}</p>
+                                <p className="text-sm text-slate-700 ">{formatPrimitiveValue(item)}</p>
                             )}
                         </div>
                     ))}
@@ -183,8 +183,8 @@ const MetadataField = ({ label, value, depth = 0 }) => {
     if (isPlainObject(value)) {
         return (
             <div className="space-y-3">
-                <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{formatLabel(label)}</dt>
-                <dd className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/70">
+                <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500 ">{formatLabel(label)}</dt>
+                <dd className="rounded-xl border border-slate-200 bg-slate-50 p-4 ">
                     <dl className="space-y-3">
                         {Object.entries(value).map(([nestedKey, nestedValue]) => (
                             <MetadataField
@@ -408,7 +408,7 @@ const Logs = () => {
     const showingTo = Math.min(pagination.page * pagination.limit, pagination.total);
 
     return (
-        <div className="flex min-h-screen bg-slate-100 dark:bg-slate-950">
+        <div className="flex min-h-screen bg-slate-100 ">
             <div className="flex min-w-0 flex-1 flex-col">
                 <main className="flex-1 overflow-y-auto p-4 lg:p-6">
                     <div className="mx-auto max-w-[1600px] space-y-6">
@@ -422,7 +422,7 @@ const Logs = () => {
                                     <button
                                         type="button"
                                         onClick={fetchLogs}
-                                        className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 transition-all duration-300 hover:bg-blue-50 dark:bg-slate-100 dark:text-slate-950"
+                                        className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 transition-all duration-300 hover:bg-blue-50 "
                                     >
                                         <RefreshCw size={16} aria-hidden="true" />
                                         Refresh
@@ -440,29 +440,29 @@ const Logs = () => {
                         />
 
                         <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm ">
                                 <div className="flex items-center justify-between">
-                                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Matching Entries</p>
+                                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 ">Matching Entries</p>
                                     <Filter size={16} className="text-cyan-500" />
                                 </div>
-                                <p className="mt-4 text-3xl font-black tracking-tight text-slate-900 dark:text-slate-50">{pagination.total}</p>
-                                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{entitySummary}</p>
+                                <p className="mt-4 text-3xl font-black tracking-tight text-slate-900 ">{pagination.total}</p>
+                                <p className="mt-1 text-sm text-slate-500 ">{entitySummary}</p>
                             </div>
-                            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm ">
                                 <div className="flex items-center justify-between">
-                                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">On This Page</p>
+                                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 ">On This Page</p>
                                     <CalendarRange size={16} className="text-blue-500" />
                                 </div>
-                                <p className="mt-4 text-3xl font-black tracking-tight text-slate-900 dark:text-slate-50">{logs.length}</p>
-                                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Page {pagination.page} of {pagination.totalPages}</p>
+                                <p className="mt-4 text-3xl font-black tracking-tight text-slate-900 ">{logs.length}</p>
+                                <p className="mt-1 text-sm text-slate-500 ">Page {pagination.page} of {pagination.totalPages}</p>
                             </div>
-                            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm ">
                                 <div className="flex items-center justify-between">
-                                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Recent Activity</p>
+                                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 ">Recent Activity</p>
                                     <Clock3 size={16} className="text-emerald-500" />
                                 </div>
-                                <p className="mt-4 text-3xl font-black tracking-tight text-slate-900 dark:text-slate-50">{todayCount}</p>
-                                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Entries loaded from today</p>
+                                <p className="mt-4 text-3xl font-black tracking-tight text-slate-900 ">{todayCount}</p>
+                                <p className="mt-1 text-sm text-slate-500 ">Entries loaded from today</p>
                             </div>
                         </section>
 
@@ -477,7 +477,7 @@ const Logs = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500 ">
                                         Record Type
                                     </label>
                                     <select
@@ -486,7 +486,7 @@ const Logs = () => {
                                             setFilters((current) => ({ ...current, entityType: event.target.value }));
                                             setPage(1);
                                         }}
-                                        className="min-h-[44px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 transition-all outline-none hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-600 focus-visible:outline-none"
+                                        className="min-h-[44px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 transition-all outline-none hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus-visible:outline-none"
                                     >
                                         <option value="">All record types</option>
                                         {entityTypeOptions.map((option) => (
@@ -497,7 +497,7 @@ const Logs = () => {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500 ">
                                         Academic Year
                                     </label>
                                     <select
@@ -506,7 +506,7 @@ const Logs = () => {
                                             setFilters((current) => ({ ...current, academicYear: event.target.value }));
                                             setPage(1);
                                         }}
-                                        className="min-h-[44px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 transition-all outline-none hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-600 focus-visible:outline-none"
+                                        className="min-h-[44px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 transition-all outline-none hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus-visible:outline-none"
                                     >
                                         {academicYearOptions.map((option) => (
                                             <option key={option.value} value={option.value}>
@@ -516,7 +516,7 @@ const Logs = () => {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500 ">
                                         Rows Per Page
                                     </label>
                                     <select
@@ -525,7 +525,7 @@ const Logs = () => {
                                             setPageSize(Number(event.target.value));
                                             setPage(1);
                                         }}
-                                        className="min-h-[44px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 transition-all outline-none hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-600 focus-visible:outline-none"
+                                        className="min-h-[44px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 transition-all outline-none hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus-visible:outline-none"
                                     >
                                         {PAGE_SIZE_OPTIONS.map((size) => (
                                             <option key={size} value={size}>
@@ -535,7 +535,7 @@ const Logs = () => {
                                     </select>
                                 </div>
                             </div>
-                            <div className="mt-5 grid grid-cols-1 gap-4 border-t border-slate-100 pt-5 dark:border-slate-800 md:grid-cols-2">
+                            <div className="mt-5 grid grid-cols-1 gap-4 border-t border-slate-100 pt-5 md:grid-cols-2">
                                 <UnifiedDateInput
                                     label="Start Date"
                                     value={filters.start}
@@ -555,16 +555,16 @@ const Logs = () => {
                             </div>
                         </UnifiedFilterBar>
 
-                        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                            <div className="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 dark:border-slate-800 md:flex-row md:items-center md:justify-between">
+                        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ">
+                            <div className="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 md:flex-row md:items-center md:justify-between">
                                 <div>
-                                    <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Activity Records</h2>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                                    <h2 className="text-lg font-bold text-slate-900 ">Activity Records</h2>
+                                    <p className="text-sm text-slate-500 ">
                                         Showing {showingFrom}–{showingTo} of {pagination.total} activity entries
                                     </p>
                                 </div>
                                 {loading && (
-                                    <div className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
+                                    <div className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 ">
                                         <RefreshCw size={15} className="animate-spin" aria-hidden="true" />
                                         Loading…
                                     </div>
@@ -574,15 +574,15 @@ const Logs = () => {
                             {logs.length === 0 && !loading ? (
                                 <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
                                     <div className="relative mb-6">
-                                        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
+                                        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-slate-100 ">
                                             <Search size={30} className="text-slate-400" />
                                         </div>
-                                        <div className="absolute -right-2 -top-1 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700">
+                                        <div className="absolute -right-2 -top-1 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow ring-1 ring-slate-200 ">
                                             <XCircle size={16} className="text-slate-300" />
                                         </div>
                                     </div>
-                                    <h3 className="text-xl font-bold text-slate-900 dark:text-slate-50">No activity found.</h3>
-                                    <p className="mt-2 max-w-md text-sm text-slate-500 dark:text-slate-400">
+                                    <h3 className="text-xl font-bold text-slate-900 ">No activity found.</h3>
+                                    <p className="mt-2 max-w-md text-sm text-slate-500 ">
                                         No entries match these filters.
                                     </p>
                                     <button
@@ -597,13 +597,13 @@ const Logs = () => {
                             ) : (
                                 <div className="overflow-x-auto">
                                     <table className="min-w-[980px] w-full">
-                                        <thead className="bg-slate-50 dark:bg-slate-950/70">
-                                            <tr className="border-b border-slate-200 dark:border-slate-800">
-                                                <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Action</th>
-                                                <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Performed By</th>
-                                                <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Related Record</th>
-                                                <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Date & Time</th>
-                                                <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Details</th>
+                                        <thead className="bg-slate-50 ">
+                                            <tr className="border-b border-slate-200 ">
+                                                <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-[0.2em] text-slate-500 ">Action</th>
+                                                <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-[0.2em] text-slate-500 ">Performed By</th>
+                                                <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-[0.2em] text-slate-500 ">Related Record</th>
+                                                <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-[0.2em] text-slate-500 ">Date & Time</th>
+                                                <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-[0.2em] text-slate-500 ">Details</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -618,14 +618,14 @@ const Logs = () => {
 
                                                 return (
                                                     <React.Fragment key={log._id}>
-                                                        <tr className="border-b border-slate-100 transition hover:bg-slate-50/80 dark:border-slate-800 dark:hover:bg-slate-800/60">
+                                                        <tr className="border-b border-slate-100 transition hover:bg-slate-50/80 ">
                                                             <td className="px-5 py-4 align-top">
                                                                 <div className="flex items-start gap-3">
                                                                     <div className={`flex h-10 w-10 items-center justify-center rounded-xl border ${presentation.iconClass}`}>
                                                                         <Icon size={18} />
                                                                     </div>
                                                                     <div className="space-y-2">
-                                                                        <p className="font-semibold text-slate-900 dark:text-slate-100">{formatLabel(log.actionName)}</p>
+                                                                        <p className="font-semibold text-slate-900 ">{formatLabel(log.actionName)}</p>
                                                                         <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.2em] ${presentation.badgeClass}`}>
                                                                             {presentation.tone}
                                                                         </span>
@@ -634,39 +634,39 @@ const Logs = () => {
                                                             </td>
                                                             <td className="px-5 py-4 align-top">
                                                                 <div className="space-y-2">
-                                                                    <div className="inline-flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                                                                    <div className="inline-flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 ">
                                                                         <UserRound size={14} className="text-slate-500" />
                                                                         {log.performedByName || 'System'}
                                                                     </div>
-                                                                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                                                                    <p className="text-xs text-slate-500 ">
                                                                         {log.performedByRole || 'Role unavailable'}
                                                                     </p>
                                                                 </div>
                                                             </td>
                                                             <td className="px-5 py-4 align-top">
                                                                 <div className="space-y-2">
-                                                                    <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                                                    <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-600 ">
                                                                         {log.displayEntityType || formatActivityRecordLabel(log.entityType)}
                                                                     </span>
-                                                                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{target.label}</p>
+                                                                    <p className="text-sm font-semibold text-slate-800 ">{target.label}</p>
                                                                     {target.admissionNumber && (
-                                                                        <p className="text-xs text-slate-500 dark:text-slate-400">Admission Number: {target.admissionNumber}</p>
+                                                                        <p className="text-xs text-slate-500 ">Admission Number: {target.admissionNumber}</p>
                                                                     )}
                                                                 </div>
                                                             </td>
                                                             <td className="px-5 py-4 align-top">
                                                                 <div className="space-y-1">
-                                                                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                                                                    <p className="text-sm font-semibold text-slate-800 ">
                                                                         {dayjs(log.createdAt).format('DD MMM YYYY')}
                                                                     </p>
-                                                                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                                                                    <p className="text-xs text-slate-500 ">
                                                                         {dayjs(log.createdAt).format('hh:mm A')}
                                                                     </p>
                                                                 </div>
                                                             </td>
                                                             <td className="px-5 py-4 align-top">
                                                                 <div className="space-y-3">
-                                                                    <p className="max-w-md text-sm text-slate-600 dark:text-slate-300">
+                                                                    <p className="max-w-md text-sm text-slate-600 ">
                                                                         {summaryDetails.length > 0
                                                                             ? summaryDetails
                                                                                 .slice(0, 2)
@@ -677,7 +677,7 @@ const Logs = () => {
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => setExpandedRowId(isExpanded ? null : log._id)}
-                                                                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                                                                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
                                                                         aria-expanded={isExpanded}
                                                                         aria-label={isExpanded ? `Hide details for ${formatLabel(log.actionName)}` : `View details for ${formatLabel(log.actionName)}`}
                                                                     >
@@ -689,11 +689,11 @@ const Logs = () => {
                                                             </td>
                                                         </tr>
                                                         {isExpanded && (
-                                                            <tr className="border-b border-slate-100 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-950/60">
+                                                            <tr className="border-b border-slate-100 bg-slate-50/70 ">
                                                                 <td colSpan={5} className="px-5 py-5">
                                                                     <div className="grid gap-4 xl:grid-cols-3">
-                                                                        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 xl:col-span-1">
-                                                                            <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Summary</h3>
+                                                                        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm xl:col-span-1">
+                                                                            <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-slate-500 ">Summary</h3>
                                                                             <dl className="space-y-3">
                                                                                 <MetadataField label="Action" value={formatLabel(log.actionName)} />
                                                                                 <MetadataField label="Performed By" value={log.performedByName || log.performedBy} />
@@ -706,8 +706,8 @@ const Logs = () => {
                                                                         <div className="space-y-4 xl:col-span-2">
                                                                             {(beforeChanges || afterChanges) && (
                                                                                 <div className="grid gap-4 lg:grid-cols-2">
-                                                                                    <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 dark:border-amber-500/30 dark:bg-amber-950/20">
-                                                                                        <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-amber-700 dark:text-amber-200">Before</h3>
+                                                                                    <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 ">
+                                                                                        <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-amber-700 ">Before</h3>
                                                                                         {beforeChanges ? (
                                                                                             <dl className="space-y-3">
                                                                                                 {Object.entries(beforeChanges).map(([key, value]) => (
@@ -715,11 +715,11 @@ const Logs = () => {
                                                                                                 ))}
                                                                                             </dl>
                                                                                         ) : (
-                                                                                            <p className="text-sm text-amber-700/80 dark:text-amber-200/80">No previous values were captured for this action.</p>
+                                                                                            <p className="text-sm text-amber-700/80 ">No previous values were captured for this action.</p>
                                                                                         )}
                                                                                     </div>
-                                                                                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 dark:border-emerald-500/30 dark:bg-emerald-950/20">
-                                                                                        <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-200">After</h3>
+                                                                                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 ">
+                                                                                        <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-emerald-700 ">After</h3>
                                                                                         {afterChanges ? (
                                                                                             <dl className="space-y-3">
                                                                                                 {Object.entries(afterChanges).map(([key, value]) => (
@@ -727,14 +727,14 @@ const Logs = () => {
                                                                                                 ))}
                                                                                             </dl>
                                                                                         ) : (
-                                                                                            <p className="text-sm text-emerald-700/80 dark:text-emerald-200/80">No updated values were captured for this action.</p>
+                                                                                            <p className="text-sm text-emerald-700/80 ">No updated values were captured for this action.</p>
                                                                                         )}
                                                                                     </div>
                                                                                 </div>
                                                                             )}
 
-                                                                            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                                                                                <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Extra Information</h3>
+                                                                            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm ">
+                                                                                <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-slate-500 ">Extra Information</h3>
                                                                                 {summaryDetails.length > 0 ? (
                                                                                     <dl className="space-y-3">
                                                                                         {summaryDetails.map(([key, value]) => (
@@ -742,7 +742,7 @@ const Logs = () => {
                                                                                         ))}
                                                                                     </dl>
                                                                                 ) : (
-                                                                                    <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-400">
+                                                                                    <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500 ">
                                                                                         No additional details were saved for this activity.
                                                                                     </div>
                                                                                 )}
@@ -760,8 +760,8 @@ const Logs = () => {
                                 </div>
                             )}
 
-                            <div className="flex flex-col gap-3 border-t border-slate-200 px-5 py-4 dark:border-slate-800 md:flex-row md:items-center md:justify-between">
-                                <p className="text-sm text-slate-500 dark:text-slate-400">
+                            <div className="flex flex-col gap-3 border-t border-slate-200 px-5 py-4 md:flex-row md:items-center md:justify-between">
+                                <p className="text-sm text-slate-500 ">
                                     {pagination.total > 0
                                         ? `Showing ${showingFrom}–${showingTo} of ${pagination.total} entries`
                                         : 'No entries to display.'}
@@ -771,19 +771,19 @@ const Logs = () => {
                                         type="button"
                                         onClick={() => setPage((current) => Math.max(1, current - 1))}
                                         disabled={!pagination.hasPrevPage || loading}
-                                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
                                     >
                                         <ChevronLeft size={16} aria-hidden="true" />
                                         Previous
                                     </button>
-                                    <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                                    <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 ">
                                         Page {pagination.page} / {pagination.totalPages}
                                     </div>
                                     <button
                                         type="button"
                                         onClick={() => setPage((current) => current + 1)}
                                         disabled={!pagination.hasNextPage || loading}
-                                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
                                     >
                                         Next
                                         <ChevronRight size={16} aria-hidden="true" />
@@ -792,7 +792,7 @@ const Logs = () => {
                             </div>
                         </section>
 
-                        <section className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-800 shadow-sm dark:border-amber-500/30 dark:bg-amber-950/20 dark:text-amber-100">
+                        <section className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-800 shadow-sm ">
                             <div className="flex items-start gap-3">
                                 <AlertTriangle size={18} className="mt-0.5 shrink-0" />
                                 <p>

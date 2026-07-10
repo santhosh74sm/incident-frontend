@@ -42,9 +42,9 @@ const CLASS_OPTIONS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', 
 const PAGE_SIZE = 8;
 
 const INPUT_CLASS_NAME =
-    'w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 shadow-sm transition-all duration-300 placeholder:text-slate-400 invalid:border-red-400 invalid:ring-2 invalid:ring-red-100 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:shadow-none dark:invalid:border-red-500 dark:invalid:ring-red-500/20 dark:focus:border-blue-400 dark:focus:ring-blue-400/20';
+    'w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 shadow-sm transition-all duration-300 placeholder:text-slate-400 invalid:border-red-400 invalid:ring-2 invalid:ring-red-100 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 ';
 const READONLY_CLASS_NAME =
-    'w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:shadow-none';
+    'w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 shadow-sm ';
 
 const getRoleGroup = (role) => {
     const normalizedRole = normalizeRole(role);
@@ -73,10 +73,10 @@ const getPassedOutYear = (student) => {
 
 const getRoleBadgeTone = (role) => {
     const normalizedRole = normalizeRole(role);
-    if (normalizedRole === 'Super Admin') return 'border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-400/30 dark:bg-purple-500/10 dark:text-purple-200';
-    if (normalizedRole === 'Admin') return 'border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-400/30 dark:bg-indigo-500/10 dark:text-indigo-200';
-    if (normalizedRole === 'Teacher') return 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-400/30 dark:bg-blue-500/10 dark:text-blue-200';
-    return 'border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200';
+    if (normalizedRole === 'Super Admin') return 'border-purple-200 bg-purple-50 text-purple-700 ';
+    if (normalizedRole === 'Admin') return 'border-indigo-200 bg-indigo-50 text-indigo-700 ';
+    if (normalizedRole === 'Teacher') return 'border-blue-200 bg-blue-50 text-blue-700 ';
+    return 'border-slate-200 bg-slate-100 text-slate-700 ';
 };
 
 const RoleBadge = ({ role }) => {
@@ -99,9 +99,9 @@ const RoleBadge = ({ role }) => {
 
 const ActionButton = ({ icon: Icon, label, tone = 'slate', onClick }) => {
     const toneClassName = {
-        slate: 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white focus-visible:ring-slate-400',
-        blue: 'text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:text-blue-300 dark:hover:bg-blue-500/10 dark:hover:text-blue-100 focus-visible:ring-blue-400',
-        red: 'text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:text-rose-300 dark:hover:bg-rose-500/10 dark:hover:text-rose-100 focus-visible:ring-rose-400',
+        slate: 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-slate-400',
+        blue: 'text-blue-600 hover:bg-blue-50 hover:text-blue-700 focus-visible:ring-blue-400',
+        red: 'text-rose-600 hover:bg-rose-50 hover:text-rose-700 focus-visible:ring-rose-400',
     }[tone];
 
     return (
@@ -122,11 +122,11 @@ const PaginationFooter = ({ currentPage, totalPages, totalItems, pageSize, onPag
     const end = totalItems === 0 ? 0 : Math.min(currentPage * pageSize, totalItems);
 
     return (
-        <div className="flex flex-col gap-3 border-t border-slate-100 px-5 py-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-                Showing <span className="font-semibold text-slate-800 dark:text-slate-100">{start}</span>–
-                <span className="font-semibold text-slate-800 dark:text-slate-100">{end}</span> of{' '}
-                <span className="font-semibold text-slate-800 dark:text-slate-100">{totalItems}</span> records
+        <div className="flex flex-col gap-3 border-t border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-slate-500 ">
+                Showing <span className="font-semibold text-slate-800 ">{start}</span>–
+                <span className="font-semibold text-slate-800 ">{end}</span> of{' '}
+                <span className="font-semibold text-slate-800 ">{totalItems}</span> records
             </p>
 
             <div className="flex items-center gap-2">
@@ -134,13 +134,13 @@ const PaginationFooter = ({ currentPage, totalPages, totalItems, pageSize, onPag
                     type="button"
                     onClick={() => onPageChange(Math.max(1, currentPage - 1))}
                     disabled={currentPage === 1}
-                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition-all duration-300 hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition-all duration-300 hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
                 >
                     <ChevronLeft size={14} aria-hidden="true" />
                     Previous
                 </button>
 
-                <span className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">
+                <span className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 ">
                     Page {totalPages === 0 ? 0 : currentPage} of {totalPages}
                 </span>
 
@@ -148,7 +148,7 @@ const PaginationFooter = ({ currentPage, totalPages, totalItems, pageSize, onPag
                     type="button"
                     onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
                     disabled={currentPage === totalPages || totalPages === 0}
-                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition-all duration-300 hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition-all duration-300 hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
                 >
                     Next
                     <ChevronRight size={14} aria-hidden="true" />
@@ -160,7 +160,7 @@ const PaginationFooter = ({ currentPage, totalPages, totalItems, pageSize, onPag
 
 const PreviewField = ({ label, value }) => (
     <div>
-        <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+        <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 ">
             {label}
         </label>
         <div className={READONLY_CLASS_NAME}>{value || 'Not available'}</div>
@@ -796,8 +796,8 @@ const UserManagement = () => {
                 label: 'Staff Member',
                 render: (row) => (
                     <div className="min-w-0 text-left">
-                        <p className="truncate font-semibold text-slate-900 dark:text-slate-100">{row?.name || 'Staff member'}</p>
-                        <p className="truncate text-sm text-slate-500 dark:text-slate-400">{row?.email || 'Email not available'}</p>
+                        <p className="truncate font-semibold text-slate-900 ">{row?.name || 'Staff member'}</p>
+                        <p className="truncate text-sm text-slate-500 ">{row?.email || 'Email not available'}</p>
                     </div>
                 ),
             },
@@ -809,7 +809,7 @@ const UserManagement = () => {
             {
                 key: 'createdAt',
                 label: 'Joined',
-                render: (row) => <span className="text-sm text-slate-600 dark:text-slate-300">{formatDate(row.createdAt)}</span>,
+                render: (row) => <span className="text-sm text-slate-600 ">{formatDate(row.createdAt)}</span>,
             },
             {
                 key: 'actions',
@@ -845,21 +845,21 @@ const UserManagement = () => {
                 label: 'Student',
                 render: (row) => (
                     <div className="min-w-0">
-                        <p className="truncate font-semibold text-slate-900 dark:text-slate-100">{row.name}</p>
-                        <p className="truncate text-sm text-slate-500 dark:text-slate-400">Admission Number: {row.admissionNo}</p>
+                        <p className="truncate font-semibold text-slate-900 ">{row.name}</p>
+                        <p className="truncate text-sm text-slate-500 ">Admission Number: {row.admissionNo}</p>
                     </div>
                 ),
             },
             {
                 key: 'className',
                 label: 'Class',
-                render: (row) => <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Class {row.className}</span>,
+                render: (row) => <span className="text-sm font-medium text-slate-700 ">Class {row.className}</span>,
             },
             {
                 key: 'section',
                 label: 'Section',
                 render: (row) => (
-                    <span className="inline-flex items-center rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-700 dark:border-cyan-400/30 dark:bg-cyan-500/10 dark:text-cyan-200">
+                    <span className="inline-flex items-center rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-700 ">
                         Section {row.section}
                     </span>
                 ),
@@ -867,19 +867,19 @@ const UserManagement = () => {
             {
                 key: 'academicYear',
                 label: 'Academic Year',
-                render: (row) => <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{row.academicYear || 'N/A'}</span>,
+                render: (row) => <span className="text-sm font-semibold text-slate-700 ">{row.academicYear || 'N/A'}</span>,
             },
             ...(activeTab === 'passedOut' ? [
                 {
                     key: 'passedOutYear',
                     label: 'Passed Out Year',
-                    render: (row) => <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{getPassedOutYear(row)}</span>,
+                    render: (row) => <span className="text-sm font-semibold text-slate-700 ">{getPassedOutYear(row)}</span>,
                 },
                 {
                     key: 'status',
                     label: 'Status',
                     render: (row) => (
-                        <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-200">
+                        <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ">
                             {row.status || 'Passed Out'}
                         </span>
                     ),
@@ -888,7 +888,7 @@ const UserManagement = () => {
             {
                 key: 'createdAt',
                 label: 'Added',
-                render: (row) => <span className="text-sm text-slate-600 dark:text-slate-300">{formatDate(row.createdAt)}</span>,
+                render: (row) => <span className="text-sm text-slate-600 ">{formatDate(row.createdAt)}</span>,
             },
             {
                 key: 'actions',
@@ -918,7 +918,7 @@ const UserManagement = () => {
     const staffMobileCards = (
         <div className="space-y-3 md:hidden">
             {paginatedUsers.length === 0 ? (
-                <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-400">
+                <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500 ">
                     No staff records match your search. Try a different name, email, or role.
                 </div>
             ) : (
@@ -926,20 +926,20 @@ const UserManagement = () => {
                     const canDelete = canDeleteStaffUser(record);
                     const isActive = record?.isActive !== false;
                     return (
-                        <article key={record?._id || record?.id || record?.email} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                        <article key={record?._id || record?.id || record?.email} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm ">
                             <div className="flex items-start gap-3">
-                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-sm font-bold text-blue-700 dark:bg-blue-500/10 dark:text-blue-200">
+                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-sm font-bold text-blue-700 ">
                                     {(record?.name || 'U').charAt(0).toUpperCase()}
                                 </div>
                                 <div className="min-w-0 flex-1">
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="min-w-0">
-                                            <p className="truncate text-sm font-bold text-slate-950 dark:text-slate-100">{record?.name || 'Staff member'}</p>
-                                            <p className="mt-0.5 truncate text-xs font-medium text-slate-500 dark:text-slate-400">{record?.email || 'Email not available'}</p>
+                                            <p className="truncate text-sm font-bold text-slate-950 ">{record?.name || 'Staff member'}</p>
+                                            <p className="mt-0.5 truncate text-xs font-medium text-slate-500 ">{record?.email || 'Email not available'}</p>
                                         </div>
                                         <RoleBadge role={record?.role} />
                                     </div>
-                                    <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-300">
+                                    <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-600 ">
                                         <div>
                                             <span className="block font-semibold text-slate-400">Joined</span>
                                             <span className="font-semibold">{formatDate(record?.createdAt)}</span>
@@ -967,22 +967,22 @@ const UserManagement = () => {
     const studentMobileCards = (
         <div className="space-y-3 md:hidden">
             {paginatedStudents.length === 0 ? (
-                <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-400">
+                <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500 ">
                     No student records match your search. Try a different name, admission number, class, or section.
                 </div>
             ) : (
                 paginatedStudents.map((record) => (
-                    <article key={record?._id || record?.id || record?.admissionNo} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                    <article key={record?._id || record?.id || record?.admissionNo} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm ">
                         <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
-                                <p className="truncate text-sm font-bold text-slate-950 dark:text-slate-100">{record?.name || 'Student'}</p>
-                                <p className="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">Admission No: {record?.admissionNo || 'N/A'}</p>
+                                <p className="truncate text-sm font-bold text-slate-950 ">{record?.name || 'Student'}</p>
+                                <p className="mt-1 text-xs font-semibold text-slate-500 ">Admission No: {record?.admissionNo || 'N/A'}</p>
                             </div>
                             <span className={`inline-flex shrink-0 rounded-full border px-2.5 py-1 text-xs font-semibold ${activeTab === 'passedOut' ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}>
                                 {activeTab === 'passedOut' ? record?.status || 'Passed Out' : record?.status || 'Active'}
                             </span>
                         </div>
-                        <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-300">
+                        <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-600 ">
                             <div>
                                 <span className="block font-semibold text-slate-400">Class</span>
                                 <span className="font-semibold">{record?.className || 'N/A'}</span>
@@ -1014,7 +1014,7 @@ const UserManagement = () => {
 
     if (loading) {
         return (
-            <div className="flex min-h-screen bg-slate-100 text-slate-800 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
+            <div className="flex min-h-screen bg-slate-100 text-slate-800 transition-colors duration-300 ">
                 <div className="flex min-w-0 flex-1 flex-col">
                     <main className="flex-1 overflow-y-auto p-4 lg:p-6">
                         <div className="mx-auto max-w-[1600px]">
@@ -1027,7 +1027,7 @@ const UserManagement = () => {
     }
 
     return (
-        <div className="user-management flex min-h-screen bg-slate-100 text-slate-800 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
+        <div className="user-management flex min-h-screen bg-slate-100 text-slate-800 transition-colors duration-300 ">
             <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
                 <main className="flex-1 overflow-y-auto p-4 lg:p-6">
                     <div className="mx-auto max-w-[1600px] space-y-6">
@@ -1041,7 +1041,7 @@ const UserManagement = () => {
                                     <button
                                         type="button"
                                         onClick={() => setShowAddUserModal(true)}
-                                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-sm transition-all duration-300 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-100 dark:text-slate-950"
+                                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-sm transition-all duration-300 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 "
                                     >
                                         <UserPlus size={16} />
                                         {currentRole === 'Super Admin' ? 'Add New Admin/Teacher' : 'Add New Teacher'}
@@ -1049,7 +1049,7 @@ const UserManagement = () => {
                                     <button
                                         type="button"
                                         onClick={() => setShowAddStudentModal(true)}
-                                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 "
                                     >
                                         <Plus size={16} />
                                         Add Student
@@ -1057,7 +1057,7 @@ const UserManagement = () => {
                                     <button
                                         type="button"
                                         onClick={() => fetchData(false)}
-                                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 "
                                     >
                                         <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
                                         Refresh
@@ -1065,11 +1065,11 @@ const UserManagement = () => {
                                 </div>
                             )}
                             meta={(
-                                <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
-                                    <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 dark:border-slate-700 dark:bg-slate-900">
+                                <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600 ">
+                                    <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 ">
                                         {summary.totalUsers} total staff accounts
                                     </span>
-                                    <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 dark:border-slate-700 dark:bg-slate-900">
+                                    <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 ">
                                         {summary.totalStudents} registered students
                                     </span>
                                 </div>
@@ -1097,7 +1097,7 @@ const UserManagement = () => {
                             </div>
                         ) : null}
 
-                        <section className="overflow-x-auto rounded-lg border border-white/80 bg-white/85 p-2 shadow-lg shadow-slate-200/70 backdrop-blur transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/85 dark:shadow-slate-950/50">
+                        <section className="overflow-x-auto rounded-lg border border-white/80 bg-white/85 p-2 shadow-lg shadow-slate-200/70 backdrop-blur transition-colors duration-300 ">
                             <div className="grid min-w-[720px] gap-2 md:min-w-0 md:grid-cols-3">
                                 <button
                                     type="button"
@@ -1106,7 +1106,7 @@ const UserManagement = () => {
                                     className={`rounded-lg px-5 py-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-400 ${
                                         activeTab === 'staff'
                                             ? 'bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-[0_18px_34px_rgba(15,23,42,0.18)]'
-                                            : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'
+                                            : 'text-slate-600 hover:bg-slate-50 '
                                     }`}
                                 >
                                     <div className="flex items-center gap-3">
@@ -1114,7 +1114,7 @@ const UserManagement = () => {
                                             className={`flex h-11 w-11 items-center justify-center rounded-2xl ${
                                                 activeTab === 'staff'
                                                     ? 'bg-white/10 text-white'
-                                                    : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200'
+                                                    : 'bg-slate-100 text-slate-700 '
                                             }`}
                                         >
                                             <Shield size={18} />
@@ -1123,7 +1123,7 @@ const UserManagement = () => {
                                             <p className="text-sm font-semibold">Staff & Admin Directory</p>
                                             <p
                                                 className={`mt-1 text-xs ${
-                                                    activeTab === 'staff' ? 'text-slate-300' : 'text-slate-500 dark:text-slate-400'
+                                                    activeTab === 'staff' ? 'text-slate-300' : 'text-slate-500 '
                                                 }`}
                                             >
                                                 Manage roles, access, and active staff accounts.
@@ -1139,7 +1139,7 @@ const UserManagement = () => {
                                     className={`rounded-lg px-5 py-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400 ${
                                         activeTab === 'students'
                                             ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_18px_34px_rgba(59,130,246,0.22)]'
-                                            : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'
+                                            : 'text-slate-600 hover:bg-slate-50 '
                                     }`}
                                  >
                                     <div className="flex items-center gap-3">
@@ -1147,7 +1147,7 @@ const UserManagement = () => {
                                             className={`flex h-11 w-11 items-center justify-center rounded-2xl ${
                                                 activeTab === 'students'
                                                     ? 'bg-white/10 text-white'
-                                                    : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200'
+                                                    : 'bg-slate-100 text-slate-700 '
                                             }`}
                                         >
                                             <UserCheck size={18} />
@@ -1156,7 +1156,7 @@ const UserManagement = () => {
                                             <p className="text-sm font-semibold">Student Registry</p>
                                             <p
                                                 className={`mt-1 text-xs ${
-                                                    activeTab === 'students' ? 'text-blue-100' : 'text-slate-500 dark:text-slate-400'
+                                                    activeTab === 'students' ? 'text-blue-100' : 'text-slate-500 '
                                                 }`}
                                             >
                                                 Review admission records, classes, and sections.
@@ -1172,7 +1172,7 @@ const UserManagement = () => {
                                     className={`rounded-lg px-5 py-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-400 ${
                                         activeTab === 'passedOut'
                                             ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-[0_18px_34px_rgba(245,158,11,0.2)]'
-                                            : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'
+                                            : 'text-slate-600 hover:bg-slate-50 '
                                     }`}
                                 >
                                     <div className="flex items-center gap-3">
@@ -1180,7 +1180,7 @@ const UserManagement = () => {
                                             className={`flex h-11 w-11 items-center justify-center rounded-2xl ${
                                                 activeTab === 'passedOut'
                                                     ? 'bg-white/10 text-white'
-                                                    : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200'
+                                                    : 'bg-slate-100 text-slate-700 '
                                             }`}
                                         >
                                             <UserCheck size={18} />
@@ -1189,7 +1189,7 @@ const UserManagement = () => {
                                             <p className="text-sm font-semibold">Passed Out Students</p>
                                             <p
                                                 className={`mt-1 text-xs ${
-                                                    activeTab === 'passedOut' ? 'text-amber-100' : 'text-slate-500 dark:text-slate-400'
+                                                    activeTab === 'passedOut' ? 'text-amber-100' : 'text-slate-500 '
                                                 }`}
                                             >
                                                 Review passed-out students with preserved history.
@@ -1226,21 +1226,21 @@ const UserManagement = () => {
                                             onChange={setRoleFilter}
                                             placeholder="All roles"
                                         />
-                                        <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 dark:border-slate-700 dark:bg-slate-950/80">
-                                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                        <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 ">
+                                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 ">
                                                 Coverage
                                             </p>
-                                            <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                            <p className="mt-2 text-sm font-semibold text-slate-900 ">
                                                 {summary.staffCount} non-admin staff account{summary.staffCount === 1 ? '' : 's'}
                                             </p>
-                                            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                            <p className="mt-1 text-sm text-slate-500 ">
                                                 Includes teachers and other operational roles.
                                             </p>
                                         </div>
                                     </div>
                                 </UnifiedFilterBar>
 
-                                <div className="min-w-0 overflow-hidden rounded-lg border border-slate-200 bg-white transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900">
+                                <div className="min-w-0 overflow-hidden rounded-lg border border-slate-200 bg-white transition-colors duration-300 ">
                                     <div className="hidden overflow-x-auto md:block">
                                         <AnalyticsDataTable
                                             columns={staffColumns}
@@ -1291,13 +1291,13 @@ const UserManagement = () => {
                                             placeholder="Search by name, admission number, class, or section"
                                         />
                                         <label className="min-w-0">
-                                            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 ">
                                                 Academic Year
                                             </span>
                                             <select
                                                 value={academicYearFilter}
                                                 onChange={(event) => updateAcademicYearFilter(event.target.value)}
-                                                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                                                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10 "
                                             >
                                                 {academicYearOptions.map((option) => (
                                                     <option key={option.value} value={option.value}>{option.label}</option>
@@ -1318,23 +1318,23 @@ const UserManagement = () => {
                                             onChange={updateSectionFilter}
                                             placeholder="All sections"
                                         />
-                                        <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 dark:border-slate-700 dark:bg-slate-950/80">
-                                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                        <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 ">
+                                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 ">
                                                 Coverage
                                             </p>
-                                            <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                            <p className="mt-2 text-sm font-semibold text-slate-900 ">
                                                  {activeTab === 'passedOut'
                                                     ? `${studentPagination.total} passed-out student${studentPagination.total === 1 ? '' : 's'}`
                                                     : `${summary.totalStudents} active student${summary.totalStudents === 1 ? '' : 's'}`}
                                             </p>
-                                            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                            <p className="mt-1 text-sm text-slate-500 ">
                                                 Filter by class, section, or student identity for fast lookup.
                                             </p>
                                         </div>
                                     </div>
                                 </UnifiedFilterBar>
 
-                                <div className="min-w-0 overflow-hidden rounded-lg border border-slate-200 bg-white transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900">
+                                <div className="min-w-0 overflow-hidden rounded-lg border border-slate-200 bg-white transition-colors duration-300 ">
                                     <div className="hidden overflow-x-auto md:block">
                                         <AnalyticsDataTable
                                             columns={studentColumns}
@@ -1361,18 +1361,18 @@ const UserManagement = () => {
 
             {showAddUserModal ? (
                 <div className="fixed inset-0 z-[100] flex min-h-[100dvh] items-center justify-center overflow-y-auto bg-slate-950/55 p-3 backdrop-blur-sm sm:p-4">
-                    <div className="my-auto max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-xl overflow-y-auto rounded-[24px] border border-slate-200 bg-white shadow-2xl transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900 sm:rounded-[30px]">
-                        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-8 py-6 dark:border-slate-800">
+                    <div className="my-auto max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-xl overflow-y-auto rounded-[24px] border border-slate-200 bg-white shadow-2xl transition-colors duration-300 sm:rounded-[30px]">
+                        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-8 py-6 ">
                             <div>
-                                <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{currentRole === 'Super Admin' ? 'Add New Admin/Teacher' : 'Add New Teacher'}</h3>
-                                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                <h3 className="text-xl font-semibold text-slate-900 ">{currentRole === 'Super Admin' ? 'Add New Admin/Teacher' : 'Add New Teacher'}</h3>
+                                <p className="mt-1 text-sm text-slate-500 ">
                                     Add login access for staff. Super Admins can create Admins and Teachers; Admins can create Teachers only.
                                 </p>
                             </div>
                             <button
                                 type="button"
                                 onClick={() => { setShowAddUserModal(false); setShowPassword(false); }}
-                                className="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-slate-400 transition-all duration-300 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                                className="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-slate-400 transition-all duration-300 hover:bg-slate-100 hover:text-slate-700 "
                             >
                                 <X size={18} />
                             </button>
@@ -1381,7 +1381,7 @@ const UserManagement = () => {
                         <form onSubmit={handleAddUser} className="space-y-5 p-8">
                             <div className="grid gap-5 md:grid-cols-2">
                                 <div>
-                                    <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Full Name</label>
+                                    <label className="mb-2 block text-sm font-semibold text-slate-700 ">Full Name</label>
                                     <input
                                         required
                                         type="text"
@@ -1393,7 +1393,7 @@ const UserManagement = () => {
                                 </div>
 
                                 <div>
-                                    <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Email Address</label>
+                                    <label className="mb-2 block text-sm font-semibold text-slate-700 ">Email Address</label>
                                     <input
                                         required
                                         type="email"
@@ -1405,7 +1405,7 @@ const UserManagement = () => {
                                 </div>
 
                                 <div>
-                                    <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Role</label>
+                                    <label className="mb-2 block text-sm font-semibold text-slate-700 ">Role</label>
                                     <div className="relative">
                                         <select
                                             required
@@ -1424,7 +1424,7 @@ const UserManagement = () => {
                                 </div>
 
                                 <div>
-                                    <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Temporary Password</label>
+                                    <label className="mb-2 block text-sm font-semibold text-slate-700 ">Temporary Password</label>
                                     <div className="relative">
                                         <input
                                             required
@@ -1438,13 +1438,13 @@ const UserManagement = () => {
                                         <button
                                             type="button"
                                             onClick={() => setShowPassword((v) => !v)}
-                                            className="absolute right-3 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl text-slate-400 transition-all duration-200 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                                            className="absolute right-3 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl text-slate-400 transition-all duration-200 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 "
                                             aria-label={showPassword ? 'Hide password' : 'Show password'}
                                         >
                                             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                         </button>
                                     </div>
-                                    <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">{PASSWORD_POLICY_TEXT}</p>
+                                    <p className="mt-1.5 text-xs text-slate-500 ">{PASSWORD_POLICY_TEXT}</p>
                                 </div>
                             </div>
 
@@ -1465,7 +1465,7 @@ const UserManagement = () => {
                                 <button
                                     type="button"
                                     onClick={() => { setShowAddUserModal(false); setShowPassword(false); }}
-                                    className="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition-all duration-300 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                                    className="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition-all duration-300 hover:bg-slate-50 "
                                 >
                                     Cancel
                                 </button>
@@ -1485,18 +1485,18 @@ const UserManagement = () => {
 
             {showAddStudentModal ? (
                 <div className="fixed inset-0 z-[100] flex min-h-[100dvh] items-center justify-center overflow-y-auto bg-slate-950/55 p-3 backdrop-blur-sm sm:p-4">
-                    <div className="my-auto max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-xl overflow-y-auto rounded-[24px] border border-slate-200 bg-white shadow-2xl transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900 sm:rounded-[30px]">
-                        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-8 py-6 dark:border-slate-800">
+                    <div className="my-auto max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-xl overflow-y-auto rounded-[24px] border border-slate-200 bg-white shadow-2xl transition-colors duration-300 sm:rounded-[30px]">
+                        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-8 py-6 ">
                             <div>
-                                <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Add Student</h3>
-                                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                <h3 className="text-xl font-semibold text-slate-900 ">Add Student</h3>
+                                <p className="mt-1 text-sm text-slate-500 ">
                                     Add students to the school directory—name, admission number, class, and section.
                                 </p>
                             </div>
                             <button
                                 type="button"
                                 onClick={() => setShowAddStudentModal(false)}
-                                className="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-slate-400 transition-all duration-300 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                                className="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-slate-400 transition-all duration-300 hover:bg-slate-100 hover:text-slate-700 "
                             >
                                 <X size={18} />
                             </button>
@@ -1505,7 +1505,7 @@ const UserManagement = () => {
                         <form onSubmit={handleAddStudent} className="space-y-5 p-8">
                             <div className="grid gap-5 md:grid-cols-2">
                                 <div>
-                                    <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Admission Number</label>
+                                    <label className="mb-2 block text-sm font-semibold text-slate-700 ">Admission Number</label>
                                     <input
                                         required
                                         type="text"
@@ -1519,7 +1519,7 @@ const UserManagement = () => {
                                 </div>
 
                                 <div>
-                                    <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Student Name</label>
+                                    <label className="mb-2 block text-sm font-semibold text-slate-700 ">Student Name</label>
                                     <input
                                         required
                                         type="text"
@@ -1531,7 +1531,7 @@ const UserManagement = () => {
                                 </div>
 
                                 <div>
-                                    <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Class</label>
+                                    <label className="mb-2 block text-sm font-semibold text-slate-700 ">Class</label>
                                     <div className="relative">
                                         <select
                                             required
@@ -1553,7 +1553,7 @@ const UserManagement = () => {
                                 </div>
 
                                 <div>
-                                    <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Section</label>
+                                    <label className="mb-2 block text-sm font-semibold text-slate-700 ">Section</label>
                                     <input
                                         required
                                         type="text"
@@ -1576,7 +1576,7 @@ const UserManagement = () => {
                                 <button
                                     type="button"
                                     onClick={() => setShowAddStudentModal(false)}
-                                    className="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition-all duration-300 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                                    className="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition-all duration-300 hover:bg-slate-50 "
                                 >
                                     Cancel
                                 </button>
@@ -1596,13 +1596,13 @@ const UserManagement = () => {
 
             {detailModal.open && detailModal.record ? (
                 <div className="fixed inset-0 z-[100] flex min-h-[100dvh] items-center justify-center overflow-y-auto bg-slate-950/55 p-3 backdrop-blur-sm sm:p-4">
-                    <div className="my-auto max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-2xl overflow-y-auto rounded-[24px] border border-slate-200 bg-white shadow-2xl transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900 sm:rounded-[30px]">
-                        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-8 py-6 dark:border-slate-800">
+                    <div className="my-auto max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-2xl overflow-y-auto rounded-[24px] border border-slate-200 bg-white shadow-2xl transition-colors duration-300 sm:rounded-[30px]">
+                        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-8 py-6 ">
                             <div>
-                                <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                                <h3 className="text-xl font-semibold text-slate-900 ">
                                     {detailModal.type === 'staff' ? 'User Details' : 'Edit Student'}
                                 </h3>
-                                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                <p className="mt-1 text-sm text-slate-500 ">
                                     {detailModal.type === 'staff'
                                         ? 'Overview of this account.'
                                         : 'Update the student information. The Admission Number must remain unique.'}
@@ -1611,7 +1611,7 @@ const UserManagement = () => {
                             <button
                                 type="button"
                                 onClick={() => setDetailModal({ open: false, type: 'staff', record: null })}
-                                className="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-slate-400 transition-all duration-300 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                                className="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-slate-400 transition-all duration-300 hover:bg-slate-100 hover:text-slate-700 "
                             >
                                 <X size={18} />
                             </button>
@@ -1621,7 +1621,7 @@ const UserManagement = () => {
                             <form onSubmit={handleEditStaff} className="space-y-6 p-8">
                                 <div className="grid gap-5 md:grid-cols-2">
                                     <div>
-                                        <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Full Name</label>
+                                        <label className="mb-2 block text-sm font-semibold text-slate-700 ">Full Name</label>
                                         <input
                                             required
                                             type="text"
@@ -1632,7 +1632,7 @@ const UserManagement = () => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Email Address</label>
+                                        <label className="mb-2 block text-sm font-semibold text-slate-700 ">Email Address</label>
                                         <input
                                             required
                                             type="email"
@@ -1643,7 +1643,7 @@ const UserManagement = () => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Role</label>
+                                        <label className="mb-2 block text-sm font-semibold text-slate-700 ">Role</label>
                                         {currentRole === 'Super Admin' && !isSelfRecord(detailModal.record) ? (
                                             <div className="relative">
                                                 <select
@@ -1670,7 +1670,7 @@ const UserManagement = () => {
                                     <button
                                         type="button"
                                         onClick={() => setDetailModal({ open: false, type: 'staff', record: null })}
-                                        className="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition-all duration-300 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                                        className="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition-all duration-300 hover:bg-slate-50 "
                                     >
                                         Close
                                     </button>
@@ -1717,7 +1717,7 @@ const UserManagement = () => {
                             <form onSubmit={handleEditStudent} className="space-y-6 p-8">
                                 <div className="grid gap-5 md:grid-cols-2">
                                     <div>
-                                        <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Admission Number</label>
+                                        <label className="mb-2 block text-sm font-semibold text-slate-700 ">Admission Number</label>
                                         <input
                                             required
                                             type="text"
@@ -1727,7 +1727,7 @@ const UserManagement = () => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Student Name</label>
+                                        <label className="mb-2 block text-sm font-semibold text-slate-700 ">Student Name</label>
                                         <input
                                             required
                                             type="text"
@@ -1737,7 +1737,7 @@ const UserManagement = () => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Academic Year</label>
+                                        <label className="mb-2 block text-sm font-semibold text-slate-700 ">Academic Year</label>
                                         <select
                                             value={editStudent.academicYear || ''}
                                             onChange={(event) => setEditStudent((current) => ({ ...current, academicYear: event.target.value }))}
@@ -1750,7 +1750,7 @@ const UserManagement = () => {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Status</label>
+                                        <label className="mb-2 block text-sm font-semibold text-slate-700 ">Status</label>
                                         <select
                                             value={editStudent.status || 'Active'}
                                             onChange={(event) => setEditStudent((current) => ({ ...current, status: event.target.value }))}
@@ -1761,7 +1761,7 @@ const UserManagement = () => {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Class</label>
+                                        <label className="mb-2 block text-sm font-semibold text-slate-700 ">Class</label>
                                         <div className="relative">
                                             <select
                                                 required
@@ -1778,7 +1778,7 @@ const UserManagement = () => {
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Section</label>
+                                        <label className="mb-2 block text-sm font-semibold text-slate-700 ">Section</label>
                                         <input
                                             required
                                             type="text"
@@ -1797,7 +1797,7 @@ const UserManagement = () => {
                                     </div>
                                 </div>
 
-                                <div className="mt-6 flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 dark:border-slate-800 sm:flex-row sm:justify-end">
+                                <div className="mt-6 flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
                                     <button
                                         type="button"
                                         onClick={() => openDeleteDialog(detailModal.record, detailModal.type)}
@@ -1809,7 +1809,7 @@ const UserManagement = () => {
                                     <button
                                         type="button"
                                         onClick={() => setDetailModal({ open: false, type: 'staff', record: null })}
-                                        className="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition-all duration-300 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                                        className="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition-all duration-300 hover:bg-slate-50 "
                                     >
                                         Cancel
                                     </button>
@@ -1830,17 +1830,17 @@ const UserManagement = () => {
 
             {temporaryPasswordResult?.temporaryPassword ? (
                 <div className="fixed inset-0 z-[110] flex min-h-[100dvh] items-center justify-center overflow-y-auto bg-slate-950/60 p-3 backdrop-blur-sm sm:p-4">
-                    <div className="my-auto w-full max-w-lg overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-2xl transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900 sm:rounded-[30px]">
-                        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-5 dark:border-slate-800 sm:px-7">
+                    <div className="my-auto w-full max-w-lg overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-2xl transition-colors duration-300 sm:rounded-[30px]">
+                        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-5 sm:px-7">
                             <div className="flex min-w-0 items-start gap-3">
-                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-200">
+                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 ">
                                     <KeyRound size={20} />
                                 </div>
                                 <div className="min-w-0">
-                                    <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                                    <h3 className="text-lg font-bold text-slate-900 ">
                                         Temporary Password Generated
                                     </h3>
-                                    <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                                    <p className="mt-1 text-sm leading-6 text-slate-500 ">
                                         Share it through a trusted channel. This staff member must change it at next login.
                                     </p>
                                 </div>
@@ -1848,7 +1848,7 @@ const UserManagement = () => {
                             <button
                                 type="button"
                                 onClick={closeTemporaryPasswordModal}
-                                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-slate-400 transition-all duration-300 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-slate-400 transition-all duration-300 hover:bg-slate-100 hover:text-slate-700 "
                                 aria-label="Close temporary password popup"
                             >
                                 <X size={18} />
@@ -1856,14 +1856,14 @@ const UserManagement = () => {
                         </div>
 
                         <div className="space-y-5 px-5 py-6 sm:px-7">
-                            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-950">
-                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 ">
+                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 ">
                                     Staff Account
                                 </p>
-                                <p className="mt-2 break-words text-sm font-semibold text-slate-800 dark:text-slate-100">
+                                <p className="mt-2 break-words text-sm font-semibold text-slate-800 ">
                                     {temporaryPasswordResult.user?.name || 'Staff member'}
                                     {temporaryPasswordResult.user?.email ? (
-                                        <span className="block text-sm font-medium text-slate-500 dark:text-slate-400">
+                                        <span className="block text-sm font-medium text-slate-500 ">
                                             {temporaryPasswordResult.user.email}
                                         </span>
                                     ) : null}
@@ -1871,11 +1871,11 @@ const UserManagement = () => {
                             </div>
 
                             <div>
-                                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 ">
                                     Generated Password
                                 </label>
-                                <div className="flex flex-col gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-400/30 dark:bg-emerald-500/10 sm:flex-row sm:items-center">
-                                    <div className="min-w-0 flex-1 rounded-xl bg-white px-4 py-3 text-center font-mono text-xl font-black tracking-wide text-slate-950 shadow-sm dark:bg-slate-950 dark:text-emerald-100">
+                                <div className="flex flex-col gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-3 sm:flex-row sm:items-center">
+                                    <div className="min-w-0 flex-1 rounded-xl bg-white px-4 py-3 text-center font-mono text-xl font-black tracking-wide text-slate-950 shadow-sm ">
                                         {temporaryPasswordResult.temporaryPassword}
                                     </div>
                                     <button
@@ -1893,7 +1893,7 @@ const UserManagement = () => {
                                 <button
                                     type="button"
                                     onClick={closeTemporaryPasswordModal}
-                                    className="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition-all duration-300 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                                    className="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition-all duration-300 hover:bg-slate-50 "
                                 >
                                     Done
                                 </button>
@@ -1905,18 +1905,18 @@ const UserManagement = () => {
 
             {deleteDialog.open ? (
                 <div className="fixed inset-0 z-[100] flex min-h-[100dvh] items-center justify-center overflow-y-auto bg-slate-950/55 p-3 backdrop-blur-sm sm:p-4">
-                    <div className="my-auto max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-md overflow-y-auto rounded-[24px] border border-slate-200 bg-white shadow-2xl transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900 sm:rounded-[30px]">
+                    <div className="my-auto max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-md overflow-y-auto rounded-[24px] border border-slate-200 bg-white shadow-2xl transition-colors duration-300 sm:rounded-[30px]">
                         <div className="px-8 py-8 text-center">
                             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-rose-100 text-rose-600">
                                 <Trash2 size={22} />
                             </div>
-                            <h3 className="mt-5 text-xl font-semibold text-slate-900 dark:text-slate-100">Confirm Deletion</h3>
+                            <h3 className="mt-5 text-xl font-semibold text-slate-900 ">Confirm Deletion</h3>
                             {deleteDialog.type === 'student' ? (
                                 <div className="mt-4 space-y-4 text-left">
-                                    <p className="text-sm leading-6 text-slate-500 dark:text-slate-400">
-                                        Permanently delete <span className="font-semibold text-slate-700 dark:text-slate-200">{deleteDialog.label}</span>. This removes the student record, academic history, incidents, letters, notifications, and directly related logs.
+                                    <p className="text-sm leading-6 text-slate-500 ">
+                                        Permanently delete <span className="font-semibold text-slate-700 ">{deleteDialog.label}</span>. This removes the student record, academic history, incidents, letters, notifications, and directly related logs.
                                     </p>
-                                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-950">
+                                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm ">
                                         <div className="grid gap-3 sm:grid-cols-2">
                                             <PreviewField label="Student Name" value={deleteDialog.preview?.student?.name || deleteDialog.record?.name} />
                                             <PreviewField label="Admission Number" value={deleteDialog.preview?.student?.admissionNo || deleteDialog.record?.admissionNo} />
@@ -1924,7 +1924,7 @@ const UserManagement = () => {
                                             <PreviewField label="Status" value={formatDisplayValue(deleteDialog.preview?.student?.status || deleteDialog.record?.status)} />
                                         </div>
                                     </div>
-                                    <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100">
+                                    <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 ">
                                         {deleteDialog.loadingPreview ? (
                                             <div className="flex items-center gap-2">
                                                 <Loader2 size={16} className="animate-spin" />
@@ -1943,8 +1943,8 @@ const UserManagement = () => {
                                     </div>
                                 </div>
                             ) : (
-                                <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
-                                    You are about to delete <span className="font-semibold text-slate-700 dark:text-slate-200">{deleteDialog.label}</span>. This action cannot be undone.
+                                <p className="mt-2 text-sm leading-6 text-slate-500 ">
+                                    You are about to delete <span className="font-semibold text-slate-700 ">{deleteDialog.label}</span>. This action cannot be undone.
                                 </p>
                             )}
 
@@ -1953,7 +1953,7 @@ const UserManagement = () => {
                                     type="button"
                                     onClick={() => setDeleteDialog({ open: false, id: null, type: 'staff', label: '', record: null, preview: null, loadingPreview: false, deleting: false })}
                                     disabled={deleteDialog.deleting}
-                                    className="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition-all duration-300 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                                    className="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition-all duration-300 hover:bg-slate-50 "
                                 >
                                     Cancel
                                 </button>

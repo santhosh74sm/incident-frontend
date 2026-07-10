@@ -61,27 +61,27 @@ const buildLetterFilename = (letter, extension) =>
 
 const SummaryCard = ({ label, value, description, tone = 'slate' }) => {
     const tones = {
-        slate: 'border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100',
-        blue: 'border-blue-200 bg-blue-50 text-blue-900 dark:border-blue-500/30 dark:bg-blue-950/30 dark:text-blue-100',
-        amber: 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-500/30 dark:bg-amber-950/30 dark:text-amber-100',
-        emerald: 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-500/30 dark:bg-emerald-950/30 dark:text-emerald-100',
+        slate: 'border-slate-200 bg-slate-50 text-slate-900 ',
+        blue: 'border-blue-200 bg-blue-50 text-blue-900 ',
+        amber: 'border-amber-200 bg-amber-50 text-amber-900 ',
+        emerald: 'border-emerald-200 bg-emerald-50 text-emerald-900 ',
     };
 
     return (
         <div className={`rounded-2xl border p-4 ${tones[tone] || tones.slate}`}>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{label}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 ">{label}</p>
             <p className="mt-3 text-3xl font-bold">{value}</p>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{description}</p>
+            <p className="mt-1 text-sm text-slate-600 ">{description}</p>
         </div>
     );
 };
 
 const StatusBadge = ({ status }) => {
     const styles = {
-        Issued: 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-500/30 dark:bg-blue-950/30 dark:text-blue-200',
-        Printed: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/30 dark:text-amber-200',
-        Sent: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/30 dark:text-emerald-200',
-        'Successfully issued': 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/30 dark:text-emerald-200',
+        Issued: 'border-blue-200 bg-blue-50 text-blue-700 ',
+        Printed: 'border-amber-200 bg-amber-50 text-amber-700 ',
+        Sent: 'border-emerald-200 bg-emerald-50 text-emerald-700 ',
+        'Successfully issued': 'border-emerald-200 bg-emerald-50 text-emerald-700 ',
     };
 
     return (
@@ -96,7 +96,7 @@ const ActionIconButton = ({ icon: Icon, label, exportAction = false, ...props })
         type="button"
         title={label}
         aria-label={label}
-        className={exportAction ? 'btn-export-icon' : 'inline-flex h-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500'}
+        className={exportAction ? 'btn-export-icon' : 'inline-flex h-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500'}
         {...props}
     >
         <Icon className="h-4 w-4" aria-hidden="true" />
@@ -267,54 +267,54 @@ const DeleteModal = ({ letter, deleting, onClose, onConfirm }) => {
 };
 
 const MobileLetterCard = ({ letter, timelineValue, downloading, onView, onDownload, onDelete }) => (
-    <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+    <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm ">
         <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-                <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 ">
                     <Hash className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
                     <span className="truncate">{letter?.letterNumber || 'N/A'}</span>
                 </div>
-                <p className="mt-1 line-clamp-2 text-sm text-slate-600 dark:text-slate-300">{letter?.title || 'Incident Letter'}</p>
+                <p className="mt-1 line-clamp-2 text-sm text-slate-600 ">{letter?.title || 'Incident Letter'}</p>
             </div>
             <StatusBadge status={letter?.status} />
         </div>
 
         <div className="mt-4 grid gap-3 text-sm">
             <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Student</p>
-                <p className="mt-1 font-semibold text-slate-900 dark:text-slate-100">{letter?.studentName || 'N/A'}</p>
-                <p className="text-slate-500 dark:text-slate-400">Admission Number: {letter?.admissionNo || 'N/A'}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 ">Student</p>
+                <p className="mt-1 font-semibold text-slate-900 ">{letter?.studentName || 'N/A'}</p>
+                <p className="text-slate-500 ">Admission Number: {letter?.admissionNo || 'N/A'}</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-2xl bg-slate-50 p-3 dark:bg-slate-800/60">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Class</p>
-                    <p className="mt-1 font-semibold text-slate-900 dark:text-slate-100">
+                <div className="rounded-2xl bg-slate-50 p-3 ">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 ">Class</p>
+                    <p className="mt-1 font-semibold text-slate-900 ">
                         {letter?.className || 'N/A'} - {letter?.section || 'N/A'}
                     </p>
                 </div>
-                <div className="rounded-2xl bg-slate-50 p-3 dark:bg-slate-800/60">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Language</p>
-                    <p className="mt-1 font-semibold text-slate-900 dark:text-slate-100">{letter?.language === 'ta' ? 'Tamil' : 'English'}</p>
+                <div className="rounded-2xl bg-slate-50 p-3 ">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 ">Language</p>
+                    <p className="mt-1 font-semibold text-slate-900 ">{letter?.language === 'ta' ? 'Tamil' : 'English'}</p>
                 </div>
             </div>
-            <div className="rounded-2xl bg-slate-50 p-3 dark:bg-slate-800/60">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Category</p>
-                <p className="mt-1 font-semibold text-slate-900 dark:text-slate-100">{letter?.incidentCategory || 'N/A'}</p>
-                <p className="mt-1 text-slate-500 dark:text-slate-400">{letter?.incident?.title || 'No incident title on file.'}</p>
+            <div className="rounded-2xl bg-slate-50 p-3 ">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 ">Category</p>
+                <p className="mt-1 font-semibold text-slate-900 ">{letter?.incidentCategory || 'N/A'}</p>
+                <p className="mt-1 text-slate-500 ">{letter?.incident?.title || 'No incident title on file.'}</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
                 <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Timeline</p>
-                    <p className="mt-1 font-semibold text-slate-900 dark:text-slate-100">{formatShortDateTime(timelineValue)}</p>
-                    <p className="text-slate-500 dark:text-slate-400">{getTimelineSource(letter)}</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 ">Timeline</p>
+                    <p className="mt-1 font-semibold text-slate-900 ">{formatShortDateTime(timelineValue)}</p>
+                    <p className="text-slate-500 ">{getTimelineSource(letter)}</p>
                 </div>
                 <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Issued</p>
-                    <p className="mt-1 font-semibold text-slate-900 dark:text-slate-100">{formatShortDateTime(letter?.generatedAt)}</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 ">Issued</p>
+                    <p className="mt-1 font-semibold text-slate-900 ">{formatShortDateTime(letter?.generatedAt)}</p>
                 </div>
                 <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Academic Year</p>
-                    <p className="mt-1 font-semibold text-slate-900 dark:text-slate-100">{letter?.academicYear || 'N/A'}</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 ">Academic Year</p>
+                    <p className="mt-1 font-semibold text-slate-900 ">{letter?.academicYear || 'N/A'}</p>
                 </div>
             </div>
         </div>
@@ -535,7 +535,7 @@ const IssuedLetters = () => {
     }
 
     return (
-        <div className="flex min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+        <div className="flex min-h-screen bg-slate-100 text-slate-900 ">
 
             <div className="flex min-w-0 flex-1 flex-col">
 
@@ -572,7 +572,7 @@ const IssuedLetters = () => {
                         </section>
 
                         <section className="mb-6">
-                            <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-slate-100">Letters by Category</h2>
+                            <h2 className="mb-4 text-lg font-semibold text-slate-900 ">Letters by Category</h2>
                             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                                 {categorySummary.length > 0 ? (
                                     categorySummary.map((item, index) => (
@@ -668,10 +668,10 @@ const IssuedLetters = () => {
                         </section>
 
                         <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-                            <div className="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800">
+                            <div className="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between ">
                                 <div>
-                                    <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Generated Letters</h2>
-                                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                    <h2 className="text-lg font-semibold text-slate-900 ">Generated Letters</h2>
+                                    <p className="mt-1 text-sm text-slate-500 ">
                                         Page {page} of {totalPages} — {pagination.total} total result{pagination.total === 1 ? '' : 's'}
                                     </p>
                                 </div>
@@ -689,7 +689,7 @@ const IssuedLetters = () => {
                                             }}
                                         />
                                     ) : null}
-                                    <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+                                    <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 ">
                                         View · Download · Delete
                                     </div>
                                 </div>
@@ -699,14 +699,14 @@ const IssuedLetters = () => {
                                 <div className="flex min-h-[420px] items-center justify-center">
                                     <div className="text-center">
                                         <Loader2 className="mx-auto h-10 w-10 animate-spin text-indigo-500" />
-                                        <p className="mt-4 text-sm font-medium text-slate-600 dark:text-slate-300">Loading issued letters…</p>
+                                        <p className="mt-4 text-sm font-medium text-slate-600 ">Loading issued letters…</p>
                                     </div>
                                 </div>
                             ) : filteredLetters.length === 0 ? (
                                 <div className="px-6 py-16 text-center">
                                     <Mail className="mx-auto h-12 w-12 text-slate-300" />
-                                    <h3 className="mt-5 text-xl font-semibold text-slate-900 dark:text-slate-100">No letters found.</h3>
-                                    <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                                    <h3 className="mt-5 text-xl font-semibold text-slate-900 ">No letters found.</h3>
+                                    <p className="mt-2 text-sm leading-6 text-slate-500 ">
                                         Try adjusting the search or clearing active filters to see more issued letter records.
                                     </p>
                                 </div>
@@ -731,9 +731,9 @@ const IssuedLetters = () => {
                                     </div>
 
                                     <div className="-mx-1 hidden min-w-0 overflow-x-auto px-1 md:block sm:mx-0 sm:px-0">
-                                        <table className="min-w-[1180px] w-full table-fixed divide-y divide-slate-200 dark:divide-slate-800">
-                                            <thead className="bg-slate-50 dark:bg-slate-900/80">
-                                                <tr className="text-left text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                        <table className="min-w-[1180px] w-full table-fixed divide-y divide-slate-200 ">
+                                            <thead className="bg-slate-50 ">
+                                                <tr className="text-left text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 ">
                                                     <th className="px-5 py-4">Letter Reference</th>
                                                     <th className="px-5 py-4">Student</th>
                                                     <th className="px-5 py-4">Category</th>
@@ -743,29 +743,29 @@ const IssuedLetters = () => {
                                                     <th className="px-5 py-4 text-right">Actions</th>
                                                 </tr>
                                             </thead>
-                                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                            <tbody className="divide-y divide-slate-100 ">
                                                 {paginatedLetters.map((letter) => {
                                                     const timelineValue = getLetterTimelineTimestamp(letter);
 
                                                     return (
-                                                        <tr key={letter._id} className="align-top transition hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
+                                                        <tr key={letter._id} className="align-top transition hover:bg-slate-50/80 ">
                                                             <td data-label="Letter Reference" className="px-5 py-4 break-words align-top">
                                                                 <div className="space-y-2">
-                                                                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                                                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 ">
                                                                         <Hash className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
                                                                         {letter.letterNumber || 'N/A'}
                                                                     </div>
-                                                                    <p className="text-sm text-slate-600 dark:text-slate-300">{letter.title || 'Incident Letter'}</p>
+                                                                    <p className="text-sm text-slate-600 ">{letter.title || 'Incident Letter'}</p>
                                                                 </div>
                                                             </td>
                                                             <td data-label="Student" className="px-5 py-4 break-words align-top">
                                                                 <div className="space-y-2">
-                                                                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                                                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 ">
                                                                         <UserRound className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
                                                                         {letter.studentName || 'N/A'}
                                                                     </div>
-                                                                    <p className="text-sm text-slate-500 dark:text-slate-400">Admission Number: {letter.admissionNo || 'N/A'}</p>
-                                                                    <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                                                    <p className="text-sm text-slate-500 ">Admission Number: {letter.admissionNo || 'N/A'}</p>
+                                                                    <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 ">
                                                                         <Layers3 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                                                                         Class {letter.className || 'N/A'} - {letter.section || 'N/A'}
                                                                     </div>
@@ -773,23 +773,23 @@ const IssuedLetters = () => {
                                                             </td>
                                                             <td data-label="Category" className="px-5 py-4 break-words align-top">
                                                                 <div className="space-y-2">
-                                                                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{letter.incidentCategory || 'N/A'}</p>
-                                                                    <p className="text-sm text-slate-500 dark:text-slate-400">{letter.incident?.title || 'No incident title on file.'}</p>
+                                                                    <p className="text-sm font-semibold text-slate-900 ">{letter.incidentCategory || 'N/A'}</p>
+                                                                    <p className="text-sm text-slate-500 ">{letter.incident?.title || 'No incident title on file.'}</p>
                                                                 </div>
                                                             </td>
                                                             <td data-label="Incident Timeline" className="px-5 py-4 break-words align-top">
                                                                 <div className="space-y-1">
-                                                                    <div className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                                                    <div className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900 ">
                                                                         <CalendarDays className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
                                                                         {formatShortDateTime(timelineValue)}
                                                                     </div>
-                                                                    <p className="text-sm text-slate-500 dark:text-slate-400">{getTimelineSource(letter)}</p>
+                                                                    <p className="text-sm text-slate-500 ">{getTimelineSource(letter)}</p>
                                                                 </div>
                                                             </td>
                                                             <td data-label="Issued Date" className="px-5 py-4 break-words align-top">
                                                                 <div className="space-y-1">
-                                                                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{formatShortDateTime(letter.generatedAt)}</p>
-                                                                    <p className="text-sm text-slate-500 dark:text-slate-400">{letter.language === 'ta' ? 'Tamil' : 'English'}</p>
+                                                                    <p className="text-sm font-semibold text-slate-900 ">{formatShortDateTime(letter.generatedAt)}</p>
+                                                                    <p className="text-sm text-slate-500 ">{letter.language === 'ta' ? 'Tamil' : 'English'}</p>
                                                                 </div>
                                                             </td>
                                                             <td data-label="Status" className="px-5 py-4 break-words align-top">
@@ -823,8 +823,8 @@ const IssuedLetters = () => {
                                         </table>
                                     </div>
 
-                                    <div className="flex flex-col gap-4 border-t border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800">
-                                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                                    <div className="flex flex-col gap-4 border-t border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between ">
+                                        <p className="text-sm text-slate-500 ">
                                             Showing {pagination.total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}–
                                             {Math.min(page * PAGE_SIZE, pagination.total)} of {pagination.total}
                                         </p>
@@ -834,19 +834,19 @@ const IssuedLetters = () => {
                                                 type="button"
                                                 onClick={() => setPage((current) => Math.max(1, current - 1))}
                                                 disabled={page === 1}
-                                                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                                                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
                                             >
                                                 <ChevronLeft className="h-4 w-4" aria-hidden="true" />
                                                 Previous
                                             </button>
-                                            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                                            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 ">
                                                 {page} / {totalPages}
                                             </div>
                                             <button
                                                 type="button"
                                                 onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
                                                 disabled={page === totalPages}
-                                                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                                                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
                                             >
                                                 Next
                                                 <ChevronRight className="h-4 w-4" aria-hidden="true" />

@@ -52,8 +52,8 @@ const ChartTooltipContent = ({ active, payload, label, labelFormatter, valueForm
         : label || payload[0]?.payload?.fullDate || payload[0]?.payload?.name || payload[0]?.name || 'Details';
 
     return (
-        <div className="rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-xl backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+        <div className="rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-xl backdrop-blur ">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 ">
                 {formattedLabel}
             </p>
             <div className="space-y-1.5">
@@ -61,9 +61,9 @@ const ChartTooltipContent = ({ active, payload, label, labelFormatter, valueForm
                     <div key={`${entry.dataKey}-${entry.name}`} className="flex items-center justify-between gap-4 text-sm">
                         <div className="flex items-center gap-2">
                             <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: entry.color || entry.fill }} />
-                            <span className="text-slate-600 dark:text-slate-300">{entry.name}</span>
+                            <span className="text-slate-600 ">{entry.name}</span>
                         </div>
-                        <span className="font-semibold text-slate-900 dark:text-slate-100">
+                        <span className="font-semibold text-slate-900 ">
                             {valueFormatter
                                 ? valueFormatter(entry.value, entry.name, entry.payload)
                                 : typeof entry.value === 'number'
@@ -205,8 +205,8 @@ export const DashboardHero = ({ eyebrow, title, description, icon: Icon, actions
                             {eyebrow}
                         </span>
                     ) : null}
-                    <h1 className="text-2xl font-extrabold tracking-tight text-slate-950 dark:text-slate-100 sm:text-[28px]">{title}</h1>
-                    {description ? <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-400">{description}</p> : null}
+                    <h1 className="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-[28px]">{title}</h1>
+                    {description ? <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 ">{description}</p> : null}
                 </div>
             </div>
             {actions ? <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:flex-wrap">{actions}</div> : null}
@@ -229,7 +229,7 @@ export const DashboardStatCard = ({ title, value, icon: Icon, tone = 'blue', hel
                 <div className="min-w-0 flex-1">
                     <p className="dashboard-kicker">{title}</p>
                     <p className="dashboard-stat-value">{value}</p>
-                    {helper ? <p className="dashboard-stat-helper mt-2 text-sm text-slate-600 dark:text-slate-400">{helper}</p> : null}
+                    {helper ? <p className="dashboard-stat-helper mt-2 text-sm text-slate-600 ">{helper}</p> : null}
                     {footer ? <div className="mt-4 text-sm font-semibold">{footer}</div> : null}
                 </div>
             </div>
@@ -243,13 +243,13 @@ export const DashboardPanel = ({ title, description, icon: Icon, actions = null,
             <div className="dashboard-panel-header">
                 <div className="flex min-w-0 items-start gap-3">
                     {Icon ? (
-                        <div className="rounded-lg bg-blue-50 p-2 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300">
+                        <div className="rounded-lg bg-blue-50 p-2 text-blue-600 ">
                             <Icon size={18} />
                         </div>
                     ) : null}
                     <div className="min-w-0">
-                        {title ? <h3 className="text-base font-bold tracking-tight text-slate-950 dark:text-slate-100">{title}</h3> : null}
-                        {description ? <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{description}</p> : null}
+                        {title ? <h3 className="text-base font-bold tracking-tight text-slate-950 ">{title}</h3> : null}
+                        {description ? <p className="mt-1 text-sm text-slate-600 ">{description}</p> : null}
                     </div>
                 </div>
                 {actions ? <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">{actions}</div> : null}
@@ -309,11 +309,11 @@ export const LegendList = ({ items = [] }) => (
         {items.map((item) => (
             <div
                 key={item.label}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 "
             >
                 <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
                 <span>{item.label}</span>
-                {item.value !== undefined ? <span className="font-semibold text-slate-800 dark:text-slate-100">{item.value}</span> : null}
+                {item.value !== undefined ? <span className="font-semibold text-slate-800 ">{item.value}</span> : null}
             </div>
         ))}
     </div>
@@ -324,7 +324,7 @@ export const TableToggleButton = ({ expanded, onClick }) => (
         type="button"
         onClick={onClick}
         aria-pressed={expanded}
-        className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition-colors duration-300 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800"
+        className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition-colors duration-300 hover:border-slate-300 hover:bg-slate-50 "
     >
         {expanded ? <EyeOff size={14} /> : <Table size={14} />}
         {expanded ? 'Hide Table' : 'View Table'}
@@ -353,16 +353,16 @@ export const AnalyticsDataTable = ({ columns = [], rows = [], emptyMessage = 'No
                             ))}
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    <tbody className="divide-y divide-slate-100 ">
                         {safeRows.length === 0 ? (
                             <tr>
-                                <td className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400" colSpan={safeColumns.length || 1}>
+                                <td className="px-4 py-8 text-center text-sm text-slate-500 " colSpan={safeColumns.length || 1}>
                                     {emptyMessage}
                                 </td>
                             </tr>
                         ) : (
                             safeRows.map((row, index) => (
-                                <tr key={row?.id || row?._id || `${index}`} className="transition hover:bg-slate-50/80 dark:hover:bg-slate-800/70">
+                                <tr key={row?.id || row?._id || `${index}`} className="transition hover:bg-slate-50/80 ">
                                     {safeColumns.map((column) => (
                                         <td
                                             key={column.key || column.label}
@@ -383,11 +383,11 @@ export const AnalyticsDataTable = ({ columns = [], rows = [], emptyMessage = 'No
 
 export const EmptyStatePanel = ({ title, description, action = null }) => (
     <div className="analytics-empty">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
-            <Eye size={22} className="text-slate-400 dark:text-slate-300" />
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 ">
+            <Eye size={22} className="text-slate-400 " />
         </div>
-        <h3 className="mt-4 text-lg font-semibold text-slate-900 dark:text-slate-100">{title}</h3>
-        <p className="mx-auto mt-2 max-w-md text-sm text-slate-500 dark:text-slate-400">{description}</p>
+        <h3 className="mt-4 text-lg font-semibold text-slate-900 ">{title}</h3>
+        <p className="mx-auto mt-2 max-w-md text-sm text-slate-500 ">{description}</p>
         {action ? <div className="mt-5">{action}</div> : null}
     </div>
 );
@@ -435,7 +435,7 @@ export const CategoryHeatmap = ({ rows = [], columns = [] }) => {
     }, 0);
 
     if (rows.length === 0 || columns.length === 0) {
-        return <p className="text-sm text-slate-500 dark:text-slate-400">No category activity matches the current filters.</p>;
+        return <p className="text-sm text-slate-500 ">No category activity matches the current filters.</p>;
     }
 
     return (
@@ -445,13 +445,13 @@ export const CategoryHeatmap = ({ rows = [], columns = [] }) => {
                     <div className={`grid gap-3`} style={{ gridTemplateColumns: `minmax(120px, 1.2fr) repeat(${columns.length}, minmax(72px, 1fr))` }}>
                         <div />
                         {columns.map((column) => (
-                            <div key={column.key} className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                            <div key={column.key} className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 ">
                                 {column.label}
                             </div>
                         ))}
                         {rows.map((row) => (
                             <React.Fragment key={row.label}>
-                                <div className="flex items-center text-sm font-semibold text-slate-700 dark:text-slate-200">{row.label}</div>
+                                <div className="flex items-center text-sm font-semibold text-slate-700 ">{row.label}</div>
                                 {columns.map((column) => {
                                     const value = Number(row[column.key] || 0);
                                     const intensity = maxValue > 0 ? value / maxValue : 0;
@@ -459,7 +459,7 @@ export const CategoryHeatmap = ({ rows = [], columns = [] }) => {
                                     return (
                                         <div
                                             key={`${row.label}-${column.key}`}
-                                            className="analytics-heat-cell font-bold text-slate-950 shadow-[inset_0_0_0_1px_rgba(15,23,42,0.08)] dark:text-white dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.14)]"
+                                            className="analytics-heat-cell font-bold text-slate-950 shadow-[inset_0_0_0_1px_rgba(15,23,42,0.08)] ,255,255,0.14)]"
                                             style={{
                                                 backgroundColor: `rgba(${column.rgb}, ${opacity})`,
                                             }}
@@ -480,7 +480,7 @@ export const CategoryHeatmap = ({ rows = [], columns = [] }) => {
 
 export const ActivityFeed = ({ items = [], emptyMessage = 'No recent activity.' }) => {
     if (items.length === 0) {
-        return <p className="text-sm text-slate-500 dark:text-slate-400">{emptyMessage}</p>;
+        return <p className="text-sm text-slate-500 ">{emptyMessage}</p>;
     }
 
     return (
@@ -490,16 +490,16 @@ export const ActivityFeed = ({ items = [], emptyMessage = 'No recent activity.' 
                 const Icon = item.icon;
 
                 return (
-                    <div key={item.id} className="flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+                    <div key={item.id} className="flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 ">
                         <div className={`mt-0.5 rounded-xl p-2 ${tone.icon}`}>
                             {Icon ? <Icon size={16} /> : <Eye size={16} />}
                         </div>
                         <div className="min-w-0 flex-1">
                             <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                                <p className="font-semibold text-slate-900 dark:text-slate-100">{item.title}</p>
-                                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{item.timestamp}</span>
+                                <p className="font-semibold text-slate-900 ">{item.title}</p>
+                                <span className="text-xs font-medium text-slate-500 ">{item.timestamp}</span>
                             </div>
-                            {item.description ? <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{item.description}</p> : null}
+                            {item.description ? <p className="mt-1 text-sm text-slate-600 ">{item.description}</p> : null}
                         </div>
                     </div>
                 );

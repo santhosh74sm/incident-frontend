@@ -18,10 +18,10 @@ const normalizeOptions = (options = []) =>
 // ─── Shared style tokens ───────────────────────────────────────────────────────
 
 const labelClassName =
-    'mb-1.5 block text-[11px] font-bold text-slate-500 dark:text-slate-400';
+    'mb-1.5 block text-[11px] font-bold text-slate-500 ';
 
 const fieldClassName =
-    'min-h-[44px] w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 shadow-sm shadow-slate-200/30 transition-all duration-200 placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:shadow-none dark:placeholder:text-slate-500 dark:hover:border-slate-600 dark:focus:border-blue-400 dark:focus:ring-blue-400/20';
+    'min-h-[44px] w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 shadow-sm shadow-slate-200/30 transition-all duration-200 placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 ';
 
 // ─── Portal dropdown positioning ──────────────────────────────────────────────
 
@@ -167,18 +167,18 @@ export const FilterDropdown = ({
                     role="listbox"
                     aria-label={label}
                     aria-multiselectable="true"
-                    className="fixed z-[9999] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl shadow-slate-300/40 dark:border-slate-700 dark:bg-slate-900 dark:shadow-slate-950/60"
+                    className="fixed z-[9999] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl shadow-slate-300/40 "
                     style={dropdownLayout.panelStyle}
                 >
                     {/* Panel header */}
-                    <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
+                    <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 ">
                         <div className="flex items-center justify-between gap-3">
                             <div className="min-w-0">
-                                <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                <p className="truncate text-sm font-semibold text-slate-900 ">
                                     {label}
                                 </p>
                                 <p
-                                    className="mt-0.5 text-xs text-slate-500 dark:text-slate-400"
+                                    className="mt-0.5 text-xs text-slate-500 "
                                     aria-live="polite"
                                     aria-atomic="true"
                                 >
@@ -189,7 +189,7 @@ export const FilterDropdown = ({
                                 type="button"
                                 onClick={handleClear}
                                 disabled={!hasActiveSelection}
-                                className="inline-flex min-h-[36px] items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-semibold text-slate-500 transition-colors duration-200 hover:bg-white hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-40 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                                className="inline-flex min-h-[36px] items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-semibold text-slate-500 transition-colors duration-200 hover:bg-white hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-40 "
                             >
                                 <X className="h-3.5 w-3.5" aria-hidden />
                                 {clearLabel}
@@ -210,8 +210,8 @@ export const FilterDropdown = ({
                     </div>
 
                     {/* Select All */}
-                    <div className="border-b border-slate-100 bg-white px-4 py-2 dark:border-slate-800 dark:bg-slate-900">
-                        <label className="flex min-h-[44px] cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm font-medium text-slate-700 transition-colors duration-150 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800">
+                    <div className="border-b border-slate-100 bg-white px-4 py-2 ">
+                        <label className="flex min-h-[44px] cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm font-medium text-slate-700 transition-colors duration-150 hover:bg-slate-50 ">
                             <input
                                 type="checkbox"
                                 checked={allSelected}
@@ -219,7 +219,7 @@ export const FilterDropdown = ({
                                     if (input) input.indeterminate = someSelected;
                                 }}
                                 onChange={handleSelectAll}
-                                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-950"
+                                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 "
                             />
                             <span>Select All</span>
                         </label>
@@ -232,10 +232,10 @@ export const FilterDropdown = ({
                     >
                         {filteredOptions.length === 0 ? (
                             <div className="px-3 py-6 text-center">
-                                <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                                <p className="text-sm font-medium text-slate-700 ">
                                     No matching options.
                                 </p>
-                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                <p className="mt-1 text-xs text-slate-500 ">
                                     Try a different keyword.
                                 </p>
                             </div>
@@ -245,13 +245,13 @@ export const FilterDropdown = ({
                                     key={option.id}
                                     role="option"
                                     aria-selected={selectedSet.has(option.id)}
-                                    className="flex min-h-[44px] cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-700 transition-colors duration-150 hover:bg-blue-50 dark:text-slate-200 dark:hover:bg-slate-800"
+                                    className="flex min-h-[44px] cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-700 transition-colors duration-150 hover:bg-blue-50 "
                                 >
                                     <input
                                         type="checkbox"
                                         checked={selectedSet.has(option.id)}
                                         onChange={() => handleOptionToggle(option.id)}
-                                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-950"
+                                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 "
                                     />
                                     <span className="min-w-0 flex-1 truncate" title={option.label}>
                                         {option.label}
@@ -281,13 +281,13 @@ export const FilterDropdown = ({
                 aria-controls={isOpen ? listboxId : undefined}
                 className={`${fieldClassName} flex items-center justify-between gap-3 ${
                     hasActiveSelection
-                        ? 'border-blue-300 bg-blue-50/80 text-blue-700 shadow-md shadow-blue-100/60 dark:border-blue-500/50 dark:bg-blue-950/40 dark:text-blue-200 dark:shadow-none'
+                        ? 'border-blue-300 bg-blue-50/80 text-blue-700 shadow-md shadow-blue-100/60 '
                         : ''
                 }`}
             >
                 <span
                     className={`truncate text-left ${
-                        selected.length === 0 ? 'text-slate-400 dark:text-slate-500' : ''
+                        selected.length === 0 ? 'text-slate-400 ' : ''
                     }`}
                 >
                     {selectedLabel}
@@ -296,7 +296,7 @@ export const FilterDropdown = ({
                     {hasActiveSelection ? (
                         <span
                             aria-hidden
-                            className="inline-flex min-w-[1.75rem] items-center justify-center rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-semibold text-blue-700 dark:bg-blue-500/20 dark:text-blue-200"
+                            className="inline-flex min-w-[1.75rem] items-center justify-center rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-semibold text-blue-700 "
                         >
                             {selected.length}
                         </span>
@@ -397,19 +397,19 @@ export const UnifiedFilterBar = ({
     const showFields = !collapsible || !isCollapsed;
 
     return (
-        <div className="overflow-visible rounded-lg border border-slate-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900">
+        <div className="overflow-visible rounded-lg border border-slate-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition-colors duration-300 ">
             {/* Bar header */}
-            <div className={`flex flex-col gap-3 px-5 py-4 dark:border-slate-800 md:flex-row md:items-center md:justify-between ${showFields ? 'border-b border-slate-200' : ''}`}>
+            <div className={`flex flex-col gap-3 px-5 py-4 md:flex-row md:items-center md:justify-between ${showFields ? 'border-b border-slate-200' : ''}`}>
                 <div className="flex items-center gap-3">
-                    <div className="rounded-lg border border-blue-100 bg-blue-50 p-2.5 text-blue-600 shadow-sm dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300">
+                    <div className="rounded-lg border border-blue-100 bg-blue-50 p-2.5 text-blue-600 shadow-sm ">
                         <Filter className="h-4 w-4" aria-hidden />
                     </div>
                     <div className="flex items-center gap-2">
-                        <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                        <h3 className="text-sm font-bold text-slate-900 ">
                             {title}
                         </h3>
                         {hasActiveFilters ? (
-                            <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-700 dark:border-blue-500/30 dark:bg-blue-950/40 dark:text-blue-300">
+                            <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-700 ">
                                 Active
                             </span>
                         ) : null}
@@ -425,7 +425,7 @@ export const UnifiedFilterBar = ({
                             onClick={() => setIsCollapsed((current) => !current)}
                             aria-expanded={showFields}
                             aria-controls={panelId}
-                            className="inline-flex min-h-[40px] w-full items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 transition-colors duration-200 hover:border-blue-300 hover:bg-blue-100 dark:border-blue-500/30 dark:bg-blue-950/30 dark:text-blue-200 dark:hover:bg-blue-950/50 sm:w-auto"
+                            className="inline-flex min-h-[40px] w-full items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 transition-colors duration-200 hover:border-blue-300 hover:bg-blue-100 sm:w-auto"
                         >
                             <Filter className="h-3.5 w-3.5" aria-hidden />
                             {showFields ? 'Hide Filters' : 'Show Filters'}
@@ -434,7 +434,7 @@ export const UnifiedFilterBar = ({
                     <button
                         type="button"
                         onClick={onReset}
-                        className="inline-flex min-h-[40px] w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition-colors duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800 sm:w-auto"
+                        className="inline-flex min-h-[40px] w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition-colors duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 sm:w-auto"
                     >
                         <RefreshCw className="h-3.5 w-3.5" aria-hidden />
                         Reset Filters
@@ -450,13 +450,13 @@ export const UnifiedFilterBar = ({
                             {activeFilterLabels.slice(0, 10).map((label) => (
                                 <span
                                     key={label}
-                                    className="inline-flex min-h-[32px] items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:border-blue-500/30 dark:bg-blue-950/40 dark:text-blue-200"
+                                    className="inline-flex min-h-[32px] items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 "
                                 >
                                     {label}
                                 </span>
                             ))}
                             {activeFilterLabels.length > 10 ? (
-                                <span className="inline-flex min-h-[32px] items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                <span className="inline-flex min-h-[32px] items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600 ">
                                     +{activeFilterLabels.length - 10} more
                                 </span>
                             ) : null}

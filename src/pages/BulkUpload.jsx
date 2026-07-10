@@ -85,11 +85,11 @@ const UploadResultsModal = ({ results, onClose, onReset }) => {
 
     return (
         <div className="fixed inset-0 z-[100] flex min-h-[100dvh] items-end justify-center overflow-y-auto bg-slate-950/50 p-3 backdrop-blur-sm sm:items-center sm:p-4">
-            <div className="my-auto max-h-[min(92vh,calc(100dvh-1.5rem))] w-full max-w-3xl min-w-0 overflow-hidden rounded-t-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:rounded-xl">
-                <div className="flex flex-col gap-3 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50 px-4 py-4 dark:border-slate-800 dark:from-slate-900 dark:to-slate-900/50 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <div className="my-auto max-h-[min(92vh,calc(100dvh-1.5rem))] w-full max-w-3xl min-w-0 overflow-hidden rounded-t-xl border border-slate-200 bg-white shadow-2xl sm:rounded-xl">
+                <div className="flex flex-col gap-3 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                     <div className="min-w-0">
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Upload Review</h3>
-                        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Here is what the system found in each row of your file.</p>
+                        <h3 className="text-lg font-semibold text-slate-900 ">Upload Review</h3>
+                        <p className="mt-1 text-sm text-slate-600 ">Here is what the system found in each row of your file.</p>
                     </div>
                     <button
                         type="button"
@@ -108,17 +108,17 @@ const UploadResultsModal = ({ results, onClose, onReset }) => {
                     </div>
 
                     {results.errors?.length > 0 ? (
-                        <div className="rounded-xl border border-red-200 bg-red-50 dark:border-red-500/30 dark:bg-red-950/30">
-                            <div className="border-b border-red-100 px-4 py-3 flex justify-between items-center dark:border-red-500/30">
-                                <h4 className="text-sm font-semibold text-red-900 dark:text-red-100">Rows That Need Correction</h4>
+                        <div className="rounded-xl border border-red-200 bg-red-50 ">
+                            <div className="border-b border-red-100 px-4 py-3 flex justify-between items-center ">
+                                <h4 className="text-sm font-semibold text-red-900 ">Rows That Need Correction</h4>
                                 {results.errors.length > 50 && (
                                     <span className="text-xs font-medium text-red-600 bg-red-100 px-2 py-1 rounded-full">Showing first 50</span>
                                 )}
                             </div>
                             <div className="max-h-72 space-y-3 overflow-y-auto px-4 py-3">
                                 {results.errors.slice(0, 50).map((error, index) => (
-                                    <div key={`server-error-${index}`} className="rounded-lg border border-red-100 bg-white px-4 py-3 dark:border-red-500/20 dark:bg-slate-900">
-                                        <p className="text-sm font-semibold text-red-900 dark:text-red-100">
+                                    <div key={`server-error-${index}`} className="rounded-lg border border-red-100 bg-white px-4 py-3 ">
+                                        <p className="text-sm font-semibold text-red-900 ">
                                             Row {error.row}: {error.reason}
                                         </p>
                                         {error.column && (
@@ -137,11 +137,11 @@ const UploadResultsModal = ({ results, onClose, onReset }) => {
                     )}
                 </div>
 
-                <div className="flex flex-col gap-3 border-t border-slate-200 bg-slate-50 px-4 py-4 dark:border-slate-800 dark:bg-slate-950/60 sm:flex-row sm:justify-end sm:px-6">
+                <div className="flex flex-col gap-3 border-t border-slate-200 bg-slate-50 px-4 py-4 sm:flex-row sm:justify-end sm:px-6">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                        className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 "
                     >
                         Close
                     </button>
@@ -177,7 +177,7 @@ const StepBar = ({ activeStep }) => (
                         <div
                             aria-hidden="true"
                             className={`absolute left-1/2 top-3.5 h-0.5 w-full rounded-full transition-colors ${
-                                done ? 'bg-emerald-400' : 'bg-slate-200 dark:bg-slate-700'
+                                done ? 'bg-emerald-400' : 'bg-slate-200 '
                             }`}
                         />
                     )}
@@ -188,14 +188,14 @@ const StepBar = ({ activeStep }) => (
                                 ? 'bg-emerald-500 text-white ring-emerald-200'
                                 : current
                                 ? 'bg-indigo-600 text-white ring-indigo-200'
-                                : 'bg-slate-100 text-slate-400 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700'
+                                : 'bg-slate-100 text-slate-400 ring-slate-200 '
                         }`}
                     >
                         {done ? <CheckCircle2 className="h-4 w-4" /> : step.id}
                     </span>
                     <span
                         className={`mt-2 hidden max-w-full text-center text-[10px] font-semibold uppercase tracking-[0.12em] sm:block ${
-                            current ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-400'
+                            current ? 'text-indigo-700 ' : 'text-slate-400'
                         }`}
                     >
                         {step.label}
@@ -210,7 +210,7 @@ const StepBar = ({ activeStep }) => (
 const CheckItem = ({ children }) => (
     <li className="flex items-start gap-3">
         <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" aria-hidden="true" />
-        <span className="text-sm text-slate-700 dark:text-slate-300">{children}</span>
+        <span className="text-sm text-slate-700 ">{children}</span>
     </li>
 );
 
@@ -509,13 +509,13 @@ const BulkUpload = () => {
 
     return (
         <>
-            <div className="min-h-screen bg-slate-100 dark:bg-slate-950">
+            <div className="min-h-screen bg-slate-100 ">
                     <main className="overflow-x-hidden px-3 py-4 sm:p-4 lg:p-6">
                         <div className="mx-auto w-full max-w-7xl min-w-0 space-y-6">
                             {/* ── Hero header ─────────────────────────────────── */}
                             <section
                                 aria-label="Incident Upload"
-                                className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-md dark:border-slate-800 dark:bg-slate-900/50"
+                                className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-md "
                             >
                                 <div className="bg-[linear-gradient(135deg,#0f172a,#1e1b4b_55%,#312e81)] px-4 py-6 sm:px-6 sm:py-8 lg:px-10">
                                     <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
@@ -540,7 +540,7 @@ const BulkUpload = () => {
                                 </div>
 
                                 {/* Step bar */}
-                                <div className="border-t border-slate-200 bg-white px-4 py-4 dark:border-slate-800 dark:bg-slate-900 sm:px-6">
+                                <div className="border-t border-slate-200 bg-white px-4 py-4 sm:px-6">
                                     <StepBar activeStep={activeStep} />
                                 </div>
                             </section>
@@ -551,13 +551,13 @@ const BulkUpload = () => {
                                 {/* Upload panel */}
                                 <section
                                     aria-label="Upload workbook"
-                                    className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/50"
+                                    className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm "
                                 >
                                     {/* Section header */}
-                                    <div className="flex flex-col gap-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-indigo-50/50 px-4 py-4 dark:border-slate-800 dark:from-slate-900 dark:to-slate-900/50 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                                    <div className="flex flex-col gap-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-indigo-50/50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                                         <div className="min-w-0">
-                                            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Choose Your Spreadsheet</h2>
-                                            <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+                                            <h2 className="text-base font-bold text-slate-900 ">Choose Your Spreadsheet</h2>
+                                            <p className="mt-0.5 text-sm text-slate-500 ">
                                                 Click the area below or drag a file in. Review the preview, then upload.
                                             </p>
                                         </div>
@@ -586,10 +586,10 @@ const BulkUpload = () => {
                                             disabled={parsing || uploading}
                                             className={`w-full rounded-2xl border-2 border-dashed px-4 py-8 text-center transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:pointer-events-none sm:px-6 sm:py-10 ${
                                                 dragActive
-                                                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30'
+                                                    ? 'border-indigo-500 bg-indigo-50 '
                                                     : file && !parsing
-                                                    ? 'border-emerald-400 bg-emerald-50/60 dark:border-emerald-500/50 dark:bg-emerald-950/20'
-                                                    : 'border-slate-300 bg-slate-50 hover:border-indigo-400 hover:bg-indigo-50/50 dark:border-slate-700 dark:bg-slate-900/60 dark:hover:border-indigo-500/60 dark:hover:bg-indigo-950/20'
+                                                    ? 'border-emerald-400 bg-emerald-50/60 '
+                                                    : 'border-slate-300 bg-slate-50 hover:border-indigo-400 hover:bg-indigo-50/50 '
                                             }`}
                                         >
                                             <input
@@ -602,7 +602,7 @@ const BulkUpload = () => {
                                             />
 
                                             {/* Icon */}
-                                            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
+                                            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow ring-1 ring-slate-200 ">
                                                 {parsing ? (
                                                     <Loader2 className="h-8 w-8 animate-spin text-indigo-600" aria-hidden="true" />
                                                 ) : file ? (
@@ -612,7 +612,7 @@ const BulkUpload = () => {
                                                 )}
                                             </div>
 
-                                            <p className="break-words text-base font-semibold text-slate-900 dark:text-slate-100">
+                                            <p className="break-words text-base font-semibold text-slate-900 ">
                                                 {dragActive
                                                     ? 'Drop your spreadsheet here'
                                                     : parsing
@@ -621,7 +621,7 @@ const BulkUpload = () => {
                                                     ? file.name
                                                     : 'Click to browse, or drag your spreadsheet here'}
                                             </p>
-                                            <p className="mt-1.5 break-words text-sm text-slate-500 dark:text-slate-400">
+                                            <p className="mt-1.5 break-words text-sm text-slate-500 ">
                                                 {file
                                                     ? `${formatFileSize(file.size)} — ${ACCEPTED_UPLOAD_FORMATS}`
                                                     : `Accepted formats: ${ACCEPTED_UPLOAD_FORMATS}`}
@@ -636,9 +636,9 @@ const BulkUpload = () => {
                                                 aria-valuemin={0}
                                                 aria-valuemax={100}
                                                 aria-label="Upload progress"
-                                                className="rounded-xl border border-blue-200 bg-blue-50 px-5 py-4 dark:border-blue-500/30 dark:bg-blue-950/30"
+                                                className="rounded-xl border border-blue-200 bg-blue-50 px-5 py-4 "
                                             >
-                                                <div className="mb-2.5 flex items-center justify-between text-sm font-semibold text-blue-900 dark:text-blue-100">
+                                                <div className="mb-2.5 flex items-center justify-between text-sm font-semibold text-blue-900 ">
                                                     <span>
                                                         {uploadStage ? uploadStage : uploadProgress < 100
                                                             ? 'Uploading your spreadsheet…'
@@ -646,7 +646,7 @@ const BulkUpload = () => {
                                                     </span>
                                                     <span className="tabular-nums">{uploadProgress}%</span>
                                                 </div>
-                                                <div className="h-2 overflow-hidden rounded-full bg-blue-100 dark:bg-blue-900/40">
+                                                <div className="h-2 overflow-hidden rounded-full bg-blue-100 ">
                                                     <div
                                                         className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-300"
                                                         style={{ width: `${uploadProgress}%` }}
@@ -657,18 +657,18 @@ const BulkUpload = () => {
 
                                         <UploadStatusBanner message={message} />
 
-                                        <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-900 dark:border-blue-500/30 dark:bg-blue-950/30 dark:text-blue-100">
+                                        <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-900 ">
                                             Current Academic Year: {currentAcademicYear || 'Loading…'}
                                         </div>
 
                                         <label className="block">
-                                            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 ">
                                                 Academic Year
                                             </span>
                                             <select
                                                 value={academicYear}
                                                 onChange={(event) => setAcademicYear(event.target.value)}
-                                                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                                                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10 "
                                             >
                                                 {academicYears.map((year) => (
                                                     <option key={year} value={year}>{year}</option>
@@ -682,7 +682,7 @@ const BulkUpload = () => {
                                                 type="button"
                                                 onClick={() => fileInputRef.current?.click()}
                                                 disabled={uploading || parsing}
-                                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
                                             >
                                                 <FileText className="h-4 w-4" aria-hidden="true" />
                                                 Choose File
@@ -692,7 +692,7 @@ const BulkUpload = () => {
                                                 type="button"
                                                 onClick={resetSelection}
                                                 disabled={uploading || parsing || (!file && !preview)}
-                                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
                                             >
                                                 <RefreshCw className="h-4 w-4" aria-hidden="true" />
                                                 Reset
@@ -719,16 +719,16 @@ const BulkUpload = () => {
                                 <aside className="min-w-0 space-y-5">
 
                                     {/* Checklist */}
-                                    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/50">
-                                        <div className="border-b border-slate-100 bg-slate-50 px-5 py-4 dark:border-slate-800 dark:bg-slate-900">
-                                            <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-slate-700 dark:text-slate-300">
+                                    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ">
+                                        <div className="border-b border-slate-100 bg-slate-50 px-5 py-4 ">
+                                            <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-slate-700 ">
                                                 Before You Upload
                                             </h2>
                                         </div>
                                         <ul className="space-y-3.5 p-5">
                                             <CheckItem>
                                                 Keep the column headings exactly as shown in the sample file:
-                                                <span className="ml-1 font-mono text-xs font-semibold text-indigo-700 dark:text-indigo-300">
+                                                <span className="ml-1 font-mono text-xs font-semibold text-indigo-700 ">
                                                     {REQUIRED_COLUMNS.join(', ')}
                                                 </span>
                                             </CheckItem>
@@ -745,40 +745,40 @@ const BulkUpload = () => {
                                     </div>
 
                                     {/* Optional columns info */}
-                                    <div className="overflow-hidden rounded-2xl border border-blue-200 bg-blue-50 dark:border-blue-500/30 dark:bg-blue-950/30">
-                                        <div className="border-b border-blue-100 px-5 py-4 dark:border-blue-500/20">
-                                            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.14em] text-blue-800 dark:text-blue-200">
+                                    <div className="overflow-hidden rounded-2xl border border-blue-200 bg-blue-50 ">
+                                        <div className="border-b border-blue-100 px-5 py-4 ">
+                                            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.14em] text-blue-800 ">
                                                 <Info className="h-4 w-4" aria-hidden="true" />
                                                 Optional Columns
                                             </h2>
                                         </div>
                                         <ul className="space-y-3.5 p-5">
-                                            <li className="text-sm text-blue-900 dark:text-blue-200">
+                                            <li className="text-sm text-blue-900 ">
                                                 <span className="font-mono font-semibold">location</span> — optional; if used, it must match an existing location.
                                             </li>
-                                            <li className="text-sm text-blue-900 dark:text-blue-200">
+                                            <li className="text-sm text-blue-900 ">
                                                 <span className="font-mono font-semibold">description</span> — optional incident notes.
                                             </li>
-                                            <li className="text-sm text-blue-900 dark:text-blue-200">
+                                            <li className="text-sm text-blue-900 ">
                                                 <span className="font-mono font-semibold">evidenceType</span> — optional; comma-separate multiple existing evidence types.
                                             </li>
-                                            <li className="text-sm text-blue-900 dark:text-blue-200">
+                                            <li className="text-sm text-blue-900 ">
                                                 <span className="font-mono font-semibold">handledBy</span> — a valid staff email address.
                                             </li>
-                                            <li className="text-sm text-blue-900 dark:text-blue-200">
+                                            <li className="text-sm text-blue-900 ">
                                                 <span className="font-mono font-semibold">timePeriod</span> — enter <strong>AM</strong> or <strong>PM</strong>.
                                             </li>
-                                            <li className="text-sm text-blue-900 dark:text-blue-200">
+                                            <li className="text-sm text-blue-900 ">
                                                 <span className="font-mono font-semibold">highPriority</span> — enter <strong>Yes</strong> or <strong>No</strong>.
                                             </li>
                                         </ul>
                                     </div>
 
                                     {/* Info tip */}
-                                    <div className="rounded-2xl border border-blue-200 bg-blue-50 px-5 py-4 dark:border-blue-500/30 dark:bg-blue-950/30">
+                                    <div className="rounded-2xl border border-blue-200 bg-blue-50 px-5 py-4 ">
                                         <div className="flex items-start gap-3">
-                                            <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" aria-hidden="true" />
-                                            <p className="text-sm text-blue-900 dark:text-blue-200">
+                                            <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-600 " aria-hidden="true" />
+                                            <p className="text-sm text-blue-900 ">
                                                 Not sure about the format? Download the sample spreadsheet to see an example with the correct column names.
                                             </p>
                                         </div>

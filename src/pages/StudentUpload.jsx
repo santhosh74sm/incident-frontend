@@ -115,7 +115,7 @@ const StepBar = ({ activeStep }) => (
                         <div
                             aria-hidden="true"
                             className={`absolute inset-x-0 top-3.5 h-0.5 rounded-full transition-colors ${
-                                done ? 'bg-emerald-400' : 'bg-slate-200 dark:bg-slate-700'
+                                done ? 'bg-emerald-400' : 'bg-slate-200 '
                             }`}
                         />
                     )}
@@ -126,14 +126,14 @@ const StepBar = ({ activeStep }) => (
                                 ? 'bg-emerald-500 text-white ring-emerald-200'
                                 : current
                                 ? 'bg-indigo-600 text-white ring-indigo-200'
-                                : 'bg-slate-100 text-slate-500 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700'
+                                : 'bg-slate-100 text-slate-500 ring-slate-200 '
                         }`}
                     >
                         {done ? <CheckCircle2 className="h-4 w-4" /> : step.id}
                     </span>
                     <span
                         className={`mt-3 text-center text-[11px] font-semibold uppercase tracking-[0.16em] ${
-                            current ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-500 dark:text-slate-400'
+                            current ? 'text-indigo-700 ' : 'text-slate-500 '
                         }`}
                     >
                         {step.label}
@@ -148,7 +148,7 @@ const StepBar = ({ activeStep }) => (
 const CheckItem = ({ children }) => (
     <li className="flex items-start gap-3">
         <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" aria-hidden="true" />
-        <span className="text-sm text-slate-700 dark:text-slate-300">{children}</span>
+        <span className="text-sm text-slate-700 ">{children}</span>
     </li>
 );
 
@@ -402,26 +402,26 @@ const StudentUpload = () => {
         : `Accepted formats: ${ACCEPTED_UPLOAD_FORMATS}`;
 
     return (
-        <div className="min-h-screen bg-slate-100 dark:bg-slate-950">
+        <div className="min-h-screen bg-slate-100 ">
             <main className="overflow-x-hidden px-3 py-4 sm:p-4 lg:p-6">
                 <div className="mx-auto w-full max-w-7xl min-w-0 space-y-6">
 
                     {/* ── Hero header ─────────────────────────────────── */}
                     <section
                         aria-label="Student Upload"
-                        className="min-w-0 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.06)] dark:border-slate-800 dark:bg-slate-900/80"
+                        className="min-w-0 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.06)] "
                     >
                         <div className="px-5 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
                             <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                                 <div className="min-w-0 max-w-2xl">
-                                    <div className="inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-indigo-700 dark:border-indigo-500/30 dark:bg-indigo-950/40 dark:text-indigo-200">
+                                    <div className="inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-indigo-700 ">
                                         <FileSpreadsheet className="h-3.5 w-3.5" aria-hidden="true" />
                                         Student Upload Workflow
                                     </div>
-                                    <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950 dark:text-white sm:text-4xl">
+                                    <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
                                         Upload Student Records
                                     </h1>
-                                    <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 dark:text-slate-300">
+                                    <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 ">
                                         Upload and manage student records with guided validation and preview before you confirm.
                                     </p>
                                 </div>
@@ -463,7 +463,7 @@ const StudentUpload = () => {
                         </div>
 
                         {/* Step bar */}
-                        <div className="border-t border-slate-200 bg-slate-50 px-5 py-5 dark:border-slate-800 dark:bg-slate-950/50 sm:px-6 sm:py-6">
+                        <div className="border-t border-slate-200 bg-slate-50 px-5 py-5 sm:px-6 sm:py-6">
                             <StepBar activeStep={activeStep} />
                         </div>
                     </section>
@@ -474,13 +474,13 @@ const StudentUpload = () => {
                         {/* Upload panel */}
                         <section
                             aria-label="Upload workbook"
-                            className="min-w-0 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_20px_55px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-900/80"
+                            className="min-w-0 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_20px_55px_rgba(15,23,42,0.08)] "
                         >
                             {/* Section header */}
-                            <div className="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 px-5 py-5 dark:border-slate-800 dark:bg-slate-950/40 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-6">
+                            <div className="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-6">
                                 <div className="min-w-0">
-                                    <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Choose Your Spreadsheet</h2>
-                                    <p className="mt-1.5 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                                    <h2 className="text-base font-semibold text-slate-900 ">Choose Your Spreadsheet</h2>
+                                    <p className="mt-1.5 text-sm leading-6 text-slate-500 ">
                                         Click the area below or drag a file in. Review the preview, then upload.
                                     </p>
                                 </div>
@@ -498,13 +498,13 @@ const StudentUpload = () => {
 
                             <div className="space-y-5 p-5 sm:p-6">
                                 <label className="block">
-                                    <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                                    <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500 ">
                                         Academic Year
                                     </span>
                                     <select
                                         value={selectedAcademicYear}
                                         onChange={(event) => setSelectedAcademicYear(event.target.value)}
-                                        className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                                        className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 "
                                     >
                                         {academicYears.map((year) => (
                                             <option key={year} value={year}>{year}</option>
@@ -524,10 +524,10 @@ const StudentUpload = () => {
                                     disabled={parsing || uploading}
                                     className={`w-full rounded-[26px] border-2 border-dashed px-5 py-10 text-center transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:pointer-events-none sm:px-6 sm:py-12 ${
                                         dragActive
-                                            ? 'border-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/30'
+                                            ? 'border-indigo-500 bg-indigo-50/70 '
                                             : file && !parsing
-                                            ? 'border-emerald-400 bg-emerald-50/70 dark:border-emerald-500/50 dark:bg-emerald-950/20'
-                                            : 'border-slate-300 bg-slate-50 hover:border-indigo-400 hover:bg-indigo-50/60 dark:border-slate-700 dark:bg-slate-900/50 dark:hover:border-indigo-500/60 dark:hover:bg-indigo-950/20'
+                                            ? 'border-emerald-400 bg-emerald-50/70 '
+                                            : 'border-slate-300 bg-slate-50 hover:border-indigo-400 hover:bg-indigo-50/60 '
                                     }`}
                                 >
                                     <input
@@ -540,7 +540,7 @@ const StudentUpload = () => {
                                     />
 
                                     {/* Icon */}
-                                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-white shadow-lg ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700">
+                                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-white shadow-lg ring-1 ring-slate-200 ">
                                         {parsing ? (
                                             <Loader2 className="h-8 w-8 animate-spin text-indigo-600" aria-hidden="true" />
                                         ) : file ? (
@@ -550,10 +550,10 @@ const StudentUpload = () => {
                                         )}
                                     </div>
 
-                                    <p className="break-words text-lg font-semibold text-slate-900 dark:text-white">
+                                    <p className="break-words text-lg font-semibold text-slate-900 ">
                                         {zonePrimary}
                                     </p>
-                                    <p className="mt-2 break-words text-sm leading-6 text-slate-500 dark:text-slate-400">
+                                    <p className="mt-2 break-words text-sm leading-6 text-slate-500 ">
                                         {zoneSecondary}
                                     </p>
                                 </button>
@@ -566,9 +566,9 @@ const StudentUpload = () => {
                                         aria-valuemin={0}
                                         aria-valuemax={100}
                                         aria-label="Upload progress"
-                                        className="rounded-3xl border border-blue-200 bg-blue-50 px-5 py-4 dark:border-blue-500/30 dark:bg-blue-950/20"
+                                        className="rounded-3xl border border-blue-200 bg-blue-50 px-5 py-4 "
                                     >
-                                        <div className="mb-3 flex items-center justify-between text-sm font-semibold text-blue-900 dark:text-blue-100">
+                                        <div className="mb-3 flex items-center justify-between text-sm font-semibold text-blue-900 ">
                                             <span>
                                                 {uploadStage ? uploadStage : uploadProgress < 100
                                                     ? 'Uploading your spreadsheet…'
@@ -576,7 +576,7 @@ const StudentUpload = () => {
                                             </span>
                                             <span className="tabular-nums">{uploadProgress}%</span>
                                         </div>
-                                        <div className="h-2.5 overflow-hidden rounded-full bg-blue-100 dark:bg-blue-900/30">
+                                        <div className="h-2.5 overflow-hidden rounded-full bg-blue-100 ">
                                             <div
                                                 className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-300"
                                                 style={{ width: `${uploadProgress}%` }}
@@ -587,7 +587,7 @@ const StudentUpload = () => {
 
                                 <UploadStatusBanner message={message} />
 
-                                <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                                <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 ">
                                     Current Academic Year: {currentAcademicYear || 'Loading…'}
                                 </div>
 
@@ -597,7 +597,7 @@ const StudentUpload = () => {
                                         type="button"
                                         onClick={() => fileInputRef.current?.click()}
                                         disabled={uploading || parsing}
-                                        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                                        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
                                     >
                                         <FileText className="h-4 w-4" aria-hidden="true" />
                                         Choose File
@@ -607,7 +607,7 @@ const StudentUpload = () => {
                                         type="button"
                                         onClick={resetSelection}
                                         disabled={uploading || parsing || (!file && !preview)}
-                                        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                                        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
                                     >
                                         <RefreshCw className="h-4 w-4" aria-hidden="true" />
                                         Reset
@@ -634,16 +634,16 @@ const StudentUpload = () => {
                         <aside className="min-w-0 space-y-5">
 
                             {/* Checklist */}
-                            <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_18px_60px_rgba(15,23,42,0.06)] dark:border-slate-800 dark:bg-slate-900/80">
-                                <div className="border-b border-slate-200 bg-slate-50 px-5 py-4 dark:border-slate-800 dark:bg-slate-950/40">
-                                    <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-700 dark:text-slate-300">
+                            <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_18px_60px_rgba(15,23,42,0.06)] ">
+                                <div className="border-b border-slate-200 bg-slate-50 px-5 py-4 ">
+                                    <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-700 ">
                                         Before You Upload
                                     </h2>
                                 </div>
                                 <ul className="space-y-4 p-5">
                                     <CheckItem>
                                         Keep the column headings exactly as shown in the sample file:
-                                        <span className="ml-1 font-mono text-xs font-semibold text-indigo-700 dark:text-indigo-300">
+                                        <span className="ml-1 font-mono text-xs font-semibold text-indigo-700 ">
                                             {REQUIRED_COLUMNS.join(', ')}
                                         </span>
                                     </CheckItem>
@@ -660,10 +660,10 @@ const StudentUpload = () => {
                             </div>
 
                             {/* Info tip */}
-                            <div className="overflow-hidden rounded-[28px] border border-blue-200 bg-blue-50 px-5 py-4 shadow-sm dark:border-blue-500/30 dark:bg-blue-950/30">
+                            <div className="overflow-hidden rounded-[28px] border border-blue-200 bg-blue-50 px-5 py-4 shadow-sm ">
                                 <div className="flex items-start gap-3">
-                                    <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" aria-hidden="true" />
-                                    <p className="text-sm text-blue-900 dark:text-blue-200">
+                                    <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-600 " aria-hidden="true" />
+                                    <p className="text-sm text-blue-900 ">
                                         Not sure about the format? Download the sample spreadsheet to see an example with the correct column names.
                                     </p>
                                 </div>
@@ -671,14 +671,14 @@ const StudentUpload = () => {
 
                             {/* Last upload summary */}
                             {lastUpload && (
-                                <div className="overflow-hidden rounded-[28px] border border-emerald-200 bg-emerald-50 shadow-sm dark:border-emerald-500/30 dark:bg-emerald-950/20">
-                                    <div className="border-b border-emerald-100 px-5 py-3.5 dark:border-emerald-500/20">
-                                        <h2 className="flex items-center gap-2 text-sm font-semibold text-emerald-900 dark:text-emerald-100">
+                                <div className="overflow-hidden rounded-[28px] border border-emerald-200 bg-emerald-50 shadow-sm ">
+                                    <div className="border-b border-emerald-100 px-5 py-3.5 ">
+                                        <h2 className="flex items-center gap-2 text-sm font-semibold text-emerald-900 ">
                                             <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
                                             Last Upload Completed
                                         </h2>
                                     </div>
-                                    <div className="space-y-2 px-5 py-4 text-sm text-emerald-800 dark:text-emerald-200">
+                                    <div className="space-y-2 px-5 py-4 text-sm text-emerald-800 ">
                                         <p className="break-all"><strong>File:</strong> {lastUpload.fileName}</p>
                                         <p><strong>Rows in file:</strong> {lastUpload.totalRows || 'N/A'}</p>
                                     </div>

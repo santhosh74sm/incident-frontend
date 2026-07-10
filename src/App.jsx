@@ -6,7 +6,6 @@ import ToastProvider from './components/ToastProvider';
 import ConfirmProvider from './components/ConfirmProvider';
 import DashboardLayout from './components/DashboardLayout';
 import AppErrorBoundary from './components/AppErrorBoundary';
-import { ThemeProvider } from './context/ThemeContext';
 import { normalizeRole } from './utils/roles';
 
 const CHUNK_RELOAD_KEY = 'st-incident-system:chunk-reload';
@@ -82,8 +81,8 @@ const NotFoundPage = () => (
   <div className="flex min-h-[70vh] items-center justify-center px-4 text-center">
     <div>
       <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">404</p>
-      <h1 className="mt-3 text-2xl font-bold text-slate-900 dark:text-slate-100">Page Not Found</h1>
-      <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">This workspace page does not exist or is no longer available.</p>
+      <h1 className="mt-3 text-2xl font-bold text-slate-900 ">Page Not Found</h1>
+      <p className="mt-2 text-sm text-slate-500 ">This workspace page does not exist or is no longer available.</p>
     </div>
   </div>
 );
@@ -203,8 +202,8 @@ const AuditLogRoute = ({ children }) => {
     <div className="flex min-h-[70vh] items-center justify-center px-4 text-center">
       <div>
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">403</p>
-        <h1 className="mt-3 text-2xl font-bold text-slate-900 dark:text-slate-100">Audit Logs Are Restricted</h1>
-        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Only Super Admins can access audit logs.</p>
+        <h1 className="mt-3 text-2xl font-bold text-slate-900 ">Audit Logs Are Restricted</h1>
+        <p className="mt-2 text-sm text-slate-500 ">Only Super Admins can access audit logs.</p>
       </div>
     </div>
   );
@@ -213,13 +212,12 @@ const AuditLogRoute = ({ children }) => {
 function App() {
   return (
     <AppErrorBoundary>
-    <ThemeProvider>
       <AuthProvider>
         <NotificationProvider>
           <ToastProvider>
             <ConfirmProvider>
             <Router>
-              <div className="min-h-screen bg-gray-50 font-sans text-slate-900 transition-colors duration-200 dark:bg-slate-950 dark:text-slate-100">
+              <div className="min-h-screen bg-gray-50 font-sans text-slate-900 transition-colors duration-200 ">
               <Suspense fallback={null}>
                 <CommandPalette />
               </Suspense>
@@ -332,7 +330,6 @@ function App() {
           </ToastProvider>
         </NotificationProvider>
       </AuthProvider>
-    </ThemeProvider>
     </AppErrorBoundary>
   );
 }

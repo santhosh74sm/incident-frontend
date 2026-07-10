@@ -146,7 +146,7 @@ const AcademicYearManagement = () => {
     };
 
     return (
-        <div className="min-h-full bg-slate-100 px-4 py-6 text-slate-900 dark:bg-slate-950 dark:text-slate-100 sm:px-6 lg:px-8">
+        <div className="min-h-full bg-slate-100 px-4 py-6 text-slate-900 sm:px-6 lg:px-8">
             <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
                 <DashboardHero
                     icon={CalendarDays}
@@ -164,13 +164,13 @@ const AcademicYearManagement = () => {
                     ) : (
                         <div className="grid gap-5 md:grid-cols-[1fr_auto] md:items-end">
                             <div className="grid gap-4 sm:grid-cols-2">
-                                <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
+                                <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 ">
                                     <span className="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Current Academic Year</span>
-                                    <span className="mt-2 block text-lg font-bold text-slate-900 dark:text-slate-100">{currentAcademicYear}</span>
+                                    <span className="mt-2 block text-lg font-bold text-slate-900 ">{currentAcademicYear}</span>
                                 </div>
-                                <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
+                                <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 ">
                                     <span className="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Next Academic Year</span>
-                                    <span className="mt-2 block text-lg font-bold text-slate-900 dark:text-slate-100">{nextAcademicYear}</span>
+                                    <span className="mt-2 block text-lg font-bold text-slate-900 ">{nextAcademicYear}</span>
                                 </div>
                             </div>
                             <div className="flex flex-col gap-3">
@@ -199,11 +199,11 @@ const AcademicYearManagement = () => {
 
                 <DashboardPanel title="Rollback Safety" description="Use this only when the most recent Academic Year Update was executed by mistake." icon={AlertTriangle}>
                     <div className="space-y-4">
-                        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-800 dark:border-rose-500/30 dark:bg-rose-950/30 dark:text-rose-100">
+                        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-800 ">
                             Reversing restores students from their previous academic-year history, removes records created in the promoted year, validates integrity, and writes an audit log.
                         </div>
                         {rollbackProgress ? (
-                            <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                            <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 ">
                                 <Loader2 className="h-4 w-4 animate-spin text-rose-600" />
                                 {rollbackProgress}
                             </div>

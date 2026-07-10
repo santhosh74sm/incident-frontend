@@ -18,12 +18,12 @@ const DashboardLayout = () => {
     }, [location.pathname]);
 
     return (
-        <div className="min-h-screen bg-[#f6f8fc] text-slate-800 transition-colors duration-200 dark:bg-slate-950 dark:text-slate-100">
+        <div className="min-h-screen bg-[#f6f8fc] text-slate-800 transition-colors duration-200 ">
             <Sidebar onDesktopCollapsedChange={setIsSidebarCollapsed} />
             <Navbar isSidebarCollapsed={isSidebarCollapsed} />
 
             <main
-                className={`w-full min-w-0 overflow-x-hidden bg-[#f6f8fc] pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))] pt-[76px] transition-all duration-300 dark:bg-slate-950 lg:pb-0 ${
+                className={`w-full min-w-0 overflow-x-hidden bg-[#f6f8fc] pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))] pt-[76px] transition-all duration-300 lg:pb-0 ${
                     isSidebarCollapsed ? SIDEBAR_COLLAPSED_PL : SIDEBAR_EXPANDED_PL
                 }`}
             >

@@ -252,14 +252,14 @@ const CommandPalette = () => {
                         role="dialog"
                         aria-modal="true"
                         aria-label="Command palette"
-                        className="my-4 w-full max-w-3xl overflow-hidden rounded-[22px] border border-slate-200/80 bg-white/95 shadow-[0_36px_80px_rgba(15,23,42,0.22)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/95 sm:my-8 sm:rounded-[30px]"
+                        className="my-4 w-full max-w-3xl overflow-hidden rounded-[22px] border border-slate-200/80 bg-white/95 shadow-[0_36px_80px_rgba(15,23,42,0.22)] backdrop-blur-xl sm:my-8 sm:rounded-[30px]"
                         style={{ animation: 'commandPalettePanel 180ms ease-out' }}
                         onClick={(event) => event.stopPropagation()}
                     >
                         {/* ── Search header ─────────────────────────────────── */}
-                        <div className="border-b border-slate-200/80 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.12),transparent_65%)] px-5 py-4 dark:border-slate-800">
+                        <div className="border-b border-slate-200/80 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.12),transparent_65%)] px-5 py-4 ">
                             <div className="flex items-center gap-3">
-                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-950 text-white dark:bg-slate-800">
+                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-950 text-white ">
                                     <Command size={18} aria-hidden />
                                 </div>
 
@@ -273,7 +273,7 @@ const CommandPalette = () => {
                                         value={query}
                                         onChange={(event) => setQuery(event.target.value)}
                                         placeholder="Search students, incidents, letters, or jump to a page…"
-                                        className="w-full border-none bg-transparent py-2 pl-7 pr-2 text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
+                                        className="w-full border-none bg-transparent py-2 pl-7 pr-2 text-sm text-slate-800 outline-none placeholder:text-slate-400 "
                                         role="combobox"
                                         aria-expanded={isOpen}
                                         aria-autocomplete="list"
@@ -289,8 +289,8 @@ const CommandPalette = () => {
                                 </div>
 
                                 {/* ESC hint */}
-                                <div className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white/90 px-2.5 py-1.5 dark:border-slate-700 dark:bg-slate-900 sm:flex">
-                                    <kbd className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                <div className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white/90 px-2.5 py-1.5 sm:flex">
+                                    <kbd className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 ">
                                         Esc
                                     </kbd>
                                 </div>
@@ -298,7 +298,7 @@ const CommandPalette = () => {
                                 <button
                                     type="button"
                                     onClick={closePalette}
-                                    className="inline-flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                                    className="inline-flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700 "
                                     aria-label="Close search"
                                 >
                                     <X size={18} aria-hidden />
@@ -307,16 +307,16 @@ const CommandPalette = () => {
 
                             {/* Keyboard hints */}
                             <div
-                                className="mt-3 flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400"
+                                className="mt-3 flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 "
                                 aria-hidden
                             >
-                                <span className="rounded-full border border-slate-200 bg-white/90 px-2.5 py-1 dark:border-slate-700 dark:bg-slate-900">
+                                <span className="rounded-full border border-slate-200 bg-white/90 px-2.5 py-1 ">
                                     ↑↓ Navigate
                                 </span>
-                                <span className="rounded-full border border-slate-200 bg-white/90 px-2.5 py-1 dark:border-slate-700 dark:bg-slate-900">
+                                <span className="rounded-full border border-slate-200 bg-white/90 px-2.5 py-1 ">
                                     ↵ Open
                                 </span>
-                                <span className="rounded-full border border-slate-200 bg-white/90 px-2.5 py-1 dark:border-slate-700 dark:bg-slate-900">
+                                <span className="rounded-full border border-slate-200 bg-white/90 px-2.5 py-1 ">
                                     Esc Close
                                 </span>
                             </div>
@@ -332,11 +332,11 @@ const CommandPalette = () => {
                         >
                             {/* Onboarding hint — shown when no query typed */}
                             {!query.trim() ? (
-                                <div className="mb-4 rounded-[20px] border border-slate-200 bg-slate-50/80 px-4 py-4 dark:border-slate-800 dark:bg-slate-950/60">
-                                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                <div className="mb-4 rounded-[20px] border border-slate-200 bg-slate-50/80 px-4 py-4 ">
+                                    <p className="text-sm font-semibold text-slate-900 ">
                                         Jump to Anything
                                     </p>
-                                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                    <p className="mt-1 text-sm text-slate-500 ">
                                         Type to search students, incidents, and letters — or pick a quick action below.
                                     </p>
                                 </div>
@@ -358,24 +358,24 @@ const CommandPalette = () => {
                                     aria-live="polite"
                                     className="px-2 py-10 text-center"
                                 >
-                                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500">
+                                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 ">
                                         <Search size={18} aria-hidden />
                                     </div>
                                     {query.trim() ? (
                                         <>
-                                            <p className="mt-4 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                            <p className="mt-4 text-sm font-semibold text-slate-700 ">
                                                 No results for "{query.trim()}".
                                             </p>
-                                            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                            <p className="mt-1 text-sm text-slate-500 ">
                                                 Try a different keyword, or use a quick action below.
                                             </p>
                                         </>
                                     ) : (
                                         <>
-                                            <p className="mt-4 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                            <p className="mt-4 text-sm font-semibold text-slate-700 ">
                                                 No quick actions available.
                                             </p>
-                                            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                            <p className="mt-1 text-sm text-slate-500 ">
                                                 Start typing to search the workspace.
                                             </p>
                                         </>
@@ -386,7 +386,7 @@ const CommandPalette = () => {
                                 visibleSections.map((section) => (
                                     <div key={section.key} className="mb-4 last:mb-0">
                                         <p
-                                            className="px-2 py-1 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400"
+                                            className="px-2 py-1 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500 "
                                             aria-hidden
                                         >
                                             {section.label}
@@ -416,15 +416,15 @@ const CommandPalette = () => {
                                                         }}
                                                         className={`flex w-full items-center gap-3 rounded-[18px] border px-4 py-3 text-left transition-all duration-150 ${
                                                             isActive
-                                                                ? 'border-indigo-200 bg-indigo-50 shadow-sm dark:border-indigo-500/40 dark:bg-indigo-950/40'
-                                                                : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700 dark:hover:bg-slate-800'
+                                                                ? 'border-indigo-200 bg-indigo-50 shadow-sm '
+                                                                : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 '
                                                         }`}
                                                     >
                                                         <div
                                                             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors duration-150 ${
                                                                 isActive
                                                                     ? 'bg-indigo-500 text-white'
-                                                                    : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                                                                    : 'bg-slate-100 text-slate-600 '
                                                             }`}
                                                             aria-hidden
                                                         >
@@ -432,10 +432,10 @@ const CommandPalette = () => {
                                                         </div>
 
                                                         <div className="min-w-0 flex-1">
-                                                            <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                                            <p className="truncate text-sm font-semibold text-slate-900 ">
                                                                 {item?.title || 'Untitled'}
                                                             </p>
-                                                            <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                                                            <p className="truncate text-xs text-slate-500 ">
                                                                 {item?.sub || 'Open this workspace item.'}
                                                             </p>
                                                         </div>
@@ -443,7 +443,7 @@ const CommandPalette = () => {
                                                         <ArrowRight
                                                             size={14}
                                                             className={`shrink-0 transition-colors duration-150 ${
-                                                                isActive ? 'text-indigo-500' : 'text-slate-300 dark:text-slate-600'
+                                                                isActive ? 'text-indigo-500' : 'text-slate-300 '
                                                             }`}
                                                             aria-hidden
                                                         />

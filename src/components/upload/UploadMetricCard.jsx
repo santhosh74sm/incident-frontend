@@ -8,28 +8,28 @@ const TONES = {
 };
 
 const SURFACE_ICON = {
-    slate: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
-    blue: 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300',
-    indigo: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300',
-    emerald: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300',
+    slate: 'bg-slate-100 text-slate-700 ',
+    blue: 'bg-blue-50 text-blue-700 ',
+    indigo: 'bg-indigo-50 text-indigo-700 ',
+    emerald: 'bg-emerald-50 text-emerald-700 ',
 };
 
 const UploadMetricCard = ({ icon: Icon, label, value, tone = 'slate', variant = 'solid', helper = null }) => {
     if (variant === 'surface') {
         return (
-            <div className="rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/80">
+            <div className="rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm ">
                 <div className="flex items-center gap-3">
                     <span className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl ${SURFACE_ICON[tone] || SURFACE_ICON.slate}`}>
                         <Icon className="h-5 w-5" />
                     </span>
                     <div className="min-w-0">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 ">
                             {label}
                         </p>
-                        <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                        <p className="mt-2 text-2xl font-semibold text-slate-900 ">
                             {value}
                         </p>
-                        {helper ? <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{helper}</p> : null}
+                        {helper ? <p className="mt-2 text-sm text-slate-500 ">{helper}</p> : null}
                     </div>
                 </div>
             </div>

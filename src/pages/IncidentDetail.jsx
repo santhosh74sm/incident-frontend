@@ -57,7 +57,7 @@ const STATUS_STYLES = {
     Closed: { badge: 'border-emerald-200 bg-emerald-50 text-emerald-700', tone: 'emerald' },
 };
 const FIELD_CARD_CLASS =
-    'incident-field-card rounded-lg border border-slate-200 bg-slate-50/70 p-4 shadow-sm shadow-slate-200/30 dark:border-slate-800 dark:bg-slate-950/40 dark:shadow-none';
+    'incident-field-card rounded-lg border border-slate-200 bg-slate-50/70 p-4 shadow-sm shadow-slate-200/30 ';
 
 const getStatusStyle = (status) =>
     STATUS_STYLES[status] || { badge: 'border-slate-200 bg-slate-50 text-slate-700', tone: 'slate' };
@@ -260,13 +260,13 @@ const DetailField = ({ icon: Icon, label, value, helper = null, action = null })
     <div className={FIELD_CARD_CLASS}>
         <div className="flex items-start gap-3">
             {Icon ? (
-                <div className="rounded-lg bg-white p-2 text-slate-500 shadow-sm shadow-slate-200/60 dark:bg-slate-900 dark:shadow-none">
+                <div className="rounded-lg bg-white p-2 text-slate-500 shadow-sm shadow-slate-200/60 ">
                     <Icon size={16} />
                 </div>
             ) : null}
             <div className="min-w-0 flex-1">
                 <p className="text-xs font-medium text-slate-500">{label}</p>
-                <div className="mt-1.5 text-sm font-semibold text-slate-950 dark:text-slate-100">{value || 'N/A'}</div>
+                <div className="mt-1.5 text-sm font-semibold text-slate-950 ">{value || 'N/A'}</div>
                 {helper ? <p className="mt-1 text-sm text-slate-500">{helper}</p> : null}
             </div>
             {action}
@@ -282,12 +282,12 @@ const TimelineStep = ({ step, isLast }) => {
                 <div className={`flex h-9 w-9 items-center justify-center rounded-full ${step.surfaceClass}`}>
                     <Icon size={16} className={step.iconClass} />
                 </div>
-                {!isLast ? <div className="mt-2 h-full min-h-[46px] w-px bg-slate-200 dark:bg-slate-800" /> : null}
+                {!isLast ? <div className="mt-2 h-full min-h-[46px] w-px bg-slate-200 " /> : null}
             </div>
             <div className="flex-1 pb-5">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                        <p className="text-sm font-bold text-slate-950 dark:text-slate-100">{step.label}</p>
+                        <p className="text-sm font-bold text-slate-950 ">{step.label}</p>
                         {step.note ? <p className="mt-1 text-sm text-slate-500">{step.note}</p> : null}
                     </div>
                     <span className="text-xs font-medium text-slate-500">
@@ -960,9 +960,9 @@ const IncidentDetail = () => {
     }
 
     return (
-        <div className="incident-workspace w-full min-w-0 bg-[#f6f8fc] p-3 text-slate-800 dark:bg-slate-950 dark:text-slate-100 sm:p-4 lg:p-6">
+        <div className="incident-workspace w-full min-w-0 bg-[#f6f8fc] p-3 text-slate-800 sm:p-4 lg:p-6">
             <div className="mx-auto max-w-[1680px] space-y-4">
-                        <section className="incident-hero space-y-4 rounded-lg border border-slate-200 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+                        <section className="incident-hero space-y-4 rounded-lg border border-slate-200 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] sm:p-5">
                             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                                 <div className="min-w-0">
                                     <nav className="mb-4 flex flex-wrap items-center gap-2 text-sm font-medium text-slate-500" aria-label="Breadcrumb">
@@ -970,22 +970,22 @@ const IncidentDetail = () => {
                                             <Activity size={14} /> All Incidents
                                         </button>
                                         <span aria-hidden="true">/</span>
-                                        <span className="text-slate-800 dark:text-slate-200">Incident Details</span>
+                                        <span className="text-slate-800 ">Incident Details</span>
                                     </nav>
                                     <span className={`inline-flex rounded-md border px-2.5 py-1 text-xs font-bold uppercase ${statusStyle.badge}`}>
                                         {formatDisplayValue(incident.status || 'Pending')}
                                     </span>
-                                    <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-slate-950 dark:text-slate-100 sm:text-[28px]">
+                                    <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-slate-950 sm:text-[28px]">
                                         {incident.title || 'Untitled Incident'}
                                     </h1>
-                                    <p className="mt-2 text-sm font-medium text-slate-600 dark:text-slate-400">
+                                    <p className="mt-2 text-sm font-medium text-slate-600 ">
                                         Admission No: {incident.admissionNo || 'N/A'} <span className="mx-2">-</span> Incident ID: {incident.incidentId || id}
                                     </p>
                                 </div>
                                 <div className="flex flex-wrap gap-2">
                                     <button type="button" onClick={() => navigate('/incidents')}
                                         aria-label="Back to incident list"
-                                        className="inline-flex min-h-[40px] items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                                        className="inline-flex min-h-[40px] items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ">
                                         <ArrowLeft size={16} />Back to List
                                     </button>
                                     {incident.status !== 'Closed' && canManageIncident ? (
@@ -1047,7 +1047,7 @@ const IncidentDetail = () => {
                             <DetailField icon={Calendar} label="Opened On" value={formatShortDateTime(getIncidentTimestamp(incident))} />
                         </div>
 
-                        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)] dark:border-slate-800 dark:bg-slate-900">
+                        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)] ">
                             <div className="flex overflow-x-auto" role="tablist" aria-label="Incident detail sections">
                                 {detailTabs.map(({ key, label, count, icon: Icon }) => (
                                     <button
@@ -1059,7 +1059,7 @@ const IncidentDetail = () => {
                                         className={`inline-flex min-w-max items-center gap-2 border-b-2 px-5 py-3.5 text-sm font-semibold transition ${
                                             activeDetailSection === key
                                                 ? 'border-blue-600 bg-blue-50/70 text-blue-700'
-                                                : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800 dark:hover:bg-slate-800'
+                                                : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800 '
                                         }`}
                                     >
                                         <Icon size={15} />
@@ -1094,7 +1094,7 @@ const IncidentDetail = () => {
                                                 </button>
                                             </div>
                                         ) : (
-                                            <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700 dark:text-slate-300">
+                                            <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700 ">
                                                 {incident.description || 'No description provided.'}
                                             </p>
                                         )}
@@ -1108,7 +1108,7 @@ const IncidentDetail = () => {
                                         {incident.status === 'Closed' ? <CheckCircle size={22} /> : <Clock size={22} />}
                                     </div>
                                     <div className="min-w-0">
-                                        <h3 className="text-xl font-extrabold text-slate-950 dark:text-slate-100">{formatDisplayValue(incident.status || 'Pending')}</h3>
+                                        <h3 className="text-xl font-extrabold text-slate-950 ">{formatDisplayValue(incident.status || 'Pending')}</h3>
                                         <p className="mt-1 text-sm text-slate-500">
                                             {incident.status === 'Closed' ? 'This incident has been resolved and closed.' : 'This incident is currently active.'}
                                         </p>

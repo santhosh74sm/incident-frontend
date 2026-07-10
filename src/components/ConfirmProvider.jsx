@@ -55,21 +55,21 @@ const ConfirmProvider = ({ children }) => {
                         aria-modal="true"
                         aria-labelledby="confirm-dialog-title"
                         aria-describedby="confirm-dialog-description"
-                        className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl shadow-slate-950/20 dark:border-slate-800 dark:bg-slate-900"
+                        className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl shadow-slate-950/20 "
                     >
                         <div className="flex items-start gap-4">
                             <div className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${tone.icon}`}>
                                 <span className="text-lg font-bold">!</span>
                             </div>
                             <div className="min-w-0 flex-1">
-                                <h2 id="confirm-dialog-title" className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                                <h2 id="confirm-dialog-title" className="text-base font-semibold text-slate-900 ">
                                     {dialog.title}
                                 </h2>
-                                <p id="confirm-dialog-description" className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                                <p id="confirm-dialog-description" className="mt-2 text-sm leading-6 text-slate-600 ">
                                     {dialog.description}
                                 </p>
                                 {dialog.details ? (
-                                    <div className="mt-4 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                                    <div className="mt-4 text-sm leading-6 text-slate-600 ">
                                         {dialog.details}
                                     </div>
                                 ) : null}
@@ -79,14 +79,14 @@ const ConfirmProvider = ({ children }) => {
                             <button
                                 type="button"
                                 onClick={() => closeDialog(false)}
-                                className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                                className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 "
                             >
                                 {dialog.cancelLabel}
                             </button>
                             <button
                                 type="button"
                                 onClick={() => closeDialog(true)}
-                                className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${tone.confirm}`}
+                                className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${tone.confirm}`}
                             >
                                 {dialog.confirmLabel}
                             </button>

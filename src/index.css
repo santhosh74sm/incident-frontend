@@ -20,11 +20,11 @@
 
 @layer base {
   html {
-    @apply overflow-x-hidden bg-white transition-colors duration-300 dark:bg-slate-950;
+    @apply overflow-x-hidden bg-white transition-colors duration-300 ;
   }
 
   body {
-    @apply overflow-x-hidden bg-white text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100;
+    @apply overflow-x-hidden bg-white text-slate-900 transition-colors duration-300 ;
   }
 
   *, ::before, ::after {
@@ -107,46 +107,11 @@
     --shadow-dropdown: 0 8px 32px rgba(15,23,42,0.12);
   }
 
-  .dark {
-    --chart-grid: #334155;
-    --chart-axis: #94a3b8;
-    --chart-axis-strong: #cbd5e1;
-    --chart-label: #e2e8f0;
-
-    --surface-base: #0f172a;
-    --surface-raised: #1e293b;
-    --surface-overlay: rgba(15,23,42,0.95);
-
-    --border-subtle: #1e293b;
-    --border-default: #334155;
-    --border-strong: #475569;
-
-    --color-primary-muted: rgba(30,58,138,0.24);
-    --color-primary-border: rgba(59,130,246,0.28);
-
-    --color-success-muted: rgba(6,78,59,0.24);
-    --color-success-border: rgba(16,185,129,0.28);
-
-    --color-warning-muted: rgba(120,53,15,0.24);
-    --color-warning-border: rgba(245,158,11,0.28);
-
-    --color-error-muted: rgba(127,29,29,0.24);
-    --color-error-border: rgba(244,63,94,0.28);
-
-    --color-info-muted: rgba(49,46,129,0.28);
-    --color-info-border: rgba(99,102,241,0.28);
-
-    --shadow-card: 0 1px 3px rgba(0,0,0,0.28);
-    --shadow-panel: 0 4px 16px rgba(0,0,0,0.32);
-    --shadow-modal: 0 24px 60px rgba(0,0,0,0.48);
-    --shadow-dropdown: 0 8px 32px rgba(0,0,0,0.40);
-  }
-
   /* Native form element transitions + dark defaults */
   input,
   select,
   textarea {
-    @apply transition-colors duration-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500;
+    @apply transition-colors duration-200 ;
   }
 
   /* Focus ring on native select */
@@ -192,23 +157,23 @@
   }
 
   .dashboard-kicker {
-    @apply text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400;
+    @apply text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500 ;
   }
 
   .dashboard-stat-card {
-    @apply rounded-lg border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(15,23,42,0.10)] dark:border-slate-800 dark:bg-slate-900;
+    @apply rounded-lg border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(15,23,42,0.10)] ;
   }
 
   .dashboard-stat-value {
-    @apply mt-2 text-[30px] font-extrabold leading-none tracking-tight text-slate-950 dark:text-slate-100;
+    @apply mt-2 text-[30px] font-extrabold leading-none tracking-tight text-slate-950 ;
   }
 
   .dashboard-panel {
-    @apply overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)] dark:border-slate-800 dark:bg-slate-900;
+    @apply overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)] ;
   }
 
   .dashboard-panel-header {
-    @apply flex flex-col gap-4 border-b border-slate-200/80 px-4 py-4 dark:border-slate-800 md:flex-row md:items-start md:justify-between sm:px-5;
+    @apply flex flex-col gap-4 border-b border-slate-200/80 px-4 py-4 md:flex-row md:items-start md:justify-between sm:px-5;
   }
 
   .dashboard-panel-body {
@@ -217,7 +182,7 @@
 
   /* ── Analytics tables ──────────────────────────────────────────────────── */
   .analytics-table-shell {
-    @apply min-w-0 overflow-hidden rounded-none border-0 bg-white dark:bg-slate-900;
+    @apply min-w-0 overflow-hidden rounded-none border-0 bg-white ;
   }
 
   .analytics-table {
@@ -230,55 +195,55 @@
   }
 
   .analytics-table-head {
-    @apply sticky top-0 z-10 bg-slate-50/90 dark:bg-slate-950;
+    @apply sticky top-0 z-10 bg-slate-50/90 ;
   }
 
   .analytics-table-th {
-    @apply whitespace-nowrap px-4 py-3 text-left text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400;
+    @apply whitespace-nowrap px-4 py-3 text-left text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500 ;
   }
 
   .analytics-table-td {
-    @apply whitespace-nowrap px-4 py-3.5 text-sm text-slate-700 dark:text-slate-200;
+    @apply whitespace-nowrap px-4 py-3.5 text-sm text-slate-700 ;
   }
 
   .analytics-empty {
-    @apply rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-10 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:px-6 sm:py-12;
+    @apply rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-10 text-center shadow-sm sm:px-6 sm:py-12;
   }
 
   .analytics-heat-cell {
-    @apply flex h-14 items-center justify-center rounded-2xl border border-white/70 text-sm font-black text-slate-950 shadow-sm transition-transform duration-200 hover:-translate-y-0.5 dark:text-white;
+    @apply flex h-14 items-center justify-center rounded-2xl border border-white/70 text-sm font-black text-slate-950 shadow-sm transition-transform duration-200 hover:-translate-y-0.5 ;
   }
 
   /* ── Design system: Typography ─────────────────────────────────────────── */
 
   /* Page-level title — use on <h1> */
   .page-title {
-    @apply text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-2xl;
+    @apply text-xl font-bold tracking-tight text-slate-900 sm:text-2xl;
   }
 
   /* Section / card heading — use on <h2>/<h3> inside panels */
   .section-title {
-    @apply text-base font-semibold text-slate-900 dark:text-slate-100;
+    @apply text-base font-semibold text-slate-900 ;
   }
 
   /* Small all-caps label above inputs or panels */
   .field-label {
-    @apply mb-1.5 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400;
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 ;
   }
 
   /* Muted body copy */
   .body-muted {
-    @apply text-sm leading-relaxed text-slate-500 dark:text-slate-400;
+    @apply text-sm leading-relaxed text-slate-500 ;
   }
 
   /* ── Design system: Cards ──────────────────────────────────────────────── */
 
   .card {
-    @apply overflow-hidden rounded-[20px] border border-white/70 bg-white/90 shadow-md shadow-slate-200/70 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-slate-950/40;
+    @apply overflow-hidden rounded-[20px] border border-white/70 bg-white/90 shadow-md shadow-slate-200/70 backdrop-blur ;
   }
 
   .card-header {
-    @apply flex flex-col gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between;
+    @apply flex flex-col gap-3 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between;
   }
 
   .card-body {
@@ -303,7 +268,7 @@
 
   /* Secondary / ghost action */
   .btn-secondary {
-    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-100;
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 ;
   }
 
   /* Danger */
@@ -313,7 +278,7 @@
 
   /* Icon-only button */
   .btn-icon {
-    @apply inline-flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition-all duration-200 hover:border-slate-300 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100;
+    @apply inline-flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition-all duration-200 hover:border-slate-300 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 ;
   }
 
   /* ── Design system: Badges ─────────────────────────────────────────────── */
@@ -323,51 +288,51 @@
   }
 
   .badge-primary {
-    @apply badge border border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-500/30 dark:bg-blue-950/40 dark:text-blue-300;
+    @apply badge border border-blue-200 bg-blue-50 text-blue-700 ;
   }
 
   .badge-success {
-    @apply badge border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/40 dark:text-emerald-300;
+    @apply badge border border-emerald-200 bg-emerald-50 text-emerald-700 ;
   }
 
   .badge-warning {
-    @apply badge border border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/40 dark:text-amber-300;
+    @apply badge border border-amber-200 bg-amber-50 text-amber-700 ;
   }
 
   .badge-error {
-    @apply badge border border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/30 dark:bg-rose-950/40 dark:text-rose-300;
+    @apply badge border border-rose-200 bg-rose-50 text-rose-700 ;
   }
 
   .badge-neutral {
-    @apply badge border border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300;
+    @apply badge border border-slate-200 bg-slate-100 text-slate-600 ;
   }
 
   .badge-info {
-    @apply badge border border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-500/30 dark:bg-indigo-950/40 dark:text-indigo-300;
+    @apply badge border border-indigo-200 bg-indigo-50 text-indigo-700 ;
   }
 
   /* ── Design system: Inputs ─────────────────────────────────────────────── */
 
   .input-base {
-    @apply min-h-[44px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 shadow-sm transition-all duration-200 placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:hover:border-slate-600 dark:focus:border-blue-400 dark:focus:ring-blue-400/20;
+    @apply min-h-[44px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 shadow-sm transition-all duration-200 placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 ;
   }
 
   /* ── Design system: Empty states ───────────────────────────────────────── */
 
   .empty-state {
-    @apply flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center dark:border-slate-700 dark:bg-slate-900;
+    @apply flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center ;
   }
 
   .empty-state-icon {
-    @apply mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500;
+    @apply mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 ;
   }
 
   .empty-state-title {
-    @apply text-sm font-semibold text-slate-700 dark:text-slate-200;
+    @apply text-sm font-semibold text-slate-700 ;
   }
 
   .empty-state-body {
-    @apply mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400;
+    @apply mt-1 text-xs leading-relaxed text-slate-500 ;
   }
 
   /* Incident detail workspace */
@@ -378,7 +343,7 @@
   }
 
   .incident-workspace .dashboard-panel {
-    @apply rounded-lg border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_rgba(15,23,42,0.055)] dark:border-slate-800 dark:bg-slate-900;
+    @apply rounded-lg border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_rgba(15,23,42,0.055)] ;
   }
 
   .incident-workspace .dashboard-panel-header {
@@ -400,7 +365,7 @@
   }
 
   .incident-field-card {
-    @apply bg-slate-50/80 p-3 shadow-none transition-colors duration-200 hover:border-slate-300 hover:bg-white dark:bg-slate-950/50 dark:hover:bg-slate-900;
+    @apply bg-slate-50/80 p-3 shadow-none transition-colors duration-200 hover:border-slate-300 hover:bg-white ;
   }
 
   .incident-field-card p {
@@ -677,7 +642,7 @@
   }
 
   .analytics-table tr {
-    @apply mb-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900;
+    @apply mb-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm ;
   }
 
   .analytics-table tr:last-child {
@@ -685,7 +650,7 @@
   }
 
   .analytics-table-td {
-    @apply flex items-start justify-between gap-4 border-b border-slate-100 px-0 py-2 text-right break-words dark:border-slate-800;
+    @apply flex items-start justify-between gap-4 border-b border-slate-100 px-0 py-2 text-right break-words ;
   }
 
   .analytics-table-td:last-child {
@@ -694,7 +659,7 @@
 
   .analytics-table-td::before {
     content: attr(data-label);
-    @apply max-w-[46%] text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400;
+    @apply max-w-[46%] text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 ;
   }
 
   .analytics-table-native {
@@ -761,7 +726,7 @@
   }
 
   .issued-letters-register-table tr {
-    @apply mb-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900;
+    @apply mb-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm ;
   }
 
   .issued-letters-register-table tr:last-child {
@@ -769,7 +734,7 @@
   }
 
   .issued-letters-register-table td {
-    @apply flex items-start justify-between gap-4 border-b border-slate-100 px-0 py-2 text-right break-words align-top dark:border-slate-800;
+    @apply flex items-start justify-between gap-4 border-b border-slate-100 px-0 py-2 text-right break-words align-top ;
   }
 
   .issued-letters-register-table td:last-child {
@@ -778,7 +743,7 @@
 
   .issued-letters-register-table td::before {
     content: attr(data-label);
-    @apply max-w-[46%] shrink-0 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400;
+    @apply max-w-[46%] shrink-0 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 ;
   }
 }
 
@@ -890,108 +855,108 @@
 /* ── Dark-mode colour overrides (no dark: prefix fallbacks) ─────────────────── */
 
 /* Backgrounds */
-.dark .bg-white:not([class*="dark:bg-"])         { background-color: rgb(15 23 42); }
-.dark [class*="bg-white/"]:not([class*="dark:bg-"]) { background-color: rgb(15 23 42 / 0.86); }
-.dark .bg-slate-50:not([class*="dark:bg-"])      { background-color: rgb(15 23 42); }
-.dark [class*="bg-slate-50/"]:not([class*="dark:bg-"]) { background-color: rgb(15 23 42 / 0.82); }
-.dark .bg-slate-100:not([class*="dark:bg-"])     { background-color: rgb(30 41 59); }
-.dark [class*="bg-slate-100/"]:not([class*="dark:bg-"]) { background-color: rgb(30 41 59 / 0.82); }
+.dark .bg-white:not([class*=""])         { background-color: rgb(15 23 42); }
+.dark [class*="bg-white/"]:not([class*=""]) { background-color: rgb(15 23 42 / 0.86); }
+.dark .bg-slate-50:not([class*=""])      { background-color: rgb(15 23 42); }
+.dark [class*="bg-slate-50/"]:not([class*=""]) { background-color: rgb(15 23 42 / 0.82); }
+.dark .bg-slate-100:not([class*=""])     { background-color: rgb(30 41 59); }
+.dark [class*="bg-slate-100/"]:not([class*=""]) { background-color: rgb(30 41 59 / 0.82); }
 
-.dark .bg-blue-50:not([class*="dark:bg-"]),
-.dark [class*="bg-blue-50/"]:not([class*="dark:bg-"]) { background-color: rgb(30 58 138 / 0.24); }
+.dark .bg-blue-50:not([class*=""]),
+.dark [class*="bg-blue-50/"]:not([class*=""]) { background-color: rgb(30 58 138 / 0.24); }
 
-.dark .bg-indigo-50:not([class*="dark:bg-"]),
-.dark [class*="bg-indigo-50/"]:not([class*="dark:bg-"]) { background-color: rgb(49 46 129 / 0.28); }
+.dark .bg-indigo-50:not([class*=""]),
+.dark [class*="bg-indigo-50/"]:not([class*=""]) { background-color: rgb(49 46 129 / 0.28); }
 
-.dark .bg-cyan-50:not([class*="dark:bg-"]),
-.dark [class*="bg-cyan-50/"]:not([class*="dark:bg-"]) { background-color: rgb(22 78 99 / 0.24); }
+.dark .bg-cyan-50:not([class*=""]),
+.dark [class*="bg-cyan-50/"]:not([class*=""]) { background-color: rgb(22 78 99 / 0.24); }
 
-.dark .bg-emerald-50:not([class*="dark:bg-"]),
-.dark .bg-green-50:not([class*="dark:bg-"]),
-.dark [class*="bg-emerald-50/"]:not([class*="dark:bg-"]),
-.dark [class*="bg-green-50/"]:not([class*="dark:bg-"]) { background-color: rgb(6 78 59 / 0.24); }
+.dark .bg-emerald-50:not([class*=""]),
+.dark .bg-green-50:not([class*=""]),
+.dark [class*="bg-emerald-50/"]:not([class*=""]),
+.dark [class*="bg-green-50/"]:not([class*=""]) { background-color: rgb(6 78 59 / 0.24); }
 
-.dark .bg-amber-50:not([class*="dark:bg-"]),
-.dark .bg-yellow-50:not([class*="dark:bg-"]),
-.dark [class*="bg-amber-50/"]:not([class*="dark:bg-"]),
-.dark [class*="bg-yellow-50/"]:not([class*="dark:bg-"]) { background-color: rgb(120 53 15 / 0.24); }
+.dark .bg-amber-50:not([class*=""]),
+.dark .bg-yellow-50:not([class*=""]),
+.dark [class*="bg-amber-50/"]:not([class*=""]),
+.dark [class*="bg-yellow-50/"]:not([class*=""]) { background-color: rgb(120 53 15 / 0.24); }
 
-.dark .bg-red-50:not([class*="dark:bg-"]),
-.dark .bg-rose-50:not([class*="dark:bg-"]),
-.dark [class*="bg-red-50/"]:not([class*="dark:bg-"]),
-.dark [class*="bg-rose-50/"]:not([class*="dark:bg-"]) { background-color: rgb(127 29 29 / 0.24); }
+.dark .bg-red-50:not([class*=""]),
+.dark .bg-rose-50:not([class*=""]),
+.dark [class*="bg-red-50/"]:not([class*=""]),
+.dark [class*="bg-rose-50/"]:not([class*=""]) { background-color: rgb(127 29 29 / 0.24); }
 
 /* Borders */
-.dark .border-white:not([class*="dark:border-"]),
-.dark [class*="border-white/"]:not([class*="dark:border-"]) { border-color: rgb(51 65 85 / 0.78); }
+.dark .border-white:not([class*=""]),
+.dark [class*="border-white/"]:not([class*=""]) { border-color: rgb(51 65 85 / 0.78); }
 
-.dark .border-slate-100:not([class*="dark:border-"]),
-.dark .border-slate-200:not([class*="dark:border-"]),
-.dark .border-slate-300:not([class*="dark:border-"]) { border-color: rgb(51 65 85); }
+.dark .border-slate-100:not([class*=""]),
+.dark .border-slate-200:not([class*=""]),
+.dark .border-slate-300:not([class*=""]) { border-color: rgb(51 65 85); }
 
-.dark .border-blue-100:not([class*="dark:border-"]),
-.dark .border-blue-200:not([class*="dark:border-"]),
-.dark .border-indigo-100:not([class*="dark:border-"]),
-.dark .border-indigo-200:not([class*="dark:border-"]),
-.dark .border-cyan-100:not([class*="dark:border-"]),
-.dark .border-cyan-200:not([class*="dark:border-"]) { border-color: rgb(59 130 246 / 0.28); }
+.dark .border-blue-100:not([class*=""]),
+.dark .border-blue-200:not([class*=""]),
+.dark .border-indigo-100:not([class*=""]),
+.dark .border-indigo-200:not([class*=""]),
+.dark .border-cyan-100:not([class*=""]),
+.dark .border-cyan-200:not([class*=""]) { border-color: rgb(59 130 246 / 0.28); }
 
-.dark .border-emerald-100:not([class*="dark:border-"]),
-.dark .border-emerald-200:not([class*="dark:border-"]),
-.dark .border-green-100:not([class*="dark:border-"]),
-.dark .border-green-200:not([class*="dark:border-"]) { border-color: rgb(16 185 129 / 0.28); }
+.dark .border-emerald-100:not([class*=""]),
+.dark .border-emerald-200:not([class*=""]),
+.dark .border-green-100:not([class*=""]),
+.dark .border-green-200:not([class*=""]) { border-color: rgb(16 185 129 / 0.28); }
 
-.dark .border-amber-100:not([class*="dark:border-"]),
-.dark .border-amber-200:not([class*="dark:border-"]),
-.dark .border-yellow-100:not([class*="dark:border-"]),
-.dark .border-yellow-200:not([class*="dark:border-"]) { border-color: rgb(245 158 11 / 0.28); }
+.dark .border-amber-100:not([class*=""]),
+.dark .border-amber-200:not([class*=""]),
+.dark .border-yellow-100:not([class*=""]),
+.dark .border-yellow-200:not([class*=""]) { border-color: rgb(245 158 11 / 0.28); }
 
-.dark .border-red-100:not([class*="dark:border-"]),
-.dark .border-red-200:not([class*="dark:border-"]),
-.dark .border-rose-100:not([class*="dark:border-"]),
-.dark .border-rose-200:not([class*="dark:border-"]) { border-color: rgb(244 63 94 / 0.28); }
+.dark .border-red-100:not([class*=""]),
+.dark .border-red-200:not([class*=""]),
+.dark .border-rose-100:not([class*=""]),
+.dark .border-rose-200:not([class*=""]) { border-color: rgb(244 63 94 / 0.28); }
 
 /* Text */
-.dark .text-slate-900:not([class*="dark:text-"]),
-.dark .text-slate-800:not([class*="dark:text-"]) { color: rgb(241 245 249); }
+.dark .text-slate-900:not([class*=""]),
+.dark .text-slate-800:not([class*=""]) { color: rgb(241 245 249); }
 
-.dark .text-slate-700:not([class*="dark:text-"]),
-.dark .text-slate-600:not([class*="dark:text-"]) { color: rgb(203 213 225); }
+.dark .text-slate-700:not([class*=""]),
+.dark .text-slate-600:not([class*=""]) { color: rgb(203 213 225); }
 
-.dark .text-slate-500:not([class*="dark:text-"]),
-.dark .text-slate-400:not([class*="dark:text-"]) { color: rgb(148 163 184); }
+.dark .text-slate-500:not([class*=""]),
+.dark .text-slate-400:not([class*=""]) { color: rgb(148 163 184); }
 
-.dark .text-blue-800:not([class*="dark:text-"]),
-.dark .text-blue-700:not([class*="dark:text-"]),
-.dark .text-blue-600:not([class*="dark:text-"]) { color: rgb(147 197 253); }
+.dark .text-blue-800:not([class*=""]),
+.dark .text-blue-700:not([class*=""]),
+.dark .text-blue-600:not([class*=""]) { color: rgb(147 197 253); }
 
-.dark .text-indigo-800:not([class*="dark:text-"]),
-.dark .text-indigo-700:not([class*="dark:text-"]),
-.dark .text-indigo-600:not([class*="dark:text-"]) { color: rgb(165 180 252); }
+.dark .text-indigo-800:not([class*=""]),
+.dark .text-indigo-700:not([class*=""]),
+.dark .text-indigo-600:not([class*=""]) { color: rgb(165 180 252); }
 
-.dark .text-cyan-800:not([class*="dark:text-"]),
-.dark .text-cyan-700:not([class*="dark:text-"]),
-.dark .text-cyan-600:not([class*="dark:text-"]) { color: rgb(103 232 249); }
+.dark .text-cyan-800:not([class*=""]),
+.dark .text-cyan-700:not([class*=""]),
+.dark .text-cyan-600:not([class*=""]) { color: rgb(103 232 249); }
 
-.dark .text-emerald-800:not([class*="dark:text-"]),
-.dark .text-emerald-700:not([class*="dark:text-"]),
-.dark .text-emerald-600:not([class*="dark:text-"]),
-.dark .text-green-800:not([class*="dark:text-"]),
-.dark .text-green-700:not([class*="dark:text-"]),
-.dark .text-green-600:not([class*="dark:text-"]) { color: rgb(110 231 183); }
+.dark .text-emerald-800:not([class*=""]),
+.dark .text-emerald-700:not([class*=""]),
+.dark .text-emerald-600:not([class*=""]),
+.dark .text-green-800:not([class*=""]),
+.dark .text-green-700:not([class*=""]),
+.dark .text-green-600:not([class*=""]) { color: rgb(110 231 183); }
 
-.dark .text-amber-900:not([class*="dark:text-"]),
-.dark .text-amber-800:not([class*="dark:text-"]),
-.dark .text-amber-700:not([class*="dark:text-"]),
-.dark .text-amber-600:not([class*="dark:text-"]),
-.dark .text-yellow-900:not([class*="dark:text-"]),
-.dark .text-yellow-800:not([class*="dark:text-"]),
-.dark .text-yellow-700:not([class*="dark:text-"]),
-.dark .text-yellow-600:not([class*="dark:text-"]) { color: rgb(252 211 77); }
+.dark .text-amber-900:not([class*=""]),
+.dark .text-amber-800:not([class*=""]),
+.dark .text-amber-700:not([class*=""]),
+.dark .text-amber-600:not([class*=""]),
+.dark .text-yellow-900:not([class*=""]),
+.dark .text-yellow-800:not([class*=""]),
+.dark .text-yellow-700:not([class*=""]),
+.dark .text-yellow-600:not([class*=""]) { color: rgb(252 211 77); }
 
-.dark .text-red-800:not([class*="dark:text-"]),
-.dark .text-red-700:not([class*="dark:text-"]),
-.dark .text-red-600:not([class*="dark:text-"]),
-.dark .text-rose-800:not([class*="dark:text-"]),
-.dark .text-rose-700:not([class*="dark:text-"]),
-.dark .text-rose-600:not([class*="dark:text-"]) { color: rgb(253 164 175); }
+.dark .text-red-800:not([class*=""]),
+.dark .text-red-700:not([class*=""]),
+.dark .text-red-600:not([class*=""]),
+.dark .text-rose-800:not([class*=""]),
+.dark .text-rose-700:not([class*=""]),
+.dark .text-rose-600:not([class*=""]) { color: rgb(253 164 175); }

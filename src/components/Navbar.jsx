@@ -9,27 +9,17 @@ import {
     ListFilter,
     LogOut,
     Loader2,
-    Monitor,
-    Moon,
     Settings,
-    Sun,
     X,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../config/apiClient';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
-import { useTheme } from '../context/ThemeContext';
 import { useConfirm } from './ConfirmProvider';
 import { useToast } from './ToastProvider';
 import NotificationDropdown from './NotificationDropdown';
 import { isAdminRole, isSuperAdminRole, normalizeRole } from '../utils/roles';
-
-const themeOptions = [
-    { value: 'light', label: 'Light', icon: Sun },
-    { value: 'dark', label: 'Dark', icon: Moon },
-    { value: 'system', label: 'System', icon: Monitor },
-];
 
 const isMacPlatform = () => {
     if (typeof navigator === 'undefined') return false;
@@ -41,7 +31,6 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
     const { user, logout, restoreAuth } = useAuth();
     const [isMac] = useState(isMacPlatform);
     const { unreadCount, enabled: notificationsEnabled } = useNotifications();
-    const { themeMode, setThemeMode } = useTheme();
     const confirm = useConfirm();
     const { addToast } = useToast();
     const navigate = useNavigate();
@@ -175,7 +164,7 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
     const hasUnread = unreadCount > 0;
     return (
         <nav
-            className={`fixed right-0 top-0 z-[60] h-[76px] border-b border-slate-200/75 bg-white/95 px-3 py-3 backdrop-blur-xl transition-all duration-300 dark:border-slate-800 dark:bg-slate-950/90 sm:px-4 lg:px-7 ${
+            className={`fixed right-0 top-0 z-[60] h-[76px] border-b border-slate-200/75 bg-white/95 px-3 py-3 backdrop-blur-xl transition-all duration-300 sm:px-4 lg:px-7 ${
                 isSidebarCollapsed ? 'left-0 lg:left-[68px]' : 'left-0 lg:left-[242px]'
             }`}
         >
@@ -183,16 +172,16 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                 <div className="h-[52px]">
                     <div className="flex h-full min-w-0 items-center justify-between gap-3">
                         <div
-                            className="hidden h-9 items-center gap-1.5 bg-transparent px-1 text-slate-700 dark:text-slate-300 cursor-default select-none lg:flex"
+                            className="hidden h-9 items-center gap-1.5 bg-transparent px-1 text-slate-700 cursor-default select-none lg:flex"
                         >
-                            <Building2 size={16} className="shrink-0 text-slate-500 dark:text-slate-400" />
+                            <Building2 size={16} className="shrink-0 text-slate-500 " />
                             <span className="text-sm font-medium">{normalizedRole || 'User'} Workspace</span>
                         </div>
 
                         <button
                             type="button"
                             onClick={openCommandPalette}
-                            className="group inline-flex h-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-900 shadow-sm transition-all duration-200 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 sm:hidden"
+                            className="group inline-flex h-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-900 shadow-sm transition-all duration-200 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:hidden"
                             aria-label="Open search"
                             title="Search"
                         >
@@ -202,7 +191,7 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                         <button
                             type="button"
                             onClick={openCommandPalette}
-                            className="group hidden h-11 min-w-0 flex-1 max-w-[380px] items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 text-left text-slate-600 shadow-sm transition-all duration-200 hover:border-slate-300 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 sm:flex"
+                            className="group hidden h-11 min-w-0 flex-1 max-w-[380px] items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 text-left text-slate-600 shadow-sm transition-all duration-200 hover:border-slate-300 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:flex"
                             aria-label="Open search"
                             title="Search"
                         >
@@ -210,14 +199,14 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                             <div className="min-w-0 flex-1">
                                 <p className="truncate text-sm font-medium">Search incidents...</p>
                             </div>
-                            <div className="hidden shrink-0 items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 dark:border-slate-700 dark:bg-slate-800/90 md:flex">
+                            <div className="hidden shrink-0 items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 md:flex">
                                 {isMac ? (
-                                    <kbd className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">⌘</kbd>
+                                    <kbd className="text-[11px] font-semibold text-slate-600 ">⌘</kbd>
                                 ) : (
-                                    <kbd className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-600 dark:text-slate-300">Ctrl</kbd>
+                                    <kbd className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-600 ">Ctrl</kbd>
                                 )}
-                                {!isMac && <span className="text-slate-300 dark:text-slate-600">+</span>}
-                                <kbd className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-600 dark:text-slate-300">K</kbd>
+                                {!isMac && <span className="text-slate-300 ">+</span>}
+                                <kbd className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-600 ">K</kbd>
                             </div>
                         </button>
 
@@ -227,7 +216,7 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                                     type="button"
                                     title="Settings"
                                     onClick={() => navigate('/user-management')}
-                                    className="inline-flex h-11 min-h-[44px] min-w-[44px] w-11 items-center justify-center rounded-lg text-slate-600 transition-all duration-200 hover:bg-slate-100 hover:text-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                                    className="inline-flex h-11 min-h-[44px] min-w-[44px] w-11 items-center justify-center rounded-lg text-slate-600 transition-all duration-200 hover:bg-slate-100 hover:text-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 "
                                     aria-label="Open settings"
                                 >
                                     <Settings size={18} />
@@ -244,8 +233,8 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                                     className={`relative inline-flex h-11 min-h-[44px] min-w-[44px] w-11 items-center justify-center rounded-xl transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
                                         showNotificationPanel || hasUnread
                                             ? 'bg-blue-50 text-blue-700 shadow-sm shadow-blue-100/70'
-                                            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white'
-                                    } ${showNotificationPanel || hasUnread ? 'dark:bg-blue-950/70 dark:text-blue-200 dark:shadow-none' : ''} ${!notificationsEnabled ? 'cursor-not-allowed opacity-60' : ''}`}
+                                            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950 '
+                                    } ${showNotificationPanel || hasUnread ? '' : ''} ${!notificationsEnabled ? 'cursor-not-allowed opacity-60' : ''}`}
                                     aria-label={hasUnread ? `${unreadCount} unread notifications` : 'Notifications'}
                                     aria-disabled={!notificationsEnabled}
                                     aria-expanded={showNotificationPanel}
@@ -271,14 +260,14 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                                     onClick={toggleProfileDropdown}
                                     className={`flex min-h-[44px] items-center gap-2 rounded-lg px-2 py-1 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:gap-3 sm:px-3 ${
                                         showDropdown
-                                            ? 'bg-blue-50 shadow-sm shadow-blue-100/70 dark:bg-blue-950/70 dark:shadow-none'
-                                            : 'hover:bg-slate-100 dark:hover:bg-slate-800'
+                                            ? 'bg-blue-50 shadow-sm shadow-blue-100/70 '
+                                            : 'hover:bg-slate-100 '
                                     }`}
                                     aria-expanded={showDropdown}
                                     aria-haspopup="menu"
                                 >
                                     <div className="hidden text-right sm:block">
-                                        <p className="text-sm font-semibold leading-tight text-slate-900 dark:text-slate-100">
+                                        <p className="text-sm font-semibold leading-tight text-slate-900 ">
                                             {user?.name}
                                         </p>
                                         <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-600">
@@ -293,17 +282,17 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                                 </button>
 
                                 {showDropdown ? (
-                                    <div role="menu" aria-label="Account menu" className="absolute right-0 z-[60] mt-3 max-h-[calc(100vh-5rem)] w-[min(19rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-[22px] border border-slate-200/80 bg-white/95 shadow-[0_30px_60px_rgba(15,23,42,0.16)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/95 sm:rounded-[26px]">
-                                        <div className="border-b border-slate-100 px-5 py-4 dark:border-slate-800">
-                                            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
+                                    <div role="menu" aria-label="Account menu" className="absolute right-0 z-[60] mt-3 max-h-[calc(100vh-5rem)] w-[min(19rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-[22px] border border-slate-200/80 bg-white/95 shadow-[0_30px_60px_rgba(15,23,42,0.16)] backdrop-blur-xl sm:rounded-[26px]">
+                                        <div className="border-b border-slate-100 px-5 py-4 ">
+                                            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-slate-500 ">
                                                 Account
                                             </p>
-                                            <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">{user?.name}</p>
-                                            <p className="mt-1 break-words text-xs text-slate-500 dark:text-slate-400">{user?.email}</p>
+                                            <p className="mt-2 text-sm font-semibold text-slate-900 ">{user?.name}</p>
+                                            <p className="mt-1 break-words text-xs text-slate-500 ">{user?.email}</p>
                                             <button
                                                 type="button"
                                                 onClick={() => setShowProfileEdit((current) => !current)}
-                                                className="mt-3 inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition-all duration-200 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                                                className="mt-3 inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition-all duration-200 hover:bg-slate-50 hover:text-slate-900 "
                                                 aria-expanded={showProfileEdit}
                                             >
                                                 {showProfileEdit ? <X size={14} /> : <Edit3 size={14} />}
@@ -312,10 +301,10 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                                         </div>
 
                                         {showProfileEdit ? (
-                                            <form onSubmit={handleProfileSubmit} className="border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+                                            <form onSubmit={handleProfileSubmit} className="border-b border-slate-100 px-5 py-4 ">
                                                 <div className="space-y-3">
                                                     <div>
-                                                        <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">
+                                                        <label className="mb-1.5 block text-xs font-semibold text-slate-600 ">
                                                             Name
                                                         </label>
                                                         <input
@@ -323,11 +312,11 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                                                             type="text"
                                                             value={profileForm.name}
                                                             onChange={(event) => setProfileForm((current) => ({ ...current, name: event.target.value }))}
-                                                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                                                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 "
                                                         />
                                                     </div>
                                                     <div>
-                                                        <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">
+                                                        <label className="mb-1.5 block text-xs font-semibold text-slate-600 ">
                                                             Email
                                                         </label>
                                                         <input
@@ -335,18 +324,18 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                                                             type="email"
                                                             value={profileForm.email}
                                                             onChange={(event) => setProfileForm((current) => ({ ...current, email: event.target.value }))}
-                                                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                                                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 "
                                                         />
                                                     </div>
                                                     <div>
-                                                        <label className="mb-1.5 block text-xs font-semibold text-slate-600 dark:text-slate-300">
+                                                        <label className="mb-1.5 block text-xs font-semibold text-slate-600 ">
                                                             Role
                                                         </label>
                                                         <input
                                                             type="text"
                                                             value={normalizedRole || 'User'}
                                                             readOnly
-                                                            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300"
+                                                            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 "
                                                         />
                                                     </div>
                                                 </div>
@@ -354,7 +343,7 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                                                     <button
                                                         type="button"
                                                         onClick={() => setShowProfileEdit(false)}
-                                                        className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                                                        className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 "
                                                     >
                                                         Cancel
                                                     </button>
@@ -370,35 +359,6 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                                             </form>
                                         ) : null}
 
-                                        <div className="border-b border-slate-100 px-5 py-4 dark:border-slate-800">
-                                            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
-                                                Display Settings
-                                            </p>
-                                            <div className="mt-3 grid grid-cols-3 gap-1 rounded-2xl bg-slate-100 p-1 dark:bg-slate-950">
-                                                {themeOptions.map((option) => {
-                                                    const Icon = option.icon;
-                                                    const isSelected = themeMode === option.value;
-
-                                                    return (
-                                                        <button
-                                                            key={option.value}
-                                                            type="button"
-                                                            onClick={() => setThemeMode(option.value)}
-                                                            className={`flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-semibold transition ${
-                                                                isSelected
-                                                                    ? 'bg-white text-indigo-700 shadow-sm dark:bg-slate-800 dark:text-indigo-200'
-                                                                    : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'
-                                                            }`}
-                                                            aria-pressed={isSelected}
-                                                        >
-                                                            <Icon size={15} />
-                                                            <span className="truncate">{option.label}</span>
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-
                                         <div className="px-3 py-3">
                                             {profileMenuItems.map((item) => {
                                                 const Icon = item.icon;
@@ -411,9 +371,9 @@ const Navbar = ({ isSidebarCollapsed = false }) => {
                                                             setShowDropdown(false);
                                                         }}
                                                         role="menuitem"
-                                                        className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-sm font-medium text-slate-600 transition-all duration-200 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                                                        className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-sm font-medium text-slate-600 transition-all duration-200 hover:bg-slate-50 hover:text-slate-900 "
                                                     >
-                                                        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                                        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 ">
                                                             <Icon size={16} />
                                                         </span>
                                                         {item.label}
