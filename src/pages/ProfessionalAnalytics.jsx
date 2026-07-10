@@ -68,6 +68,7 @@ import {
     toneForStatus,
     withUnknownOption,
     formatDisplayValue,
+    getFilteredSections,
 } from '../utils/analytics';
 import { downloadWorkbook } from '../utils/downloadFiles';
 import { withFeedback } from '../utils/notifications';
@@ -134,10 +135,25 @@ const ProfessionalAnalytics = () => {
     const [filterOptions, setFilterOptions] = useState({
         classes: [],
         sections: [],
+        classSectionMap: {},
         incidentTypes: [],
         locations: [],
         evidence: [],
     });
+
+    const filteredSections = useMemo(() => {
+        return getFilteredSections(filters.classes, filterOptions.sections, filterOptions.classSectionMap);
+    }, [filters.classes, filterOptions.sections, filterOptions.classSectionMap]);
+
+    useEffect(() => {
+        if (filters.sections?.length > 0) {
+            const validSections = getFilteredSections(filters.classes, filterOptions.sections, filterOptions.classSectionMap);
+            const nextSections = filters.sections.filter((sec) => validSections.includes(sec));
+            if (nextSections.length !== filters.sections.length) {
+                setFilters((current) => ({ ...current, sections: nextSections }));
+            }
+        }
+    }, [filters.classes, filterOptions.sections, filterOptions.classSectionMap, filters.sections]);
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
     const [academicYear, setAcademicYear] = useState('');
     const [currentAcademicYear, setCurrentAcademicYear] = useState('');
@@ -291,6 +307,7 @@ const ProfessionalAnalytics = () => {
             setFilterOptions({
                 classes: studentsRes.data?.classes || [],
                 sections: studentsRes.data?.sections || [],
+                classSectionMap: studentsRes.data?.classSectionMap || {},
                 incidentTypes: normalizeOptionList(categoriesRes.data),
                 locations: normalizeOptionList(locationsRes.data),
                 evidence: normalizeOptionList(evidenceRes.data),
@@ -299,6 +316,7 @@ const ProfessionalAnalytics = () => {
             setFilterOptions({
                 classes: [],
                 sections: [],
+                classSectionMap: {},
                 incidentTypes: [],
                 locations: [],
                 evidence: [],
@@ -818,7 +836,7 @@ const ProfessionalAnalytics = () => {
                                 />
                                 <UnifiedMultiSelect
                                     label="Section"
-                                    options={filterOptions.sections}
+                                    options={filteredSections}
                                     selected={filters.sections}
                                     onChange={(value) => setFilters((current) => ({ ...current, sections: value }))}
                                     placeholder="All sections"

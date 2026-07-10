@@ -26,7 +26,7 @@ import {
     DashboardStatCard,
     EmptyStatePanel,
 } from '../components/analytics/DashboardPrimitives';
-import { buildAcademicYearOptions, buildIncidentFilterParams, formatShortDate, getIncidentTimestamp, resolveHandlerLabel, STATUS_OPTIONS, formatDisplayValue, resolveUserLabel } from '../utils/analytics';
+import { buildAcademicYearOptions, buildIncidentFilterParams, formatShortDate, getIncidentTimestamp, resolveHandlerLabel, STATUS_OPTIONS, formatDisplayValue, resolveUserLabel, getFilteredSections } from '../utils/analytics';
 import apiClient from '../config/apiClient';
 import {
     migrateIncidentStorageForUser,
@@ -75,6 +75,20 @@ const IncidentList = () => {
     const [categoryList, setCategoryList] = useState([]);
     const [classList, setClassList] = useState([]);
     const [sectionList, setSectionList] = useState([]);
+    const [classSectionMap, setClassSectionMap] = useState({});
+
+    const filteredSections = useMemo(() => {
+        return getFilteredSections(classFilter, sectionList, classSectionMap);
+    }, [classFilter, sectionList, classSectionMap]);
+
+    useEffect(() => {
+        if (sectionFilter.length > 0) {
+            const nextSections = sectionFilter.filter((sec) => filteredSections.includes(sec));
+            if (nextSections.length !== sectionFilter.length) {
+                setSectionFilter(nextSections);
+            }
+        }
+    }, [filteredSections, sectionFilter]);
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
     const [academicYear, setAcademicYear] = useState('');
     const [currentAcademicYear, setCurrentAcademicYear] = useState('');
@@ -208,18 +222,18 @@ const IncidentList = () => {
     const fetchFilterData = useCallback(async () => {
         if (!userId) return;
         try {
-            const [staffRes, categoriesRes, classesRes, sectionsRes, yearRes] = await Promise.all([
+            const studentFilterConfig = academicYear ? { ...config, params: { academicYear } } : config;
+            const [staffRes, categoriesRes, studentsRes, yearRes] = await Promise.all([
                 apiClient.get('/api/auth/users', config).catch(() => ({ data: [] })),
                 apiClient.get('/api/incidents/categories', config).catch(() => ({ data: [] })),
-                apiClient.get('/api/incidents/classes', config).catch(() => ({ data: [] })),
-                apiClient.get('/api/incidents/sections', config).catch(() => ({ data: [] })),
+                apiClient.get('/api/students/filters', studentFilterConfig).catch(() => ({ data: {} })),
                 apiClient.get('/api/auth/academic-years', config).catch(() => ({ data: {} })),
             ]);
 
             const categories = Array.isArray(categoriesRes.data)
                 ? categoriesRes.data.map((item) => (typeof item === 'string' ? item : item?.name)).filter(Boolean)
                 : [];
-            const classes = Array.isArray(classesRes.data) ? [...classesRes.data] : [];
+            const classes = Array.isArray(studentsRes.data?.classes) ? [...studentsRes.data.classes] : [];
             const sortedClasses = classes.length > 0
                 ? classes.sort((a, b) => {
                     const aNum = parseInt(a, 10);
@@ -228,12 +242,14 @@ const IncidentList = () => {
                     return a.localeCompare(b);
                 })
                 : ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
-            const sections = Array.isArray(sectionsRes.data) ? sectionsRes.data : [];
+            const sections = Array.isArray(studentsRes.data?.sections) ? studentsRes.data.sections : [];
+            const classSecMap = studentsRes.data?.classSectionMap || {};
 
             setStaffList(Array.isArray(staffRes.data) ? staffRes.data : []);
             setCategoryList(categories);
             setClassList(sortedClasses);
             setSectionList(sections.length > 0 ? sections : ['A', 'B', 'C', 'D', 'E']);
+            setClassSectionMap(classSecMap);
             setAcademicYears(yearRes.data?.academicYears || []);
             setCurrentAcademicYear(yearRes.data?.currentAcademicYear || '');
             setAcademicYear((current) => current || yearRes.data?.currentAcademicYear || yearRes.data?.academicYears?.[yearRes.data.academicYears.length - 1] || '');
@@ -242,8 +258,9 @@ const IncidentList = () => {
             setCategoryList([]);
             setClassList(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']);
             setSectionList(['A', 'B', 'C', 'D', 'E']);
+            setClassSectionMap({});
         }
-    }, [config, userId]);
+    }, [config, userId, academicYear]);
 
     useEffect(() => {
         fetchFilterData();
@@ -551,7 +568,7 @@ const IncidentList = () => {
                                 />
                                 <UnifiedMultiSelect
                                     label="Section"
-                                    options={sectionList}
+                                    options={filteredSections}
                                     selected={sectionFilter}
                                     onChange={setSectionFilter}
                                     placeholder="All sections"

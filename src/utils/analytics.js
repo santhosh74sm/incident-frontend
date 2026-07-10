@@ -695,3 +695,26 @@ export const formatDisplayValue = (val) => {
     const withSpaces = raw.replace(/[_-]+/g, ' ');
     return withSpaces.replace(/\b\w/g, (char) => char.toUpperCase());
 };
+
+/**
+ * Reusable utility to filter sections by selected class(es) based on class-section map.
+ * @param {string|string[]} selectedClass - String (single) or Array (multi) of selected class(es)
+ * @param {string[]} allSections - Fallback list of sections
+ * @param {Object} classSectionMap - Map of class to its sections
+ * @returns {string[]} Filtered sections list
+ */
+export const getFilteredSections = (selectedClass, allSections = [], classSectionMap = {}) => {
+    if (!selectedClass || (Array.isArray(selectedClass) && selectedClass.length === 0)) {
+        return allSections;
+    }
+    if (!classSectionMap || Object.keys(classSectionMap).length === 0) {
+        return allSections;
+    }
+    const classesToCheck = Array.isArray(selectedClass) ? selectedClass : [selectedClass];
+    const sectionsSet = new Set();
+    classesToCheck.forEach((cls) => {
+        const secs = classSectionMap[cls] || [];
+        secs.forEach((sec) => sectionsSet.add(sec));
+    });
+    return Array.from(sectionsSet).sort();
+};

@@ -128,7 +128,7 @@ const QuickActionsPanel = memo(({ canAccessAnalytics, canReportIncident }) => (
                 to="/incidents"
                 tone="slate"
                 icon={Activity}
-                title="All Incidents"
+                title="View Incidents"
                 description="Review open cases, assignments, and follow-ups."
             />
             {canAccessAnalytics && (
@@ -357,7 +357,7 @@ const DashboardContent = memo(() => {
                     // Closed: most recently closed first.
                     return priorityA === 2 ? timeB - timeA : timeA - timeB;
                 })
-                .slice(0, 6)
+                .slice(0, 5)
                 .map((incident) => ({
                     id:      incident._id,
                     title:   formatDisplayValue(incident.title || 'Untitled incident'),
@@ -425,15 +425,15 @@ const DashboardContent = memo(() => {
                                     Create Incident
                                 </Link>
                             )}
-                            {canAccessAnalytics && (
-                                <Link
-                                    to="/analytics"
-                                    className="btn-secondary"
-                                >
-                                    <TrendingUp size={15} aria-hidden="true" />
-                                    View Reports
-                                </Link>
-                            )}
+                             {canAccessAnalytics && (
+                                 <Link
+                                     to="/analytics"
+                                     className="btn-primary"
+                                 >
+                                     <TrendingUp size={15} aria-hidden="true" />
+                                     View Reports
+                                 </Link>
+                             )}
                         </>
                     )}
                 />
@@ -480,7 +480,7 @@ const DashboardContent = memo(() => {
                         actions={(
                             <Link
                                 to="/incidents"
-                                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 "
+                                className="hidden md:inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 "
                             >
                                 View All
                                 <ArrowRight size={13} aria-hidden="true" />
@@ -528,6 +528,17 @@ const DashboardContent = memo(() => {
                                 </article>
                             ))}
                         </div>
+                        {recentIncidentRows.length > 0 && (
+                            <div className="mt-4 md:hidden">
+                                <Link
+                                    to="/incidents"
+                                    className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
+                                >
+                                    View All
+                                    <ArrowRight size={15} aria-hidden="true" />
+                                </Link>
+                            </div>
+                        )}
                     </DashboardPanel>
 
                     {/* Right column */}

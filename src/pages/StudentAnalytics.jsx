@@ -74,6 +74,7 @@ import {
     withUnknownOption,
     formatDisplayValue,
     resolveUserLabel,
+    getFilteredSections,
 } from '../utils/analytics';
 import { downloadBlob, downloadWorkbook } from '../utils/downloadFiles';
 import { withFeedback } from '../utils/notifications';
@@ -112,10 +113,24 @@ const StudentAnalytics = () => {
     const [filterOptions, setFilterOptions] = useState({
         classes: [],
         sections: [],
+        classSectionMap: {},
         incidentTypes: [],
         locations: [],
         evidence: [],
     });
+
+    const filteredSections = useMemo(() => {
+        return getFilteredSections(classFilter, filterOptions.sections, filterOptions.classSectionMap);
+    }, [classFilter, filterOptions.sections, filterOptions.classSectionMap]);
+
+    useEffect(() => {
+        if (sectionFilter) {
+            const validSections = getFilteredSections(classFilter, filterOptions.sections, filterOptions.classSectionMap);
+            if (!validSections.includes(sectionFilter)) {
+                setSectionFilter('');
+            }
+        }
+    }, [classFilter, filterOptions.sections, filterOptions.classSectionMap, sectionFilter]);
     const [studentLetters, setStudentLetters] = useState([]);
     const [lettersLoading, setLettersLoading] = useState(false);
     const [downloadingLetterId, setDownloadingLetterId] = useState(null);
@@ -179,6 +194,7 @@ const StudentAnalytics = () => {
             setFilterOptions({
                 classes: studentsRes.data?.classes || [],
                 sections: studentsRes.data?.sections || [],
+                classSectionMap: studentsRes.data?.classSectionMap || {},
                 incidentTypes: normalizeOptionList(categoriesRes.data),
                 locations: normalizeOptionList(locationsRes.data),
                 evidence: normalizeOptionList(evidenceRes.data),
@@ -187,6 +203,7 @@ const StudentAnalytics = () => {
             setFilterOptions({
                 classes: [],
                 sections: [],
+                classSectionMap: {},
                 incidentTypes: [],
                 locations: [],
                 evidence: [],
@@ -979,7 +996,7 @@ const StudentAnalytics = () => {
                                                 className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus-visible:outline-none"
                                             >
                                                 <option value="">All sections</option>
-                                                {filterOptions.sections.map((option) => (
+                                                {filteredSections.map((option) => (
                                                     <option key={option} value={option}>
                                                         {option}
                                                     </option>

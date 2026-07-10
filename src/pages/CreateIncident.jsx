@@ -33,7 +33,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../config/apiClient';
 import { isAdminRole, isTeacherRole } from '../utils/roles';
-import { formatDisplayValue, resolveUserLabel } from '../utils/analytics';
+import { formatDisplayValue, resolveUserLabel, getFilteredSections } from '../utils/analytics';
 import useFocusFirstInvalid from '../hooks/useFocusFirstInvalid';
 import {
     clearCreateIncidentDraft,
@@ -361,7 +361,22 @@ const CreateIncident = () => {
     const [evidenceEntries, setEvidenceEntries] = useState([{ evidenceType: '', file: null, preview: null }]);
     const evidenceEntriesRef = useRef(evidenceEntries);
     evidenceEntriesRef.current = evidenceEntries;
-    const [dbOptions, setDbOptions] = useState({ classes: [], sections: [] });
+    const [dbOptions, setDbOptions] = useState({ classes: [], sections: [], classSectionMap: {} });
+    const filteredSections = useMemo(() => {
+        return getFilteredSections(formData.class, dbOptions.sections, dbOptions.classSectionMap);
+    }, [formData.class, dbOptions.sections, dbOptions.classSectionMap]);
+
+    useEffect(() => {
+        if (!formData.class) {
+            if (formData.section) {
+                setFormData((current) => ({ ...current, section: '' }));
+            }
+        } else if (formData.section) {
+            if (!filteredSections.includes(formData.section)) {
+                setFormData((current) => ({ ...current, section: '' }));
+            }
+        }
+    }, [formData.class, filteredSections, formData.section]);
     const [staffList, setStaffList] = useState([]);
     const [students, setStudents] = useState([]);
     const [studentSearch, setStudentSearch] = useState('');
@@ -557,7 +572,7 @@ const CreateIncident = () => {
         try {
             const [filtersResponse, categoryResponse, locationResponse, staffResponse, evidenceResponse] =
                 await Promise.all([
-                    apiClient.get(`/api/students/filters`, config).catch(() => ({ data: { classes: [], sections: [] } })),
+                    apiClient.get(`/api/students/filters`, config).catch(() => ({ data: { classes: [], sections: [], classSectionMap: {} } })),
                     apiClient.get(`/api/incidents/categories`, config).catch(() => ({ data: [] })),
                     apiClient.get(`/api/incidents/locations`, config).catch(() => ({ data: [] })),
                     apiClient.get(`/api/auth/users/investigators`, config).catch(() => ({ data: [] })),
@@ -565,7 +580,7 @@ const CreateIncident = () => {
                 ]);
 
             if (!isMounted()) return;
-            setDbOptions(filtersResponse.data || { classes: [], sections: [] });
+            setDbOptions(filtersResponse.data || { classes: [], sections: [], classSectionMap: {} });
             setCategories(categoryResponse.data || []);
             setLocations(locationResponse.data || []);
             setStaffList(Array.isArray(staffResponse.data) ? staffResponse.data : []);
@@ -2341,7 +2356,7 @@ const CreateIncident = () => {
                                                     className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
                                                 >
                                                     <option value="">Select section</option>
-                                                    {dbOptions.sections?.map((section) => (
+                                                    {filteredSections?.map((section) => (
                                                         <option key={section} value={section}>
                                                             {section}
                                                         </option>
