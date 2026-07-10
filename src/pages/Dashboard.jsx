@@ -223,7 +223,6 @@ const LifecycleOverviewPanel = memo(({ rows }) => (
 // ─── Module-level request dedup map (unchanged) ────────────────────────────────
 
 const dashboardDataRequests = new Map();
-const STATUS_PRIORITY = { Pending: 0, Closed: 1 };
 
 const fetchDashboardData = (user) => {
     const requestKey = `${user?._id || user?.id || 'unknown'}:${user?.role || 'unknown'}:${user?.currentAcademicYear || 'unknown'}`;
@@ -231,7 +230,7 @@ const fetchDashboardData = (user) => {
         dashboardDataRequests.set(
             requestKey,
             Promise.all([
-                apiClient.get('/api/incidents', { params: { page: 1, limit: 6, academicYear: user?.currentAcademicYear } }),
+                apiClient.get('/api/incidents', { params: { page: 1, limit: 5, academicYear: user?.currentAcademicYear, sortBy: 'updatedAt', sortDirection: 'desc' } }),
                 apiClient.get('/api/incidents/summary', { params: { academicYear: user?.currentAcademicYear } }),
             ]).finally(() => {
                 dashboardDataRequests.delete(requestKey);
@@ -280,7 +279,7 @@ const DashboardContent = memo(() => {
                 ),
             },
             { key: 'handler', label: 'Assigned To' },
-            { key: 'opened',  label: 'Opened'      },
+            { key: 'opened',  label: 'Last Active' },
             {
                 key: 'actions',
                 label: 'Actions',
@@ -347,15 +346,9 @@ const DashboardContent = memo(() => {
         () =>
             [...incidents]
                 .sort((a, b) => {
-                    const priorityA = STATUS_PRIORITY[a.status] ?? 0;
-                    const priorityB = STATUS_PRIORITY[b.status] ?? 0;
-                    if (priorityA !== priorityB) return priorityA - priorityB;
-
-                    const timeA = new Date(getIncidentTimestamp(a) || 0).getTime();
-                    const timeB = new Date(getIncidentTimestamp(b) || 0).getTime();
-                    // Open/In Progress: oldest pending first (needs attention).
-                    // Closed: most recently closed first.
-                    return priorityA === 2 ? timeB - timeA : timeA - timeB;
+                    const timeA = new Date(a.updatedAt || getIncidentTimestamp(a) || 0).getTime();
+                    const timeB = new Date(b.updatedAt || getIncidentTimestamp(b) || 0).getTime();
+                    return timeB - timeA;
                 })
                 .slice(0, 5)
                 .map((incident) => ({
@@ -363,7 +356,7 @@ const DashboardContent = memo(() => {
                     title:   formatDisplayValue(incident.title || 'Untitled incident'),
                     student: incident.studentDetails?.name || incident.studentsInvolved?.[0] || 'Student unavailable',
                     status:  formatDisplayValue(incident.status || 'Pending'),
-                    opened:  formatShortDateTime(getIncidentTimestamp(incident)),
+                    opened:  formatShortDateTime(incident.updatedAt || getIncidentTimestamp(incident)),
                     handler: resolveHandlerLabel(incident),
                 })),
         [incidents]
