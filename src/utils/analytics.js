@@ -563,10 +563,14 @@ const resolveDailyWindow = (resolvedItems, dateRange, fallbackDays) => {
     if (resolvedItems.length > 0) {
         const latest = dayjs(Math.max(...resolvedItems.map(({ parsed }) => parsed.getTime()))).endOf('day');
         const earliest = dayjs(Math.min(...resolvedItems.map(({ parsed }) => parsed.getTime()))).startOf('day');
-        const fallbackStart = latest.startOf('day').subtract(fallbackDays - 1, 'day');
+
+        let start = earliest;
+        if (latest.diff(earliest, 'day') < 14) {
+            start = latest.subtract(13, 'day').startOf('day');
+        }
 
         return {
-            start: fallbackStart.valueOf() > earliest.valueOf() ? fallbackStart : earliest,
+            start,
             end: latest,
         };
     }
@@ -603,26 +607,82 @@ export const buildDailySeries = ({
         return [];
     }
 
+    const start = windowRange.start;
+    const end = windowRange.end;
+    const durationDays = end.diff(start, 'day') + 1;
+
+    let mode = 'daily';
+    if (durationDays > 30 && durationDays <= 90) {
+        mode = 'weekly';
+    } else if (durationDays > 90) {
+        mode = 'monthly';
+    }
+
     const series = [];
-    let cursor = windowRange.start.startOf('day');
-    const end = windowRange.end.endOf('day');
 
-    while (cursor.valueOf() <= end.valueOf()) {
-        const bucketStart = cursor.startOf('day');
-        const bucketEnd = cursor.endOf('day');
-        const bucketItems = resolvedItems
-            .filter(({ parsed }) => parsed >= bucketStart.toDate() && parsed <= bucketEnd.toDate())
-            .map(({ item }) => item);
+    if (mode === 'daily') {
+        let cursor = start.startOf('day');
+        while (cursor.valueOf() <= end.endOf('day').valueOf()) {
+            const bucketStart = cursor.startOf('day');
+            const bucketEnd = cursor.endOf('day');
+            const bucketItems = resolvedItems
+                .filter(({ parsed }) => parsed >= bucketStart.toDate() && parsed <= bucketEnd.toDate())
+                .map(({ item }) => item);
 
-        series.push(project({
-            label: formatDayBucketLabel(bucketStart),
-            fullLabel: formatDayBucketTitle(bucketStart),
-            start: bucketStart.toDate(),
-            end: bucketEnd.toDate(),
-            bucketItems,
-        }));
+            series.push(project({
+                label: formatDayBucketLabel(bucketStart),
+                fullLabel: formatDayBucketTitle(bucketStart),
+                start: bucketStart.toDate(),
+                end: bucketEnd.toDate(),
+                bucketItems,
+            }));
 
-        cursor = cursor.add(1, 'day');
+            cursor = cursor.add(1, 'day');
+        }
+    } else if (mode === 'weekly') {
+        let cursor = start.startOf('week');
+        while (cursor.valueOf() <= end.endOf('day').valueOf()) {
+            const bucketStart = cursor.startOf('day');
+            const bucketEnd = cursor.add(6, 'day').endOf('day');
+            const bucketItems = resolvedItems
+                .filter(({ parsed }) => parsed >= bucketStart.toDate() && parsed <= bucketEnd.toDate())
+                .map(({ item }) => item);
+
+            const labelStr = `${bucketStart.format('MMM D')}`;
+            const fullLabelStr = `${bucketStart.format('MMM D, YYYY')} – ${bucketEnd.format('MMM D, YYYY')}`;
+
+            series.push(project({
+                label: labelStr,
+                fullLabel: fullLabelStr,
+                start: bucketStart.toDate(),
+                end: bucketEnd.toDate(),
+                bucketItems,
+            }));
+
+            cursor = cursor.add(1, 'week');
+        }
+    } else { // monthly
+        let cursor = start.startOf('month');
+        while (cursor.valueOf() <= end.endOf('day').valueOf()) {
+            const bucketStart = cursor.startOf('month');
+            const bucketEnd = cursor.endOf('month');
+            const bucketItems = resolvedItems
+                .filter(({ parsed }) => parsed >= bucketStart.toDate() && parsed <= bucketEnd.toDate())
+                .map(({ item }) => item);
+
+            const labelStr = bucketStart.format('MMM YYYY');
+            const fullLabelStr = bucketStart.format('MMMM YYYY');
+
+            series.push(project({
+                label: labelStr,
+                fullLabel: fullLabelStr,
+                start: bucketStart.toDate(),
+                end: bucketEnd.toDate(),
+                bucketItems,
+            }));
+
+            cursor = cursor.add(1, 'month');
+        }
     }
 
     return series;
@@ -652,6 +712,8 @@ export const buildCreationTrendSeries = ({ items = [], dateRange = { start: '', 
             name: label,
             fullDate: fullLabel,
             created: bucketItems.length,
+            pending: bucketItems.filter((incident) => incident.status === 'Pending').length,
+            closed: bucketItems.filter((incident) => incident.status === 'Closed').length,
         }),
     });
 
@@ -667,22 +729,103 @@ export const buildTrendSeriesFromBuckets = ({ buckets = [], dateRange = { start:
         return { statusTrendData: [], creationTrendData: [] };
     }
 
-    const bucketMap = new Map(normalizedBuckets.map((bucket) => [normalizeDateParam(bucket.date), bucket]));
+    const start = windowRange.start;
+    const end = windowRange.end;
+    const durationDays = end.diff(start, 'day') + 1;
+
+    let mode = 'daily';
+    if (durationDays > 30 && durationDays <= 90) {
+        mode = 'weekly';
+    } else if (durationDays > 90) {
+        mode = 'monthly';
+    }
+
     const statusTrendData = [];
     const creationTrendData = [];
-    let cursor = windowRange.start.startOf('day');
-    const end = windowRange.end.endOf('day');
-    while (cursor.valueOf() <= end.valueOf()) {
-        const bucket = bucketMap.get(cursor.format('YYYY-MM-DD')) || {};
-        const shared = { name: formatDayBucketLabel(cursor), fullDate: formatDayBucketTitle(cursor) };
-        statusTrendData.push({
-            ...shared,
-            pending: Number(bucket.pending || bucket.open || 0),
-            closed: Number(bucket.closed || 0),
-        });
-        creationTrendData.push({ ...shared, created: Number(bucket.created || 0) });
-        cursor = cursor.add(1, 'day');
+
+    if (mode === 'daily') {
+        const bucketMap = new Map(normalizedBuckets.map((bucket) => [normalizeDateParam(bucket.date), bucket]));
+        let cursor = start.startOf('day');
+        while (cursor.valueOf() <= end.endOf('day').valueOf()) {
+            const bucket = bucketMap.get(cursor.format('YYYY-MM-DD')) || {};
+            const shared = { name: formatDayBucketLabel(cursor), fullDate: formatDayBucketTitle(cursor) };
+            const pendingCount = Number(bucket.pending || bucket.open || 0);
+            const closedCount = Number(bucket.closed || 0);
+            const createdCount = Number(bucket.created || 0);
+
+            statusTrendData.push({
+                ...shared,
+                pending: pendingCount,
+                closed: closedCount,
+            });
+            creationTrendData.push({
+                ...shared,
+                created: createdCount,
+                pending: pendingCount,
+                closed: closedCount,
+            });
+            cursor = cursor.add(1, 'day');
+        }
+    } else if (mode === 'weekly') {
+        let cursor = start.startOf('week');
+        while (cursor.valueOf() <= end.endOf('day').valueOf()) {
+            const bucketStart = cursor.startOf('day');
+            const bucketEnd = cursor.add(6, 'day').endOf('day');
+
+            const weekBuckets = normalizedBuckets.filter(
+                (bucket) => bucket.parsed >= bucketStart.toDate() && bucket.parsed <= bucketEnd.toDate()
+            );
+
+            let pending = 0;
+            let closed = 0;
+            let created = 0;
+            weekBuckets.forEach((b) => {
+                pending += Number(b.pending || b.open || 0);
+                closed += Number(b.closed || 0);
+                created += Number(b.created || 0);
+            });
+
+            const shared = {
+                name: `${bucketStart.format('MMM D')}`,
+                fullDate: `${bucketStart.format('MMM D, YYYY')} – ${bucketEnd.format('MMM D, YYYY')}`,
+            };
+
+            statusTrendData.push({ ...shared, pending, closed });
+            creationTrendData.push({ ...shared, created, pending, closed });
+
+            cursor = cursor.add(1, 'week');
+        }
+    } else { // monthly
+        let cursor = start.startOf('month');
+        while (cursor.valueOf() <= end.endOf('day').valueOf()) {
+            const bucketStart = cursor.startOf('month');
+            const bucketEnd = cursor.endOf('month');
+
+            const monthBuckets = normalizedBuckets.filter(
+                (bucket) => bucket.parsed >= bucketStart.toDate() && bucket.parsed <= bucketEnd.toDate()
+            );
+
+            let pending = 0;
+            let closed = 0;
+            let created = 0;
+            monthBuckets.forEach((b) => {
+                pending += Number(b.pending || b.open || 0);
+                closed += Number(b.closed || 0);
+                created += Number(b.created || 0);
+            });
+
+            const shared = {
+                name: bucketStart.format('MMM YYYY'),
+                fullDate: bucketStart.format('MMMM YYYY'),
+            };
+
+            statusTrendData.push({ ...shared, pending, closed });
+            creationTrendData.push({ ...shared, created, pending, closed });
+
+            cursor = cursor.add(1, 'month');
+        }
     }
+
     return { statusTrendData, creationTrendData };
 };
 export const formatDisplayValue = (val) => {

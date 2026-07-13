@@ -1334,6 +1334,13 @@ const StudentAnalytics = () => {
                                                 description="New incidents per day based on the timeline date."
                                                 icon={AlertTriangle}
                                                 chart={<DailyCreationTrendChart data={studentAnalytics.creationTrendData} />}
+                                                footer={
+                                                    <LegendList
+                                                        items={[
+                                                            { label: 'New Incidents', color: CHART_COLORS.neutralPrimary },
+                                                        ]}
+                                                    />
+                                                }
                                                 tableColumns={creationTrendColumns}
                                                 tableRows={studentAnalytics.creationTrendData}
                                                 emptyMessage="No creation trend data is available for the current filters."
@@ -1388,15 +1395,15 @@ const StudentAnalytics = () => {
                                                 <ResponsiveContainer width="100%" height="100%" minWidth={1}>
                                                         <BarChart data={studentAnalytics.locationData.slice(0, 6)} layout="vertical" margin={{ top: 10, right: 24, left: 8, bottom: 0 }}>
                                                             <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" horizontal={false} />
-                                                            <XAxis type="number" tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                                                            <XAxis type="number" tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} domain={[0, (dataMax) => Math.max(1, dataMax)]} />
                                                             <YAxis dataKey="location" type="category" width={compactChart ? 118 : 96} axisLine={false} tickLine={false} {...compactYAxisProps} />
                                                             <ChartTooltip />
-                                                            <Bar dataKey="count" fill={CHART_COLORS.location} radius={[0, 8, 8, 0]} name="Incidents">
+                                                            <Bar dataKey="count" fill={CHART_COLORS.location} radius={[0, 8, 8, 0]} name="Incidents" maxBarSize={28}>
                                                                 <LabelList dataKey="count" position="right" fill={CHART_THEME.label} fontSize={12} />
                                                             </Bar>
                                                         </BarChart>
                                                     </ResponsiveContainer>
-
+ 
                                                     </ChartSurface>
                                                 }
                                                 footer={
@@ -1423,15 +1430,22 @@ const StudentAnalytics = () => {
                                                         <BarChart data={studentAnalytics.categoryData.slice(0, 6)} margin={horizontalBarMargin}>
                                                             <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" vertical={false} />
                                                             <XAxis dataKey="category" axisLine={false} tickLine={false} {...compactXAxisProps} />
-                                                            <YAxis tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                                                            <YAxis tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} domain={[0, (dataMax) => Math.max(1, dataMax)]} />
                                                             <ChartTooltip />
-                                                            <Bar dataKey="count" fill={CHART_COLORS.category} radius={[6, 6, 0, 0]} name="Incidents">
+                                                            <Bar dataKey="count" fill={CHART_COLORS.category} radius={[6, 6, 0, 0]} name="Incidents" maxBarSize={45}>
                                                                 <LabelList dataKey="count" position="top" fill={CHART_THEME.label} fontSize={12} />
                                                             </Bar>
                                                         </BarChart>
                                                     </ResponsiveContainer>
-
+ 
                                                     </ChartSurface>
+                                                }
+                                                footer={
+                                                    <LegendList
+                                                        items={[
+                                                            { label: 'Incident Count', color: CHART_COLORS.category },
+                                                        ]}
+                                                    />
                                                 }
                                                 tableColumns={categoryColumns}
                                                 tableRows={studentAnalytics.categoryData}
@@ -1452,14 +1466,14 @@ const StudentAnalytics = () => {
                                                             <BarChart data={studentAnalytics.evidenceData.slice(0, 8)} margin={horizontalBarMargin}>
                                                                 <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" vertical={false} />
                                                                 <XAxis dataKey="name" axisLine={false} tickLine={false} {...compactXAxisProps} />
-                                                                <YAxis tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                                                                <YAxis tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} domain={[0, (dataMax) => Math.max(1, dataMax)]} />
                                                                 <ChartTooltip />
-                                                                <Bar dataKey="count" fill={CHART_COLORS.evidence} radius={[6, 6, 0, 0]} name="Evidence Count">
+                                                                <Bar dataKey="count" fill={CHART_COLORS.evidence} radius={[6, 6, 0, 0]} name="Evidence Count" maxBarSize={45}>
                                                                     <LabelList dataKey="count" position="top" fill={CHART_THEME.label} fontSize={12} />
                                                                 </Bar>
                                                             </BarChart>
                                                         </ResponsiveContainer>
-
+ 
                                                         </ChartSurface>
                                                     )
                                                 }

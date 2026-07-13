@@ -927,6 +927,13 @@ const ProfessionalAnalytics = () => {
                                         description="Counts how many new incident reports appear on each calendar day."
                                         icon={AlertTriangle}
                                         chart={<DailyCreationTrendChart data={analytics.creationTrendData} />}
+                                        footer={
+                                            <LegendList
+                                                items={[
+                                                    { label: 'New Incidents', color: CHART_COLORS.neutralPrimary },
+                                                ]}
+                                            />
+                                        }
                                         tableColumns={creationTrendColumns}
                                         tableRows={analytics.creationTrendData}
                                         emptyMessage="No creation trend data is available for the current filters."
@@ -943,10 +950,10 @@ const ProfessionalAnalytics = () => {
                                                     <BarChart data={analytics.academicYearData} margin={horizontalBarMargin}>
                                                         <CartesianGrid strokeDasharray="3 3" stroke={CHART_THEME.grid} />
                                                         <XAxis dataKey="name" {...compactXAxisProps} />
-                                                        <YAxis allowDecimals={false} {...compactYAxisProps} />
+                                                        <YAxis allowDecimals={false} domain={[0, (dataMax) => Math.max(1, dataMax)]} {...compactYAxisProps} />
                                                         <Tooltip cursor={false} content={<AcademicYearStatusTooltip />} />
-                                                        <Bar dataKey="pending" stackId="academic-year-status" fill={STATUS_COLORS.Pending} name="Pending" radius={[0, 0, 0, 0]} />
-                                                        <Bar dataKey="closed" stackId="academic-year-status" fill={STATUS_COLORS.Closed} name="Closed" radius={[6, 6, 0, 0]}>
+                                                        <Bar dataKey="pending" stackId="academic-year-status" fill={STATUS_COLORS.Pending} name="Pending" radius={[0, 0, 0, 0]} maxBarSize={45} />
+                                                        <Bar dataKey="closed" stackId="academic-year-status" fill={STATUS_COLORS.Closed} name="Closed" radius={[6, 6, 0, 0]} maxBarSize={45}>
                                                             <LabelList dataKey="total" position="top" className="fill-slate-600 text-xs font-semibold" />
                                                         </Bar>
                                                     </BarChart>
@@ -1012,7 +1019,6 @@ const ProfessionalAnalytics = () => {
                                         tableRows={statusTableRows}
                                         emptyMessage="No status data is available for the current filters."
                                     />
-
                                     <DashboardWidgetPanel
                                         className="xl:col-span-7"
                                         title="Workload by Staff Member"
@@ -1028,24 +1034,32 @@ const ProfessionalAnalytics = () => {
                                                 <ChartSurface height={300}>
                                                 <ResponsiveContainer width="100%" height="100%" minWidth={1}>
                                                 <BarChart data={analytics.staffWorkload} margin={horizontalBarMargin}>
-                                                        <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" vertical={false} />
-                                                        <XAxis dataKey="name" axisLine={false} tickLine={false} {...compactXAxisProps} />
-                                                        <YAxis tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
-                                                        <ChartTooltip />
-                                                        <Bar dataKey="pending" stackId="workload" fill={STATUS_COLORS.Pending} radius={[6, 6, 0, 0]} name="Pending" />
-                                                        <Bar dataKey="closed" stackId="workload" fill={STATUS_COLORS.Closed} radius={[6, 6, 0, 0]} name="Closed">
-                                                            <LabelList dataKey="total" position="top" fill={CHART_THEME.label} fontSize={12} />
-                                                        </Bar>
-                                                    </BarChart>
-                                                </ResponsiveContainer>
-
-                                                </ChartSurface>
-                                            )
-                                        }
-                                        tableColumns={workloadColumns}
-                                        tableRows={analytics.staffWorkload}
-                                        emptyMessage="No staff workload data is available for the current filters."
-                                    />
+                                                         <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" vertical={false} />
+                                                         <XAxis dataKey="name" axisLine={false} tickLine={false} {...compactXAxisProps} />
+                                                         <YAxis tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} domain={[0, (dataMax) => Math.max(1, dataMax)]} />
+                                                         <ChartTooltip />
+                                                         <Bar dataKey="pending" stackId="workload" fill={STATUS_COLORS.Pending} radius={[6, 6, 0, 0]} name="Pending" maxBarSize={45} />
+                                                         <Bar dataKey="closed" stackId="workload" fill={STATUS_COLORS.Closed} radius={[6, 6, 0, 0]} name="Closed" maxBarSize={45}>
+                                                             <LabelList dataKey="total" position="top" fill={CHART_THEME.label} fontSize={12} />
+                                                         </Bar>
+                                                     </BarChart>
+                                                 </ResponsiveContainer>
+ 
+                                                 </ChartSurface>
+                                             )
+                                         }
+                                         footer={
+                                             <LegendList
+                                                 items={[
+                                                     { label: 'Pending', color: STATUS_COLORS.Pending },
+                                                     { label: 'Closed', color: STATUS_COLORS.Closed },
+                                                 ]}
+                                             />
+                                         }
+                                         tableColumns={workloadColumns}
+                                         tableRows={analytics.staffWorkload}
+                                         emptyMessage="No staff workload data is available for the current filters."
+                                     />
 
                                     <DashboardWidgetPanel
                                         className="xl:col-span-6"
@@ -1061,11 +1075,18 @@ const ProfessionalAnalytics = () => {
                                                 ]}
                                             />
                                         }
+                                        footer={
+                                            <LegendList
+                                                items={[
+                                                    { label: 'Pending (Incident Volume)', color: STATUS_COLORS.Pending },
+                                                    { label: 'Closed (Incident Volume)', color: STATUS_COLORS.Closed },
+                                                ]}
+                                            />
+                                        }
                                         tableColumns={categoryHeatmapColumns}
                                         tableRows={categoryHeatmapRows}
                                         emptyMessage="No category frequency data is available for the current filters."
                                     />
-
                                     <DashboardWidgetPanel
                                         className="xl:col-span-6"
                                         title="Incidents by Type"
@@ -1073,24 +1094,31 @@ const ProfessionalAnalytics = () => {
                                         icon={FileText}
                                         chart={
                                             <ChartSurface height={280}>
-                                                <ResponsiveContainer width="100%" height="100%" minWidth={1}>
-                                                <BarChart data={analytics.categoryData.slice(0, 8)} layout="vertical" margin={{ top: 10, right: 24, left: 8, bottom: 0 }}>
-                                                    <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" horizontal={false} />
-                                                    <XAxis type="number" tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
-                                                    <YAxis dataKey="name" type="category" width={compactChart ? 124 : 110} axisLine={false} tickLine={false} {...compactYAxisProps} />
-                                                    <ChartTooltip />
-                                                    <Bar dataKey="count" fill={CHART_COLORS.category} radius={[0, 8, 8, 0]} name="Incidents">
-                                                        <LabelList dataKey="count" position="right" fill={CHART_THEME.label} fontSize={12} />
-                                                    </Bar>
-                                                </BarChart>
-                                            </ResponsiveContainer>
-
-                                            </ChartSurface>
-                                        }
-                                        tableColumns={categoryColumns}
-                                        tableRows={analytics.categoryData}
-                                        emptyMessage="No category distribution data is available for the current filters."
-                                    />
+                                                 <ResponsiveContainer width="100%" height="100%" minWidth={1}>
+                                                 <BarChart data={analytics.categoryData.slice(0, 8)} layout="vertical" margin={{ top: 10, right: 24, left: 8, bottom: 0 }}>
+                                                     <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" horizontal={false} />
+                                                     <XAxis type="number" tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} domain={[0, (dataMax) => Math.max(1, dataMax)]} />
+                                                     <YAxis dataKey="name" type="category" width={compactChart ? 124 : 110} axisLine={false} tickLine={false} {...compactYAxisProps} />
+                                                     <ChartTooltip />
+                                                     <Bar dataKey="count" fill={CHART_COLORS.category} radius={[0, 8, 8, 0]} name="Incidents" maxBarSize={28}>
+                                                         <LabelList dataKey="count" position="right" fill={CHART_THEME.label} fontSize={12} />
+                                                     </Bar>
+                                                 </BarChart>
+                                             </ResponsiveContainer>
+ 
+                                             </ChartSurface>
+                                         }
+                                         footer={
+                                             <LegendList
+                                                 items={[
+                                                     { label: 'Incident Count', color: CHART_COLORS.category },
+                                                 ]}
+                                             />
+                                         }
+                                         tableColumns={categoryColumns}
+                                         tableRows={analytics.categoryData}
+                                         emptyMessage="No category distribution data is available for the current filters."
+                                     />
 
                                     <DashboardWidgetPanel
                                         className="xl:col-span-6"
@@ -1153,18 +1181,26 @@ const ProfessionalAnalytics = () => {
                                                 <BarChart data={analytics.classWiseData} margin={horizontalBarMargin}>
                                                     <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" vertical={false} />
                                                     <XAxis dataKey="className" axisLine={false} tickLine={false} {...compactXAxisProps} />
-                                                    <YAxis tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                                                    <YAxis tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} domain={[0, (dataMax) => Math.max(1, dataMax)]} />
                                                     <ChartTooltip />
-                                                    <Bar dataKey="pending" fill={STATUS_COLORS.Pending} radius={[6, 6, 0, 0]} name="Pending">
+                                                    <Bar dataKey="pending" fill={STATUS_COLORS.Pending} radius={[6, 6, 0, 0]} name="Pending" maxBarSize={30}>
                                                         <LabelList dataKey="pending" position="top" fill={CHART_THEME.label} fontSize={12} />
                                                     </Bar>
-                                                    <Bar dataKey="closed" fill={STATUS_COLORS.Closed} radius={[6, 6, 0, 0]} name="Closed">
+                                                    <Bar dataKey="closed" fill={STATUS_COLORS.Closed} radius={[6, 6, 0, 0]} name="Closed" maxBarSize={30}>
                                                         <LabelList dataKey="closed" position="top" fill={CHART_THEME.label} fontSize={12} />
                                                     </Bar>
                                                 </BarChart>
                                             </ResponsiveContainer>
 
                                             </ChartSurface>
+                                        }
+                                        footer={
+                                            <LegendList
+                                                items={[
+                                                    { label: 'Pending', color: STATUS_COLORS.Pending },
+                                                    { label: 'Closed', color: STATUS_COLORS.Closed },
+                                                ]}
+                                            />
                                         }
                                         tableColumns={classResolutionColumns}
                                         tableRows={classResolutionRows}
@@ -1182,15 +1218,22 @@ const ProfessionalAnalytics = () => {
                                                 <BarChart data={analytics.locationData.slice(0, 8)} margin={horizontalBarMargin}>
                                                     <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" vertical={false} />
                                                     <XAxis dataKey="name" axisLine={false} tickLine={false} {...compactXAxisProps} />
-                                                    <YAxis tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                                                    <YAxis tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} domain={[0, (dataMax) => Math.max(1, dataMax)]} />
                                                     <ChartTooltip />
-                                                    <Bar dataKey="count" fill={CHART_COLORS.location} radius={[6, 6, 0, 0]} name="Incidents">
+                                                    <Bar dataKey="count" fill={CHART_COLORS.location} radius={[6, 6, 0, 0]} name="Incidents" maxBarSize={45}>
                                                         <LabelList dataKey="count" position="top" fill={CHART_THEME.label} fontSize={12} />
                                                     </Bar>
                                                 </BarChart>
                                             </ResponsiveContainer>
 
                                             </ChartSurface>
+                                        }
+                                        footer={
+                                            <LegendList
+                                                items={[
+                                                    { label: 'Incident Count', color: CHART_COLORS.location },
+                                                ]}
+                                            />
                                         }
                                         tableColumns={locationColumns}
                                         tableRows={analytics.locationData}
