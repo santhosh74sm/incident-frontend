@@ -90,6 +90,7 @@ const StudentAnalytics = () => {
     const navigate = useNavigate();
     const params = useParams();
     const compactChart = useCompactChart();
+    const mainScrollContainerRef = useRef(null);
 
     const [loading, setLoading] = useState(true);
     const [activeSummaryTab, setActiveSummaryTab] = useState('active');
@@ -420,6 +421,13 @@ const StudentAnalytics = () => {
             fetchLetterStatusForIncidents(studentIncidents);
         }
     }, [fetchLetterStatusForIncidents, studentIncidents]);
+
+    useEffect(() => {
+        if (mainScrollContainerRef.current) {
+            mainScrollContainerRef.current.scrollTo({ top: 0, behavior: 'instant' });
+        }
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }, [selectedStudent]);
 
     const filteredIncidentSet = useMemo(() => (selectedStudent ? studentIncidents : []), [selectedStudent, studentIncidents]);
     const locationFilterOptions = useMemo(
@@ -885,7 +893,7 @@ const StudentAnalytics = () => {
     return (
         <div className="student-analytics flex min-h-screen bg-slate-100 ">
             <div className="flex min-w-0 flex-1 flex-col">
-                <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+                <main ref={mainScrollContainerRef} className="flex-1 overflow-y-auto p-4 lg:p-6">
                     <div className="mx-auto max-w-[1600px] space-y-6">
                         {!selectedStudent ? (
                             <>
