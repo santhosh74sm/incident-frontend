@@ -17,19 +17,19 @@ const SURFACE_ICON = {
 const UploadMetricCard = ({ icon: Icon, label, value, tone = 'slate', variant = 'solid', helper = null }) => {
     if (variant === 'surface') {
         return (
-            <div className="h-full rounded-lg border border-slate-200 bg-white px-4 py-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
-                <div className="flex items-center gap-3">
-                    <span className={`inline-flex h-10 w-10 items-center justify-center rounded-lg ${SURFACE_ICON[tone] || SURFACE_ICON.slate}`}>
+            <div className="dashboard-stat-card h-full">
+                <div className="flex items-start gap-4">
+                    <span className={`shrink-0 rounded-full p-3 ${SURFACE_ICON[tone] || SURFACE_ICON.slate}`}>
                         <Icon className="h-5 w-5" />
                     </span>
-                    <div className="min-w-0">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 ">
+                    <div className="min-w-0 flex-1">
+                        <p className="dashboard-kicker">
                             {label}
                         </p>
-                        <p className="mt-1.5 break-words text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
+                        <p className="dashboard-stat-value break-words text-2xl sm:text-[30px]">
                             {value}
                         </p>
-                        {helper ? <p className="mt-1 text-xs leading-5 text-slate-500">{helper}</p> : null}
+                        {helper ? <p className="mt-2 text-sm text-slate-600">{helper}</p> : null}
                     </div>
                 </div>
             </div>

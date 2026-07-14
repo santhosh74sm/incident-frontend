@@ -509,9 +509,9 @@ const BulkUpload = () => {
 
     return (
         <>
-            <div className="min-h-screen bg-slate-100 ">
+            <div className="min-h-screen bg-[#f6f8fc]">
                     <main className="overflow-x-hidden px-3 py-4 sm:p-4 lg:p-6">
-                        <div className="mx-auto w-full max-w-7xl min-w-0 space-y-6">
+                        <div className="mx-auto w-full max-w-[1560px] min-w-0 space-y-5">
                             {/* ── Hero header ─────────────────────────────────── */}
                             <section
                                 aria-label="Incident Upload"
@@ -524,10 +524,10 @@ const BulkUpload = () => {
                                                 <FileSpreadsheet className="h-3.5 w-3.5" aria-hidden="true" />
                                                 Incident Data Import
                                             </div>
-                                            <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
+                                            <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-slate-950 sm:text-[28px]">
                                                 Upload Incident Records
                                             </h1>
-                                            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
+                                            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
                                                 Upload incident records with guided validation and review before you confirm.
                                             </p>
                                         </div>
@@ -557,7 +557,7 @@ const BulkUpload = () => {
                                     {/* Section header */}
                                     <div className="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-6">
                                         <div className="min-w-0">
-                                            <h2 className="text-base font-semibold text-slate-900">Choose Your Spreadsheet</h2>
+                                            <h2 className="text-base font-bold tracking-tight text-slate-950">Choose Your Spreadsheet</h2>
                                             <p className="mt-1.5 text-sm leading-6 text-slate-500">
                                                 Click the area below or drag a file in. Review the preview, then upload.
                                             </p>
@@ -683,7 +683,7 @@ const BulkUpload = () => {
                                                 type="button"
                                                 onClick={() => fileInputRef.current?.click()}
                                                 disabled={uploading || parsing}
-                                                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                                                className="btn-secondary w-full"
                                             >
                                                 <FileText className="h-4 w-4" aria-hidden="true" />
                                                 Choose File
@@ -693,7 +693,7 @@ const BulkUpload = () => {
                                                 type="button"
                                                 onClick={resetSelection}
                                                 disabled={uploading || parsing || (!file && !preview)}
-                                                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                                                className="btn-secondary w-full"
                                             >
                                                 <RefreshCw className="h-4 w-4" aria-hidden="true" />
                                                 Reset
@@ -703,7 +703,7 @@ const BulkUpload = () => {
                                                 type="button"
                                                 onClick={handleUpload}
                                                 disabled={!canUpload}
-                                                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                                                className="btn-primary w-full"
                                             >
                                                 {uploading
                                                     ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
