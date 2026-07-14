@@ -196,7 +196,7 @@ const manualValueToDayjs = (value) => {
     if (!value?.date) return null;
 
     const hour = value.hour || '12';
-    const minute = value.minute || '01';
+    const minute = value.minute || '00';
     const ampm = value.ampm || 'AM';
     const parsed = dayjs(`${value.date} ${hour}:${minute} ${ampm}`, 'YYYY-MM-DD hh:mm A');
 
@@ -955,7 +955,7 @@ const CreateIncident = () => {
 
     const ensureManualSetupState = () => {
         setManualSetup((current) => ({
-            status: current.status || 'Open',
+            status: current.status || createInitialManualSetup().status,
             openedAt: normalizeManualValue(current.openedAt),
             inProgressAt: normalizeManualValue(current.inProgressAt),
             closedAt: normalizeManualValue(current.closedAt),
@@ -1344,8 +1344,6 @@ const CreateIncident = () => {
 
         if (manualTimingPayload) {
             data.append('manualTiming', 'true');
-            data.append('initialStatus', statusChoice);
-            data.append('status', statusChoice);
             data.append('openedAt', manualTimingPayload.openedAt);
             if (manualTimingPayload.inProgressAt) data.append('inProgressAt', manualTimingPayload.inProgressAt);
             if (statusChoice === 'Closed') {
@@ -1461,13 +1459,13 @@ const CreateIncident = () => {
     });
 
     const handleManualSetupPrimary = async () => {
-        const manualError = validateManualSetup();
-        if (manualError) {
-            setErrors((currentErrors) => ({ ...currentErrors, manualTiming: manualError }));
-            return;
+        if (modal.mode === 'submit') {
+            const manualError = validateManualSetup();
+            if (manualError) {
+                setErrors((currentErrors) => ({ ...currentErrors, manualTiming: manualError }));
+                return;
+            }
         }
-
-        removeFieldError('manualTiming');
 
         const payload = buildManualTimingPayload();
         setManualTiming(true);
@@ -1476,9 +1474,12 @@ const CreateIncident = () => {
         closeModal();
 
         if (modal.mode === 'edit') {
+            removeFieldError('manualTiming');
             addToast('Manual setup saved. It will be used when you submit the incident.', 'success');
             return;
         }
+
+        removeFieldError('manualTiming');
 
         const matchingTemplate =
             categoryTemplateStatus.checkedCategory === formData.category
@@ -1639,23 +1640,27 @@ const CreateIncident = () => {
                                     <div className="mt-3 grid gap-3 sm:grid-cols-2">
                                         {['Pending', 'Closed'].map((status) => {
                                             const isActive = manualSetup.status === status;
+                                            const isClosedChoice = status === 'Closed';
+                                            const isClosedAvailable = Boolean(manualSetup.openedAt?.date);
                                             return (
                                                 <button
                                                     key={status}
                                                     type="button"
-                                                    onClick={() =>
+                                                    disabled={isClosedChoice && !isClosedAvailable}
+                                                    onClick={() => {
+                                                        removeFieldError('manualTiming');
                                                         updateManualSetup((current) => ({
                                                             ...current,
                                                             status,
-                                                        }))
-                                                    }
-                                                    className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${
+                                                        }));
+                                                    }}
+                                                    className={`rounded-xl border px-4 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
                                                         isActive
                                                             ? 'border-indigo-300 bg-indigo-50 text-indigo-700'
                                                             : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                                                     }`}
                                                 >
-                                                    {status}
+                                                    {isClosedChoice && !isClosedAvailable ? 'Closed (set opened date first)' : status}
                                                 </button>
                                             );
                                         })}
@@ -1668,10 +1673,13 @@ const CreateIncident = () => {
                                         required
                                         value={normalizeManualValue(manualSetup.openedAt)}
                                         onChange={(value) =>
-                                            updateManualSetup((current) => ({
-                                                ...current,
-                                                openedAt: value,
-                                            }))
+                                            {
+                                                removeFieldError('manualTiming');
+                                                updateManualSetup((current) => ({
+                                                    ...current,
+                                                    openedAt: value,
+                                                }));
+                                            }
                                         }
                                         description="When the incident was first reported. The date is required."
                                     />
@@ -1683,12 +1691,15 @@ const CreateIncident = () => {
                                             label="Closed Timeline"
                                             required
                                             value={normalizeManualValue(manualSetup.closedAt)}
-                                            onChange={(value) =>
+                                        onChange={(value) =>
+                                            {
+                                                removeFieldError('manualTiming');
                                                 updateManualSetup((current) => ({
                                                     ...current,
                                                     closedAt: value,
-                                                }))
+                                                }));
                                             }
+                                        }
                                             description="When the incident was resolved."
                                         />
                                     )}
