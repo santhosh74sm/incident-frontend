@@ -80,6 +80,7 @@ const ChartTooltipContent = ({ active, payload, label, labelFormatter, valueForm
 export const ChartTooltip = ({ labelFormatter, valueFormatter, cursor = false }) => (
     <Tooltip
         cursor={cursor}
+        allowEscapeViewBox={{ x: true, y: true }}
         content={<ChartTooltipContent labelFormatter={labelFormatter} valueFormatter={valueFormatter} />}
     />
 );

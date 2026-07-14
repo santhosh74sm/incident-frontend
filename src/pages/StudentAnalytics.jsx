@@ -143,21 +143,27 @@ const StudentAnalytics = () => {
     const [locationDistribution, setLocationDistribution] = useState([]);
     const studentDirectoryRequestRef = useRef(0);
     const compactXAxisProps = useMemo(
-        () => compactChart
-            ? { height: 72, interval: 0, tickMargin: 12, tick: <CompactXAxisTick maxLength={12} /> }
-            : { tick: { fill: CHART_THEME.axis, fontSize: 12 } },
+        () => ({
+            height: compactChart ? 72 : 55,
+            interval: 0,
+            tickMargin: compactChart ? 12 : 8,
+            tick: <CompactXAxisTick maxLength={compactChart ? 12 : 18} />
+        }),
         [compactChart]
     );
     const compactYAxisProps = useMemo(
-        () => compactChart
-            ? { tick: <CompactYAxisTick maxLength={17} /> }
-            : { tick: { fill: CHART_THEME.axisStrong, fontSize: 12 } },
+        () => ({
+            tick: <CompactYAxisTick maxLength={compactChart ? 17 : 24} />
+        }),
         [compactChart]
     );
     const horizontalBarMargin = useMemo(
-        () => compactChart
-            ? { top: 24, right: 12, left: -12, bottom: 36 }
-            : { top: 20, right: 10, left: -20, bottom: 0 },
+        () => ({
+            top: compactChart ? 24 : 20,
+            right: compactChart ? 12 : 10,
+            left: 0,
+            bottom: compactChart ? 36 : 28
+        }),
         [compactChart]
     );
     const academicYearOptions = useMemo(
@@ -1401,10 +1407,10 @@ const StudentAnalytics = () => {
                                                 chart={
                                                     <ChartSurface height={280}>
                                                 <ResponsiveContainer width="100%" height="100%" minWidth={1}>
-                                                        <BarChart data={studentAnalytics.locationData.slice(0, 6)} layout="vertical" margin={{ top: 10, right: 24, left: 8, bottom: 0 }}>
+                                                        <BarChart data={studentAnalytics.locationData.slice(0, 6)} layout="vertical" margin={{ top: 10, right: 24, left: 0, bottom: 8 }}>
                                                             <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" horizontal={false} />
                                                             <XAxis type="number" tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} domain={[0, (dataMax) => Math.max(1, dataMax)]} />
-                                                            <YAxis dataKey="location" type="category" width={compactChart ? 118 : 96} axisLine={false} tickLine={false} {...compactYAxisProps} />
+                                                            <YAxis dataKey="location" type="category" width={compactChart ? 120 : 155} axisLine={false} tickLine={false} {...compactYAxisProps} />
                                                             <ChartTooltip />
                                                             <Bar dataKey="count" fill={CHART_COLORS.location} radius={[0, 8, 8, 0]} name="Incidents" maxBarSize={28}>
                                                                 <LabelList dataKey="count" position="right" fill={CHART_THEME.label} fontSize={12} />

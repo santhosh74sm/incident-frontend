@@ -100,6 +100,7 @@ const TrendChartTooltipContent = ({ active, payload, label }) => {
 const TrendChartTooltip = ({ cursor }) => (
     <Tooltip
         cursor={cursor}
+        allowEscapeViewBox={{ x: true, y: true }}
         content={<TrendChartTooltipContent />}
     />
 );
@@ -115,12 +116,12 @@ export const IncidentStatusTrendChart = memo(({ data = [], height = 320, idPrefi
     const interval = compactChart ? getXAxisInterval(data.length) : 'preserveStartEnd';
     const xAxisProps = compactChart
         ? { height: 68, interval, tickMargin: 12, tick: <CompactXAxisTick maxLength={10} /> }
-        : { tick: { fill: CHART_THEME.axis, fontSize: 12 }, interval: 'preserveStartEnd' };
+        : { height: 35, tick: { fill: CHART_THEME.axis, fontSize: 12 }, interval: 'preserveStartEnd' };
 
     return (
         <ChartSurface height={height}>
             <ResponsiveContainer width="100%" height="100%" minWidth={1}>
-                <AreaChart data={data} margin={{ top: 10, right: 8, left: -16, bottom: compactChart ? 34 : 0 }}>
+                <AreaChart data={data} margin={{ top: 10, right: 8, left: 0, bottom: compactChart ? 34 : 24 }}>
                     <defs>
                         <linearGradient id={`${idPrefix}-pending`} x1="0" x2="0" y1="0" y2="1">
                             <stop offset="5%" stopColor={STATUS_COLORS.Pending} stopOpacity={0.18} />
@@ -148,12 +149,12 @@ export const DailyCreationTrendChart = memo(({ data = [], height = 300 }) => {
     const interval = compactChart ? getXAxisInterval(data.length) : 'preserveStartEnd';
     const xAxisProps = compactChart
         ? { height: 68, interval, tickMargin: 12, tick: <CompactXAxisTick maxLength={10} /> }
-        : { tick: { fill: CHART_THEME.axis, fontSize: 12 }, interval: 'preserveStartEnd' };
+        : { height: 35, tick: { fill: CHART_THEME.axis, fontSize: 12 }, interval: 'preserveStartEnd' };
 
     return (
         <ChartSurface height={height}>
             <ResponsiveContainer width="100%" height="100%" minWidth={1}>
-                <BarChart data={data} margin={{ top: 20, right: 10, left: -20, bottom: compactChart ? 34 : 0 }} maxBarSize={38}>
+                <BarChart data={data} margin={{ top: 20, right: 10, left: 0, bottom: compactChart ? 34 : 24 }} maxBarSize={38}>
                     <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="name" axisLine={false} tickLine={false} {...xAxisProps} />
                     <YAxis tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} domain={[0, (dataMax) => Math.max(1, dataMax)]} />
