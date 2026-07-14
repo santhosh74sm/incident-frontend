@@ -409,7 +409,7 @@ const StudentUpload = () => {
                     {/* ── Hero header ─────────────────────────────────── */}
                     <section
                         aria-label="Student Upload"
-                        className="min-w-0 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.06)] "
+                        className="min-w-0 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)]"
                     >
                         <div className="px-5 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
                             <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
@@ -474,7 +474,7 @@ const StudentUpload = () => {
                         {/* Upload panel */}
                         <section
                             aria-label="Upload workbook"
-                            className="min-w-0 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_20px_55px_rgba(15,23,42,0.08)] "
+                            className="min-w-0 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)]"
                         >
                             {/* Section header */}
                             <div className="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-6">
@@ -504,7 +504,7 @@ const StudentUpload = () => {
                                     <select
                                         value={selectedAcademicYear}
                                         onChange={(event) => setSelectedAcademicYear(event.target.value)}
-                                        className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 "
+                                        className="h-12 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
                                     >
                                         {academicYears.map((year) => (
                                             <option key={year} value={year}>{year}</option>
@@ -522,7 +522,7 @@ const StudentUpload = () => {
                                     onDragOver={handleDrag}
                                     onDrop={handleDrop}
                                     disabled={parsing || uploading}
-                                    className={`w-full rounded-[26px] border-2 border-dashed px-5 py-10 text-center transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:pointer-events-none sm:px-6 sm:py-12 ${
+                                    className={`w-full rounded-lg border-2 border-dashed px-5 py-10 text-center transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:pointer-events-none sm:px-6 sm:py-12 ${
                                         dragActive
                                             ? 'border-indigo-500 bg-indigo-50/70 '
                                             : file && !parsing
@@ -540,7 +540,7 @@ const StudentUpload = () => {
                                     />
 
                                     {/* Icon */}
-                                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-white shadow-lg ring-1 ring-slate-200 ">
+                                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-slate-200">
                                         {parsing ? (
                                             <Loader2 className="h-8 w-8 animate-spin text-indigo-600" aria-hidden="true" />
                                         ) : file ? (
@@ -566,7 +566,7 @@ const StudentUpload = () => {
                                         aria-valuemin={0}
                                         aria-valuemax={100}
                                         aria-label="Upload progress"
-                                        className="rounded-3xl border border-blue-200 bg-blue-50 px-5 py-4 "
+                                        className="rounded-lg border border-blue-200 bg-blue-50 px-5 py-4"
                                     >
                                         <div className="mb-3 flex items-center justify-between text-sm font-semibold text-blue-900 ">
                                             <span>
@@ -587,7 +587,7 @@ const StudentUpload = () => {
 
                                 <UploadStatusBanner message={message} />
 
-                                <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 ">
+                                <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
                                     Current Academic Year: {currentAcademicYear || 'Loading…'}
                                 </div>
 
@@ -597,7 +597,7 @@ const StudentUpload = () => {
                                         type="button"
                                         onClick={() => fileInputRef.current?.click()}
                                         disabled={uploading || parsing}
-                                        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                                        className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
                                     >
                                         <FileText className="h-4 w-4" aria-hidden="true" />
                                         Choose File
@@ -607,7 +607,7 @@ const StudentUpload = () => {
                                         type="button"
                                         onClick={resetSelection}
                                         disabled={uploading || parsing || (!file && !preview)}
-                                        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                                        className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
                                     >
                                         <RefreshCw className="h-4 w-4" aria-hidden="true" />
                                         Reset
@@ -617,7 +617,7 @@ const StudentUpload = () => {
                                         type="button"
                                         onClick={handleUpload}
                                         disabled={!canUpload}
-                                        className="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                                     >
                                         {uploading
                                             ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -634,7 +634,7 @@ const StudentUpload = () => {
                         <aside className="min-w-0 space-y-5">
 
                             {/* Checklist */}
-                            <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_18px_60px_rgba(15,23,42,0.06)] ">
+                            <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
                                 <div className="border-b border-slate-200 bg-slate-50 px-5 py-4 ">
                                     <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-700 ">
                                         Before You Upload
@@ -660,7 +660,7 @@ const StudentUpload = () => {
                             </div>
 
                             {/* Info tip */}
-                            <div className="overflow-hidden rounded-[28px] border border-blue-200 bg-blue-50 px-5 py-4 shadow-sm ">
+                            <div className="overflow-hidden rounded-lg border border-blue-200 bg-blue-50 px-5 py-4 shadow-sm">
                                 <div className="flex items-start gap-3">
                                     <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-600 " aria-hidden="true" />
                                     <p className="text-sm text-blue-900 ">
@@ -671,7 +671,7 @@ const StudentUpload = () => {
 
                             {/* Last upload summary */}
                             {lastUpload && (
-                                <div className="overflow-hidden rounded-[28px] border border-emerald-200 bg-emerald-50 shadow-sm ">
+                                <div className="overflow-hidden rounded-lg border border-emerald-200 bg-emerald-50 shadow-sm">
                                     <div className="border-b border-emerald-100 px-5 py-3.5 ">
                                         <h2 className="flex items-center gap-2 text-sm font-semibold text-emerald-900 ">
                                             <CheckCircle2 className="h-4 w-4" aria-hidden="true" />

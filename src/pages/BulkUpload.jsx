@@ -167,7 +167,7 @@ const STEPS = [
 ];
 
 const StepBar = ({ activeStep }) => (
-    <ol aria-label="Upload steps" className="grid w-full min-w-0 grid-cols-4 items-start gap-1 sm:gap-2">
+    <ol aria-label="Upload steps" className="grid w-full min-w-0 grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
         {STEPS.map((step, i) => {
             const done    = step.id < activeStep;
             const current = step.id === activeStep;
@@ -176,14 +176,14 @@ const StepBar = ({ activeStep }) => (
                     {i < STEPS.length - 1 && (
                         <div
                             aria-hidden="true"
-                            className={`absolute left-1/2 top-3.5 h-0.5 w-full rounded-full transition-colors ${
+                            className={`absolute inset-x-0 top-3.5 h-0.5 rounded-full transition-colors ${
                                 done ? 'bg-emerald-400' : 'bg-slate-200 '
                             }`}
                         />
                     )}
                     <span
                         aria-current={current ? 'step' : undefined}
-                        className={`relative z-10 flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ring-2 transition-colors ${
+                        className={`relative z-10 flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold ring-2 transition-colors ${
                             done
                                 ? 'bg-emerald-500 text-white ring-emerald-200'
                                 : current
@@ -194,8 +194,8 @@ const StepBar = ({ activeStep }) => (
                         {done ? <CheckCircle2 className="h-4 w-4" /> : step.id}
                     </span>
                     <span
-                        className={`mt-2 hidden max-w-full text-center text-[10px] font-semibold uppercase tracking-[0.12em] sm:block ${
-                            current ? 'text-indigo-700 ' : 'text-slate-400'
+                        className={`mt-3 text-center text-[11px] font-semibold uppercase tracking-[0.16em] ${
+                            current ? 'text-indigo-700 ' : 'text-slate-500 '
                         }`}
                     >
                         {step.label}
@@ -515,32 +515,33 @@ const BulkUpload = () => {
                             {/* ── Hero header ─────────────────────────────────── */}
                             <section
                                 aria-label="Incident Upload"
-                                className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-md "
+                                className="min-w-0 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)]"
                             >
-                                <div className="bg-[linear-gradient(135deg,#0f172a,#1e1b4b_55%,#312e81)] px-4 py-6 sm:px-6 sm:py-8 lg:px-10">
+                                <div className="px-5 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
                                     <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                                         <div className="min-w-0 max-w-2xl">
-                                            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-indigo-200">
+                                            <div className="inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-indigo-700">
                                                 <FileSpreadsheet className="h-3.5 w-3.5" aria-hidden="true" />
                                                 Incident Data Import
                                             </div>
-                                            <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">
+                                            <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
                                                 Upload Incident Records
                                             </h1>
-                                            <p className="mt-2.5 max-w-xl text-sm leading-relaxed text-indigo-100/85">
-                                                Upload incident records in bulk.
+                                            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
+                                                Upload incident records with guided validation and review before you confirm.
                                             </p>
                                         </div>
-                                        <div className="grid w-full grid-cols-1 gap-3 sm:w-auto sm:grid-cols-3">
-                                            <UploadMetricCard icon={ShieldCheck} label="Required" value="7 columns" tone="indigo" />
-                                            <UploadMetricCard icon={Table2}      label="Preview"  value="Up to 5 rows" tone="blue" />
-                                            <UploadMetricCard icon={Users}       label="Formats"  value="XLSX / CSV" tone="emerald" />
+                                        <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                                            <UploadMetricCard icon={Table2} label="Incident Rows" value={preview?.totalRows ?? '—'} tone="indigo" variant="surface" helper="In current file" />
+                                            <UploadMetricCard icon={ShieldCheck} label="Columns Required" value={REQUIRED_COLUMNS.length} tone="blue" variant="surface" helper="Required columns" />
+                                            <UploadMetricCard icon={FileText} label="Allowed Formats" value="XLSX / CSV" tone="emerald" variant="surface" helper="File formats" />
+                                            <UploadMetricCard icon={Users} label="Academic Year" value={academicYear || '—'} tone="indigo" variant="surface" helper="Upload destination" />
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Step bar */}
-                                <div className="border-t border-slate-200 bg-white px-4 py-4 sm:px-6">
+                                <div className="border-t border-slate-200 bg-slate-50 px-5 py-5 sm:px-6 sm:py-6">
                                     <StepBar activeStep={activeStep} />
                                 </div>
                             </section>
@@ -551,13 +552,13 @@ const BulkUpload = () => {
                                 {/* Upload panel */}
                                 <section
                                     aria-label="Upload workbook"
-                                    className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm "
+                                    className="min-w-0 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)]"
                                 >
                                     {/* Section header */}
-                                    <div className="flex flex-col gap-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-indigo-50/50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                                    <div className="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-6">
                                         <div className="min-w-0">
-                                            <h2 className="text-base font-bold text-slate-900 ">Choose Your Spreadsheet</h2>
-                                            <p className="mt-0.5 text-sm text-slate-500 ">
+                                            <h2 className="text-base font-semibold text-slate-900">Choose Your Spreadsheet</h2>
+                                            <p className="mt-1.5 text-sm leading-6 text-slate-500">
                                                 Click the area below or drag a file in. Review the preview, then upload.
                                             </p>
                                         </div>
@@ -566,14 +567,14 @@ const BulkUpload = () => {
                                             type="button"
                                             onClick={downloadTemplate}
                                             disabled={uploading || parsing || downloadingTemplate}
-                                            className="btn-export w-full shrink-0 sm:w-auto"
+                                            className="btn-primary w-full shrink-0 sm:w-auto"
                                         >
                                             {downloadingTemplate ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Download className="h-4 w-4" aria-hidden="true" />}
                                             Download Sample
                                         </button>
                                     </div>
 
-                                    <div className="space-y-5 p-4 sm:p-6">
+                                    <div className="space-y-5 p-5 sm:p-6">
                                         {/* Drop zone */}
                                         <button
                                             type="button"
@@ -584,7 +585,7 @@ const BulkUpload = () => {
                                             onDragOver={handleDrag}
                                             onDrop={handleDrop}
                                             disabled={parsing || uploading}
-                                            className={`w-full rounded-2xl border-2 border-dashed px-4 py-8 text-center transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:pointer-events-none sm:px-6 sm:py-10 ${
+                                            className={`w-full rounded-lg border-2 border-dashed px-5 py-10 text-center transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:pointer-events-none sm:px-6 sm:py-12 ${
                                                 dragActive
                                                     ? 'border-indigo-500 bg-indigo-50 '
                                                     : file && !parsing
@@ -602,7 +603,7 @@ const BulkUpload = () => {
                                             />
 
                                             {/* Icon */}
-                                            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow ring-1 ring-slate-200 ">
+                                            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-slate-200">
                                                 {parsing ? (
                                                     <Loader2 className="h-8 w-8 animate-spin text-indigo-600" aria-hidden="true" />
                                                 ) : file ? (
@@ -612,7 +613,7 @@ const BulkUpload = () => {
                                                 )}
                                             </div>
 
-                                            <p className="break-words text-base font-semibold text-slate-900 ">
+                                            <p className="break-words text-lg font-semibold text-slate-900">
                                                 {dragActive
                                                     ? 'Drop your spreadsheet here'
                                                     : parsing
@@ -621,7 +622,7 @@ const BulkUpload = () => {
                                                     ? file.name
                                                     : 'Click to browse, or drag your spreadsheet here'}
                                             </p>
-                                            <p className="mt-1.5 break-words text-sm text-slate-500 ">
+                                            <p className="mt-2 break-words text-sm leading-6 text-slate-500">
                                                 {file
                                                     ? `${formatFileSize(file.size)} — ${ACCEPTED_UPLOAD_FORMATS}`
                                                     : `Accepted formats: ${ACCEPTED_UPLOAD_FORMATS}`}
@@ -636,9 +637,9 @@ const BulkUpload = () => {
                                                 aria-valuemin={0}
                                                 aria-valuemax={100}
                                                 aria-label="Upload progress"
-                                                className="rounded-xl border border-blue-200 bg-blue-50 px-5 py-4 "
+                                                className="rounded-lg border border-blue-200 bg-blue-50 px-5 py-4"
                                             >
-                                                <div className="mb-2.5 flex items-center justify-between text-sm font-semibold text-blue-900 ">
+                                                <div className="mb-3 flex items-center justify-between text-sm font-semibold text-blue-900">
                                                     <span>
                                                         {uploadStage ? uploadStage : uploadProgress < 100
                                                             ? 'Uploading your spreadsheet…'
@@ -646,7 +647,7 @@ const BulkUpload = () => {
                                                     </span>
                                                     <span className="tabular-nums">{uploadProgress}%</span>
                                                 </div>
-                                                <div className="h-2 overflow-hidden rounded-full bg-blue-100 ">
+                                                <div className="h-2.5 overflow-hidden rounded-full bg-blue-100">
                                                     <div
                                                         className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-300"
                                                         style={{ width: `${uploadProgress}%` }}
@@ -657,18 +658,18 @@ const BulkUpload = () => {
 
                                         <UploadStatusBanner message={message} />
 
-                                        <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-900 ">
+                                        <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
                                             Current Academic Year: {currentAcademicYear || 'Loading…'}
                                         </div>
 
                                         <label className="block">
-                                            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 ">
+                                            <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
                                                 Academic Year
                                             </span>
                                             <select
                                                 value={academicYear}
                                                 onChange={(event) => setAcademicYear(event.target.value)}
-                                                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10 "
+                                                className="h-12 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
                                             >
                                                 {academicYears.map((year) => (
                                                     <option key={year} value={year}>{year}</option>
@@ -682,7 +683,7 @@ const BulkUpload = () => {
                                                 type="button"
                                                 onClick={() => fileInputRef.current?.click()}
                                                 disabled={uploading || parsing}
-                                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                                                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
                                             >
                                                 <FileText className="h-4 w-4" aria-hidden="true" />
                                                 Choose File
@@ -692,7 +693,7 @@ const BulkUpload = () => {
                                                 type="button"
                                                 onClick={resetSelection}
                                                 disabled={uploading || parsing || (!file && !preview)}
-                                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                                                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
                                             >
                                                 <RefreshCw className="h-4 w-4" aria-hidden="true" />
                                                 Reset
@@ -702,7 +703,7 @@ const BulkUpload = () => {
                                                 type="button"
                                                 onClick={handleUpload}
                                                 disabled={!canUpload}
-                                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                                                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                                             >
                                                 {uploading
                                                     ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -719,9 +720,9 @@ const BulkUpload = () => {
                                 <aside className="min-w-0 space-y-5">
 
                                     {/* Checklist */}
-                                    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ">
-                                        <div className="border-b border-slate-100 bg-slate-50 px-5 py-4 ">
-                                            <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-slate-700 ">
+                                    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
+                                        <div className="border-b border-slate-200 bg-slate-50 px-5 py-4">
+                                            <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-700">
                                                 Before You Upload
                                             </h2>
                                         </div>
@@ -745,9 +746,9 @@ const BulkUpload = () => {
                                     </div>
 
                                     {/* Optional columns info */}
-                                    <div className="overflow-hidden rounded-2xl border border-blue-200 bg-blue-50 ">
-                                        <div className="border-b border-blue-100 px-5 py-4 ">
-                                            <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.14em] text-blue-800 ">
+                                    <div className="overflow-hidden rounded-lg border border-blue-200 bg-blue-50 shadow-sm">
+                                        <div className="border-b border-blue-100 px-5 py-4">
+                                            <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.18em] text-blue-800">
                                                 <Info className="h-4 w-4" aria-hidden="true" />
                                                 Optional Columns
                                             </h2>
@@ -775,7 +776,7 @@ const BulkUpload = () => {
                                     </div>
 
                                     {/* Info tip */}
-                                    <div className="rounded-2xl border border-blue-200 bg-blue-50 px-5 py-4 ">
+                                    <div className="overflow-hidden rounded-lg border border-blue-200 bg-blue-50 px-5 py-4 shadow-sm">
                                         <div className="flex items-start gap-3">
                                             <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-600 " aria-hidden="true" />
                                             <p className="text-sm text-blue-900 ">
