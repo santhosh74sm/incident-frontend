@@ -2522,10 +2522,10 @@ const CreateIncident = () => {
                                                         <button
                                                             type="button"
                                                             onClick={() => openMetaModal('category')}
-                                                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                                                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                                         >
                                                             <PlusCircle className="h-4 w-4" />
-                                                            Add
+                                                            Add New
                                                         </button>
                                                     )}
 
@@ -2534,7 +2534,7 @@ const CreateIncident = () => {
                                                             type="button"
                                                             disabled={!selectedCategory}
                                                             onClick={() => openEditMetaModal('category', selectedCategory)}
-                                                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                                         >
                                                             <Pencil className="h-4 w-4" />
                                                             Edit
@@ -2557,7 +2557,7 @@ const CreateIncident = () => {
                                                                     );
                                                                 }
                                                             }}
-                                                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                                                         >
                                                             <Trash2 className="h-4 w-4" />
                                                             Remove
@@ -2638,10 +2638,10 @@ const CreateIncident = () => {
                                                         <button
                                                             type="button"
                                                             onClick={() => openMetaModal('location')}
-                                                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                                                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                                         >
                                                             <PlusCircle className="h-4 w-4" />
-                                                            Add
+                                                            Add New
                                                         </button>
                                                     )}
 
@@ -2657,7 +2657,7 @@ const CreateIncident = () => {
                                                                     openEditMetaModal('location', currentLocation);
                                                                 }
                                                             }}
-                                                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                                         >
                                                             <Pencil className="h-4 w-4" />
                                                             Edit
@@ -2680,7 +2680,7 @@ const CreateIncident = () => {
                                                                     );
                                                                 }
                                                             }}
-                                                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                                                         >
                                                             <Trash2 className="h-4 w-4" />
                                                             Remove
@@ -2842,18 +2842,7 @@ const CreateIncident = () => {
                                 title="Evidence & Attachments"
                                 description="Optional. Map each file to an evidence type before submitting."
                                 step={4}
-                                action={
-                                    isPrivilegedUser ? (
-                                        <button
-                                            type="button"
-                                            onClick={() => openMetaModal('evidence')}
-                                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:w-auto"
-                                        >
-                                            <PlusCircle className="h-4 w-4" />
-                                            Add New Evidence Type
-                                        </button>
-                                    ) : null
-                                }
+                                action={null}
                             >
                                 <div className="grid min-w-0 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
                                     {evidenceEntries.map((entry, index) => {
@@ -2880,7 +2869,7 @@ const CreateIncident = () => {
                                             </div>
 
                                             <div className="mt-4 space-y-3">
-                                                <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_auto_auto]">
+                                                <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_auto_auto_auto]">
                                                     <select
                                                         value={entry.evidenceType}
                                                         onChange={(event) => handleEvidenceTypeChange(index, event.target.value)}
@@ -2907,6 +2896,17 @@ const CreateIncident = () => {
                                                     {isPrivilegedUser && (
                                                         <button
                                                             type="button"
+                                                            onClick={() => openMetaModal('evidence')}
+                                                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                                        >
+                                                            <PlusCircle className="h-4 w-4" />
+                                                            Add New
+                                                        </button>
+                                                    )}
+
+                                                    {isPrivilegedUser && (
+                                                        <button
+                                                            type="button"
                                                             disabled={!entry.evidenceType}
                                                             onClick={() => {
                                                                 const currentType = evidenceTypes.find(
@@ -2916,7 +2916,7 @@ const CreateIncident = () => {
                                                                     openEditMetaModal('evidence', currentType);
                                                                 }
                                                             }}
-                                                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                                                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                                         >
                                                             <Pencil className="h-4 w-4" />
                                                             Edit
@@ -2939,7 +2939,7 @@ const CreateIncident = () => {
                                                                     );
                                                                 }
                                                             }}
-                                                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                                                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                                                         >
                                                             <Trash2 className="h-4 w-4" />
                                                             Remove
