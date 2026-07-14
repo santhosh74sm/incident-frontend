@@ -44,7 +44,7 @@ export const CHART_THEME = {
     label: 'var(--chart-label)',
 };
 
-const ChartTooltipContent = ({ active, payload, label, labelFormatter, valueFormatter }) => {
+export const ChartTooltipContent = ({ active, payload, label, labelFormatter, valueFormatter }) => {
     if (!active || !payload || payload.length === 0) return null;
 
     const formattedLabel = labelFormatter
@@ -52,18 +52,18 @@ const ChartTooltipContent = ({ active, payload, label, labelFormatter, valueForm
         : label || payload[0]?.payload?.fullDate || payload[0]?.payload?.name || payload[0]?.name || 'Details';
 
     return (
-        <div className="rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-xl backdrop-blur ">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 ">
+        <div className="max-w-[min(16rem,calc(100vw-2rem))] rounded-xl border border-slate-200 bg-white/95 px-2.5 py-2 shadow-xl backdrop-blur">
+            <p className="mb-1.5 break-words text-[11px] font-semibold uppercase leading-4 tracking-[0.14em] text-slate-500">
                 {formattedLabel}
             </p>
-            <div className="space-y-1.5">
+            <div className="space-y-1">
                 {payload.map((entry) => (
-                    <div key={`${entry.dataKey}-${entry.name}`} className="flex items-center justify-between gap-4 text-sm">
-                        <div className="flex items-center gap-2">
-                            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: entry.color || entry.fill }} />
-                            <span className="text-slate-600 ">{entry.name}</span>
+                    <div key={`${entry.dataKey}-${entry.name}`} className="flex items-start justify-between gap-3 text-[13px] leading-5">
+                        <div className="flex min-w-0 items-center gap-1.5">
+                            <span className="h-2 shrink-0 w-2 rounded-full" style={{ backgroundColor: entry.color || entry.fill }} />
+                            <span className="break-words text-slate-600">{entry.name}</span>
                         </div>
-                        <span className="font-semibold text-slate-900 ">
+                        <span className="shrink-0 text-right font-semibold text-slate-900">
                             {valueFormatter
                                 ? valueFormatter(entry.value, entry.name, entry.payload)
                                 : typeof entry.value === 'number'
@@ -77,11 +77,13 @@ const ChartTooltipContent = ({ active, payload, label, labelFormatter, valueForm
     );
 };
 
-export const ChartTooltip = ({ labelFormatter, valueFormatter, cursor = false }) => (
+export const ChartTooltip = ({ labelFormatter, valueFormatter, cursor = false, content = null }) => (
     <Tooltip
         cursor={cursor}
-        allowEscapeViewBox={{ x: true, y: true }}
-        content={<ChartTooltipContent labelFormatter={labelFormatter} valueFormatter={valueFormatter} />}
+        allowEscapeViewBox={{ x: false, y: false }}
+        offset={12}
+        wrapperStyle={{ zIndex: 20 }}
+        content={content || <ChartTooltipContent labelFormatter={labelFormatter} valueFormatter={valueFormatter} />}
     />
 );
 

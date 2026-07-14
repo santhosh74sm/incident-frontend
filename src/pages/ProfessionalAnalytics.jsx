@@ -10,7 +10,6 @@ import {
     Pie,
     PieChart,
     ResponsiveContainer,
-    Tooltip,
     XAxis,
     YAxis,
 } from 'recharts';
@@ -84,20 +83,20 @@ const AcademicYearStatusTooltip = ({ active, payload, label }) => {
     const row = payload[0]?.payload || {};
 
     return (
-        <div className="rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-xl backdrop-blur ">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 ">
+        <div className="max-w-[min(16rem,calc(100vw-2rem))] rounded-xl border border-slate-200 bg-white/95 px-2.5 py-2 shadow-xl backdrop-blur">
+            <p className="mb-1.5 break-words text-[11px] font-semibold uppercase leading-4 tracking-[0.14em] text-slate-500">
                 {row.academicYear || label || 'Academic Year'}
             </p>
-            <div className="space-y-1.5">
+            <div className="space-y-1">
                 {[
                     { label: 'Total Incidents', value: row.total, color: CHART_COLORS.neutralPrimary },
                     { label: 'Pending', value: row.pending || row.open, color: STATUS_COLORS.Pending },
                     { label: 'Closed', value: row.closed, color: STATUS_COLORS.Closed },
                 ].map((entry) => (
-                    <div key={entry.label} className="flex items-center justify-between gap-4 text-sm">
-                        <div className="flex items-center gap-2">
-                            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
-                            <span className="text-slate-600 ">{entry.label}</span>
+                    <div key={entry.label} className="flex items-start justify-between gap-3 text-[13px] leading-5">
+                        <div className="flex min-w-0 items-center gap-1.5">
+                            <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: entry.color }} />
+                            <span className="break-words text-slate-600">{entry.label}</span>
                         </div>
                         <span className="font-semibold text-slate-900 ">
                             {Number(entry.value || 0).toLocaleString('en-US')}
@@ -957,7 +956,7 @@ const ProfessionalAnalytics = () => {
                                                         <CartesianGrid strokeDasharray="3 3" stroke={CHART_THEME.grid} />
                                                         <XAxis dataKey="name" {...compactXAxisProps} />
                                                         <YAxis allowDecimals={false} domain={[0, (dataMax) => Math.max(1, dataMax)]} {...compactYAxisProps} />
-                                                        <Tooltip cursor={false} content={<AcademicYearStatusTooltip />} />
+                                                        <ChartTooltip cursor={false} content={<AcademicYearStatusTooltip />} />
                                                         <Bar dataKey="pending" stackId="academic-year-status" fill={STATUS_COLORS.Pending} name="Pending" radius={[0, 0, 0, 0]} maxBarSize={45} />
                                                         <Bar dataKey="closed" stackId="academic-year-status" fill={STATUS_COLORS.Closed} name="Closed" radius={[6, 6, 0, 0]} maxBarSize={45}>
                                                             <LabelList dataKey="total" position="top" className="fill-slate-600 text-xs font-semibold" />

@@ -7,11 +7,10 @@ import {
     CartesianGrid,
     LabelList,
     ResponsiveContainer,
-    Tooltip,
     XAxis,
     YAxis,
 } from 'recharts';
-import { CHART_THEME, ChartSurface, CompactXAxisTick, useCompactChart } from './DashboardPrimitives';
+import { CHART_THEME, ChartSurface, ChartTooltip, CompactXAxisTick, useCompactChart } from './DashboardPrimitives';
 import { CHART_COLORS, STATUS_COLORS } from '../../utils/analytics';
 
 const TrendChartTooltipContent = ({ active, payload, label }) => {
@@ -31,18 +30,18 @@ const TrendChartTooltipContent = ({ active, payload, label }) => {
     const closedPct = total > 0 ? Math.round((closed / total) * 100) : 0;
 
     return (
-        <div className="rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-xl backdrop-blur">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+        <div className="max-w-[min(16rem,calc(100vw-2rem))] rounded-xl border border-slate-200 bg-white/95 px-2.5 py-2 shadow-xl backdrop-blur">
+            <p className="mb-1.5 break-words text-[11px] font-semibold uppercase leading-4 tracking-[0.14em] text-slate-500">
                 {fullDate}
             </p>
-            <div className="space-y-1.5">
-                <div className="flex items-center justify-between gap-4 text-sm font-bold text-slate-900 border-b border-slate-100 pb-1">
+            <div className="space-y-1">
+                <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-1 text-[13px] font-bold leading-5 text-slate-900">
                     <span>Incident Count</span>
                     <span>{total.toLocaleString('en-US')}</span>
                 </div>
                 {isCreationTrend ? (
                     <>
-                        <div className="flex items-center justify-between gap-4 text-sm">
+                        <div className="flex items-center justify-between gap-3 text-[13px] leading-5">
                             <div className="flex items-center gap-2">
                                 <span className="h-2.5 w-2.5 rounded-full bg-slate-600" />
                                 <span className="text-slate-600 font-medium">New Incidents</span>
@@ -51,7 +50,7 @@ const TrendChartTooltipContent = ({ active, payload, label }) => {
                                 {created.toLocaleString('en-US')}
                             </span>
                         </div>
-                        <div className="flex items-center justify-between gap-4 text-sm pl-4">
+                        <div className="flex items-center justify-between gap-3 pl-3 text-[13px] leading-5">
                             <div className="flex items-center gap-2">
                                 <span className="h-2 w-2 rounded-full" style={{ backgroundColor: STATUS_COLORS.Pending }} />
                                 <span className="text-slate-500">Pending</span>
@@ -60,7 +59,7 @@ const TrendChartTooltipContent = ({ active, payload, label }) => {
                                 {pending.toLocaleString('en-US')} ({pendingPct}%)
                             </span>
                         </div>
-                        <div className="flex items-center justify-between gap-4 text-sm pl-4">
+                        <div className="flex items-center justify-between gap-3 pl-3 text-[13px] leading-5">
                             <div className="flex items-center gap-2">
                                 <span className="h-2 w-2 rounded-full" style={{ backgroundColor: STATUS_COLORS.Closed }} />
                                 <span className="text-slate-500">Closed</span>
@@ -72,7 +71,7 @@ const TrendChartTooltipContent = ({ active, payload, label }) => {
                     </>
                 ) : (
                     <>
-                        <div className="flex items-center justify-between gap-4 text-sm">
+                        <div className="flex items-center justify-between gap-3 text-[13px] leading-5">
                             <div className="flex items-center gap-2">
                                 <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: STATUS_COLORS.Pending }} />
                                 <span className="text-slate-600 font-medium">Pending</span>
@@ -81,7 +80,7 @@ const TrendChartTooltipContent = ({ active, payload, label }) => {
                                 {pending.toLocaleString('en-US')} ({pendingPct}%)
                             </span>
                         </div>
-                        <div className="flex items-center justify-between gap-4 text-sm">
+                        <div className="flex items-center justify-between gap-3 text-[13px] leading-5">
                             <div className="flex items-center gap-2">
                                 <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: STATUS_COLORS.Closed }} />
                                 <span className="text-slate-600 font-medium">Closed</span>
@@ -97,13 +96,7 @@ const TrendChartTooltipContent = ({ active, payload, label }) => {
     );
 };
 
-const TrendChartTooltip = ({ cursor }) => (
-    <Tooltip
-        cursor={cursor}
-        allowEscapeViewBox={{ x: true, y: true }}
-        content={<TrendChartTooltipContent />}
-    />
-);
+const TrendChartTooltip = ({ cursor }) => <ChartTooltip cursor={cursor} content={<TrendChartTooltipContent />} />;
 
 const getXAxisInterval = (len) => {
     if (len <= 10) return 0;
