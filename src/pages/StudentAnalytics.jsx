@@ -58,7 +58,6 @@ import {
     buildIssuedLetterFilterParams,
     buildStatusTrendSeries,
     CHART_COLORS,
-    formatShare,
     formatProgressLogForExport,
     formatShortDate,
     getIncidentTimestamp,
@@ -488,10 +487,7 @@ const StudentAnalytics = () => {
                 { name: 'Pending', value: pending, color: STATUS_COLORS.Pending },
                 { name: 'Closed', value: closed, color: STATUS_COLORS.Closed },
             ],
-            letterSummaryData: [
-                { name: 'Generated', value: generatedLetters, color: '#10b981' },
-                { name: 'Pending', value: pendingLetters, color: CHART_COLORS.pending },
-            ],
+
             categoryData: buildDistribution(filteredIncidentSet, (incident) => incident.category || 'Uncategorized', 'category'),
             locationData: locationDistribution,
             evidenceData: buildEvidenceDistribution(filteredIncidentSet),
@@ -852,11 +848,7 @@ const StudentAnalytics = () => {
         { key: 'created', label: 'New Incidents' },
     ];
 
-    const letterSummaryColumns = [
-        { key: 'name', label: 'Letter Status' },
-        { key: 'value', label: 'Count' },
-        { key: 'share', label: 'Share' },
-    ];
+
 
     const categoryColumns = [
         { key: 'category', label: 'Category' },
@@ -873,10 +865,7 @@ const StudentAnalytics = () => {
         { key: 'count', label: 'Count' },
     ];
 
-    const letterSummaryRows = studentAnalytics.letterSummaryData.map((entry) => ({
-        ...entry,
-        share: formatShare(entry.value, studentAnalytics.total),
-    }));
+
 
     const directoryFilterLabels = [
         academicYear && academicYear !== currentAcademicYear ? `Year: ${academicYear}` : null,
@@ -1374,44 +1363,52 @@ const StudentAnalytics = () => {
                                             />
 
                                             <DashboardWidgetPanel
-                                                title="Letter Status"
-                                                description="Letters generated versus letters still pending for this student."
-                                                icon={Mail}
+                                                title="Evidence Distribution"
+                                                description="Types of evidence files associated with this student's recorded incidents."
+                                                icon={ShieldCheck}
                                                 chart={
-                                                    <ChartSurface height={240}>
-                                                <ResponsiveContainer width="100%" height="100%" minWidth={1}>
-                                                        <PieChart>
-                                                            <Pie
-                                                                data={studentAnalytics.letterSummaryData}
-                                                                dataKey="value"
-                                                                nameKey="name"
-                                                                innerRadius={62}
-                                                                outerRadius={92}
-                                                                paddingAngle={4}
-                                                            >
-                                                                {studentAnalytics.letterSummaryData.map((entry) => (
-                                                                    <Cell key={entry.name} fill={entry.color} />
-                                                                ))}
-                                                            </Pie>
-                                                            <ChartTooltip />
-                                                        </PieChart>
-                                                    </ResponsiveContainer>
-
-                                                    </ChartSurface>
-                                                }
-                                                footer={
-                                                    <LegendList
-                                                        items={studentAnalytics.letterSummaryData.map((entry) => ({
-                                                            label: entry.name,
-                                                            value: entry.value,
-                                                            color: entry.color,
-                                                        }))}
-                                                    />
-                                                }
-                                                tableColumns={letterSummaryColumns}
-                                                tableRows={letterSummaryRows}
-                                                emptyMessage="No letter issuance data is available for the current filters."
-                                            />
+                                                    studentAnalytics.evidenceData.length === 0 ? (
+                                                        <EmptyStatePanel title="No evidence data." description="No evidence records are available for the current filters." />
+                                                     ) : (
+                                                         <ChartSurface height={240}>
+                                                         <ResponsiveContainer width="100%" height="100%" minWidth={1}>
+                                                             <PieChart>
+                                                                 <Pie
+                                                                     data={studentAnalytics.evidenceData.slice(0, 6)}
+                                                                     dataKey="count"
+                                                                     nameKey="name"
+                                                                     innerRadius={54}
+                                                                     outerRadius={88}
+                                                                     paddingAngle={4}
+                                                                 >
+                                                                     {studentAnalytics.evidenceData.slice(0, 6).map((entry, index) => (
+                                                                         <Cell
+                                                                             key={entry.name}
+                                                                             fill={[CHART_COLORS.evidence, STATUS_COLORS['In Progress'], STATUS_COLORS.Closed, STATUS_COLORS.Open, CHART_COLORS.category, CHART_COLORS.neutralPrimary][index % 6]}
+                                                                         />
+                                                                     ))}
+                                                                 </Pie>
+                                                                 <ChartTooltip />
+                                                             </PieChart>
+                                                         </ResponsiveContainer>
+                                                         </ChartSurface>
+                                                     )
+                                                 }
+                                                 footer={
+                                                     studentAnalytics.evidenceData.length > 0 ? (
+                                                         <LegendList
+                                                             items={studentAnalytics.evidenceData.slice(0, 6).map((entry, index) => ({
+                                                                 label: entry.name,
+                                                                 value: entry.count,
+                                                                 color: [CHART_COLORS.evidence, STATUS_COLORS.Closed, STATUS_COLORS.Pending, CHART_COLORS.category, CHART_COLORS.neutralPrimary][index % 5],
+                                                             }))}
+                                                         />
+                                                     ) : null
+                                                 }
+                                                 tableColumns={evidenceColumns}
+                                                 tableRows={studentAnalytics.evidenceData}
+                                                 emptyMessage="No evidence data is available for the current filters."
+                                             />
 
                                             <DashboardWidgetPanel
                                                 title="Where Incidents Occurred"
@@ -1448,6 +1445,7 @@ const StudentAnalytics = () => {
                                             />
 
                                             <DashboardWidgetPanel
+                                                className="lg:col-span-2"
                                                 title="Incidents by Type"
                                                 description="Most frequent incident categories involving this student."
                                                 icon={FileText}
@@ -1477,47 +1475,6 @@ const StudentAnalytics = () => {
                                                 tableColumns={categoryColumns}
                                                 tableRows={studentAnalytics.categoryData}
                                                 emptyMessage="No category data is available for the current filters."
-                                            />
-
-                                            <DashboardWidgetPanel
-                                                className="lg:col-span-2"
-                                                title="Evidence Records"
-                                                description="Types of evidence captured across this student's incident history."
-                                                icon={ShieldCheck}
-                                                chart={
-                                                    studentAnalytics.evidenceData.length === 0 ? (
-                                                        <EmptyStatePanel title="No evidence distribution." description="There are no evidence records for the current filters." />
-                                                    ) : (
-                                                        <ChartSurface height={280}>
-                                                <ResponsiveContainer width="100%" height="100%" minWidth={1}>
-                                                            <BarChart data={studentAnalytics.evidenceData.slice(0, 8)} margin={horizontalBarMargin}>
-                                                                <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" vertical={false} />
-                                                                <XAxis dataKey="name" axisLine={false} tickLine={false} {...compactXAxisProps} />
-                                                                <YAxis tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} domain={[0, (dataMax) => Math.max(1, dataMax)]} />
-                                                                <ChartTooltip />
-                                                                <Bar dataKey="count" fill={CHART_COLORS.evidence} radius={[6, 6, 0, 0]} name="Evidence Count" maxBarSize={45}>
-                                                                    <LabelList dataKey="count" position="top" fill={CHART_THEME.label} fontSize={12} />
-                                                                </Bar>
-                                                            </BarChart>
-                                                        </ResponsiveContainer>
- 
-                                                        </ChartSurface>
-                                                    )
-                                                }
-                                                footer={
-                                                    studentAnalytics.evidenceData.length > 0 ? (
-                                                        <LegendList
-                                                            items={studentAnalytics.evidenceData.slice(0, 6).map((entry, index) => ({
-                                                                label: entry.name,
-                                                                value: entry.count,
-                                                                color: [CHART_COLORS.evidence, CHART_COLORS.category, STATUS_COLORS.Closed, STATUS_COLORS.Open, CHART_COLORS.location, STATUS_COLORS['In Progress']][index % 6],
-                                                            }))}
-                                                        />
-                                                    ) : null
-                                                }
-                                                tableColumns={evidenceColumns}
-                                                tableRows={studentAnalytics.evidenceData}
-                                                emptyMessage="No evidence data is available for the current filters."
                                             />
                                         </div>
 
