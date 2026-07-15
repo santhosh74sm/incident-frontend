@@ -102,6 +102,8 @@ const IncidentList = () => {
     const [serverSummary, setServerSummary] = useState({ total: 0, pending: 0, closed: 0, highPriority: 0, unread: 0 });
     const pageSize = 18;
     const incidentRequestRef = useRef({ controller: null, id: 0 });
+    const filterMetadataRef = useRef({ userId: '', data: null });
+    const hasLoadedIncidentsRef = useRef(false);
 
     const config = useMemo(() => ({ headers: {} }), []);
     const userId = getRecordId(user);
@@ -210,6 +212,7 @@ const IncidentList = () => {
             setError(requestError.response?.data?.message || 'Failed to load incidents.');
         } finally {
             if (isCurrentRequest()) {
+                hasLoadedIncidentsRef.current = true;
                 setLoading(false);
             }
         }
@@ -223,12 +226,22 @@ const IncidentList = () => {
         if (!userId) return;
         try {
             const studentFilterConfig = academicYear ? { ...config, params: { academicYear } } : config;
-            const [staffRes, categoriesRes, studentsRes, yearRes] = await Promise.all([
-                apiClient.get('/api/auth/users', config).catch(() => ({ data: [] })),
-                apiClient.get('/api/incidents/categories', config).catch(() => ({ data: [] })),
-                apiClient.get('/api/students/filters', studentFilterConfig).catch(() => ({ data: {} })),
-                apiClient.get('/api/auth/academic-years', config).catch(() => ({ data: {} })),
-            ]);
+            let metadata = filterMetadataRef.current;
+            if (metadata.userId !== userId || !metadata.data) {
+                const [staffRes, categoriesRes, yearRes] = await Promise.all([
+                    apiClient.get('/api/auth/users', config).catch(() => ({ data: [] })),
+                    apiClient.get('/api/incidents/categories', config).catch(() => ({ data: [] })),
+                    apiClient.get('/api/auth/academic-years', config).catch(() => ({ data: {} })),
+                ]);
+                metadata = {
+                    userId,
+                    data: { staffRes, categoriesRes, yearRes },
+                };
+                filterMetadataRef.current = metadata;
+            }
+
+            const studentsRes = await apiClient.get('/api/students/filters', studentFilterConfig).catch(() => ({ data: {} }));
+            const { staffRes, categoriesRes, yearRes } = metadata.data;
 
             const categories = Array.isArray(categoriesRes.data)
                 ? categoriesRes.data.map((item) => (typeof item === 'string' ? item : item?.name)).filter(Boolean)
@@ -363,7 +376,7 @@ const IncidentList = () => {
         setReadStatusFilter('All');
     }, [currentAcademicYear]);
 
-    if (loading && incidents.length === 0) {
+    if (loading && !hasLoadedIncidentsRef.current) {
         return (
             <div className="flex bg-[#f6f8fc] text-slate-800 ">
                 <div className="flex min-w-0 flex-1 flex-col">
@@ -643,7 +656,7 @@ const IncidentList = () => {
                                         allCount={summary.total}
                                         source={{ page: 'IncidentList', filteredCount: filteredIncidents.length }}
                                         addToast={addToast}
-                                        onComplete={() => fetchIncidents({ reset: true })}
+                                        onComplete={() => fetchIncidents()}
                                     />
                                 ) : null}
                             >

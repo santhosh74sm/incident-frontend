@@ -142,6 +142,8 @@ const StudentAnalytics = () => {
     const [academicYears, setAcademicYears] = useState([]);
     const [locationDistribution, setLocationDistribution] = useState([]);
     const studentDirectoryRequestRef = useRef(0);
+    const filterMetadataRef = useRef({ userId: '', data: null });
+    const hasLoadedStudentsRef = useRef(false);
     const compactXAxisProps = useMemo(
         () => ({
             height: compactChart ? 72 : 55,
@@ -186,13 +188,23 @@ const StudentAnalytics = () => {
         try {
             const config = academicYear ? { params: { academicYear, status: studentStatus } } : { params: { status: studentStatus } };
             const staticConfig = {};
-            const [studentsRes, categoriesRes, locationsRes, evidenceRes, yearsRes] = await Promise.all([
-                apiClient.get('/api/students/filters', config).catch(() => ({ data: {} })),
-                apiClient.get('/api/incidents/categories', staticConfig).catch(() => ({ data: [] })),
-                apiClient.get('/api/incidents/locations', { ...staticConfig, params: { includeUnknown: true } }).catch(() => ({ data: [] })),
-                apiClient.get('/api/evidence-types', { ...staticConfig, params: { includeUnknown: true } }).catch(() => ({ data: [] })),
-                apiClient.get('/api/auth/academic-years', staticConfig).catch(() => ({ data: {} })),
-            ]);
+            let metadata = filterMetadataRef.current;
+            if (metadata.userId !== user._id || !metadata.data) {
+                const [categoriesRes, locationsRes, evidenceRes, yearsRes] = await Promise.all([
+                    apiClient.get('/api/incidents/categories', staticConfig).catch(() => ({ data: [] })),
+                    apiClient.get('/api/incidents/locations', { ...staticConfig, params: { includeUnknown: true } }).catch(() => ({ data: [] })),
+                    apiClient.get('/api/evidence-types', { ...staticConfig, params: { includeUnknown: true } }).catch(() => ({ data: [] })),
+                    apiClient.get('/api/auth/academic-years', staticConfig).catch(() => ({ data: {} })),
+                ]);
+                metadata = {
+                    userId: user._id,
+                    data: { categoriesRes, locationsRes, evidenceRes, yearsRes },
+                };
+                filterMetadataRef.current = metadata;
+            }
+
+            const studentsRes = await apiClient.get('/api/students/filters', config).catch(() => ({ data: {} }));
+            const { categoriesRes, locationsRes, evidenceRes, yearsRes } = metadata.data;
 
             const nextYears = yearsRes.data?.academicYears || [];
             setAcademicYears(nextYears);
@@ -289,6 +301,7 @@ const StudentAnalytics = () => {
             }
         } finally {
             if (isCurrentRequest()) {
+                if (academicYear) hasLoadedStudentsRef.current = true;
                 setLoading(false);
             }
         }
@@ -704,7 +717,7 @@ const StudentAnalytics = () => {
         );
     };
 
-    if (loading && !selectedStudent && students.length === 0) {
+    if (loading && !hasLoadedStudentsRef.current) {
         return (
             <div className="flex min-h-screen bg-slate-100 ">
                 <div className="flex min-w-0 flex-1 flex-col">

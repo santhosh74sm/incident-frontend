@@ -159,6 +159,9 @@ const ProfessionalAnalytics = () => {
     const [academicYears, setAcademicYears] = useState([]);
     const [letterStatusMap, setLetterStatusMap] = useState({});
     const analyticsRequestRef = useRef({ controller: null, id: 0 });
+    const filterMetadataRef = useRef({ userId: '', data: null });
+    const staffMetadataRef = useRef({ userId: '', data: null });
+    const loadedDetailsQueryRef = useRef('');
     const config = useMemo(() => ({ headers: {} }), []);
     const compactXAxisProps = useMemo(
         () => ({
@@ -297,13 +300,23 @@ const ProfessionalAnalytics = () => {
 
         try {
             const studentFilterConfig = academicYear ? { ...config, params: { academicYear } } : config;
-            const [studentsRes, categoriesRes, locationsRes, evidenceRes, yearsRes] = await Promise.all([
-                apiClient.get('/api/students/filters', studentFilterConfig),
-                apiClient.get('/api/incidents/categories', config),
-                apiClient.get('/api/incidents/locations', { ...config, params: { includeUnknown: true } }),
-                apiClient.get('/api/evidence-types', { ...config, params: { includeUnknown: true } }),
-                apiClient.get('/api/auth/academic-years', config),
-            ]);
+            let metadata = filterMetadataRef.current;
+            if (metadata.userId !== user._id || !metadata.data) {
+                const [categoriesRes, locationsRes, evidenceRes, yearsRes] = await Promise.all([
+                    apiClient.get('/api/incidents/categories', config),
+                    apiClient.get('/api/incidents/locations', { ...config, params: { includeUnknown: true } }),
+                    apiClient.get('/api/evidence-types', { ...config, params: { includeUnknown: true } }),
+                    apiClient.get('/api/auth/academic-years', config),
+                ]);
+                metadata = {
+                    userId: user._id,
+                    data: { categoriesRes, locationsRes, evidenceRes, yearsRes },
+                };
+                filterMetadataRef.current = metadata;
+            }
+
+            const studentsRes = await apiClient.get('/api/students/filters', studentFilterConfig);
+            const { categoriesRes, locationsRes, evidenceRes, yearsRes } = metadata.data;
 
             const nextYears = yearsRes.data?.academicYears || [];
             setAcademicYears(nextYears);
@@ -333,10 +346,16 @@ const ProfessionalAnalytics = () => {
         if (!user?._id) return;
 
         try {
+            if (staffMetadataRef.current.userId === user._id && staffMetadataRef.current.data) {
+                setStaffList(staffMetadataRef.current.data);
+                return;
+            }
             const { data } = await apiClient.get('/api/auth/users', config);
             // Keep ALL users in staffList (role info needed for filter logic);
             // admins are excluded from the dropdown via allStaffOptions.
-            setStaffList(Array.isArray(data) ? data : []);
+            const nextStaff = Array.isArray(data) ? data : [];
+            staffMetadataRef.current = { userId: user._id, data: nextStaff };
+            setStaffList(nextStaff);
         } catch {
             setStaffList([]);
         }
@@ -359,21 +378,40 @@ const ProfessionalAnalytics = () => {
 
     useEffect(() => {
         if (activeTab !== 'details' || !serverAnalytics) return;
+        const detailsQueryKey = buildRequestParams().toString();
+        if (loadedDetailsQueryRef.current === detailsQueryKey) return;
+
+        let mounted = true;
         setDetailsLoading(true);
-        fetchAnalyticsDetails({ fetchAll: true, limit: 100 })
-            .catch(async () => {
+        const loadDetails = async () => {
+            try {
+                const payload = await fetchAnalyticsDetails({ fetchAll: true, limit: 100, updateState: false });
+                if (!mounted) return;
+                setIncidents(payload.data);
+                setLetterStatusMap(payload.letterStatusMap);
+                loadedDetailsQueryRef.current = detailsQueryKey;
+            } catch {
                 try {
                     const params = buildRequestParams();
                     const { data } = await apiClient.get('/api/incidents', { ...config, params });
+                    if (!mounted) return;
                     setIncidents(Array.isArray(data) ? data : []);
                 } catch {
+                    if (!mounted) return;
                     setIncidents([]);
                 }
+                if (!mounted) return;
                 setLetterStatusMap({});
-            })
-            .finally(() => {
-                setDetailsLoading(false);
-            });
+                loadedDetailsQueryRef.current = detailsQueryKey;
+            } finally {
+                if (mounted) setDetailsLoading(false);
+            }
+        };
+
+        void loadDetails();
+        return () => {
+            mounted = false;
+        };
     }, [activeTab, buildRequestParams, config, fetchAnalyticsDetails, serverAnalytics]);
 
     const filteredIncidents = useMemo(() => incidents, [incidents]);
