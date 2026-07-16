@@ -190,7 +190,7 @@
   }
 
   .analytics-table-scroll {
-    @apply max-h-[70vh] overflow-auto overscroll-contain [-webkit-overflow-scrolling:touch];
+    @apply max-h-[70vh] overflow-auto overscroll-contain;
     scrollbar-width: thin;
   }
 
@@ -667,8 +667,7 @@
   }
 
   .analytics-table-native .analytics-table-scroll {
-    @apply block max-h-none overflow-x-auto overflow-y-auto overscroll-x-contain pb-2;
-    touch-action: auto;
+    @apply block max-h-none overflow-x-auto overflow-y-hidden overscroll-x-contain pb-2;
   }
 
   .analytics-table-native .analytics-table {
@@ -752,8 +751,10 @@
 /* Keep horizontal regions responsible for horizontal swipes while preserving normal vertical page scrolling. */
 :where([class~="overflow-x-auto"], [class~="overflow-auto"]) {
   overscroll-behavior-x: contain;
-  touch-action: auto;
-  -webkit-overflow-scrolling: touch;
+}
+
+:where([class~="overflow-x-auto"]) {
+  overflow-y: hidden;
 }
 
 @keyframes analytics-shimmer {

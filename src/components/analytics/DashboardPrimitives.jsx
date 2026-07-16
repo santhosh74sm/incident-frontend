@@ -443,7 +443,7 @@ export const CategoryHeatmap = ({ rows = [], columns = [] }) => {
 
     return (
         <div className="space-y-3">
-            <div className="-mx-1 max-w-full overflow-x-auto overscroll-x-contain px-1 pb-1 [-webkit-overflow-scrolling:touch]">
+            <div className="-mx-1 max-w-full overflow-x-auto overscroll-x-contain px-1 pb-1">
                 <div className="inline-block min-w-[480px] max-w-none md:min-w-0 md:max-w-full">
                     <div className={`grid gap-3`} style={{ gridTemplateColumns: `minmax(120px, 1.2fr) repeat(${columns.length}, minmax(72px, 1fr))` }}>
                         <div />
