@@ -548,7 +548,7 @@
   }
 
   .school-analytics .analytics-table-shell {
-    @apply overflow-x-auto;
+    @apply overflow-hidden;
   }
 
   .school-analytics .analytics-table-scroll {
@@ -748,6 +748,13 @@
 }
 
 /* ── Keyframes ──────────────────────────────────────────────────────────────── */
+
+/* Keep horizontal regions responsible for horizontal swipes while preserving normal vertical page scrolling. */
+:where([class~="overflow-x-auto"], [class~="overflow-auto"]) {
+  overscroll-behavior-x: contain;
+  touch-action: pan-x pan-y pinch-zoom;
+  -webkit-overflow-scrolling: touch;
+}
 
 @keyframes analytics-shimmer {
   0%   { background-position: -200% 0; }
