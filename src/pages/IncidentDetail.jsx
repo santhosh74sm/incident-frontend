@@ -10,11 +10,9 @@ import {
     Activity,
     AlertTriangle,
     ArrowLeft,
-    Calendar,
-    Check,
+        Check,
     CheckCircle,
     ChevronDown,
-    Clock,
     Download,
     ExternalLink,
     FileImage,
@@ -23,16 +21,13 @@ import {
     Loader2,
     Lock,
     Mail,
-    MapPin,
-    MessageSquare,
+        MessageSquare,
     Plus,
     PlusCircle,
     ShieldAlert,
-    ShieldCheck,
     Trash2,
     UploadCloud,
-    UserCheck,
-    UserPlus,
+        UserPlus,
     Users,
     X,
     Zap,
@@ -41,7 +36,7 @@ import {
     DashboardPanel,
     EmptyStatePanel,
 } from '../components/analytics/DashboardPrimitives';
-import { formatShortDate, formatShortDateTime, getIncidentTimestamp, resolveHandlerLabel, formatDisplayValue, resolveUserLabel } from '../utils/analytics';
+import { formatShortDateTime, getIncidentTimestamp, resolveHandlerLabel, formatDisplayValue, resolveUserLabel, resolveIncidentPriorityForExport } from '../utils/analytics';
 import {
     migrateIncidentStorageForUser,
     readUserList,
@@ -56,8 +51,7 @@ const STATUS_STYLES = {
     Pending: { badge: 'border-orange-200 bg-orange-50 text-orange-700', tone: 'amber' },
     Closed: { badge: 'border-emerald-200 bg-emerald-50 text-emerald-700', tone: 'emerald' },
 };
-const FIELD_CARD_CLASS =
-    'incident-field-card rounded-lg border border-slate-200 bg-slate-50/70 p-4 shadow-sm shadow-slate-200/30 ';
+
 
 const getStatusStyle = (status) =>
     STATUS_STYLES[status] || { badge: 'border-slate-200 bg-slate-50 text-slate-700', tone: 'slate' };
@@ -256,49 +250,6 @@ const EvidenceFilePreview = ({ src, alt }) => {
     );
 };
 
-const DetailField = ({ icon: Icon, label, value, helper = null, action = null }) => (
-    <div className={FIELD_CARD_CLASS}>
-        <div className="flex items-start gap-3">
-            {Icon ? (
-                <div className="rounded-lg bg-white p-2 text-slate-500 shadow-sm shadow-slate-200/60 ">
-                    <Icon size={16} />
-                </div>
-            ) : null}
-            <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium text-slate-500">{label}</p>
-                <div className="mt-1.5 text-sm font-semibold text-slate-950 ">{value || 'N/A'}</div>
-                {helper ? <p className="mt-1 text-sm text-slate-500">{helper}</p> : null}
-            </div>
-            {action}
-        </div>
-    </div>
-);
-
-const TimelineStep = ({ step, isLast }) => {
-    const Icon = step.icon || Activity;
-    return (
-        <div className="flex gap-4">
-            <div className="flex flex-col items-center">
-                <div className={`flex h-9 w-9 items-center justify-center rounded-full ${step.surfaceClass}`}>
-                    <Icon size={16} className={step.iconClass} />
-                </div>
-                {!isLast ? <div className="mt-2 h-full min-h-[46px] w-px bg-slate-200 " /> : null}
-            </div>
-            <div className="flex-1 pb-5">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                        <p className="text-sm font-bold text-slate-950 ">{step.label}</p>
-                        {step.note ? <p className="mt-1 text-sm text-slate-500">{step.note}</p> : null}
-                    </div>
-                    <span className="text-xs font-medium text-slate-500">
-                        {formatShortDateTime(step.time)}
-                    </span>
-                </div>
-            </div>
-        </div>
-    );
-};
-
 const IncidentDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -339,8 +290,9 @@ const IncidentDetail = () => {
     const deleteInFlightRef = useRef(false);
     const markedIncidentReadRef = useRef('');
     const userId = getRecordId(user);
-    const detailSectionRefs = useRef({});
-    const [activeDetailSection, setActiveDetailSection] = useState('overview');
+    const [activeDetailSection, setActiveDetailSection] = useState('evidence');
+    const activeTab = activeDetailSection;
+    const setActiveTab = setActiveDetailSection;
 
     const fetchFieldOptions = useCallback(async () => {
         try {
@@ -860,35 +812,7 @@ const IncidentDetail = () => {
         return false;
     }, [incident, user]);
 
-    const timelineData = useMemo(() => {
-        if (!incident) return [];
-        const status = incident.status || 'Pending';
-        const steps = [];
-        const openedTime = getIncidentTimestamp(incident);
-        if (openedTime) {
-            steps.push({
-                label: 'Incident Registered', time: openedTime,
-                note: 'Manual timeline date is used as the primary opened timestamp for this case.',
-                icon: Activity, surfaceClass: 'bg-blue-50', iconClass: 'text-blue-600',
-            });
-        }
-        const progressTime = incident.inProgressAt || incident.progressAt;
-        if (progressTime) {
-            steps.push({
-                label: 'Active Investigation', time: progressTime,
-                note: 'The case moved into active handling.',
-                icon: Clock, surfaceClass: 'bg-blue-50', iconClass: 'text-blue-600',
-            });
-        }
-        if (incident.closedAt && status === 'Closed') {
-            steps.push({
-                label: 'Case Closed', time: incident.closedAt,
-                note: incident.actionTaken || 'The case was finalized and closed.',
-                icon: CheckCircle, surfaceClass: 'bg-emerald-50', iconClass: 'text-emerald-600',
-            });
-        }
-        return steps;
-    }, [incident]);
+    
 
     const studentNames = useMemo(() => {
         if (incident?.studentDetails?.name) return incident.studentDetails.name;
@@ -915,20 +839,13 @@ const IncidentDetail = () => {
         incident?.status !== 'Closed'
     );
     const detailTabs = useMemo(() => ([
-        { key: 'overview', label: 'Overview', count: 0, icon: ShieldCheck },
         { key: 'evidence', label: 'Evidence', count: evidenceAssets.length, icon: FileImage },
-        { key: 'progress', label: 'Progress', count: progressLogs.length, icon: Activity },
-        { key: 'letters', label: 'Letters', count: incident?.letterGenerated || generatedLetter ? 1 : 0, icon: Mail },
-        { key: 'notes', label: 'Notes', count: progressLogs.length, icon: MessageSquare },
-        { key: 'actionLog', label: 'Action Log', count: timelineData.length, icon: Clock },
-    ]), [evidenceAssets.length, generatedLetter, incident?.letterGenerated, progressLogs.length, timelineData.length]);
-    const scrollToDetailSection = useCallback((sectionKey) => {
-        setActiveDetailSection(sectionKey);
-        detailSectionRefs.current[sectionKey]?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start',
-        });
-    }, []);
+        { key: 'notes', label: 'Progress Updates', count: progressLogs.length, icon: MessageSquare },
+        { key: 'assignment', label: 'Handler', icon: UserPlus },
+        { key: 'closure', label: 'Closure', icon: Lock },
+        canManageIncident ? { key: 'letters', label: 'Letters', count: incident?.letterGenerated || generatedLetter ? 1 : 0, icon: Mail } : null,
+    ].filter(Boolean)), [canManageIncident, evidenceAssets.length, generatedLetter, incident?.letterGenerated, progressLogs.length]);
+    
 
     if (loading && !incident) {
         return (
@@ -960,335 +877,326 @@ const IncidentDetail = () => {
     }
 
     return (
-        <div className="incident-workspace w-full min-w-0 bg-[#f6f8fc] p-3 text-slate-800 sm:p-4 lg:p-6">
-            <div className="mx-auto max-w-[1680px] space-y-4">
-                        <section className="incident-hero space-y-4 rounded-lg border border-slate-200 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] sm:p-5">
-                            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                                <div className="min-w-0">
-                                    <nav className="mb-4 flex flex-wrap items-center gap-2 text-sm font-medium text-slate-500" aria-label="Breadcrumb">
-                                        <button type="button" onClick={() => navigate('/incidents')} className="inline-flex items-center gap-1 text-blue-600 transition hover:text-blue-700">
-                                            <Activity size={14} /> All Incidents
-                                        </button>
-                                        <span aria-hidden="true">/</span>
-                                        <span className="text-slate-800 ">Incident Details</span>
-                                    </nav>
-                                    <span className={`inline-flex rounded-md border px-2.5 py-1 text-xs font-bold uppercase ${statusStyle.badge}`}>
+        <div className="incident-workspace w-full min-w-0 bg-[#f6f8fc] text-slate-800 pb-6">
+            {/* Desktop Quick Header */}
+            <div className="bg-white border-b border-slate-200 px-6 py-4">
+                <div className="mx-auto max-w-[1680px] flex items-center justify-between">
+                    {/* Breadcrumbs */}
+                    <nav className="flex items-center gap-2 text-sm font-semibold text-slate-500" aria-label="Breadcrumb">
+                        <button type="button" onClick={() => navigate('/incidents')} className="inline-flex items-center gap-1.5 text-slate-500 hover:text-indigo-600 transition">
+                            Incidents
+                        </button>
+                        <span aria-hidden="true" className="text-slate-400">/</span>
+                        <span className="text-slate-800">Incident Detail</span>
+                    </nav>
+
+                    {/* Actions Row */}
+                    <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={() => navigate('/incidents')}
+                            className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition shadow-sm"
+                        >
+                            <ArrowLeft size={14} />
+                            <span>Back</span>
+                        </button>
+                        {incident.status !== 'Closed' && canManageIncident && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setDescriptionDraft(incident.description || '');
+                                    setDescriptionEditing(true);
+                                }}
+                                className="inline-flex h-9 items-center gap-2 rounded-lg border border-indigo-200 bg-white px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50 transition shadow-sm"
+                            >
+                                <FileText size={14} />
+                                <span>Edit</span>
+                            </button>
+                        )}
+                        <button
+                            type="button"
+                            onClick={handleExportReport}
+                            disabled={isExporting}
+                            className="inline-flex h-9 items-center gap-2 rounded-lg border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 transition shadow-sm disabled:opacity-60"
+                        >
+                            {isExporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                            <span>Export</span>
+                        </button>
+                        {isAdminUser && (
+                            <button
+                                type="button"
+                                onClick={handleDelete}
+                                disabled={isDeleting}
+                                className="inline-flex h-9 items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition shadow-sm disabled:opacity-60"
+                            >
+                                {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                                <span>Delete</span>
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            <div className="mx-auto max-w-[1680px] p-4 lg:p-6 space-y-6">
+                
+                {/* ALERTS */}
+                {showRejectionAlert && (
+                    <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm">
+                        <div className="flex items-start gap-3">
+                            <div className="rounded-lg bg-white p-2 text-red-600 shadow-sm"><ShieldAlert size={18} /></div>
+                            <div>
+                                <p className="font-bold text-red-800">Re-investigation Required</p>
+                                <p className="mt-1 text-sm text-red-700 leading-relaxed">{incident.rejectionReason}</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                {showClosureRequestedAlert && (
+                    <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
+                        <div className="flex items-start gap-3">
+                            <div className="rounded-lg bg-white p-2 text-amber-600 shadow-sm"><Zap size={18} /></div>
+                            <div>
+                                <p className="font-bold text-amber-800">Closure Request Pending</p>
+                                <p className="mt-1 text-sm text-amber-700 leading-relaxed">
+                                    The assigned handler has requested final closure. Admin review is still required.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* THE UNIFIED TOP SUMMARY BANNER CARD */}
+                <section className="rounded-xl border border-slate-200 bg-white p-5 lg:p-6 shadow-sm space-y-5">
+                    {/* Row 1: Profile & Status */}
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 border border-slate-200">
+                                <Users size={24} />
+                            </div>
+                            <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2.5">
+                                    <h2 className="text-xl font-bold tracking-tight text-slate-900">
+                                        {studentNames}
+                                    </h2>
+                                    <span className={`inline-flex rounded-md border px-2.5 py-0.5 text-xs font-bold uppercase ${statusStyle.badge}`}>
                                         {formatDisplayValue(incident.status || 'Pending')}
                                     </span>
-                                    <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-slate-950 sm:text-[28px]">
-                                        {incident.title || 'Untitled Incident'}
-                                    </h1>
-                                    <p className="mt-2 text-sm font-medium text-slate-600 ">
-                                        Admission No: {incident.admissionNo || 'N/A'} <span className="mx-2">-</span> Incident ID: {incident.incidentId || id}
-                                    </p>
                                 </div>
-                                <div className="flex flex-wrap gap-2">
-                                    <button type="button" onClick={() => navigate('/incidents')}
-                                        aria-label="Back to incident list"
-                                        className="inline-flex min-h-[40px] items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ">
-                                        <ArrowLeft size={16} />Back to List
-                                    </button>
-                                    {incident.status !== 'Closed' && canManageIncident ? (
-                                        <button type="button" onClick={() => {
-                                            setDescriptionDraft(incident.description || '');
-                                            setDescriptionEditing(true);
-                                        }}
-                                            className="inline-flex min-h-[40px] items-center gap-2 rounded-lg border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
-                                            <FileText size={16} />Edit Description
-                                        </button>
-                                    ) : null}
-                                    <button type="button" onClick={handleExportReport} disabled={isExporting}
-                                        className="inline-flex min-h-[40px] items-center gap-2 rounded-lg border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-50 disabled:opacity-60">
-                                        {isExporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-                                        Export
-                                    </button>
-                                    {isAdminUser ? (
-                                        <button type="button" onClick={handleDelete} disabled={isDeleting}
-                                            className="inline-flex min-h-[40px] items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 disabled:opacity-60">
-                                            {isDeleting ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
-                                            Delete Incident
-                                        </button>
-                                    ) : null}
-                                </div>
+                                <p className="mt-1 text-sm font-medium text-slate-500">
+                                    Admission No: {incident.admissionNo || 'N/A'}
+                                </p>
                             </div>
-                        </section>
-
-                        {showRejectionAlert ? (
-                            <div role="alert" className="rounded-3xl border border-red-200 bg-red-50 p-4 shadow-sm">
-                                <div className="flex items-start gap-3">
-                                    <div className="rounded-2xl bg-white p-2.5 text-red-600 shadow-sm"><ShieldAlert size={18} /></div>
-                                    <div>
-                                        <p className="font-semibold text-red-800">Re-investigation required</p>
-                                        <p className="mt-1 text-sm text-red-700">{incident.rejectionReason}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        ) : null}
-
-                        {showClosureRequestedAlert ? (
-                            <div role="alert" className="rounded-3xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
-                                <div className="flex items-start gap-3">
-                                    <div className="rounded-2xl bg-white p-2.5 text-amber-600 shadow-sm"><Zap size={18} /></div>
-                                    <div>
-                                        <p className="font-semibold text-amber-800">Closure request pending</p>
-                                        <p className="mt-1 text-sm text-amber-700">
-                                            The assigned handler has requested final closure. Admin review is still required.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        ) : null}
-
-                        <div className="incident-summary-grid grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
-                            <DetailField icon={Calendar} label="Incident Date" value={formatShortDateTime(getIncidentTimestamp(incident))} />
-                            <DetailField icon={FileText} label="Category" value={formatDisplayValue(incident.category || 'N/A')} />
-                            <DetailField icon={Users} label="Reported By" value={resolveUserLabel(incident.reportedBy)} />
-                            <DetailField icon={UserCheck} label="Assigned To" value={resolveHandlerLabel(incident)} />
-                            <DetailField icon={Calendar} label="Opened On" value={formatShortDateTime(getIncidentTimestamp(incident))} />
                         </div>
 
-                        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)] ">
-                            <div className="flex overflow-x-auto" role="tablist" aria-label="Incident detail sections">
-                                {detailTabs.map(({ key, label, count, icon: Icon }) => (
+                        {/* Row 1 Right: Status dates */}
+                        <div className="flex flex-col text-xs text-slate-400 sm:text-right gap-1.5 border-t border-slate-100 pt-3 sm:border-t-0 sm:pt-0">
+                            <div>
+                                <span className="font-semibold text-slate-500">Incident Opened:</span>{' '}
+                                <span>{formatShortDateTime(getIncidentTimestamp(incident))}</span>
+                            </div>
+                            {incident.status === 'Closed' && (
+                                <div>
+                                    <span className="font-semibold text-slate-500">Closed:</span>{' '}
+                                    <span>{formatShortDateTime(incident.closedAt || getIncidentTimestamp(incident))}</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Row 2: Grid of basic details - Consolidated Single Source of Truth */}
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 md:grid-cols-8 border-t border-b border-slate-100 py-4 text-sm">
+                        <div>
+                            <span className="block text-xs font-semibold text-slate-400">Class</span>
+                            <span className="mt-1 block font-semibold text-slate-800">{incident.class || 'N/A'}</span>
+                        </div>
+                        <div>
+                            <span className="block text-xs font-semibold text-slate-400">Section</span>
+                            <span className="mt-1 block font-semibold text-slate-800">{incident.section || 'N/A'}</span>
+                        </div>
+                        <div>
+                            <span className="block text-xs font-semibold text-slate-400">Academic Year</span>
+                            <span className="mt-1 block font-semibold text-slate-800">{incident.academicYear || 'N/A'}</span>
+                        </div>
+                        <div>
+                            <span className="block text-xs font-semibold text-slate-400">Priority</span>
+                            <span className={`mt-1 inline-flex rounded px-1.5 py-0.5 text-xs font-bold uppercase ${
+                                resolveIncidentPriorityForExport(incident) === 'High Priority'
+                                    ? 'bg-red-50 text-red-700 border border-red-200'
+                                    : 'bg-slate-50 text-slate-700 border border-slate-200'
+                            }`}>
+                                {resolveIncidentPriorityForExport(incident)}
+                            </span>
+                        </div>
+                        <div>
+                            <span className="block text-xs font-semibold text-slate-400">Incident Type</span>
+                            <span className="mt-1 block font-semibold text-slate-800">{formatDisplayValue(incident.category || 'N/A')}</span>
+                        </div>
+                        <div>
+                            <span className="block text-xs font-semibold text-slate-400">Location</span>
+                            <span className="mt-1 block font-semibold text-slate-800">{formatDisplayValue(incident.location || 'N/A')}</span>
+                        </div>
+                        <div>
+                            <span className="block text-xs font-semibold text-slate-400">Reporter</span>
+                            <span className="mt-1 block font-semibold text-slate-800">{resolveUserLabel(incident.reportedBy)}</span>
+                        </div>
+                        <div>
+                            <span className="block text-xs font-semibold text-slate-400">Handler</span>
+                            <span className="mt-1 block font-semibold text-slate-800">{resolveHandlerLabel(incident)}</span>
+                        </div>
+                    </div>
+
+                    {/* Row 3: Description Details */}
+                    <div className="space-y-2">
+                        <span className="block text-xs font-semibold uppercase tracking-wider text-slate-400">Description</span>
+                        {descriptionEditing ? (
+                            <div className="space-y-3">
+                                <textarea
+                                    id="incident-description-textarea"
+                                    aria-label="Edit Incident Description"
+                                    className="min-h-[120px] w-full rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                                    value={descriptionDraft}
+                                    maxLength={3000}
+                                    onChange={(event) => setDescriptionDraft(event.target.value)}
+                                />
+                                <div className="flex gap-2">
                                     <button
-                                        key={label}
                                         type="button"
-                                        role="tab"
-                                        onClick={() => scrollToDetailSection(key)}
-                                        aria-selected={activeDetailSection === key}
-                                        className={`inline-flex min-w-max items-center gap-2 border-b-2 px-5 py-3.5 text-sm font-semibold transition ${
-                                            activeDetailSection === key
-                                                ? 'border-blue-600 bg-blue-50/70 text-blue-700'
-                                                : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800 '
-                                        }`}
+                                        onClick={handleSaveDescription}
+                                        disabled={descriptionSaving}
+                                        className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-indigo-700 disabled:opacity-60 shadow-sm"
                                     >
-                                        <Icon size={15} />
-                                        {label}
-                                        {count ? <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">{count}</span> : null}
+                                        {descriptionSaving ? <Loader2 size={14} className="mr-2 inline animate-spin" /> : <Check size={14} className="mr-2 inline" />}
+                                        Save Description
                                     </button>
-                                ))}
+                                    <button
+                                        type="button"
+                                        onClick={() => setDescriptionEditing(false)}
+                                        className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
                             </div>
-                        </div>
+                        ) : (
+                            <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
+                                {incident.description || 'No description provided.'}
+                            </p>
+                        )}
+                    </div>
+                </section>
 
-                        <div ref={(node) => { detailSectionRefs.current.overview = node; }} className="scroll-mt-24 grid grid-cols-1 gap-4 2xl:grid-cols-12">
-                            <DashboardPanel className="2xl:col-span-8" title="Incident Description" description="" icon={FileText}>
-                                <div className="flex items-start gap-3">
-                                    <div className="rounded-lg bg-blue-50 p-2 text-blue-600"><FileText size={16} /></div>
-                                    <div className="min-w-0 flex-1">
-                                        {descriptionEditing ? (
-                                            <div className="space-y-3">
-                                                <textarea
-                                                    className="min-h-[112px] w-full rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                                                    value={descriptionDraft}
-                                                    maxLength={3000}
-                                                    onChange={(event) => setDescriptionDraft(event.target.value)}
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={handleSaveDescription}
-                                                    disabled={descriptionSaving}
-                                                    className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
-                                                >
-                                                    {descriptionSaving ? <Loader2 size={16} className="mr-2 inline animate-spin" /> : <Check size={16} className="mr-2 inline" />}
-                                                    Save Description
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700 ">
-                                                {incident.description || 'No description provided.'}
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-                            </DashboardPanel>
-
-                            <DashboardPanel className="2xl:col-span-4" title="Current Status" description="" icon={incident.status === 'Closed' ? CheckCircle : Clock}>
-                                <div className="flex items-start gap-4">
-                                    <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-full ${incident.status === 'Closed' ? 'bg-emerald-100 text-emerald-600' : 'bg-orange-100 text-orange-600'}`}>
-                                        {incident.status === 'Closed' ? <CheckCircle size={22} /> : <Clock size={22} />}
-                                    </div>
-                                    <div className="min-w-0">
-                                        <h3 className="text-xl font-extrabold text-slate-950 ">{formatDisplayValue(incident.status || 'Pending')}</h3>
-                                        <p className="mt-1 text-sm text-slate-500">
-                                            {incident.status === 'Closed' ? 'This incident has been resolved and closed.' : 'This incident is currently active.'}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="mt-5 space-y-4 text-sm">
-                                    <DetailField icon={Calendar} label={incident.status === 'Closed' ? 'Closed On' : 'Opened On'} value={formatShortDateTime(incident.closedAt || getIncidentTimestamp(incident))} />
-                                    <DetailField icon={UserCheck} label={incident.status === 'Closed' ? 'Closed By' : 'Assigned To'} value={incident.status === 'Closed' ? resolveUserLabel(incident.closedBy, resolveHandlerLabel(incident)) : resolveHandlerLabel(incident)} />
-                                    {incident.actionTaken ? (
-                                        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-                                            <p className="font-semibold">Resolution</p>
-                                            <p className="mt-1">{incident.actionTaken}</p>
-                                        </div>
+                {/* FULL-WIDTH TABS WORKSPACE LAYOUT */}
+                <div className="space-y-6">
+                    
+                    {/* THE NAVIGATION TABS BAR */}
+                    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm sticky top-[76px] z-20">
+                        <div className="flex overflow-x-auto scrollbar-none" role="tablist" aria-label="Incident Workspace Tabs">
+                            {detailTabs.map(({ key, label, count, icon: Icon }) => (
+                                <button
+                                    key={key}
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={activeTab === key}
+                                    onClick={() => setActiveTab(key)}
+                                    className={`flex-1 inline-flex min-w-[120px] items-center justify-center gap-2 border-b-2 px-4 py-3.5 text-sm font-bold transition ${
+                                        activeTab === key
+                                            ? 'border-indigo-600 bg-indigo-50/50 text-indigo-700 font-extrabold'
+                                            : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                                    }`}
+                                >
+                                    <Icon size={15} />
+                                    <span>{label}</span>
+                                    {count ? (
+                                        <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">
+                                            {count}
+                                        </span>
                                     ) : null}
-                                </div>
-                            </DashboardPanel>
+                                </button>
+                            ))}
                         </div>
+                    </div>
 
-                        <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
-                            <DashboardPanel className="xl:col-span-7" title="Student Information" description="" icon={Users}>
-                                <div className="grid gap-3 md:grid-cols-2">
-                                    <DetailField icon={Users} label="Student Name" value={studentNames}
-                                        action={incident.admissionNo ? (
-                                            <button type="button" onClick={() => navigate(`/student-analytics/${incident.admissionNo}`)}
-                                                className="inline-flex items-center gap-1 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-100">
-                                                <ExternalLink size={14} />View Student
-                                            </button>
-                                        ) : null}
-                                    />
-                                    <DetailField icon={FileText} label="Admission Number" value={incident.admissionNo || 'N/A'} />
-                                    <DetailField icon={Calendar} label="Class and Section"
-                                        value={incident.class && incident.section ? `${incident.class} / ${incident.section}` : 'N/A'} />
-                                    <DetailField icon={Calendar} label="Academic Year" value={incident.academicYear || 'N/A'} />
-                                </div>
-                            </DashboardPanel>
-
-                            <DashboardPanel className="xl:col-span-5" title="Incident Information" description="" icon={MessageSquare}>
-                                <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-1">
-                                    <DetailField icon={FileText} label="Category" value={formatDisplayValue(incident.category || 'N/A')} />
-                                    <DetailField icon={MapPin} label="Location" value={formatDisplayValue(incident.location || 'N/A')} />
-                                    <DetailField icon={Calendar} label="Incident Date" value={formatShortDate(getIncidentTimestamp(incident))} helper="Date the incident occurred." />
-                                    <div className={`${FIELD_CARD_CLASS} hidden`}>
-                                        <div className="flex items-start gap-3">
-                                            <div className="rounded-2xl bg-white p-2.5 text-slate-600 shadow-sm shadow-slate-200/70"><MessageSquare size={18} /></div>
-                                            <div className="min-w-0 flex-1">
-                                                <div className="flex items-center justify-between gap-3">
-                                                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Description</p>
-                                                    {incident.status !== 'Closed' && canManageIncident ? (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setDescriptionDraft(incident.description || '');
-                                                                setDescriptionEditing((value) => !value);
-                                                            }}
-                                                            className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
-                                                        >
-                                                            {descriptionEditing ? 'Cancel' : 'Edit'}
-                                                        </button>
-                                                    ) : null}
-                                                </div>
-                                                {descriptionEditing ? (
-                                                    <div className="mt-3 space-y-3">
-                                                        <textarea
-                                                            className="min-h-[130px] w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                                                            value={descriptionDraft}
-                                                            maxLength={3000}
-                                                            onChange={(event) => setDescriptionDraft(event.target.value)}
-                                                        />
-                                                        <button
-                                                            type="button"
-                                                            onClick={handleSaveDescription}
-                                                            disabled={descriptionSaving}
-                                                            className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
-                                                        >
-                                                            {descriptionSaving ? <Loader2 size={16} className="mr-2 inline animate-spin" /> : <Check size={16} className="mr-2 inline" />}
-                                                            Save Description
-                                                        </button>
-                                                    </div>
-                                                ) : (
-                                                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
-                                                        {incident.description || 'No description provided.'}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </DashboardPanel>
-
-                            <DashboardPanel className="xl:col-span-12" title="Case Administration" description="" icon={ShieldCheck}>
-                                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                                    <DetailField icon={ShieldCheck} label="Reported By" value={resolveUserLabel(incident.reportedBy)} />
-                                    <DetailField icon={UserCheck} label="Handled By"
-                                        value={resolveHandlerLabel(incident)}
-                                    />
-                                    <DetailField icon={Calendar} label="Opened" value={formatShortDateTime(getIncidentTimestamp(incident))} />
-                                    <DetailField icon={Activity} label="Last Updated" value={formatShortDateTime(incident.updatedAt || incident.closedAt || getIncidentTimestamp(incident))} />
-                                </div>
-                            </DashboardPanel>
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-4 xl:grid-cols-12 xl:items-start">
-                            <div className="space-y-4 xl:col-span-8">
-                                <div ref={(node) => { detailSectionRefs.current.actionLog = node; }} className="scroll-mt-24">
-                                <DashboardPanel title="Case History" description="Important milestones as this case moves from opened through closed." icon={Clock} bodyClassName="max-h-[360px] overflow-y-auto custom-scrollbar">
-                                    {timelineData.length === 0 ? (
-                                        <EmptyStatePanel title="No case history yet" description="Milestones will appear here as the case progresses through each stage." />
-                                    ) : (
-                                        <div className="space-y-4">
-                                            {timelineData.map((step, index) => (
-                                                <TimelineStep key={`${step.label}-${index}`} step={step} isLast={index === timelineData.length - 1} />
-                                            ))}
-                                        </div>
-                                    )}
-                                </DashboardPanel>
-                                </div>
-
-                                <div ref={(node) => { detailSectionRefs.current.evidence = node; }} className="scroll-mt-24">
+                    {/* TAB PANEL CONTENTS */}
+                    <div className="min-h-[300px]">
+                        {activeTab === 'evidence' && (
+                            <div className="space-y-6 animate-fadeIn">
                                 <DashboardPanel
-                                    title="Evidence Records"
-                                    description="Uploaded files and supporting documents attached to this case."
+                                    title="Evidence Locker"
+                                    description="Supporting documents, photos, or audio logs attached to this case file."
                                     icon={FileImage}
                                     actions={incident.status !== 'Closed' && canManageIncident ? (
-                                        <button type="button" onClick={handleOpenEvidenceForm}
-                                            aria-label="Add evidence to this case"
-                                            className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
-                                            <Plus size={16} className="mr-2 inline" />Add Evidence
+                                        <button
+                                            type="button"
+                                            onClick={handleOpenEvidenceForm}
+                                            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 text-sm font-bold text-white hover:bg-indigo-700 transition shadow-sm"
+                                        >
+                                            <Plus size={16} />
+                                            <span>Add Evidence</span>
                                         </button>
                                     ) : null}
                                 >
                                     {evidenceAssets.length === 0 ? (
-                                        <EmptyStatePanel title="No evidence on record" description="Upload supporting files — photos, documents, or reports — to support this case." />
+                                        <EmptyStatePanel title="No evidence items" description="Attach photos or documents here as supporting materials for validation." />
                                     ) : (
-                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
                                             {evidenceAssets.map((entry, index) => {
                                                 const fileUrl = resolveFileUrl(entry?.fileUrl);
                                                 const previewUrl = withEvidenceDisposition(fileUrl, 'inline');
                                                 const fileLabel = getEvidenceFilename(entry, `${entry?.evidenceType || 'Evidence'} file ${index + 1}`);
                                                 return (
-                                                    <div key={`${entry?.fileUrl || entry?.evidenceType || 'ev'}-${index}`}
-                                                        className="rounded-3xl border border-slate-200 bg-slate-50/80 p-4 shadow-sm shadow-slate-200/40">
-                                                        <div className="flex items-start justify-between gap-3">
-                                                            <div>
-                                                                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{entry?.evidenceType || 'Evidence'}</p>
+                                                    <div key={`${entry?.fileUrl || entry?.evidenceType}-${index}`} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm flex flex-col justify-between">
+                                                        <div>
+                                                            <div className="flex items-center justify-between pb-2 border-b border-slate-50">
+                                                                <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
+                                                                    {entry?.evidenceType || 'Evidence'}
+                                                                </span>
+                                                            </div>
+                                                            <div className="relative mt-2">
+                                                                {previewUrl ? (
+                                                                    <EvidenceFilePreview src={previewUrl} alt={entry?.evidenceType || `Evidence ${index + 1}`} />
+                                                                ) : (
+                                                                    <div className="flex h-36 items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 text-xs text-slate-400">
+                                                                        Preview not available
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         </div>
-                                                        {previewUrl ? (
-                                                            <EvidenceFilePreview
-                                                                src={previewUrl}
-                                                                alt={entry?.evidenceType || `Evidence ${index + 1}`}
-                                                            />
-                                                        ) : (
-                                                            <div className="mt-4 flex h-44 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white text-sm font-medium text-slate-500" aria-label="File preview not available">
-                                                                Preview not available
-                                                            </div>
-                                                        )}
-                                                        <div className="mt-4 flex flex-wrap gap-2">
-                                                            {fileUrl ? (
+                                                        <div className="mt-4 flex gap-2">
+                                                            {fileUrl && (
                                                                 <>
-                                                                    <button type="button" onClick={() => handleOpenEvidenceFile(fileUrl, fileLabel)}
-                                                                        className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
-                                                                        <ExternalLink size={15} className="mr-2" />Open
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleOpenEvidenceFile(fileUrl, fileLabel)}
+                                                                        className="flex-1 inline-flex h-9 items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                                                                    >
+                                                                        <ExternalLink size={13} />
+                                                                        <span>View</span>
                                                                     </button>
-                                                                    <button type="button" onClick={() => handleDownloadEvidenceFile(fileUrl, fileLabel)}
-                                                                        className="inline-flex items-center rounded-xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">
-                                                                        <Download size={15} className="mr-2" />Download
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleDownloadEvidenceFile(fileUrl, fileLabel)}
+                                                                        className="flex-1 inline-flex h-9 items-center justify-center gap-1 rounded-lg bg-slate-900 text-xs font-semibold text-white hover:bg-slate-800"
+                                                                    >
+                                                                        <Download size={13} />
+                                                                        <span>Download</span>
                                                                     </button>
                                                                 </>
-                                                            ) : null}
-                                                            {incident.status !== 'Closed' && canManageIncident ? (
+                                                            )}
+                                                            {incident.status !== 'Closed' && canManageIncident && (
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => handleDeleteEvidence(entry)}
                                                                     disabled={deletingEvidenceId === getRecordId(entry)}
-                                                                    className="inline-flex items-center rounded-xl border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-60"
+                                                                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-red-200 bg-white text-red-600 hover:bg-red-50 disabled:opacity-60"
+                                                                    aria-label="Delete Evidence"
                                                                 >
-                                                                    {deletingEvidenceId === getRecordId(entry) ? <Loader2 size={15} className="mr-2 animate-spin" /> : <Trash2 size={15} className="mr-2" />}
-                                                                    Delete
+                                                                    {deletingEvidenceId === getRecordId(entry) ? (
+                                                                        <Loader2 size={14} className="animate-spin" />
+                                                                    ) : (
+                                                                        <Trash2 size={14} />
+                                                                    )}
                                                                 </button>
-                                                            ) : null}
+                                                            )}
                                                         </div>
                                                     </div>
                                                 );
@@ -1296,46 +1204,59 @@ const IncidentDetail = () => {
                                         </div>
                                     )}
 
-                                    {showUploadForm ? (
-                                        <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                                            <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
+                                    {/* Upload Form Dialog Box */}
+                                    {showUploadForm && (
+                                        <div className="mt-6 rounded-xl border border-indigo-100 bg-indigo-50/20 p-5 shadow-inner">
+                                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-indigo-100/55 pb-4">
                                                 <div>
-                                                    <p className="text-sm font-semibold text-slate-900">Upload evidence</p>
-                                                    <p className="mt-1 text-sm text-slate-500">Attach one or more files and choose a category for each before saving.</p>
+                                                    <h4 className="text-sm font-bold text-slate-900">Upload Evidence Files</h4>
+                                                    <p className="text-xs text-slate-500 mt-0.5">Drag files into the zones or tap to select files.</p>
                                                 </div>
-                                                <div className="flex flex-wrap gap-2">
-                                                    <button type="button" onClick={handleAddEvidenceEntry}
-                                                        className="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100">
-                                                        <PlusCircle size={16} className="mr-2 inline" />Add File
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleAddEvidenceEntry}
+                                                        className="rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-xs font-bold text-indigo-700 hover:bg-indigo-50"
+                                                    >
+                                                        <PlusCircle size={14} className="mr-1 inline" />Add Row
                                                     </button>
-                                                    <button type="button" onClick={handleCancelEvidenceForm} disabled={evidenceLoading}
-                                                        className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60">
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleCancelEvidenceForm}
+                                                        disabled={evidenceLoading}
+                                                        className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                                                    >
                                                         Cancel
                                                     </button>
                                                 </div>
                                             </div>
-                                            <div className="mt-5 space-y-4">
+
+                                            <div className="mt-4 space-y-4">
                                                 {evidenceEntries.map((entry, index) => (
-                                                    <div key={`ev-entry-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-                                                        <div className="flex items-center justify-between">
-                                                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Evidence File</p>
-                                                            {evidenceEntries.length > 1 ? (
-                                                                <button type="button" onClick={() => handleRemoveEvidenceEntry(index)} className="text-slate-400 transition hover:text-red-600">
-                                                                    <X size={16} />
-                                                                </button>
-                                                            ) : null}
+                                                    <div key={`ev-entry-${index}`} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                                                        <div className="flex items-center justify-between pb-2 border-b border-slate-50">
+                                                            <span className="text-[10px] font-extrabold uppercase tracking-wide text-slate-400">File Attachment {index + 1}</span>
+                                                            {evidenceEntries.length > 1 && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleRemoveEvidenceEntry(index)}
+                                                                        className="text-slate-400 hover:text-red-600 transition"
+                                                                    >
+                                                                        <X size={15} />
+                                                                    </button>
+                                                            )}
                                                         </div>
-                                                        <div className="mt-4 grid gap-4">
+                                                        <div className="mt-3 grid gap-4 md:grid-cols-2">
                                                             <div>
-                                                                <label htmlFor={`evidence-category-${index}`} className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Evidence Category</label>
+                                                                <label htmlFor={`evidence-cat-select-${index}`} className="block text-xs font-bold text-slate-500 mb-1">Evidence Type</label>
                                                                 <div className="relative">
                                                                     <select
-                                                                        id={`evidence-category-${index}`}
-                                                                        className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                                                                        id={`evidence-cat-select-${index}`}
+                                                                        className="w-full appearance-none rounded-lg border border-slate-200 bg-white pl-3 pr-10 py-2 text-sm text-slate-700 outline-none transition focus:border-indigo-500"
                                                                         value={entry.evidenceType}
                                                                         onChange={(e) => handleEvidenceTypeChange(index, e.target.value)}
                                                                     >
-                                                                        <option value="" disabled>Select evidence type...</option>
+                                                                        <option value="" disabled>Select Category</option>
                                                                         {evidenceTypes.map((type) => {
                                                                             const label = type?.name || type;
                                                                             return <option key={getRecordId(type) || label} value={label}>{label}</option>;
@@ -1344,276 +1265,453 @@ const IncidentDetail = () => {
                                                                     <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                                                                 </div>
                                                             </div>
-                                                            <label
-                                                                htmlFor={`evidence-file-${index}`}
-                                                                className={`cursor-pointer rounded-2xl border-2 border-dashed bg-white px-4 py-8 text-center transition ${
-                                                                    dragActiveIndex === index ? 'border-indigo-400 bg-indigo-50/40' : 'border-slate-300 hover:border-indigo-400 hover:bg-indigo-50/20'
-                                                                }`}
-                                                                onDragOver={(e) => { e.preventDefault(); setDragActiveIndex(index); }}
-                                                                onDragLeave={(e) => { e.preventDefault(); setDragActiveIndex(null); }}
-                                                                onDrop={(e) => {
-                                                                    e.preventDefault(); setDragActiveIndex(null);
-                                                                    const f = e.dataTransfer.files?.[0];
-                                                                    if (f) handleEvidenceFileChange(index, f);
-                                                                }}
-                                                            >
-                                                                <div className="flex flex-col items-center gap-2 text-slate-500">
-                                                                    <UploadCloud size={22} />
-                                                                    <span className="text-sm font-medium">{entry.file ? 'File selected. Click to replace.' : 'Click or drag a file to upload'}</span>
-                                                                    <span className="text-xs text-slate-400">Supports image, PDF, DOC, DOCX, XLS, and XLSX</span>
-                                                                </div>
-                                                                <input id={`evidence-file-${index}`} type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" className="hidden"
-                                                                    aria-label="Evidence file"
-                                                                    onChange={(e) => { const f = e.target.files?.[0]; if (f) handleEvidenceFileChange(index, f); e.target.value = ''; }} />
-                                                            </label>
-                                                            {entry.file ? (
-                                                                <div className="flex items-center justify-between gap-3 rounded-2xl border border-indigo-100 bg-indigo-50/70 p-3">
-                                                                    <div className="flex min-w-0 items-center gap-2">
-                                                                        <FilePlus size={16} className="shrink-0 text-indigo-600" />
-                                                                        <div className="min-w-0">
-                                                                            <p className="truncate text-sm font-medium text-slate-800">{entry.file.name}</p>
-                                                                            <p className="text-xs text-slate-500">{formatFileSize(entry.file.size)}</p>
-                                                                        </div>
-                                                                    </div>
-                                                                    {evidenceUploadDone ? (
-                                                                        <Check size={16} className="shrink-0 text-emerald-600" />
-                                                                    ) : (
-                                                                        <button type="button" onClick={() => handleRemoveEvidenceFile(index)}
-                                                                            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-red-200 bg-white text-red-600 transition hover:bg-red-50">
-                                                                            <X size={15} />
-                                                                        </button>
-                                                                    )}
-                                                                </div>
-                                                            ) : null}
-                                                            {entry.preview ? (
-                                                                <img src={entry.preview} alt="" className="h-32 w-full rounded-2xl border border-slate-200 object-cover" />
-                                                            ) : null}
+                                                            <div>
+                                                                <label className="block text-xs font-bold text-slate-500 mb-1">File Attachment</label>
+                                                                <label
+                                                                    htmlFor={`evidence-file-input-${index}`}
+                                                                    className={`flex flex-col items-center justify-center rounded-lg border-2 border-dashed bg-slate-50/50 py-4 px-4 text-center cursor-pointer transition hover:bg-slate-50 ${
+                                                                        dragActiveIndex === index ? 'border-indigo-400 bg-indigo-50/50' : 'border-slate-300'
+                                                                    }`}
+                                                                    onDragOver={(e) => { e.preventDefault(); setDragActiveIndex(index); }}
+                                                                    onDragLeave={(e) => { e.preventDefault(); setDragActiveIndex(null); }}
+                                                                    onDrop={(e) => {
+                                                                        e.preventDefault(); setDragActiveIndex(null);
+                                                                        const f = e.dataTransfer.files?.[0];
+                                                                        if (f) handleEvidenceFileChange(index, f);
+                                                                    }}
+                                                                >
+                                                                    <UploadCloud size={18} className="text-slate-400 mb-1" />
+                                                                    <span className="text-xs font-bold text-slate-600">
+                                                                        {entry.file ? 'Replace File' : 'Click/Drag File'}
+                                                                    </span>
+                                                                    <input
+                                                                        id={`evidence-file-input-${index}`}
+                                                                        type="file"
+                                                                        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                                                                        className="hidden"
+                                                                        aria-label="Upload File Input"
+                                                                        onChange={(e) => {
+                                                                            const f = e.target.files?.[0];
+                                                                            if (f) handleEvidenceFileChange(index, f);
+                                                                            e.target.value = '';
+                                                                        }}
+                                                                    />
+                                                                </label>
+                                                            </div>
                                                         </div>
+
+                                                        {entry.file && (
+                                                            <div className="mt-3 flex items-center justify-between rounded-lg border border-indigo-100 bg-indigo-50/50 p-2 text-xs">
+                                                                <div className="flex items-center gap-1.5 min-w-0">
+                                                                    <FilePlus size={14} className="text-indigo-600 shrink-0" />
+                                                                    <span className="font-semibold text-slate-700 truncate">{entry.file.name}</span>
+                                                                    <span className="text-slate-400">({formatFileSize(entry.file.size)})</span>
+                                                                </div>
+                                                                {evidenceUploadDone ? (
+                                                                    <Check size={14} className="text-emerald-600" />
+                                                                ) : (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleRemoveEvidenceFile(index)}
+                                                                        className="text-slate-400 hover:text-red-600"
+                                                                    >
+                                                                        <X size={14} />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ))}
                                             </div>
-                                            <div className="mt-5 space-y-3">
-                                                <button type="button" onClick={submitEvidence}
-                                                    disabled={evidenceLoading || !evidenceEntries.some((e) => e.file)}
-                                                    className="w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60">
-                                                    {evidenceLoading ? <Loader2 size={16} className="mr-2 inline animate-spin" /> : <UploadCloud size={16} className="mr-2 inline" />}
-                                                    {evidenceLoading ? 'Uploading...' : 'Save Evidence to Incident'}
-                                                </button>
-                                                {evidenceLoading ? <div className="h-1.5 overflow-hidden rounded-full bg-slate-200"><div className="h-full w-2/3 animate-pulse bg-indigo-500" /></div> : null}
-                                            </div>
-                                        </div>
-                                    ) : null}
-                                </DashboardPanel>
-                                </div>
 
-                                <div ref={(node) => { detailSectionRefs.current.progress = node; detailSectionRefs.current.notes = node; }} className="scroll-mt-24">
-                                <DashboardPanel title="Case Updates" description="Notes from staff, follow-up steps, and decisions along the way." icon={Activity} bodyClassName="max-h-[420px] overflow-y-auto custom-scrollbar">
+                                            <button
+                                                type="button"
+                                                onClick={submitEvidence}
+                                                disabled={evidenceLoading || !evidenceEntries.some((e) => e.file)}
+                                                className="mt-4 w-full rounded-xl bg-indigo-600 py-3 text-sm font-bold text-white hover:bg-indigo-700 transition disabled:opacity-50"
+                                            >
+                                                {evidenceLoading ? <Loader2 size={16} className="mr-2 inline animate-spin" /> : <UploadCloud size={16} className="mr-2 inline" />}
+                                                {evidenceLoading ? 'Saving Evidence...' : 'Save Uploaded Evidence'}
+                                            </button>
+                                        </div>
+                                    )}
+                                </DashboardPanel>
+                            </div>
+                        )}
+
+                        {activeTab === 'notes' && (
+                            <div className="grid grid-cols-1 gap-6 animate-fadeIn">
+                                {/* Notes logging list */}
+                                <DashboardPanel title="Case updates log" icon={MessageSquare}>
                                     {progressLogs.length === 0 ? (
-                                        <EmptyStatePanel title="No case updates yet" description="Use Field Operations to start documenting progress and actions." />
+                                        <EmptyStatePanel title="No notes recorded yet" description="Internal records will appear in chronological sequence as saved." />
                                     ) : (
                                         <div className="space-y-4">
                                             {progressLogs.map((log, index) => (
-                                                <div key={`${log.timestamp || index}-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 shadow-sm shadow-slate-200/40">
-                                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                                        <div className="flex items-start gap-3">
-                                                            <div className="rounded-2xl bg-white p-2.5 text-blue-600 shadow-sm shadow-slate-200/70"><Activity size={18} /></div>
+                                                <div key={`${log.timestamp || index}-${index}`} className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 shadow-sm">
+                                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                                        <div className="flex items-start gap-2.5">
+                                                                <div className="rounded-lg bg-white p-2 text-indigo-600 shadow-sm"><MessageSquare size={16} /></div>
                                                             <div>
-                                                                <p className="text-sm font-semibold text-slate-900">{log.updatedBy || 'System Update'}</p>
-                                                                <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-slate-600">{log.note || 'No note recorded.'}</p>
+                                                                <span className="block text-sm font-bold text-slate-800">{log.updatedBy || 'System Update'}</span>
+                                                                <p className="mt-2 text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">{log.note}</p>
                                                             </div>
                                                         </div>
-                                                        <span className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500">{formatShortDateTime(log.timestamp)}</span>
+                                                        <span className="text-[10px] font-extrabold uppercase tracking-wide text-slate-400">
+                                                            {formatShortDateTime(log.timestamp)}
+                                                        </span>
                                                     </div>
                                                 </div>
                                             ))}
                                         </div>
                                     )}
                                 </DashboardPanel>
-                                </div>
-                            </div>
 
-                            <div className="incident-command-rail space-y-4 xl:col-span-4 xl:sticky xl:top-24">
-                                {canManageIncident ? (
-                                    <div ref={(node) => { detailSectionRefs.current.letters = node; }} className="scroll-mt-24">
-                                    <DashboardPanel title="Generated Letter" description="Official letter linked to this case." icon={FileText}>
-                                        {incident.letterGenerated || generatedLetter ? (
-                                            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
-                                                <p className="text-sm font-semibold text-emerald-800">
-                                                    {generatedLetter?.letterNumber || incident.letterGenerated?.letterNumber || 'Letter Generated'}
-                                                </p>
-                                                <p className="mt-1 text-sm text-emerald-700">
-                                                    Letter layout: {generatedLetter?.templateName || incident.letterGenerated?.templateName || 'School standard'}
-                                                </p>
-                                                {isAdminUser ? (
-                                                    <div className="mt-4 flex flex-wrap gap-2">
-                                                        <button type="button" onClick={handleGeneratedLetterDownload}
-                                                            className="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
-                                                            <Download size={16} className="mr-2 inline" />Download Word file
-                                                        </button>
-                                                    </div>
-                                                ) : null}
-                                            </div>
-                                        ) : (
-                                            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
-                                                <p className="text-sm font-semibold text-slate-900">No letter generated yet</p>
-                                                <p className="mt-1 text-sm text-slate-500">Generate from the matching template when one is available.</p>
-                                                <button
-                                                    type="button"
-                                                    onClick={handleOpenLetterPermission}
-                                                    disabled={letterGenerating || letterPermission.loading}
-                                                    className="mt-4 rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
-                                                >
-                                                    {letterGenerating || letterPermission.loading ? <Loader2 size={16} className="mr-2 inline animate-spin" /> : <FileText size={16} className="mr-2 inline" />}
-                                                    Generate Letter
-                                                </button>
-                                            </div>
-                                        )}
-                                    </DashboardPanel>
-                                    </div>
-                                ) : null}
-
-                                {showCaseAllocation ? (
-                                    <DashboardPanel title="Handled By" description="Staff Who Dealt With The Incident." icon={UserPlus}>
-                                        <div className="space-y-4">
-                                            <div>
-                                                <select className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                                                    value={selectedHandler} onChange={(e) => setSelectedHandler(e.target.value)}>
-                                                    <option value="">Choose Handler</option>
-                                                    {staffList.map((staff) => (
-                                                        <option key={getRecordId(staff)} value={getRecordId(staff)}>{resolveUserLabel(staff)}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                            <button type="button" onClick={() => handleAction('assign', { handlerId: selectedHandler })}
-                                                disabled={!selectedHandler || actionLoading}
-                                                className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
-                                                {actionLoading ? <Loader2 size={16} className="mr-2 inline animate-spin" /> : null}
-                                                Assign Selected Handler
-                                            </button>
-                                            <button type="button" onClick={handleAssignToMyself}
-                                                disabled={!userId || actionLoading}
-                                                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60">
-                                                Assign to Myself
-                                            </button>
-                                        </div>
-                                    </DashboardPanel>
-                                ) : null}
-
-                                {showAdminCommand ? (
-                                    <DashboardPanel title="Close Incident" description="Finalize the case or return it to the handler with a decision note." icon={Lock}>
-                                        <div className="space-y-4">
-                                            <textarea
-                                                className="min-h-[110px] w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                                                placeholder="Decision or closure note (optional)"
-                                                value={adminFinalNote}
-                                                onChange={(e) => setAdminFinalNote(e.target.value)}
-                                            />
-                                            <button type="button" onClick={() => handleAction('finalize-closure', { note: adminFinalNote })}
-                                                disabled={actionLoading}
-                                                className="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60">
-                                                {actionLoading ? <Loader2 size={16} className="mr-2 inline animate-spin" /> : null}
-                                                Finalize and Close Case
-                                            </button>
-                                            {incident.closureRequested ? (
-                                                <button type="button" onClick={() => handleAction('reject-closure', { reason: adminFinalNote })}
-                                                    disabled={actionLoading}
-                                                    className="w-full rounded-xl bg-red-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60">
-                                                    Return to Handler
-                                                </button>
-                                            ) : null}
-                                        </div>
-                                    </DashboardPanel>
-                                ) : null}
-
-                                {showFieldUpdates ? (
-                                    <DashboardPanel title="Field Operations" description="Select preset updates or add custom notes to advance the case." icon={UserCheck}
+                                {/* Quick Add Custom Notes Panel */}
+                                {incident.status !== 'Closed' && showFieldUpdates ? (
+                                    <DashboardPanel
+                                        title="Log Custom Note"
+                                        icon={Plus}
                                         actions={(
-                                            <button type="button" onClick={() => setEditMode((v) => !v)}
-                                                className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${editMode ? 'bg-blue-600 text-white hover:bg-blue-700' : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}>
+                                            <button
+                                                type="button"
+                                                onClick={() => setEditMode((v) => !v)}
+                                                className={`rounded-lg px-2.5 py-1 text-xs font-bold transition ${
+                                                    editMode
+                                                        ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+                                                        : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                                                }`}
+                                            >
                                                 {editMode ? 'Done' : 'Edit Presets'}
                                             </button>
                                         )}
                                     >
                                         <div className="space-y-4">
-                                            <div>
-                                                <span className="inline-block text-xs font-bold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg">
-                                                    Updated Notes
-                                                </span>
-                                            </div>
-                                            <div className="space-y-2">
-                                                {(fieldOptions || []).map((option) => (
-                                                    <div key={getRecordId(option)}
-                                                        className={`group flex items-center gap-3 rounded-2xl border px-3 py-3 transition ${editMode ? 'border-slate-200 bg-slate-50' : 'cursor-pointer border-slate-200 bg-white hover:border-blue-200 hover:bg-blue-50/60'}`}
-                                                        onClick={() => { if (!editMode) handleSelectOption(option); }}>
-                                                        <div className={`flex h-8 w-8 items-center justify-center rounded-xl ${editMode ? 'bg-slate-100 text-slate-400' : 'bg-blue-50 text-blue-600'}`}>
-                                                            {editMode ? (
-                                                                <Trash2 size={14} className="cursor-pointer transition hover:text-red-600"
-                                                                    onClick={(e) => { e.stopPropagation(); handleDeleteOption(getRecordId(option)); }} />
-                                                            ) : <CheckCircle size={16} />}
+                                            {/* Preset Selects */}
+                                            <div className="space-y-1.5">
+                                                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Quick Select Notes</span>
+                                                <div className="space-y-1.5">
+                                                    {(fieldOptions || []).map((option) => (
+                                                        <div
+                                                            key={getRecordId(option)}
+                                                            className={`flex items-center justify-between rounded-xl border p-2.5 transition ${
+                                                                editMode
+                                                                    ? 'border-slate-200 bg-slate-50'
+                                                                    : 'cursor-pointer border-slate-200 bg-white hover:border-indigo-200 hover:bg-indigo-50/55'
+                                                            }`}
+                                                            onClick={() => { if (!editMode) handleSelectOption(option); }}
+                                                        >
+                                                            <span className="text-xs font-semibold text-slate-700">{option.label}</span>
+                                                            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                                                                {editMode ? (
+                                                                    <Trash2
+                                                                        size={12}
+                                                                        className="cursor-pointer text-slate-400 hover:text-red-600"
+                                                                        onClick={(e) => { e.stopPropagation(); handleDeleteOption(getRecordId(option)); }}
+                                                                    />
+                                                                ) : (
+                                                                    <CheckCircle size={12} />
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                        <span className="text-sm font-medium text-slate-700">{option.label}</span>
-                                                    </div>
-                                                ))}
-                                                {(fieldOptions || []).length === 0 ? (
-                                                    <EmptyStatePanel title="No preset updates yet" description="Add preset options to speed up workflows." />
-                                                ) : null}
+                                                    ))}
+                                                    {(fieldOptions || []).length === 0 && (
+                                                        <p className="text-xs text-slate-400">No quick presets defined.</p>
+                                                    )}
+                                                </div>
                                             </div>
-                                            {editMode ? (
-                                                <div className="flex flex-col gap-2 sm:flex-row">
-                                                    <input type="text" value={newOptionLabel} onChange={(e) => setNewOptionLabel(e.target.value)}
-                                                        placeholder="Add new preset..."
-                                                        className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                                                        onKeyDown={(e) => { if (e.key === 'Enter') handleAddOption(); }} />
-                                                    <button type="button" onClick={handleAddOption} disabled={!newOptionLabel.trim()}
-                                                        className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
-                                                        <Plus size={16} className="mr-2 inline" />Add
+
+                                            {editMode && (
+                                                <div className="flex gap-1.5">
+                                                    <input
+                                                        type="text"
+                                                        aria-label="New Preset Label"
+                                                        value={newOptionLabel}
+                                                        onChange={(e) => setNewOptionLabel(e.target.value)}
+                                                        placeholder="New preset label..."
+                                                        className="flex-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-700 outline-none transition focus:border-indigo-500"
+                                                        onKeyDown={(e) => { if (e.key === 'Enter') handleAddOption(); }}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleAddOption}
+                                                        disabled={!newOptionLabel.trim()}
+                                                        className="rounded-lg bg-indigo-600 px-3 text-xs font-bold text-white hover:bg-indigo-700 disabled:opacity-50"
+                                                    >
+                                                        Add
                                                     </button>
                                                 </div>
-                                            ) : null}
-                                            <div>
-                                                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Custom Note</label>
+                                            )}
+
+                                            <div className="border-t border-slate-100 pt-3">
+                                                <label htmlFor="notes-tab-textarea" className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1.5">Custom Remark</label>
                                                 <textarea
-                                                    className="min-h-[120px] w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700 outline-none transition hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                                                    placeholder="Add additional notes or details..."
+                                                    id="notes-tab-textarea"
+                                                    className="min-h-[120px] w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-700 outline-none transition focus:border-indigo-500"
+                                                    placeholder="Log details or additional status remarks..."
                                                     value={note}
                                                     onChange={(e) => setNote(e.target.value)}
                                                     disabled={incident.closureRequested && !isAdminUser}
                                                 />
                                             </div>
-                                            {!incident.closureRequested ? (
-                                                <div className="space-y-3">
-                                                    <button type="button" onClick={handleSubmitProgress} disabled={!note.trim() || progressLoading}
-                                                        className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
-                                                        {progressLoading ? <Loader2 size={16} className="mr-2 inline animate-spin" /> : <Activity size={16} className="mr-2 inline" />}
-                                                        {progressLoading ? 'Saving...' : 'Save Progress'}
-                                                    </button>
-                                                    {!isAdminUser ? (
-                                                        <button type="button" onClick={() => handleAction('request-closure', { actionTaken: note })}
-                                                            disabled={actionLoading || !note.trim()}
-                                                            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60">
-                                                            Close Case
-                                                        </button>
-                                                    ) : null}
-                                                </div>
-                                            ) : null}
+
+                                            {!incident.closureRequested && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleSubmitProgress}
+                                                    disabled={!note.trim() || progressLoading}
+                                                    className="w-full rounded-xl bg-indigo-600 py-3 text-sm font-bold text-white hover:bg-indigo-700 transition disabled:opacity-50"
+                                                >
+                                                    {progressLoading ? <Loader2 size={16} className="mr-2 inline animate-spin" /> : <Activity size={16} className="mr-2 inline" />}
+                                                    <span>Save Internal Note</span>
+                                                </button>
+                                            )}
                                         </div>
                                     </DashboardPanel>
-                                ) : null}
+                                ) : (
+                                    <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 text-center">
+                                        <p className="text-xs text-slate-400">Note submission is locked because the case is resolved or you do not have edit rights.</p>
+                                    </div>
+                                )}
                             </div>
-                        </div>
+                        )}
+
+                        {activeTab === 'assignment' && (
+                            <div className="space-y-6 animate-fadeIn">
+                                <DashboardPanel title="Case Assignment Ownership" icon={UserPlus}>
+                                    <div className="space-y-4">
+                                        <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between text-sm">
+                                            <div>
+                                                <span className="block text-xs font-semibold text-slate-400">Assigned Handler</span>
+                                                <span className="mt-1 block font-bold text-slate-800">{resolveHandlerLabel(incident)}</span>
+                                            </div>
+                                            <div className="text-xs text-slate-400 sm:text-right">
+                                                Incident Opened: {formatShortDateTime(getIncidentTimestamp(incident))}
+                                            </div>
+                                        </div>
+                                        
+                                        {showCaseAllocation ? (
+                                            <div className="space-y-3 border-t border-slate-100 pt-4">
+                                                <label htmlFor="choose-handler-select" className="block text-xs font-bold text-slate-500">Assign/Reassign Handler</label>
+                                                <div className="flex flex-col gap-2.5 sm:flex-row">
+                                                    <div className="relative flex-1">
+                                                        <select
+                                                            id="choose-handler-select"
+                                                            aria-label="Choose Handler"
+                                                            className="w-full appearance-none rounded-xl border border-slate-200 bg-white pl-3 pr-10 py-2.5 text-sm text-slate-700 outline-none transition hover:border-slate-300 focus:border-indigo-500"
+                                                            value={selectedHandler}
+                                                            onChange={(e) => setSelectedHandler(e.target.value)}
+                                                        >
+                                                            <option value="">Choose Handler</option>
+                                                            {staffList.map((staff) => (
+                                                                <option key={getRecordId(staff)} value={getRecordId(staff)}>
+                                                                    {resolveUserLabel(staff)}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleAction('assign', { handlerId: selectedHandler })}
+                                                        disabled={!selectedHandler || actionLoading}
+                                                        className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-700 transition disabled:opacity-60 shadow-sm"
+                                                    >
+                                                        Assign Handler
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleAssignToMyself}
+                                                        disabled={!userId || actionLoading}
+                                                        className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition disabled:opacity-60"
+                                                    >
+                                                        Assign to Myself
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 text-center">
+                                                <p className="text-xs text-slate-400">Assignment controls are locked because this case is resolved or you lack management rights.</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </DashboardPanel>
+                            </div>
+                        )}
+
+                        {activeTab === 'closure' && (
+                            <div className="space-y-6 animate-fadeIn">
+                                <DashboardPanel title="Case Closure & Resolutions" icon={Lock}>
+                                    <div className="space-y-6">
+                                        {incident.status === 'Closed' ? (
+                                            <div className="rounded-xl border border-emerald-100 bg-emerald-50/55 p-6 text-center">
+                                                <CheckCircle size={32} className="mx-auto text-emerald-600 mb-2" />
+                                                <p className="font-bold text-emerald-800">This case has been resolved and closed.</p>
+                                                {incident.closureNote && (
+                                                    <div className="mt-3 rounded-lg bg-white p-3 border border-emerald-100 text-left text-xs text-slate-700">
+                                                        <span className="font-bold text-slate-500">Resolution Note:</span>
+                                                        <p className="mt-1 whitespace-pre-wrap">{incident.closureNote}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <>
+                                                {/* Close Case (For Handler/Teacher - request closure) */}
+                                                {showFieldUpdates && !isAdminUser && !incident.closureRequested && (
+                                                    <div className="space-y-3">
+                                                        <h4 className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                                                            <Lock size={16} className="text-indigo-600" />
+                                                            <span>Submit Closure Request</span>
+                                                        </h4>
+                                                        <p className="text-xs text-slate-500">
+                                                            Explain the actions taken and results before requesting incident closure. Write your notes in the custom note field below.
+                                                        </p>
+                                                        <div className="space-y-3">
+                                                            <textarea
+                                                                aria-label="Closure note action taken"
+                                                                placeholder="Describe the action to resolve this incident..."
+                                                                className="min-h-[100px] w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-700 outline-none transition focus:border-indigo-500"
+                                                                value={note}
+                                                                onChange={(e) => setNote(e.target.value)}
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleAction('request-closure', { actionTaken: note })}
+                                                                disabled={actionLoading || !note.trim()}
+                                                                className="w-full rounded-xl bg-indigo-600 py-3 text-sm font-bold text-white hover:bg-indigo-700 transition disabled:opacity-60 shadow-sm"
+                                                            >
+                                                                {actionLoading ? <Loader2 size={16} className="mr-2 inline animate-spin" /> : null}
+                                                                Submit Closure Request
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Close Incident (For Admin - Finalize closure or Return) */}
+                                                {showAdminCommand && (
+                                                    <div className="space-y-3">
+                                                        <h4 className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                                                            <CheckCircle size={16} className="text-indigo-600" />
+                                                            <span>Close/Review Incident</span>
+                                                        </h4>
+                                                        <textarea
+                                                            aria-label="Decision or closure note"
+                                                            className="min-h-[110px] w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-700 outline-none transition focus:border-indigo-500"
+                                                            placeholder="Add a final resolution decision or closure note (optional)"
+                                                            value={adminFinalNote}
+                                                            onChange={(e) => setAdminFinalNote(e.target.value)}
+                                                        />
+                                                        <div className="flex flex-col gap-2 sm:flex-row">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleAction('finalize-closure', { note: adminFinalNote })}
+                                                                disabled={actionLoading}
+                                                                className="flex-1 rounded-xl bg-emerald-600 py-3 text-sm font-bold text-white hover:bg-emerald-700 transition disabled:opacity-60 shadow-sm"
+                                                            >
+                                                                {actionLoading ? <Loader2 size={16} className="mr-2 inline animate-spin" /> : null}
+                                                                Finalize and Close Case
+                                                            </button>
+                                                            {incident.closureRequested && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleAction('reject-closure', { reason: adminFinalNote })}
+                                                                    disabled={actionLoading}
+                                                                    className="flex-1 rounded-xl bg-red-600 py-3 text-sm font-bold text-white hover:bg-red-700 transition disabled:opacity-60 shadow-sm"
+                                                                >
+                                                                    Return to Handler (Request Re-investigation)
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {!showFieldUpdates && !showAdminCommand && (
+                                                    <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 text-center">
+                                                        <p className="text-xs text-slate-400">Closure workflow controls are only accessible to assigned handlers and administrators.</p>
+                                                    </div>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+                                </DashboardPanel>
+                            </div>
+                        )}
+
+                        {activeTab === 'letters' && (
+                            <div className="space-y-6 animate-fadeIn">
+                                <DashboardPanel title="Official Documentation" icon={Mail}>
+                                    {incident.letterGenerated || generatedLetter ? (
+                                        <div className="rounded-xl border border-emerald-200 bg-emerald-50/55 p-5 shadow-sm space-y-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="rounded-xl bg-white p-2.5 text-emerald-600 shadow-sm">
+                                                    <Mail size={20} />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-bold text-emerald-800">
+                                                        {generatedLetter?.letterNumber || incident.letterGenerated?.letterNumber || 'Letter Generated'}
+                                                    </p>
+                                                    <p className="text-xs text-emerald-600">
+                                                        Letter Template Layout: {generatedLetter?.templateName || incident.letterGenerated?.templateName || 'School standard'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            {isAdminUser && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleGeneratedLetterDownload}
+                                                    className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-emerald-600 px-4 text-sm font-bold text-white hover:bg-emerald-700 transition shadow-sm"
+                                                >
+                                                    <Download size={15} />
+                                                    <span>Download Document (Word Format)</span>
+                                                </button>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-6 text-center space-y-3">
+                                            <Mail size={32} className="mx-auto text-slate-400" />
+                                            <div>
+                                                <h4 className="font-bold text-slate-800">No official letter issued yet</h4>
+                                                <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+                                                    Generate an official letter layout using pre-configured categories when documents are complete.
+                                                </p>
+                                            </div>
+                                            {canManageIncident && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleOpenLetterPermission}
+                                                    disabled={letterGenerating || letterPermission.loading}
+                                                    className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-indigo-600 px-4 text-sm font-bold text-white hover:bg-indigo-700 transition disabled:opacity-60 shadow-sm"
+                                                >
+                                                    {letterGenerating || letterPermission.loading ? (
+                                                        <Loader2 size={15} className="animate-spin" />
+                                                    ) : (
+                                                        <FileText size={15} />
+                                                    )}
+                                                    <span>Generate Official Letter</span>
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                </DashboardPanel>
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
+
+            {/* Letter Generation Modal overlay (same logic) */}
             {letterPermission.open ? (
                 <div className="fixed inset-0 z-[100] flex min-h-[100dvh] items-center justify-center overflow-y-auto bg-slate-950/50 p-3 backdrop-blur-sm sm:p-4">
-                    <div className="my-auto max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-lg overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-2xl">
-                        <div className="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50 px-6 py-4">
+                    <div className="my-auto max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-lg overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-2xl animate-scaleUp">
+                        <div className="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-indigo-50/55 px-6 py-4">
                             <div className="flex items-center gap-3">
                                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
                                     <Mail className="h-5 w-5 text-indigo-600" />
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-semibold text-slate-900">Create official letter?</h3>
-                                    <p className="mt-1 text-sm text-slate-600">
-                                        A letter file is available for {letterPermission.categoryName || 'this category'}.
+                                    <h3 className="text-lg font-bold text-slate-900">Create Official Letter?</h3>
+                                    <p className="mt-0.5 text-xs text-slate-500">
+                                        An official letter template is defined for category: {letterPermission.categoryName || 'this category'}.
                                     </p>
                                 </div>
                             </div>
@@ -1621,17 +1719,17 @@ const IncidentDetail = () => {
 
                         <div className="space-y-5 p-6">
                             <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
-                                Generate the official letter for <strong>{studentNames || 'the selected student'}</strong> in the <strong>{formatDisplayValue(letterPermission.categoryName)}</strong> category?
+                                Generate the official letter for student <strong>{studentNames || 'involved student'}</strong> in category <strong>{formatDisplayValue(letterPermission.categoryName)}</strong>?
                             </div>
 
                             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                                <p className="text-sm font-semibold text-slate-800">Available languages</p>
-                                <div className="mt-3 flex flex-wrap gap-2">
+                                <p className="text-xs font-extrabold uppercase tracking-wide text-slate-400">Available Languages</p>
+                                <div className="mt-2 flex flex-wrap gap-2">
                                     {letterPermission.templates?.en ? (
-                                        <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">English ready</span>
+                                        <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">English Supported</span>
                                     ) : null}
                                     {letterPermission.templates?.ta ? (
-                                        <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">Tamil ready</span>
+                                        <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">Tamil Supported</span>
                                     ) : null}
                                 </div>
 
@@ -1641,7 +1739,7 @@ const IncidentDetail = () => {
                                         onClick={() => setLetterLanguage('en')}
                                         className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${
                                             letterLanguage === 'en'
-                                                ? 'border-indigo-300 bg-indigo-50 text-indigo-700'
+                                                ? 'border-indigo-300 bg-indigo-50 text-indigo-700 font-bold'
                                                 : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                                         }`}
                                     >
@@ -1652,7 +1750,7 @@ const IncidentDetail = () => {
                                         onClick={() => setLetterLanguage('ta')}
                                         className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${
                                             letterLanguage === 'ta'
-                                                ? 'border-indigo-300 bg-indigo-50 text-indigo-700'
+                                                ? 'border-indigo-300 bg-indigo-50 text-indigo-700 font-bold'
                                                 : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                                         }`}
                                     >
@@ -1660,13 +1758,11 @@ const IncidentDetail = () => {
                                     </button>
                                 </div>
 
-                                {!letterPermission.templates?.[letterLanguage] ? (
-                                    <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
-                                        {letterLanguage === 'ta'
-                                            ? 'Tamil letter file is not available for this category.'
-                                            : 'English letter file is not available for this category.'}
+                                {!letterPermission.templates?.[letterLanguage] && (
+                                    <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-semibold text-red-800">
+                                        Selected language ({letterLanguage === 'ta' ? 'Tamil' : 'English'}) template file is not configured.
                                     </div>
-                                ) : null}
+                                )}
                             </div>
 
                             <div className="grid gap-3">
@@ -1674,19 +1770,19 @@ const IncidentDetail = () => {
                                     type="button"
                                     disabled={!letterPermission.templates?.[letterLanguage] || letterGenerating}
                                     onClick={handleGenerateLetter}
-                                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
+                                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-700 disabled:opacity-50"
                                 >
                                     {letterGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                                    Yes, create letter
+                                    <span>Yes, Generate Letter</span>
                                 </button>
 
                                 <button
                                     type="button"
                                     disabled={letterGenerating}
                                     onClick={() => setLetterPermission({ open: false, templates: null, categoryName: '', loading: false })}
-                                    className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                    className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
                                 >
-                                    No, keep incident without letter
+                                    No, Cancel
                                 </button>
                             </div>
                         </div>
@@ -1695,6 +1791,7 @@ const IncidentDetail = () => {
             ) : null}
         </div>
     );
+
 };
 
 export default IncidentDetail;
