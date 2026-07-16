@@ -668,7 +668,7 @@
 
   .analytics-table-native .analytics-table-scroll {
     @apply block max-h-none overflow-x-auto overflow-y-auto overscroll-x-contain pb-2;
-    touch-action: pan-x pan-y;
+    touch-action: auto;
   }
 
   .analytics-table-native .analytics-table {
@@ -752,7 +752,7 @@
 /* Keep horizontal regions responsible for horizontal swipes while preserving normal vertical page scrolling. */
 :where([class~="overflow-x-auto"], [class~="overflow-auto"]) {
   overscroll-behavior-x: contain;
-  touch-action: pan-x pan-y pinch-zoom;
+  touch-action: auto;
   -webkit-overflow-scrolling: touch;
 }
 
