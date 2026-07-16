@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/ToastProvider';
-import { UnifiedDateInput, UnifiedFilterBar, UnifiedMultiSelect } from '../components/UnifiedFilters';
+import { UnifiedDateInput, UnifiedFilterBar, UnifiedMultiSelect, UnifiedSearchInput } from '../components/UnifiedFilters';
 import {
     AnalyticsDataTable,
     CategoryHeatmap,
@@ -78,6 +78,9 @@ const slugifyExportPart = (value, fallback = 'all') => {
     return clean || fallback;
 };
 
+const getAnalyticsOpenedTimestamp = (incident) =>
+    incident?.openedAt || incident?.incidentDate || incident?.incident_date || incident?.submittedAt || null;
+
 const AcademicYearStatusTooltip = ({ active, payload, label }) => {
     if (!active || !payload || payload.length === 0) return null;
     const row = payload[0]?.payload || {};
@@ -118,6 +121,9 @@ const ProfessionalAnalytics = () => {
     const [serverAnalytics, setServerAnalytics] = useState(null);
     const [staffList, setStaffList] = useState([]);
     const [selectedStaff, setSelectedStaff] = useState([]);
+    const [studentSearchQuery, setStudentSearchQuery] = useState('');
+    const [studentSearchResults, setStudentSearchResults] = useState([]);
+    const [selectedStudent, setSelectedStudent] = useState(null);
     const [loading, setLoading] = useState(true);
     const [analyticsError, setAnalyticsError] = useState('');
     const [isExporting, setIsExporting] = useState(false);
@@ -159,6 +165,7 @@ const ProfessionalAnalytics = () => {
     const [academicYears, setAcademicYears] = useState([]);
     const [letterStatusMap, setLetterStatusMap] = useState({});
     const analyticsRequestRef = useRef({ controller: null, id: 0 });
+    const studentSearchRequestRef = useRef({ controller: null, id: 0 });
     const filterMetadataRef = useRef({ userId: '', data: null });
     const staffMetadataRef = useRef({ userId: '', data: null });
     const loadedDetailsQueryRef = useRef('');
@@ -217,9 +224,10 @@ const ProfessionalAnalytics = () => {
             includeUnassigned: false,
         });
         if (academicYear) params.set('academicYear', academicYear);
+        if (selectedStudent?.admissionNo) params.set('admissionNo', selectedStudent.admissionNo);
         params.set('timezoneOffsetMinutes', String(new Date().getTimezoneOffset()));
         return params;
-    }, [academicYear, allStaffOptions.length, dateRange.end, dateRange.start, filters.classes, filters.evidence, filters.incidentTypes, filters.locations, filters.sections, filters.statuses, selectedStaff, staffList]);
+    }, [academicYear, allStaffOptions.length, dateRange.end, dateRange.start, filters.classes, filters.evidence, filters.incidentTypes, filters.locations, filters.sections, filters.statuses, selectedStaff, selectedStudent?.admissionNo, staffList]);
 
     const fetchAnalytics = useCallback(async () => {
         if (!user?._id || !academicYear) return;
@@ -262,7 +270,46 @@ const ProfessionalAnalytics = () => {
 
     useEffect(() => () => {
         analyticsRequestRef.current.controller?.abort();
+        studentSearchRequestRef.current.controller?.abort();
     }, []);
+
+    useEffect(() => {
+        const search = studentSearchQuery.trim();
+        if (!search || selectedStudent) {
+            studentSearchRequestRef.current.controller?.abort();
+            setStudentSearchResults([]);
+            return undefined;
+        }
+
+        const controller = new AbortController();
+        const requestId = studentSearchRequestRef.current.id + 1;
+        studentSearchRequestRef.current = { controller, id: requestId };
+        const debounceTimer = window.setTimeout(async () => {
+            try {
+                const { data } = await apiClient.get('/api/students', {
+                    ...config,
+                    params: {
+                        academicYear,
+                        search,
+                        page: 1,
+                        limit: 10,
+                    },
+                    signal: controller.signal,
+                });
+                if (studentSearchRequestRef.current.id !== requestId) return;
+                setStudentSearchResults(Array.isArray(data?.data) ? data.data : []);
+            } catch (error) {
+                if (error?.code !== 'ERR_CANCELED' && error?.name !== 'CanceledError' && studentSearchRequestRef.current.id === requestId) {
+                    setStudentSearchResults([]);
+                }
+            }
+        }, 300);
+
+        return () => {
+            window.clearTimeout(debounceTimer);
+            controller.abort();
+        };
+    }, [academicYear, config, selectedStudent, studentSearchQuery]);
 
     const fetchAnalyticsDetails = useCallback(async ({ updateState = true, page = 1, limit = 100, fetchAll = false } = {}) => {
         if (!user?._id || !academicYear) return { data: [], letterStatusMap: {} };
@@ -393,6 +440,8 @@ const ProfessionalAnalytics = () => {
             } catch {
                 try {
                     const params = buildRequestParams();
+                    params.set('sortBy', 'incidentDate');
+                    params.set('sortDirection', 'asc');
                     const { data } = await apiClient.get('/api/incidents', { ...config, params });
                     if (!mounted) return;
                     setIncidents(Array.isArray(data) ? data : []);
@@ -474,16 +523,12 @@ const ProfessionalAnalytics = () => {
 
     const filteredIncidentDetails = useMemo(
         () =>
-            [...filteredIncidents].sort((a, b) => {
-                const classA = String(a.class || a.studentDetails?.className || '').toLowerCase();
-                const classB = String(b.class || b.studentDetails?.className || '').toLowerCase();
-                if (classA !== classB) return classA.localeCompare(classB);
-
-                const sectionA = String(a.section || a.studentDetails?.section || '').toLowerCase();
-                const sectionB = String(b.section || b.studentDetails?.section || '').toLowerCase();
-                if (sectionA !== sectionB) return sectionA.localeCompare(sectionB);
-
-                return String(a.studentDetails?.name || '').localeCompare(String(b.studentDetails?.name || ''));
+            [...filteredIncidents].sort((firstIncident, secondIncident) => {
+                const firstOpenedDate = new Date(getAnalyticsOpenedTimestamp(firstIncident)).getTime();
+                const secondOpenedDate = new Date(getAnalyticsOpenedTimestamp(secondIncident)).getTime();
+                const firstTimestamp = Number.isNaN(firstOpenedDate) ? Number.POSITIVE_INFINITY : firstOpenedDate;
+                const secondTimestamp = Number.isNaN(secondOpenedDate) ? Number.POSITIVE_INFINITY : secondOpenedDate;
+                return firstTimestamp - secondTimestamp;
             }),
         [filteredIncidents]
     );
@@ -496,6 +541,7 @@ const ProfessionalAnalytics = () => {
         filters.evidence.length > 0 ||
         filters.statuses.length > 0 ||
         selectedStaff.length > 0 ||
+        Boolean(selectedStudent) ||
         academicYear !== currentAcademicYear ||
         Boolean(dateRange.start) ||
         Boolean(dateRange.end);
@@ -510,7 +556,8 @@ const ProfessionalAnalytics = () => {
         ...filters.evidence.map((value) => `Evidence: ${value}`),
         ...filters.statuses.map((value) => `Status: ${value}`),
         ...selectedStaff.map((value) => `Staff: ${value}`),
-    ].filter(Boolean), [academicYear, currentAcademicYear, dateRange.end, dateRange.start, filters.classes, filters.evidence, filters.incidentTypes, filters.locations, filters.sections, filters.statuses, selectedStaff]);
+        selectedStudent ? `Student: ${selectedStudent.name} (${selectedStudent.admissionNo})` : null,
+    ].filter(Boolean), [academicYear, currentAcademicYear, dateRange.end, dateRange.start, filters.classes, filters.evidence, filters.incidentTypes, filters.locations, filters.sections, filters.statuses, selectedStaff, selectedStudent]);
 
     const resetFilters = useCallback(() => {
         setFilters({
@@ -522,9 +569,23 @@ const ProfessionalAnalytics = () => {
             statuses: [],
         });
         setSelectedStaff(isOperationalUser && user?.name ? [user.name] : []);
+        setSelectedStudent(null);
+        setStudentSearchQuery('');
+        setStudentSearchResults([]);
         setDateRange({ start: '', end: '' });
         setAcademicYear(currentAcademicYear);
     }, [currentAcademicYear, isOperationalUser, user?.name]);
+
+    const handleStudentSearchChange = useCallback((value) => {
+        setStudentSearchQuery(value);
+        setSelectedStudent((current) => (current && value !== `${current.name} — Admission No. ${current.admissionNo}` ? null : current));
+    }, []);
+
+    const selectStudent = useCallback((student) => {
+        setSelectedStudent(student);
+        setStudentSearchQuery(`${student.name} — Admission No. ${student.admissionNo}`);
+        setStudentSearchResults([]);
+    }, []);
 
     const exportIncidentDetailsToExcel = useCallback(async () => {
         let downloadFeedbackStarted = false;
@@ -540,15 +601,11 @@ const ProfessionalAnalytics = () => {
                 Object.assign(exportLetterStatusMap, nextPage.letterStatusMap);
             }
             const exportIncidentDetails = exportRows.sort((a, b) => {
-                const classA = String(a.class || a.studentDetails?.className || '').toLowerCase();
-                const classB = String(b.class || b.studentDetails?.className || '').toLowerCase();
-                if (classA !== classB) return classA.localeCompare(classB);
-
-                const sectionA = String(a.section || a.studentDetails?.section || '').toLowerCase();
-                const sectionB = String(b.section || b.studentDetails?.section || '').toLowerCase();
-                if (sectionA !== sectionB) return sectionA.localeCompare(sectionB);
-
-                return String(a.studentDetails?.name || '').localeCompare(String(b.studentDetails?.name || ''));
+                const openedA = new Date(getIncidentTimestamp(a)).getTime();
+                const openedB = new Date(getIncidentTimestamp(b)).getTime();
+                const safeOpenedA = Number.isNaN(openedA) ? Number.POSITIVE_INFINITY : openedA;
+                const safeOpenedB = Number.isNaN(openedB) ? Number.POSITIVE_INFINITY : openedB;
+                return safeOpenedA - safeOpenedB;
             });
 
             const excelData = exportIncidentDetails.map((incident) => {
@@ -593,6 +650,7 @@ const ProfessionalAnalytics = () => {
                     { label: 'Evidence Type', value: filters.evidence },
                     { label: 'Status', value: filters.statuses },
                     { label: 'Assigned To', value: selectedStaff },
+                    { label: 'Student', value: selectedStudent ? `${selectedStudent.name} (${selectedStudent.admissionNo})` : '' },
                 ],
                 totalRecords: exportIncidentDetails.length,
                 columns: exportColumns,
@@ -629,7 +687,7 @@ const ProfessionalAnalytics = () => {
         } finally {
             setIsExporting(false);
         }
-    }, [academicYear, addToast, analytics.academicYearData, currentAcademicYear, dateRange.end, dateRange.start, fetchAnalyticsDetails, filters.classes, filters.evidence, filters.incidentTypes, filters.locations, filters.sections, filters.statuses, selectedStaff, user?.email, user?.name]);
+    }, [academicYear, addToast, analytics.academicYearData, currentAcademicYear, dateRange.end, dateRange.start, fetchAnalyticsDetails, filters.classes, filters.evidence, filters.incidentTypes, filters.locations, filters.sections, filters.statuses, selectedStaff, selectedStudent, user?.email, user?.name]);
 
     if (loading && !serverAnalytics) {
         return (
@@ -707,7 +765,7 @@ const ProfessionalAnalytics = () => {
                 </span>
             ),
         },
-        { key: 'opened', label: 'Opened', render: (row) => formatShortDate(getIncidentTimestamp(row)) },
+        { key: 'opened', label: 'Opened', render: (row) => formatShortDate(getAnalyticsOpenedTimestamp(row)) },
         { key: 'closed', label: 'Closed', render: (row) => formatShortDate(row.closedAt) },
         {
             key: 'letter',
@@ -859,6 +917,40 @@ const ProfessionalAnalytics = () => {
                                         ))}
                                     </select>
                                 </label>
+                                <div className="relative min-w-0">
+                                    <UnifiedSearchInput
+                                        label="Search Student"
+                                        value={studentSearchQuery}
+                                        onChange={handleStudentSearchChange}
+                                        placeholder="Search name or admission number"
+                                    />
+                                    {selectedStudent ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => handleStudentSearchChange('')}
+                                            className="absolute right-2 top-[31px] rounded-md px-2 py-1 text-xs font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+                                        >
+                                            Clear
+                                        </button>
+                                    ) : null}
+                                    {studentSearchResults.length > 0 ? (
+                                        <div className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
+                                            {studentSearchResults.map((student) => (
+                                                <button
+                                                    key={`${student._id}-${student.academicYear || ''}`}
+                                                    type="button"
+                                                    onClick={() => selectStudent(student)}
+                                                    className="block w-full rounded-md px-3 py-2 text-left text-sm transition hover:bg-blue-50"
+                                                >
+                                                    <span className="block font-semibold text-slate-800">{student.name}</span>
+                                                    <span className="block text-xs text-slate-500">
+                                                        Admission No. {student.admissionNo} <span aria-hidden="true">•</span> Class {student.className || 'N/A'}-{student.section || 'N/A'}
+                                                    </span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    ) : null}
+                                </div>
                                 <UnifiedDateInput
                                     label="From Date"
                                     value={dateRange.start}
