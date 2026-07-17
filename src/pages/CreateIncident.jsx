@@ -10,7 +10,6 @@ import {
     CalendarDays,
     Camera,
     Check,
-    CheckCircle,
     Clock3,
     FileImage,
     FileText,
@@ -26,7 +25,6 @@ import {
     Sparkles,
     Tag,
     Trash2,
-    UserCheck,
     Users,
     X,
 } from 'lucide-react';
@@ -93,9 +91,7 @@ const createInitialFormData = () => ({
 });
 
 const createInitialManualSetup = () => ({
-    status: 'Pending',
     openedAt: null,
-    closedAt: null,
 });
 
 const createInitialCategoryTemplateStatus = () => ({
@@ -398,80 +394,10 @@ const CreateIncident = () => {
     const [scrollPosition, setScrollPosition] = useState(0);
     const [isDraftHydrated, setIsDraftHydrated] = useState(false);
 
-    const [fieldOptions, setFieldOptions] = useState([]);
-    const [editMode, setEditMode] = useState(false);
-    const [actionTaken, setActionTaken] = useState('');
-    const [statusConfirmModal, setStatusConfirmModal] = useState({
-        open: false,
-        shouldGenerateLetter: false,
-        manualTimingPayload: null,
-        statusChoice: 'Pending',
-        error: null,
-    });
-
     const [showPreviewModal, setShowPreviewModal] = useState(false);
     const [previewSubmitContext, setPreviewSubmitContext] = useState(null);
 
-    const [presetSearch, setPresetSearch] = useState('');
-    const [showPresetDropdown, setShowPresetDropdown] = useState(false);
-    const [fieldOpsCollapsed, setFieldOpsCollapsed] = useState(false);
 
-    const presetDropdownRef = useRef(null);
-    const textareaRef = useRef(null);
-
-    useEffect(() => {
-        const handleOutsideClick = (e) => {
-            if (presetDropdownRef.current && !presetDropdownRef.current.contains(e.target)) {
-                setShowPresetDropdown(false);
-            }
-        };
-        document.addEventListener('mousedown', handleOutsideClick);
-        return () => document.removeEventListener('mousedown', handleOutsideClick);
-    }, []);
-
-    useEffect(() => {
-        const el = textareaRef.current;
-        if (el) {
-            el.style.height = 'auto';
-            el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
-        }
-    }, [actionTaken]);
-
-    const fetchFieldOptions = useCallback(async () => {
-        try {
-            const response = await apiClient.get('/api/field-operation-options');
-            setFieldOptions(Array.isArray(response.data) ? response.data : []);
-        } catch {
-            // Ignore options loading errors on create
-        }
-    }, []);
-
-    useEffect(() => {
-        fetchFieldOptions();
-    }, [fetchFieldOptions]);
-
-    const handleSelectOption = (option) => {
-        const label = option?.label;
-        if (!label) return;
-        setActionTaken((current) => (current ? `${current}\n- ${label}` : `- ${label}`));
-    };
-
-
-    const handleDeleteOption = async (optionId) => {
-        const confirmed = await confirm({
-            tone: 'danger',
-            title: 'Delete saved option?',
-            description: 'Delete this preset option from the field update list? Existing progress notes will not be changed.',
-            confirmLabel: 'Delete option',
-        });
-        if (!confirmed) return;
-        try {
-            await apiClient.delete(`/api/field-operation-options/${optionId}`);
-            fetchFieldOptions();
-        } catch (err) {
-            addToast(err.response?.data?.message || 'Failed to delete option.', 'error');
-        }
-    };
 
     useFocusFirstInvalid(errors, formRef);
 
@@ -603,7 +529,6 @@ const CreateIncident = () => {
             selectedStudent,
             letterInfo,
             behavioralInsight,
-            actionTaken,
         });
 
         if (!hasContent) {
@@ -627,10 +552,8 @@ const CreateIncident = () => {
             behavioralInsight,
             categoryTemplateStatus,
             scrollPosition,
-            actionTaken,
         });
     }, [
-        actionTaken,
         behavioralInsight,
         categoryTemplateStatus,
         errors,
@@ -695,7 +618,6 @@ const CreateIncident = () => {
             setLetterLanguage(savedDraft.letterLanguage || 'en');
             setBehavioralInsight(savedDraft.behavioralInsight || null);
             setCategoryTemplateStatus(savedDraft.categoryTemplateStatus || createInitialCategoryTemplateStatus());
-            setActionTaken(savedDraft.actionTaken || '');
             setScrollPosition(savedDraft.scrollPosition || 0);
 
             requestAnimationFrame(() => {
@@ -955,10 +877,7 @@ const CreateIncident = () => {
 
     const ensureManualSetupState = () => {
         setManualSetup((current) => ({
-            status: current.status || createInitialManualSetup().status,
             openedAt: normalizeManualValue(current.openedAt),
-            inProgressAt: normalizeManualValue(current.inProgressAt),
-            closedAt: normalizeManualValue(current.closedAt),
         }));
     };
 
@@ -1333,10 +1252,10 @@ const CreateIncident = () => {
         data.append('title', formData.category);
         data.append('shouldGenerateLetter', shouldGenerateLetter ? 'true' : 'false');
 
-        // Pass selected statusChoice as initialStatus and status, and field operations custom notes as actionTaken
+        // Pass selected statusChoice as initialStatus and status, and field operations custom notes as empty
         data.append('status', statusChoice);
         data.append('initialStatus', statusChoice);
-        data.append('actionTaken', actionTaken.trim());
+        data.append('actionTaken', '');
 
         if (shouldGenerateLetter) {
             data.append('letterLanguage', letterLanguage);
@@ -1345,12 +1264,6 @@ const CreateIncident = () => {
         if (manualTimingPayload) {
             data.append('manualTiming', 'true');
             data.append('openedAt', manualTimingPayload.openedAt);
-            if (manualTimingPayload.inProgressAt) data.append('inProgressAt', manualTimingPayload.inProgressAt);
-            if (statusChoice === 'Closed') {
-                data.append('closedAt', manualTimingPayload.closedAt || new Date().toISOString());
-            } else if (manualTimingPayload.closedAt) {
-                data.append('closedAt', manualTimingPayload.closedAt);
-            }
         }
 
         const uploadableEvidenceEntries = evidenceEntries.filter((entry) => entry.evidenceType && entry.file);
@@ -1393,17 +1306,6 @@ const CreateIncident = () => {
     };
 
     const submitIncident = async (shouldGenerateLetter, manualTimingPayload = null) => {
-        setStatusConfirmModal({
-            open: true,
-            shouldGenerateLetter,
-            manualTimingPayload,
-            statusChoice: manualTimingPayload?.status || 'Pending',
-            error: null,
-        });
-    };
-
-    const handleConfirmStatusSubmit = async () => {
-        const choice = statusConfirmModal.statusChoice;
         setLoading(true);
         setUploadProgress(0);
         setSubmitSuccess(false);
@@ -1412,9 +1314,9 @@ const CreateIncident = () => {
 
         try {
             const data = buildIncidentPayload(
-                statusConfirmModal.shouldGenerateLetter,
-                statusConfirmModal.manualTimingPayload,
-                choice
+                shouldGenerateLetter,
+                manualTimingPayload,
+                'Pending'
             );
             const response = await apiClient.post(`/api/incidents`, data, {
                 headers: { ...config.headers },
@@ -1426,10 +1328,8 @@ const CreateIncident = () => {
                     }
                 }
             });
-            setStatusConfirmModal({ open: false, shouldGenerateLetter: false, manualTimingPayload: null, statusChoice: 'Pending', error: null });
-            handleSuccessResponse(response.data, statusConfirmModal.shouldGenerateLetter);
+            handleSuccessResponse(response.data, shouldGenerateLetter);
         } catch (error) {
-            setStatusConfirmModal((curr) => ({ ...curr, open: false }));
             setErrors((currentErrors) => ({
                 ...currentErrors,
                 submit: error.response?.data?.message || 'Failed to save this incident. Please review the form and try again.',
@@ -1444,18 +1344,13 @@ const CreateIncident = () => {
         if (!manualSetup.openedAt?.date) {
             return 'Opened date is required.';
         }
-
-        if (manualSetup.status === 'Closed' && !manualSetup.closedAt?.date) {
-            return 'Closed date is required when the status is Closed.';
-        }
-
         return '';
     };
 
     const buildManualTimingPayload = () => ({
-        status: manualSetup.status,
+        status: 'Pending',
         openedAt: manualValueToDayjs(manualSetup.openedAt)?.toISOString(),
-        closedAt: manualValueToDayjs(manualSetup.closedAt)?.toISOString(),
+        closedAt: null,
     });
 
     const handleManualSetupPrimary = async () => {
@@ -1617,16 +1512,16 @@ const CreateIncident = () => {
 
                 {modal.type === 'manualTiming' && modal.open && (
                     <div className="fixed inset-0 z-[100] flex min-h-[100dvh] items-center justify-center overflow-y-auto bg-slate-950/50 p-3 backdrop-blur-sm sm:p-4">
-                        <div className="my-auto flex w-full max-w-3xl max-h-[min(92dvh,calc(100dvh-1.5rem))] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl">
+                        <div className="my-auto flex w-full max-w-lg max-h-[min(92dvh,calc(100dvh-1.5rem))] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl">
                             <div className="shrink-0 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50 px-6 py-4">
                                 <div className="flex items-center gap-3">
                                     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
                                         <Clock3 className="h-5 w-5 text-indigo-600" />
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-semibold text-slate-900">Custom Date & Progress</h3>
+                                        <h3 className="text-lg font-semibold text-slate-900">Custom Opening Date</h3>
                                         <p className="mt-1 text-sm text-slate-600">
-                                            Date is required; time is optional. If time is blank, midnight is used.
+                                            Specify a custom date and time for when the incident occurred.
                                         </p>
                                     </div>
                                 </div>
@@ -1635,74 +1530,20 @@ const CreateIncident = () => {
                             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-6">
                                 {errors.manualTiming && <StatusBanner type="error">{errors.manualTiming}</StatusBanner>}
 
-                                <div>
-                                    <p className="text-sm font-semibold text-slate-800">Initial Status</p>
-                                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                                        {['Pending', 'Closed'].map((status) => {
-                                            const isActive = manualSetup.status === status;
-                                            const isClosedChoice = status === 'Closed';
-                                            const isClosedAvailable = Boolean(manualSetup.openedAt?.date);
-                                            return (
-                                                <button
-                                                    key={status}
-                                                    type="button"
-                                                    disabled={isClosedChoice && !isClosedAvailable}
-                                                    onClick={() => {
-                                                        removeFieldError('manualTiming');
-                                                        updateManualSetup((current) => ({
-                                                            ...current,
-                                                            status,
-                                                        }));
-                                                    }}
-                                                    className={`rounded-xl border px-4 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
-                                                        isActive
-                                                            ? 'border-indigo-300 bg-indigo-50 text-indigo-700'
-                                                            : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                                                    }`}
-                                                >
-                                                    {isClosedChoice && !isClosedAvailable ? 'Closed (set opened date first)' : status}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-
                                 <div className="space-y-4">
                                     <ManualDateTimeField
-                                        label="Opened Timeline"
+                                        label="Opening Date"
                                         required
                                         value={normalizeManualValue(manualSetup.openedAt)}
-                                        onChange={(value) =>
-                                            {
-                                                removeFieldError('manualTiming');
-                                                updateManualSetup((current) => ({
-                                                    ...current,
-                                                    openedAt: value,
-                                                }));
-                                            }
-                                        }
-                                        description="When the incident was first reported. The date is required."
+                                        onChange={(value) => {
+                                            removeFieldError('manualTiming');
+                                            updateManualSetup((current) => ({
+                                                ...current,
+                                                openedAt: value,
+                                            }));
+                                        }}
+                                        description="When the incident occurred. The date is required."
                                     />
-
-
-
-                                    {manualSetup.status === 'Closed' && (
-                                        <ManualDateTimeField
-                                            label="Closed Timeline"
-                                            required
-                                            value={normalizeManualValue(manualSetup.closedAt)}
-                                        onChange={(value) =>
-                                            {
-                                                removeFieldError('manualTiming');
-                                                updateManualSetup((current) => ({
-                                                    ...current,
-                                                    closedAt: value,
-                                                }));
-                                            }
-                                        }
-                                            description="When the incident was resolved."
-                                        />
-                                    )}
                                 </div>
                             </div>
 
@@ -1720,7 +1561,7 @@ const CreateIncident = () => {
                                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
                                 >
                                     <Check className="h-4 w-4" />
-                                    {modal.mode === 'submit' ? 'Continue' : 'Save Dates'}
+                                    {modal.mode === 'submit' ? 'Continue' : 'Save Date'}
                                 </button>
                             </div>
                         </div>
@@ -1955,42 +1796,7 @@ const CreateIncident = () => {
                                             );
                                         })()}
 
-                                        {/* Field Operations Card */}
-                                        {(() => {
-                                            const lines = (actionTaken || '').split('\n');
-                                            const presetLines = lines.filter(line => line.trim().startsWith('-')).map(line => line.replace(/^-\s*/, '').trim()).filter(Boolean);
-                                            const customLines = lines.filter(line => !line.trim().startsWith('-')).join('\n').trim();
-                                            
-                                            if (presetLines.length === 0 && !customLines) return null;
 
-                                            return (
-                                                <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
-                                                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Field Operations</h4>
-                                                    <div className="space-y-2">
-                                                        {presetLines.length > 0 && (
-                                                            <div>
-                                                                <span className="block text-[10px] uppercase font-bold text-slate-400">Selected Presets</span>
-                                                                <div className="flex flex-wrap gap-1.5 mt-1">
-                                                                    {presetLines.map((preset, idx) => (
-                                                                        <span key={idx} className="inline-flex rounded-lg bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-800 border border-emerald-100">
-                                                                            {preset}
-                                                                        </span>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                        {customLines && (
-                                                            <div>
-                                                                <span className="block text-[10px] uppercase font-bold text-slate-400">Custom Note</span>
-                                                                <p className="text-xs text-slate-600 whitespace-pre-wrap mt-0.5 line-clamp-3">
-                                                                    {customLines}
-                                                                </p>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })()}
 
                                         {/* Evidence Card */}
                                         {(() => {
@@ -2072,100 +1878,7 @@ const CreateIncident = () => {
                     </div>
                 )}
 
-                {statusConfirmModal.open && (
-                    <div className="fixed inset-0 z-[110] flex min-h-[100dvh] items-center justify-center overflow-y-auto bg-slate-950/50 p-3 backdrop-blur-sm sm:p-4">
-                        <div className="my-auto max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-md overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-2xl">
-                            <div className="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50 px-6 py-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
-                                        <ShieldCheck className="h-5 w-5 text-indigo-600" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-lg font-semibold text-slate-900">Incident Status</h3>
-                                        <p className="mt-1 text-sm text-slate-600">
-                                            Choose initial status for this report.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
 
-                            <div className="space-y-4 p-6">
-                                {statusConfirmModal.error && (
-                                    <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
-                                        {statusConfirmModal.error}
-                                    </div>
-                                )}
-
-                                <div className="space-y-3">
-                                    <label
-                                        className={`flex cursor-pointer items-center justify-between rounded-xl border p-4 transition ${
-                                            statusConfirmModal.statusChoice === 'Pending'
-                                                ? 'border-indigo-500 bg-indigo-50/50 ring-1 ring-indigo-500'
-                                                : 'border-slate-200 bg-white hover:bg-slate-50'
-                                        }`}
-                                    >
-                                        <div className="flex items-start gap-3">
-                                            <input
-                                                type="radio"
-                                                name="statusChoice"
-                                                value="Pending"
-                                                checked={statusConfirmModal.statusChoice === 'Pending'}
-                                                onChange={() => setStatusConfirmModal((curr) => ({ ...curr, statusChoice: 'Pending', error: null }))}
-                                                className="mt-1 h-4 w-4 text-indigo-600 border-slate-300 focus:ring-indigo-500"
-                                            />
-                                            <div>
-                                                <span className="block text-sm font-bold text-slate-900">Pending</span>
-                                                <span className="block mt-0.5 text-xs text-slate-500">Incident remains active for investigator handling.</span>
-                                            </div>
-                                        </div>
-                                    </label>
-
-                                    <label
-                                        className={`flex cursor-pointer items-center justify-between rounded-xl border p-4 transition ${
-                                            statusConfirmModal.statusChoice === 'Closed'
-                                                ? 'border-indigo-500 bg-indigo-50/50 ring-1 ring-indigo-500'
-                                                : 'border-slate-200 bg-white hover:bg-slate-50'
-                                        }`}
-                                    >
-                                        <div className="flex items-start gap-3">
-                                            <input
-                                                type="radio"
-                                                name="statusChoice"
-                                                value="Closed"
-                                                checked={statusConfirmModal.statusChoice === 'Closed'}
-                                                onChange={() => setStatusConfirmModal((curr) => ({ ...curr, statusChoice: 'Closed', error: null }))}
-                                                className="mt-1 h-4 w-4 text-indigo-600 border-slate-300 focus:ring-indigo-500"
-                                            />
-                                            <div>
-                                                <span className="block text-sm font-bold text-slate-900">Closed</span>
-                                                <span className="block mt-0.5 text-xs text-slate-500">Case is fully resolved immediately. Requires Field Operations notes.</span>
-                                            </div>
-                                        </div>
-                                    </label>
-                                </div>
-
-                                <div className="mt-6 flex items-center justify-end gap-3 border-t border-slate-100 pt-4">
-                                    <button
-                                        type="button"
-                                        onClick={() => setStatusConfirmModal((curr) => ({ ...curr, open: false }))}
-                                        className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={handleConfirmStatusSubmit}
-                                        disabled={loading}
-                                        className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-60"
-                                    >
-                                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                                        Submit Report
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
 
                 {behavioralInsight && (
                     <div className="fixed inset-0 z-[100] flex min-h-[100dvh] items-center justify-center overflow-y-auto bg-slate-950/50 p-3 backdrop-blur-sm sm:p-4">
@@ -2793,29 +2506,20 @@ const CreateIncident = () => {
                                             >
                                                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                                                     <div className="max-w-xl">
-                                                        <p className="text-base font-semibold text-slate-900">Custom Date & Progress</p>
+                                                        <p className="text-base font-semibold text-slate-900">Custom Opening Date</p>
                                                         <p className="mt-1 text-sm text-slate-600">
-                                                            Turn this on when the incident happened on an earlier date or you need to set the status dates yourself. The date is required; time is optional.
+                                                            Turn this on when the incident happened on an earlier date. The date is required; time is optional.
                                                         </p>
 
                                                         {manualTiming ? (
                                                             <div className="mt-4 grid gap-2 text-xs text-indigo-900">
                                                                 <span className="rounded-full bg-white px-3 py-1 ring-1 ring-indigo-200">
-                                                                    Status: {manualSetup.status}
-                                                                </span>
-                                                                <span className="rounded-full bg-white px-3 py-1 ring-1 ring-indigo-200">
                                                                     Opened: {formatManualSummary(manualSetup.openedAt)}
                                                                 </span>
-
-                                                                {manualSetup.status === 'Closed' && (
-                                                                    <span className="rounded-full bg-white px-3 py-1 ring-1 ring-indigo-200">
-                                                                        Closed: {formatManualSummary(manualSetup.closedAt)}
-                                                                    </span>
-                                                                )}
                                                             </div>
                                                         ) : (
                                                             <div className="mt-4 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
-                                                                Automatic timeline is currently active. Open manual setup only when you need a custom date workflow.
+                                                                Automatic timing is currently active. Open manual setup only when you need a custom opening date.
                                                             </div>
                                                         )}
                                                     </div>
@@ -2827,7 +2531,7 @@ const CreateIncident = () => {
                                                             className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
                                                         >
                                                             <Clock3 className="h-4 w-4" />
-                                                            {manualTiming ? 'Edit Dates & Progress' : 'Open Date & Progress'}
+                                                            {manualTiming ? 'Edit Opening Date' : 'Set Custom Opening Date'}
                                                         </button>
 
                                                         {manualTiming && (
@@ -2836,7 +2540,7 @@ const CreateIncident = () => {
                                                                 onClick={clearManualSetup}
                                                                 className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                                                             >
-                                                                Remove Custom Dates
+                                                                Remove Custom Date
                                                             </button>
                                                         )}
                                                     </div>
@@ -3029,169 +2733,7 @@ const CreateIncident = () => {
                                 </button>
                             </SectionCard>
 
-                            {fieldOpsCollapsed ? (
-                                <div
-                                    onClick={() => setFieldOpsCollapsed(false)}
-                                    className="cursor-pointer flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3.5 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100/80 shadow-sm"
-                                >
-                                    <div className="flex items-center gap-2.5 min-w-0">
-                                        <CheckCircle className="h-5 w-5 text-emerald-600 shrink-0" />
-                                        <span className="truncate">
-                                            Field Operations Completed
-                                            {actionTaken.trim() ? (
-                                                <span className="font-normal text-emerald-600 ml-1.5 hidden sm:inline">
-                                                    ({actionTaken.slice(0, 45).replace(/\n/g, ' ')}
-                                                    {actionTaken.length > 45 ? '...' : ''})
-                                                </span>
-                                            ) : (
-                                                <span className="font-normal text-emerald-600 ml-1.5 hidden sm:inline">(No custom notes)</span>
-                                            )}
-                                        </span>
-                                    </div>
-                                    <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 hover:text-indigo-800">
-                                        Expand
-                                    </span>
-                                </div>
-                            ) : (
-                                <SectionCard
-                                    icon={UserCheck}
-                                    title="Field Operations"
-                                    description="Optional. Select preset updates or add custom notes to progress or close the case."
-                                    step={5}
-                                    action={
-                                        <button
-                                            type="button"
-                                            onClick={() => setFieldOpsCollapsed(true)}
-                                            className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-500 hover:bg-slate-50 transition"
-                                        >
-                                            Collapse
-                                        </button>
-                                    }
-                                >
-                                    <div className="flex flex-col gap-3">
-                                        {/* Updated Notes Header Label & Edit Presets Button */}
-                                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                            <span className="text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-lg self-start">
-                                                Updated Notes
-                                            </span>
 
-                                            <button
-                                                type="button"
-                                                onClick={() => setEditMode((v) => !v)}
-                                                className={`rounded-xl px-3 py-1 text-xs font-semibold transition self-end sm:self-auto ${
-                                                    editMode
-                                                        ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-                                                        : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                                                }`}
-                                            >
-                                                {editMode ? 'Done Editing' : 'Manage Presets'}
-                                            </button>
-                                        </div>
-
-                                        {/* Search & Add Presets Dropdown */}
-                                        <div className="relative" ref={presetDropdownRef}>
-                                            <div className="flex gap-2">
-                                                <div className="relative flex-1">
-                                                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                                                    <input
-                                                        type="text"
-                                                        value={presetSearch}
-                                                        onChange={(e) => {
-                                                            setPresetSearch(e.target.value);
-                                                            setShowPresetDropdown(true);
-                                                        }}
-                                                        onFocus={() => setShowPresetDropdown(true)}
-                                                        placeholder="Search presets..."
-                                                        className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 py-2 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                                                    />
-                                                </div>
-                                                {presetSearch.trim() && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={async () => {
-                                                            try {
-                                                                await apiClient.post('/api/field-operation-options', { type: 'updated', label: presetSearch.trim() });
-                                                                setPresetSearch('');
-                                                                fetchFieldOptions();
-                                                                addToast('Preset added successfully.', 'success');
-                                                            } catch (err) {
-                                                                addToast(err.response?.data?.message || 'Failed to add option.', 'error');
-                                                            }
-                                                        }}
-                                                        className="inline-flex items-center gap-1 rounded-xl bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-indigo-700"
-                                                    >
-                                                        <PlusCircle className="h-4 w-4" />
-                                                        Add
-                                                    </button>
-                                                )}
-                                            </div>
-
-                                            {showPresetDropdown && (
-                                                <div className="absolute left-0 right-0 z-50 mt-1 max-h-48 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-lg">
-                                                    {(() => {
-                                                        const query = presetSearch.toLowerCase().trim();
-                                                        const filtered = (fieldOptions || []).filter(
-                                                            (opt) => opt.label.toLowerCase().includes(query)
-                                                        );
-
-                                                        if (filtered.length === 0) {
-                                                            return (
-                                                                <div className="px-4 py-3 text-xs text-slate-500">
-                                                                    No presets found. {presetSearch.trim() ? 'Click "Add" to save this preset.' : ''}
-                                                                </div>
-                                                            );
-                                                        }
-
-                                                        return filtered.map((option) => (
-                                                            <div
-                                                                key={getOptionId(option)}
-                                                                className="group flex items-center justify-between px-4 py-2 text-xs text-slate-700 cursor-pointer hover:bg-indigo-50"
-                                                                onClick={() => {
-                                                                    handleSelectOption(option);
-                                                                    setShowPresetDropdown(false);
-                                                                    setPresetSearch('');
-                                                                }}
-                                                            >
-                                                                <span className="truncate pr-4">{option.label}</span>
-                                                                {editMode && (
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            handleDeleteOption(getOptionId(option));
-                                                                        }}
-                                                                        className="text-slate-400 hover:text-red-600 transition p-1"
-                                                                    >
-                                                                        <Trash2 className="h-3.5 w-3.5" />
-                                                                    </button>
-                                                                )}
-                                                            </div>
-                                                        ));
-                                                    })()}
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Compact Custom Notes */}
-                                        <div className="space-y-1">
-                                            <label className="block text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
-                                                Custom Note / Action Taken
-                                            </label>
-                                            <textarea
-                                                ref={textareaRef}
-                                                style={{ maxHeight: '120px' }}
-                                                className="w-full min-h-[72px] rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 outline-none transition focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                                                placeholder="Add action taken or progress notes..."
-                                                value={actionTaken}
-                                                onChange={(e) => setActionTaken(e.target.value)}
-                                            />
-                                            {errors.actionTaken && (
-                                                <p className="text-xs font-semibold text-red-600">{errors.actionTaken}</p>
-                                            )}
-                                        </div>
-                                    </div>
-                                </SectionCard>
-                            )}
 
                             <div className="sticky bottom-0 z-40 -mx-3 -mb-3 lg:-mx-4 lg:-mb-4 bg-white/95 border-t border-slate-200 px-4 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] backdrop-blur flex flex-row items-center justify-end gap-3 rounded-b-lg">
                                 {uploadProgress > 0 && uploadProgress < 100 && (

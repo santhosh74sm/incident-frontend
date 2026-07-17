@@ -217,6 +217,33 @@ export const buildIssuedLetterFilterParams = ({
 export const getIncidentTimestamp = (incident) =>
     incident?.incidentDate || incident?.incident_date || incident?.openedAt || incident?.submittedAt || null;
 
+export const getIncidentOpenedTimestamp = (incident) =>
+    incident?.openedAt || incident?.incidentDate || incident?.incident_date || incident?.submittedAt || null;
+
+export const sortIncidentsChronologically = (a, b) => {
+    const timeA = new Date(getIncidentOpenedTimestamp(a)).getTime();
+    const timeB = new Date(getIncidentOpenedTimestamp(b)).getTime();
+    const cleanA = Number.isNaN(timeA) ? Number.POSITIVE_INFINITY : timeA;
+    const cleanB = Number.isNaN(timeB) ? Number.POSITIVE_INFINITY : timeB;
+
+    if (cleanA !== cleanB) {
+        return cleanA - cleanB;
+    }
+
+    const createdA = a?.createdAt ? new Date(a.createdAt).getTime() : Number.POSITIVE_INFINITY;
+    const createdB = b?.createdAt ? new Date(b.createdAt).getTime() : Number.POSITIVE_INFINITY;
+    const cleanCreatedA = Number.isNaN(createdA) ? Number.POSITIVE_INFINITY : createdA;
+    const cleanCreatedB = Number.isNaN(createdB) ? Number.POSITIVE_INFINITY : createdB;
+
+    if (cleanCreatedA !== cleanCreatedB) {
+        return cleanCreatedA - cleanCreatedB;
+    }
+
+    const idA = String(a?._id || a?.id || '');
+    const idB = String(b?._id || b?.id || '');
+    return idA.localeCompare(idB);
+};
+
 export const getLetterTimelineTimestamp = (letter) =>
     letter?.incident?.incidentDate ||
     letter?.incident?.incident_date ||

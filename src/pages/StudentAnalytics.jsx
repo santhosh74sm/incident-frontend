@@ -74,6 +74,8 @@ import {
     formatDisplayValue,
     resolveUserLabel,
     getFilteredSections,
+    getIncidentOpenedTimestamp,
+    sortIncidentsChronologically,
 } from '../utils/analytics';
 import { downloadBlob, downloadWorkbook } from '../utils/downloadFiles';
 import { withFeedback } from '../utils/notifications';
@@ -462,7 +464,8 @@ const StudentAnalytics = () => {
         const pending = filteredIncidentSet.filter((incident) => incident.status === 'Pending' || incident.status === 'Open' || incident.status === 'In Progress').length;
         const closed = filteredIncidentSet.filter((incident) => incident.status === 'Closed').length;
 
-        const incidentDetails = filteredIncidentSet.map((incident) => ({
+        const sortedIncidents = [...filteredIncidentSet].sort(sortIncidentsChronologically);
+        const incidentDetails = sortedIncidents.map((incident) => ({
             ...incident,
             reportedBy: resolveUserLabel(incident.reportedBy, 'Unknown'),
             assignedHandler: resolveUserLabel(incident.assignedHandler, 'Unassigned'),
@@ -796,7 +799,7 @@ const StudentAnalytics = () => {
                 </span>
             ),
         },
-        { key: 'opened', label: 'Opened', render: (row) => formatShortDate(getIncidentTimestamp(row)) },
+        { key: 'opened', label: 'Opened', render: (row) => formatShortDate(getIncidentOpenedTimestamp(row)) },
         { key: 'closed', label: 'Closed', render: (row) => formatShortDate(row.closedAt) },
         {
             key: 'letter',

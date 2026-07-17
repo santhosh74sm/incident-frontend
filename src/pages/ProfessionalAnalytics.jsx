@@ -68,6 +68,8 @@ import {
     withUnknownOption,
     formatDisplayValue,
     getFilteredSections,
+    getIncidentOpenedTimestamp,
+    sortIncidentsChronologically,
 } from '../utils/analytics';
 import { downloadWorkbook } from '../utils/downloadFiles';
 import { withFeedback } from '../utils/notifications';
@@ -78,8 +80,6 @@ const slugifyExportPart = (value, fallback = 'all') => {
     return clean || fallback;
 };
 
-const getAnalyticsOpenedTimestamp = (incident) =>
-    incident?.openedAt || incident?.incidentDate || incident?.incident_date || incident?.submittedAt || null;
 
 const AcademicYearStatusTooltip = ({ active, payload, label }) => {
     if (!active || !payload || payload.length === 0) return null;
@@ -522,14 +522,7 @@ const ProfessionalAnalytics = () => {
     }, [dateRange, serverAnalytics]);
 
     const filteredIncidentDetails = useMemo(
-        () =>
-            [...filteredIncidents].sort((firstIncident, secondIncident) => {
-                const firstOpenedDate = new Date(getAnalyticsOpenedTimestamp(firstIncident)).getTime();
-                const secondOpenedDate = new Date(getAnalyticsOpenedTimestamp(secondIncident)).getTime();
-                const firstTimestamp = Number.isNaN(firstOpenedDate) ? Number.POSITIVE_INFINITY : firstOpenedDate;
-                const secondTimestamp = Number.isNaN(secondOpenedDate) ? Number.POSITIVE_INFINITY : secondOpenedDate;
-                return firstTimestamp - secondTimestamp;
-            }),
+        () => [...filteredIncidents].sort(sortIncidentsChronologically),
         [filteredIncidents]
     );
 
@@ -600,13 +593,7 @@ const ProfessionalAnalytics = () => {
                 exportRows.push(...nextPage.data);
                 Object.assign(exportLetterStatusMap, nextPage.letterStatusMap);
             }
-            const exportIncidentDetails = exportRows.sort((a, b) => {
-                const openedA = new Date(getIncidentTimestamp(a)).getTime();
-                const openedB = new Date(getIncidentTimestamp(b)).getTime();
-                const safeOpenedA = Number.isNaN(openedA) ? Number.POSITIVE_INFINITY : openedA;
-                const safeOpenedB = Number.isNaN(openedB) ? Number.POSITIVE_INFINITY : openedB;
-                return safeOpenedA - safeOpenedB;
-            });
+            const exportIncidentDetails = exportRows.sort(sortIncidentsChronologically);
 
             const excelData = exportIncidentDetails.map((incident) => {
                 const incidentId = incident._id || incident.id;
@@ -765,7 +752,7 @@ const ProfessionalAnalytics = () => {
                 </span>
             ),
         },
-        { key: 'opened', label: 'Opened', render: (row) => formatShortDate(getAnalyticsOpenedTimestamp(row)) },
+        { key: 'opened', label: 'Opened', render: (row) => formatShortDate(getIncidentOpenedTimestamp(row)) },
         { key: 'closed', label: 'Closed', render: (row) => formatShortDate(row.closedAt) },
         {
             key: 'letter',
