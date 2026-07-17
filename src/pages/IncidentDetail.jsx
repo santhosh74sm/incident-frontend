@@ -880,26 +880,18 @@ const IncidentDetail = () => {
         <div className="incident-workspace w-full min-w-0 bg-[#f6f8fc] text-slate-800 pb-6">
             {/* Desktop Quick Header */}
             <div className="bg-white border-b border-slate-200 px-6 py-4">
-                <div className="mx-auto max-w-[1680px] flex items-center justify-between">
-                    {/* Breadcrumbs */}
-                    <nav className="flex items-center gap-2 text-sm font-semibold text-slate-500" aria-label="Breadcrumb">
-                        <button type="button" onClick={() => navigate('/incidents')} className="inline-flex items-center gap-1.5 text-slate-500 hover:text-indigo-600 transition">
-                            Incidents
-                        </button>
-                        <span aria-hidden="true" className="text-slate-400">/</span>
-                        <span className="text-slate-800">Incident Detail</span>
-                    </nav>
+                <div className="mx-auto max-w-[1680px] flex flex-wrap items-center justify-between gap-4">
+                    <button
+                        type="button"
+                        onClick={() => navigate('/incidents')}
+                        className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition shadow-sm"
+                    >
+                        <ArrowLeft size={14} />
+                        <span>Back</span>
+                    </button>
 
                     {/* Actions Row */}
                     <div className="flex items-center gap-2">
-                        <button
-                            type="button"
-                            onClick={() => navigate('/incidents')}
-                            className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition shadow-sm"
-                        >
-                            <ArrowLeft size={14} />
-                            <span>Back</span>
-                        </button>
                         {incident.status !== 'Closed' && canManageIncident && (
                             <button
                                 type="button"
@@ -981,6 +973,16 @@ const IncidentDetail = () => {
                                     <span className={`inline-flex rounded-md border px-2.5 py-0.5 text-xs font-bold uppercase ${statusStyle.badge}`}>
                                         {formatDisplayValue(incident.status || 'Pending')}
                                     </span>
+                                    {isAdminUser && incident.admissionNo && (
+                                        <button
+                                            type="button"
+                                            onClick={() => navigate(`/student-analytics/${incident.admissionNo}`)}
+                                            className="inline-flex h-9 items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition shadow-sm"
+                                        >
+                                            <ExternalLink size={14} />
+                                            <span>View Full Student Report</span>
+                                        </button>
+                                    )}
                                 </div>
                                 <p className="mt-1 text-sm font-medium text-slate-500">
                                     Admission No: {incident.admissionNo || 'N/A'}
