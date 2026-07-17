@@ -388,46 +388,43 @@ const DashboardContent = memo(() => {
 
                 {/* Hero */}
                 <DashboardHero
-                    title={`Welcome, ${user?.name || 'Admin'}`}
+                    title="Incident Report Management System"
                     icon={ShieldCheck}
-                    meta={
-                        (user?.schoolName || user?.currentAcademicYear) ? (
-                            <div className="max-w-full min-w-0 space-y-1.5 text-center">
-                                {user?.schoolName ? (
-                                    <p className="break-words text-base font-bold text-slate-800 sm:text-lg">
+                    actions={(
+                        <div className="flex flex-col items-start gap-3.5 text-left md:items-end md:text-right">
+                            <div className="space-y-1 text-left md:text-right">
+                                {user?.schoolName && (
+                                    <p className="text-lg font-bold text-slate-900 sm:text-xl">
                                         {user.schoolName}
                                     </p>
-                                ) : null}
-                                {user?.currentAcademicYear ? (
-                                    <p className="text-sm font-semibold text-blue-700 ">
+                                )}
+                                {user?.currentAcademicYear && (
+                                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                                         Academic Year: {user.currentAcademicYear}
                                     </p>
-                                ) : null}
+                                )}
                             </div>
-                        ) : null
-                    }
-                    metaClassName="justify-center"
-                    actions={(
-                        <>
-                            {canReportIncident && (
-                                <Link
-                                    to="/create-incident"
-                                    className="btn-primary"
-                                >
-                                    <FileText size={15} aria-hidden="true" />
-                                    Create Incident
-                                </Link>
-                            )}
-                             {canAccessAnalytics && (
-                                 <Link
-                                     to="/analytics"
-                                     className="btn-primary"
-                                 >
-                                     <TrendingUp size={15} aria-hidden="true" />
-                                     View Reports
-                                 </Link>
-                             )}
-                        </>
+                            <div className="flex flex-wrap gap-2.5">
+                                {canReportIncident && (
+                                    <Link
+                                        to="/create-incident"
+                                        className="btn-primary"
+                                    >
+                                        <FileText size={15} aria-hidden="true" />
+                                        Create Incident
+                                    </Link>
+                                )}
+                                {canAccessAnalytics && (
+                                    <Link
+                                        to="/analytics"
+                                        className="btn-primary"
+                                    >
+                                        <TrendingUp size={15} aria-hidden="true" />
+                                        View Reports
+                                    </Link>
+                                )}
+                            </div>
+                        </div>
                     )}
                 />
 
