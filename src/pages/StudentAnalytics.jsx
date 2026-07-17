@@ -1380,8 +1380,8 @@ const StudentAnalytics = () => {
                                                                      data={studentAnalytics.evidenceData.slice(0, 6)}
                                                                      dataKey="count"
                                                                      nameKey="name"
-                                                                     innerRadius={54}
-                                                                     outerRadius={88}
+                                                                     innerRadius={compactChart ? 44 : 54}
+                                                                     outerRadius={compactChart ? 74 : 88}
                                                                      paddingAngle={4}
                                                                  >
                                                                      {studentAnalytics.evidenceData.slice(0, 6).map((entry, index) => (

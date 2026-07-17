@@ -1114,8 +1114,8 @@ const ProfessionalAnalytics = () => {
                                                         data={analytics.statusData}
                                                         dataKey="value"
                                                         nameKey="name"
-                                                        innerRadius={62}
-                                                        outerRadius={92}
+                                                        innerRadius={compactChart ? 50 : 62}
+                                                        outerRadius={compactChart ? 80 : 92}
                                                         paddingAngle={4}
                                                     >
                                                         {analytics.statusData.map((entry) => (
@@ -1258,8 +1258,8 @@ const ProfessionalAnalytics = () => {
                                                             data={analytics.evidenceData.slice(0, 6)}
                                                             dataKey="count"
                                                             nameKey="name"
-                                                            innerRadius={54}
-                                                            outerRadius={88}
+                                                            innerRadius={compactChart ? 44 : 54}
+                                                            outerRadius={compactChart ? 74 : 88}
                                                             paddingAngle={4}
                                                         >
                                                             {analytics.evidenceData.slice(0, 6).map((entry, index) => (

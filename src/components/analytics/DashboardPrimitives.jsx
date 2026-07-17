@@ -80,7 +80,7 @@ export const ChartTooltipContent = ({ active, payload, label, labelFormatter, va
 export const ChartTooltip = ({ labelFormatter, valueFormatter, cursor = false, content = null }) => (
     <Tooltip
         cursor={cursor}
-        allowEscapeViewBox={{ x: false, y: false }}
+        allowEscapeViewBox={{ x: true, y: true }}
         offset={12}
         wrapperStyle={{ zIndex: 20 }}
         content={content || <ChartTooltipContent labelFormatter={labelFormatter} valueFormatter={valueFormatter} />}
@@ -148,7 +148,7 @@ export const useCompactChart = () => {
 
 export const ChartSurface = memo(({ height = 400, className = '', children }) => {
     const surfaceRef = useRef(null);
-    const [hasValidSize, setHasValidSize] = useState(false);
+    const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
     const safeHeight = Math.max(Number(height) || 0, 240);
 
     useLayoutEffect(() => {
@@ -159,8 +159,16 @@ export const ChartSurface = memo(({ height = 400, className = '', children }) =>
         const updateSize = () => {
             if (animationFrame) cancelAnimationFrame(animationFrame);
             animationFrame = requestAnimationFrame(() => {
-                const { width, height: measuredHeight } = node.getBoundingClientRect();
-                setHasValidSize(width > 0 && measuredHeight > 0);
+                const rect = node.getBoundingClientRect();
+                setDimensions((current) => {
+                    if (
+                        Math.abs(current.width - rect.width) < 1 &&
+                        Math.abs(current.height - rect.height) < 1
+                    ) {
+                        return current;
+                    }
+                    return { width: rect.width, height: rect.height };
+                });
             });
         };
 
@@ -178,6 +186,8 @@ export const ChartSurface = memo(({ height = 400, className = '', children }) =>
         };
     }, []);
 
+    const hasValidSize = dimensions.width > 0 && dimensions.height > 0;
+
     return (
         <div
             ref={surfaceRef}
@@ -185,7 +195,11 @@ export const ChartSurface = memo(({ height = 400, className = '', children }) =>
             style={{ height: safeHeight, minHeight: safeHeight, minWidth: 1 }}
         >
             {hasValidSize ? (
-                <div className="h-full w-full min-w-[1px]" style={{ height: safeHeight }}>
+                <div
+                    key={`${Math.round(dimensions.width)}-${Math.round(dimensions.height)}`}
+                    className="h-full w-full min-w-[1px]"
+                    style={{ height: safeHeight }}
+                >
                     {children}
                 </div>
             ) : null}
