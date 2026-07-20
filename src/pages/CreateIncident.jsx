@@ -31,7 +31,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../config/apiClient';
 import { isAdminRole, isTeacherRole } from '../utils/roles';
-import { formatDisplayValue, resolveUserLabel, getFilteredSections } from '../utils/analytics';
+import { formatDisplayValue, resolveUserLabel, getFilteredSections, STATUS_OPTIONS } from '../utils/analytics';
 import useFocusFirstInvalid from '../hooks/useFocusFirstInvalid';
 import {
     clearCreateIncidentDraft,
@@ -395,6 +395,8 @@ const CreateIncident = () => {
     const [isDraftHydrated, setIsDraftHydrated] = useState(false);
 
     const [showPreviewModal, setShowPreviewModal] = useState(false);
+    const [showStatusModal, setShowStatusModal] = useState(false);
+    const [selectedStatus, setSelectedStatus] = useState('');
     const [previewSubmitContext, setPreviewSubmitContext] = useState(null);
 
 
@@ -1241,7 +1243,7 @@ const CreateIncident = () => {
         return Object.keys(nextErrors).length === 0;
     };
 
-    const buildIncidentPayload = (shouldGenerateLetter, manualTimingPayload = null, statusChoice = 'Pending') => {
+    const buildIncidentPayload = (shouldGenerateLetter, manualTimingPayload = null, statusChoice) => {
         const data = new FormData();
         Object.keys(formData).forEach((key) => {
             data.append(key, formData[key] ?? '');
@@ -1252,9 +1254,7 @@ const CreateIncident = () => {
         data.append('title', formData.category);
         data.append('shouldGenerateLetter', shouldGenerateLetter ? 'true' : 'false');
 
-        // Pass selected statusChoice as initialStatus and status, and field operations custom notes as empty
         data.append('status', statusChoice);
-        data.append('initialStatus', statusChoice);
         data.append('actionTaken', '');
 
         if (shouldGenerateLetter) {
@@ -1305,7 +1305,15 @@ const CreateIncident = () => {
         }
     };
 
-    const submitIncident = async (shouldGenerateLetter, manualTimingPayload = null) => {
+    const submitIncident = async (shouldGenerateLetter, manualTimingPayload = null, statusChoice) => {
+        if (!STATUS_OPTIONS.some((option) => option.id === statusChoice)) {
+            setErrors((currentErrors) => ({
+                ...currentErrors,
+                status: 'Select an incident status before submitting.',
+            }));
+            return;
+        }
+
         setLoading(true);
         setUploadProgress(0);
         setSubmitSuccess(false);
@@ -1316,7 +1324,7 @@ const CreateIncident = () => {
             const data = buildIncidentPayload(
                 shouldGenerateLetter,
                 manualTimingPayload,
-                'Pending'
+                statusChoice
             );
             const response = await apiClient.post(`/api/incidents`, data, {
                 headers: { ...config.headers },
@@ -1348,7 +1356,6 @@ const CreateIncident = () => {
     };
 
     const buildManualTimingPayload = () => ({
-        status: 'Pending',
         openedAt: manualValueToDayjs(manualSetup.openedAt)?.toISOString(),
         closedAt: null,
     });
@@ -1381,33 +1388,28 @@ const CreateIncident = () => {
                 ? categoryTemplateStatus.templates
                 : await checkLetterTemplate(formData.category);
 
-        if (hasAvailableLetterTemplate(matchingTemplate)) {
-            openLetterPermission(matchingTemplate, payload);
-            return;
-        }
-
-        await submitIncident(false, payload);
+        setPreviewSubmitContext({ manualTimingPayload: payload, matchingTemplate });
+        setShowPreviewModal(true);
     };
 
-    const handleContinueSubmit = async () => {
+    const handleContinueSubmit = () => {
         setShowPreviewModal(false);
+        setSelectedStatus('');
+        setShowStatusModal(true);
+    };
+
+    const handleStatusContinue = async () => {
+        if (!selectedStatus) return;
+
+        setShowStatusModal(false);
         const { manualTimingPayload, matchingTemplate } = previewSubmitContext || {};
 
-        if (manualTimingPayload) {
-            if (hasAvailableLetterTemplate(matchingTemplate)) {
-                openLetterPermission(matchingTemplate, manualTimingPayload);
-                return;
-            }
-            await submitIncident(false, manualTimingPayload);
-            return;
-        }
-
         if (hasAvailableLetterTemplate(matchingTemplate)) {
-            openLetterPermission(matchingTemplate);
+            openLetterPermission(matchingTemplate, manualTimingPayload);
             return;
         }
 
-        await submitIncident(false);
+        await submitIncident(false, manualTimingPayload, selectedStatus);
     };
 
     const handleSubmit = async (event) => {
@@ -1652,7 +1654,7 @@ const CreateIncident = () => {
                                     <button
                                         type="button"
                                         disabled={!letterPermission.templates?.[letterLanguage] || loading}
-                                        onClick={() => submitIncident(true, letterPermission.manualTiming)}
+                                        onClick={() => submitIncident(true, letterPermission.manualTiming, selectedStatus)}
                                         className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
                                     >
                                         <Check className="h-4 w-4" />
@@ -1662,7 +1664,7 @@ const CreateIncident = () => {
                                     <button
                                         type="button"
                                         disabled={loading}
-                                        onClick={() => submitIncident(false, letterPermission.manualTiming)}
+                                        onClick={() => submitIncident(false, letterPermission.manualTiming, selectedStatus)}
                                         className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                         Submit Without Letter
@@ -1872,6 +1874,103 @@ const CreateIncident = () => {
                                     className="rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm shadow-indigo-500/20 transition hover:bg-indigo-700"
                                 >
                                     Continue
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {showStatusModal && (
+                    <div className="fixed inset-0 z-[120] flex min-h-[100dvh] items-center justify-center overflow-y-auto bg-slate-950/60 p-3 backdrop-blur-sm sm:p-4">
+                        <div className="my-auto w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+                            <div className="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50/50 px-6 py-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
+                                        <Tag className="h-5 w-5 text-indigo-600" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-bold text-slate-900">Choose Incident Status</h3>
+                                        <p className="mt-0.5 text-sm text-slate-600">Select how this incident should be handled before submitting.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4 p-6">
+                                {STATUS_OPTIONS.map((option) => {
+                                    const isSelected = selectedStatus === option.id;
+                                    const isClosed = option.id === 'Closed';
+                                    const guidance = isClosed
+                                        ? [
+                                            'No further investigation is required.',
+                                            'The incident is marked as completed.',
+                                            'Future edits may be restricted based on permissions.',
+                                            'Notifications are considered complete.',
+                                        ]
+                                        : [
+                                            'Investigation is still in progress.',
+                                            'More actions or follow-up may be required.',
+                                            'The incident can be updated later.',
+                                            'Notifications remain active until resolved.',
+                                        ];
+
+                                    return (
+                                        <section
+                                            key={option.id}
+                                            className={`rounded-xl border p-4 transition ${
+                                                isSelected
+                                                    ? 'border-indigo-400 bg-indigo-50 ring-2 ring-indigo-100'
+                                                    : 'border-slate-200 bg-white'
+                                            }`}
+                                        >
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div>
+                                                    <h4 className="text-base font-bold text-slate-900">
+                                                        {isClosed ? '🟢' : '🟡'} {option.label}
+                                                    </h4>
+                                                    <p className="mt-1 text-sm text-slate-600">
+                                                        {isClosed ? 'Use only when the issue is fully resolved.' : 'Recommended for most incidents.'}
+                                                    </p>
+                                                </div>
+                                                {isSelected && <Check className="h-5 w-5 shrink-0 text-indigo-600" aria-label={`${option.label} selected`} />}
+                                            </div>
+                                            <ul className="mt-3 space-y-1 text-sm text-slate-600">
+                                                {guidance.map((item) => <li key={item}>• {item}</li>)}
+                                            </ul>
+                                            <button
+                                                type="button"
+                                                onClick={() => setSelectedStatus(option.id)}
+                                                className={`mt-4 rounded-lg px-3 py-2 text-sm font-semibold transition ${
+                                                    isSelected
+                                                        ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+                                                        : 'border border-indigo-200 bg-white text-indigo-700 hover:bg-indigo-50'
+                                                }`}
+                                                aria-pressed={isSelected}
+                                            >
+                                                {isSelected ? `${option.label} Selected` : `Select ${option.label}`}
+                                            </button>
+                                        </section>
+                                    );
+                                })}
+                            </div>
+
+                            <div className="flex flex-col gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4 sm:flex-row sm:justify-end">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowStatusModal(false);
+                                        setShowPreviewModal(true);
+                                    }}
+                                    className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                                >
+                                    Back to Review
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled={!selectedStatus || loading}
+                                    onClick={handleStatusContinue}
+                                    className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                                >
+                                    Submit Incident
                                 </button>
                             </div>
                         </div>
