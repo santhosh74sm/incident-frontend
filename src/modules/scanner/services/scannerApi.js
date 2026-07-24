@@ -1,5 +1,7 @@
-const rawApiUrl = process.env.REACT_APP_API_URL || (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL);
-export const API_BASE = (rawApiUrl && rawApiUrl.trim() !== '' ? rawApiUrl : '/api').replace(/\/+$/, '');
+const rawScannerApiUrl =
+  process.env.REACT_APP_SCANNER_API_URL ||
+  (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_SCANNER_API_URL);
+export const API_BASE = (rawScannerApiUrl && rawScannerApiUrl.trim() !== '' ? rawScannerApiUrl : 'http://127.0.0.1:8001').replace(/\/+$/, '');
 
 export function formatApiUrl(path) {
   if (!path) return '';
@@ -73,7 +75,8 @@ export async function apiFetch(url, options = {}) {
       }
       if (attempt < retries && err instanceof Error && err.name !== 'AbortError') {
         attempt++;
-        await new Promise((res) => setTimeout(res, 800 * attempt));
+        const delayMs = 800 * attempt;
+        await new Promise((res) => setTimeout(res, delayMs));
         continue;
       }
       throw err;
@@ -160,3 +163,59 @@ export async function enhanceDocument(sessionId, mode, signal) {
 export function getDownloadUrl(sessionId, format = 'png') {
   return `${API_BASE}/download?session_id=${sessionId}&format=${format}`;
 }
+
+export async function fetchScannedFile(sessionId, finalUrl, originalFileName = 'document') {
+  const downloadUrl = sessionId ? getDownloadUrl(sessionId, 'png') : null;
+  const targetUrls = [downloadUrl, finalUrl].filter(Boolean);
+
+  let blob = null;
+
+  for (const url of targetUrls) {
+    try {
+      const response = await apiFetch(url, { retries: 1 });
+      if (response.ok) {
+        blob = await response.blob();
+        if (blob && blob.size > 0) break;
+      }
+    } catch {
+      // Continue to fallback
+    }
+  }
+
+  if (!blob && finalUrl) {
+    blob = await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth || img.width;
+          canvas.height = img.naturalHeight || img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          canvas.toBlob(
+            (b) => (b ? resolve(b) : reject(new Error('Canvas blob generation failed.'))),
+            'image/png'
+          );
+        } catch (e) {
+          reject(e);
+        }
+      };
+      img.onerror = () => reject(new Error('Image load failed for blob conversion.'));
+      img.src = finalUrl;
+    });
+  }
+
+  if (!blob) {
+    throw new Error('Could not retrieve processed scan image.');
+  }
+
+  const cleanBaseName = originalFileName ? originalFileName.replace(/\.[^/.]+$/, '') : 'document';
+  const scannedFileName = `${cleanBaseName}_scanned.png`;
+
+  return new File([blob], scannedFileName, {
+    type: blob.type || 'image/png',
+    lastModified: Date.now(),
+  });
+}
+

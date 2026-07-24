@@ -41,6 +41,7 @@ import {
 
 dayjs.extend(customParseFormat);
 
+const ScannerModal = React.lazy(() => import('../modules/scanner/components/ScannerModal'));
 
 const emptyLetterPermission = {
     open: false,
@@ -355,6 +356,7 @@ const CreateIncident = () => {
     const [isManualTimeFinalized, setIsManualTimeFinalized] = useState(false);
     const [selectedCategoryId, setSelectedCategoryId] = useState('');
     const [evidenceEntries, setEvidenceEntries] = useState([{ evidenceType: '', file: null, preview: null }]);
+    const [activeScanningIndex, setActiveScanningIndex] = useState(null);
     const evidenceEntriesRef = useRef(evidenceEntries);
     evidenceEntriesRef.current = evidenceEntries;
     const [dbOptions, setDbOptions] = useState({ classes: [], sections: [], classSectionMap: {} });
@@ -2807,11 +2809,25 @@ const CreateIncident = () => {
                                                     </div>
                                                 )}
 
+                                                {entry.file && entry.file.type?.startsWith('image/') && (
+                                                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setActiveScanningIndex(index)}
+                                                            className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-300 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-800 transition hover:bg-indigo-100"
+                                                            title="Open document scanner studio to crop and enhance document"
+                                                        >
+                                                            <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
+                                                            Scan Document
+                                                        </button>
+                                                    </div>
+                                                )}
+
                                                 {entry.preview && (
                                                     <img
                                                         src={entry.preview}
                                                         alt=""
-                                                        className="h-36 w-full rounded-xl border border-slate-200 object-cover"
+                                                        className="h-36 w-full rounded-xl border border-slate-200 object-cover mt-2"
                                                     />
                                                 )}
                                             </div>
@@ -2884,6 +2900,28 @@ const CreateIncident = () => {
                     </div>
                 </main>
             </div>
+
+            {activeScanningIndex !== null && (
+                <React.Suspense fallback={null}>
+                    <ScannerModal
+                        open={activeScanningIndex !== null}
+                        file={evidenceEntries[activeScanningIndex]?.file}
+                        onComplete={(scannedFile) => {
+                            const targetIdx = activeScanningIndex;
+                            setActiveScanningIndex(null);
+                            handleEvidenceFileChange(targetIdx, scannedFile);
+                            addToast('Scanned document copy applied to Evidence attachment.', 'success');
+                        }}
+                        onCancel={() => {
+                            const targetIdx = activeScanningIndex;
+                            setActiveScanningIndex(null);
+                            if (targetIdx !== null && evidenceEntries[targetIdx]?.file) {
+                                handleEvidenceFileChange(targetIdx, evidenceEntries[targetIdx].file);
+                            }
+                        }}
+                    />
+                </React.Suspense>
+            )}
         </div>
     );
 };

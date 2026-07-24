@@ -25,6 +25,7 @@ import {
     Plus,
     PlusCircle,
     ShieldAlert,
+    Sparkles,
     Trash2,
     UploadCloud,
         UserPlus,
@@ -32,6 +33,8 @@ import {
     X,
     Zap,
 } from 'lucide-react';
+
+import { isAdminRole, isTeacherRole } from '../utils/roles';
 import {
     DashboardPanel,
     EmptyStatePanel,
@@ -45,7 +48,8 @@ import {
 import { getRecordId, isValidMongoObjectId } from '../utils/ids';
 import { downloadBlob, downloadRemoteFile, isNativeDownloadPlatform, openRemoteFile, parseDownloadFilename } from '../utils/downloadFiles';
 import { withFeedback } from '../utils/notifications';
-import { isAdminRole, isTeacherRole } from '../utils/roles';
+
+const ScannerModal = React.lazy(() => import('../modules/scanner/components/ScannerModal'));
 
 const STATUS_STYLES = {
     Pending: { badge: 'border-orange-200 bg-orange-50 text-orange-700', tone: 'amber' },
@@ -278,6 +282,7 @@ const IncidentDetail = () => {
     const [evidenceLoading, setEvidenceLoading] = useState(false);
     const [deletingEvidenceId, setDeletingEvidenceId] = useState('');
     const [dragActiveIndex, setDragActiveIndex] = useState(null);
+    const [activeScanningIndex, setActiveScanningIndex] = useState(null);
     const [evidenceUploadDone, setEvidenceUploadDone] = useState(false);
     const [showUploadForm, setShowUploadForm] = useState(false);
     const [descriptionDraft, setDescriptionDraft] = useState('');
@@ -1322,6 +1327,20 @@ const IncidentDetail = () => {
                                                                 )}
                                                             </div>
                                                         )}
+
+                                                        {entry.file && entry.file.type?.startsWith('image/') && (
+                                                            <div className="flex flex-wrap items-center gap-2 mt-2">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setActiveScanningIndex(index)}
+                                                                    className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-300 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-800 transition hover:bg-indigo-100"
+                                                                    title="Open document scanner studio to crop and enhance document"
+                                                                >
+                                                                    <Sparkles size={13} className="text-indigo-600" />
+                                                                    Scan Document
+                                                                </button>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ))}
                                             </div>
@@ -1791,9 +1810,30 @@ const IncidentDetail = () => {
                     </div>
                 </div>
             ) : null}
+
+            {activeScanningIndex !== null && (
+                <React.Suspense fallback={null}>
+                    <ScannerModal
+                        open={activeScanningIndex !== null}
+                        file={evidenceEntries[activeScanningIndex]?.file}
+                        onComplete={(scannedFile) => {
+                            const targetIdx = activeScanningIndex;
+                            setActiveScanningIndex(null);
+                            handleEvidenceFileChange(targetIdx, scannedFile);
+                            addToast('Scanned document copy applied to Evidence attachment.', 'success');
+                        }}
+                        onCancel={() => {
+                            const targetIdx = activeScanningIndex;
+                            setActiveScanningIndex(null);
+                            if (targetIdx !== null && evidenceEntries[targetIdx]?.file) {
+                                handleEvidenceFileChange(targetIdx, evidenceEntries[targetIdx].file);
+                            }
+                        }}
+                    />
+                </React.Suspense>
+            )}
         </div>
     );
-
 };
 
 export default IncidentDetail;

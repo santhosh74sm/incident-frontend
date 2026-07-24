@@ -33,6 +33,23 @@ export function useDocumentScanner() {
     }
   }, []);
 
+  const initWithFile = useCallback(async (file) => {
+    if (!file) return;
+    setBusy(true);
+    setError('');
+    try {
+      const result = await uploadDocument(file);
+      setUpload(result.upload);
+      setCorners(result.corners);
+      setStep(1); // Jump directly to Crop step (Step 1)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Scanner service unavailable. Could not process image.');
+      throw err;
+    } finally {
+      setBusy(false);
+    }
+  }, []);
+
   const handleAutoDetect = useCallback(async () => {
     if (!upload) return;
     setBusy(true);
@@ -119,6 +136,7 @@ export function useDocumentScanner() {
     error,
     setError,
     handleUpload,
+    initWithFile,
     handleAutoDetect,
     handleCrop,
     handleEnhance,

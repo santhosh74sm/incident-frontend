@@ -57,7 +57,7 @@ export function CompareStep({
           onPointerUp={() => setIsSliding(false)}
           onPointerLeave={() => setIsSliding(false)}
         >
-          <img className="split-bg" src={original} alt="Original input photo" />
+          <img className="split-bg" src={original} alt="Original document input" />
           <div
             className="split-fg-wrapper"
             style={{ clipPath: `inset(0 ${100 - splitPos}% 0 0)` }}
@@ -75,7 +75,7 @@ export function CompareStep({
       ) : (
         <div className="comparison">
           <figure>
-            <img src={original} alt="Original input photo" />
+            <img src={original} alt="Original document input" />
             <figcaption>Original Photo</figcaption>
           </figure>
           <div className="arrow">→</div>
