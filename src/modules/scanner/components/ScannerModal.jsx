@@ -114,7 +114,7 @@ export function ScannerModal({
             <div className="spinner-box" style={{ marginTop: '100px' }}>
               <div className="spinner" />
               <p style={{ marginTop: '16px', fontSize: '1.1rem' }}>
-                Analyzing document boundaries with OpenCV...
+                Preparing your document...
               </p>
             </div>
           )}
@@ -133,9 +133,9 @@ export function ScannerModal({
               }}
             >
               <AlertTriangle size={48} style={{ color: '#f87171', marginBottom: '16px' }} />
-              <h2 style={{ color: '#ffffff', marginBottom: '8px' }}>Scanner Engine Unavailable</h2>
+              <h2 style={{ color: '#ffffff', marginBottom: '8px' }}>Unable to Scan Document</h2>
               <p style={{ color: '#9ca3af', marginBottom: '24px' }}>
-                The document scanner service could not process this image right now. You can retry scanning or proceed using the original file.
+                The document scanner could not process this file right now. You can try again or keep the original document.
               </p>
               <div className="actions" style={{ flexDirection: 'row', gap: '12px' }}>
                 <button
@@ -146,10 +146,10 @@ export function ScannerModal({
                     initWithFile(file).catch(() => setInitFailed(true));
                   }}
                 >
-                  Retry Scanner
+                  Try Again
                 </button>
                 <button type="button" className="primary" onClick={onCancel}>
-                  Use Original File
+                  Keep Original Document
                 </button>
               </div>
             </div>

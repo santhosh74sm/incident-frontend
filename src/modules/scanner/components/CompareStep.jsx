@@ -23,9 +23,9 @@ export function CompareStep({
   return (
     <div className="center-page">
       <p className="eyebrow">STEP 3 OF 5</p>
-      <h1>Perspective Correction Result</h1>
+      <h1>Adjusted Document</h1>
       <p className="lede">
-        Your document has been flattened and rectified. Slide to compare original photo vs scan.
+        Your document has been straightened. Slide to compare original vs cropped document.
       </p>
 
       <div className="compare-toggle-bar">
@@ -34,7 +34,7 @@ export function CompareStep({
           onClick={() => setViewMode('slider')}
           type="button"
         >
-          <Sliders size={16} /> Split Slider
+          <Sliders size={16} /> Split View
         </button>
         <button
           className={viewMode === 'side' ? 'active' : ''}
@@ -62,7 +62,7 @@ export function CompareStep({
             className="split-fg-wrapper"
             style={{ clipPath: `inset(0 ${100 - splitPos}% 0 0)` }}
           >
-            <img className="split-fg" src={corrected} alt="Rectified perspective scan" />
+            <img className="split-fg" src={corrected} alt="Cropped document scan" />
           </div>
 
           <div className="split-divider" style={{ left: `${splitPos}%` }}>
@@ -70,28 +70,28 @@ export function CompareStep({
           </div>
 
           <span className="badge badge-left">Original</span>
-          <span className="badge badge-right">Rectified</span>
+          <span className="badge badge-right">Cropped</span>
         </div>
       ) : (
         <div className="comparison">
           <figure>
             <img src={original} alt="Original document input" />
-            <figcaption>Original Photo</figcaption>
+            <figcaption>Original Document</figcaption>
           </figure>
           <div className="arrow">→</div>
           <figure>
-            <img src={corrected} alt="Rectified perspective scan" />
-            <figcaption>Rectified Scan</figcaption>
+            <img src={corrected} alt="Cropped document scan" />
+            <figcaption>Cropped Document</figcaption>
           </figure>
         </div>
       )}
 
       <div className="actions">
         <button className="secondary" onClick={onBack} type="button">
-          Adjust Crop Corners
+          Back: Adjust Corners
         </button>
         <button className="primary" onClick={onNext} type="button">
-          Choose Image Filter <Check size={16} />
+          Next: Improve Document <Check size={16} />
         </button>
       </div>
     </div>

@@ -27,7 +27,7 @@ export function useDocumentScanner() {
       setCorners(result.corners);
       setStep(1);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to upload or process this image.');
+      setError(err instanceof Error ? err.message : 'Unable to upload or process this document.');
     } finally {
       setBusy(false);
     }
@@ -43,7 +43,7 @@ export function useDocumentScanner() {
       setCorners(result.corners);
       setStep(1); // Jump directly to Crop step (Step 1)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Scanner service unavailable. Could not process image.');
+      setError(err instanceof Error ? err.message : 'Document scanner unavailable. Could not process document.');
       throw err;
     } finally {
       setBusy(false);
@@ -58,7 +58,7 @@ export function useDocumentScanner() {
       const newCorners = await detectDocumentCorners(upload.session_id);
       setCorners(newCorners);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Automatic corner detection was unavailable.');
+      setError(err instanceof Error ? err.message : 'Automatic document selection was unavailable.');
     } finally {
       setBusy(false);
     }
@@ -73,7 +73,7 @@ export function useDocumentScanner() {
       setCropUrl(url);
       setStep(2);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Please keep all four corners inside the image.');
+      setError(err instanceof Error ? err.message : 'Please keep all four corners inside the document.');
     } finally {
       setBusy(false);
     }
@@ -95,7 +95,7 @@ export function useDocumentScanner() {
       setFinalUrl(url);
     } catch (err) {
       if (err instanceof Error && err.message === 'Request cancelled.') return;
-      setError(err instanceof Error ? err.message : 'Could not apply selected enhancement.');
+      setError(err instanceof Error ? err.message : 'Could not apply selected document style.');
     } finally {
       if (enhanceAbortRef.current === controller) {
         setBusy(false);

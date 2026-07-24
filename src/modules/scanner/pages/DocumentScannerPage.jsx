@@ -41,11 +41,11 @@ export function DocumentScannerPage() {
     <main className="scanner-container">
       <header>
         <div className="brand">
-          <span>▣</span> Incident DocScanner <em>v1.0</em>
+          <span>▣</span> Incident Document Scanner
         </div>
         <div className="secure">
           <div className="secure-badge">
-            <div className="secure-dot" /> OPENCV ENGINE READY
+            <div className="secure-dot" /> DOCUMENT SCANNER READY
           </div>
         </div>
       </header>
@@ -56,14 +56,14 @@ export function DocumentScannerPage() {
         {step === 0 && (
           <div className="hero">
             <div>
-              <div className="eyebrow-badge">⚡ AI & OPENCV POWERED</div>
+              <div className="eyebrow-badge">⚡ SMART DOCUMENT SCANNER</div>
               <h1>
                 Turn photos into
                 <br />
-                <em>crisp document evidence.</em>
+                <em>clear official documents.</em>
               </h1>
               <p className="lede">
-                Automatic boundary detection, perspective correction, and smart contrast enhancements powered by high precision computer vision.
+                Automatically align, straighten, and clean your document for clear reading.
               </p>
             </div>
             <div className="drop">
@@ -77,15 +77,15 @@ export function DocumentScannerPage() {
               {busy ? (
                 <div className="spinner-box">
                   <div className="spinner" />
-                  <p>Analyzing document...</p>
+                  <p>Preparing document...</p>
                 </div>
               ) : (
                 <>
                   <div className="upload-icon">
                     <Upload size={28} />
                   </div>
-                  <h2>Upload document scan</h2>
-                  <p>Click or drag your document file here</p>
+                  <h2>Select Document File</h2>
+                  <p>Click or drop your document here</p>
                   <button className="primary" type="button" style={{ pointerEvents: 'none' }}>
                     <ImageIcon size={16} /> Choose Document
                   </button>

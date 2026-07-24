@@ -18,20 +18,20 @@ export function CropStep({
     <div className="workspace">
       <aside>
         <button className="back" onClick={onBack} type="button">
-          <ArrowLeft size={16} /> Choose Different Image
+          <ArrowLeft size={16} /> Back
         </button>
         <p className="eyebrow">STEP 2 OF 5</p>
-        <h1>Adjust Crop Corners</h1>
+        <h1>Adjust Document Boundaries</h1>
         <p>
-          Drag corner markers to paper edges. Drag background to pan, or use mouse wheel to zoom.
+          Drag corners to document edges.
         </p>
 
         <div className="button-group">
           <button className="secondary" onClick={onAuto} disabled={busy} type="button">
-            <RefreshCw size={16} /> Auto Detect
+            <RefreshCw size={16} /> Auto Select
           </button>
           <button className="primary wide" disabled={busy} onClick={onNext} type="button">
-            Perspective Crop <Check size={16} />
+            Next: Crop Document <Check size={16} />
           </button>
         </div>
       </aside>

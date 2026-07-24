@@ -16,12 +16,12 @@ export function FinalStep({
 
   return (
     <div className="center-page final" style={{ maxWidth: isEmbedded ? '800px' : undefined }}>
-      <div className="eyebrow-badge">✓ SCAN COMPLETED</div>
+      <div className="eyebrow-badge">✓ DOCUMENT READY</div>
       <h1>Your Document is Ready</h1>
       <p className="lede">
         {isEmbedded
-          ? 'Review original vs scanned copy and select your preferred document version.'
-          : 'Crisp, straightened, high contrast scan ready for instant export.'}
+          ? 'Review original vs improved document and select your preferred version.'
+          : 'Clear, straightened document ready for save.'}
       </p>
 
       {isEmbedded ? (
@@ -34,7 +34,7 @@ export function FinalStep({
               justifyContent: 'center',
             }}
           >
-            {/* Original Image Card */}
+            {/* Original Document Card */}
             <div
               style={{
                 background: 'rgba(255, 255, 255, 0.05)',
@@ -56,7 +56,7 @@ export function FinalStep({
                   marginBottom: '12px',
                 }}
               >
-                Original Image
+                Original Document
               </span>
               <div
                 style={{
@@ -78,7 +78,7 @@ export function FinalStep({
               </div>
             </div>
 
-            {/* Scanned Image Card */}
+            {/* Improved Document Card */}
             <div
               style={{
                 background: 'rgba(16, 185, 129, 0.08)',
@@ -100,7 +100,7 @@ export function FinalStep({
                   marginBottom: '12px',
                 }}
               >
-                Scanned Image
+                Improved Document
               </span>
               <div
                 style={{
@@ -116,7 +116,7 @@ export function FinalStep({
               >
                 <img
                   src={image}
-                  alt="Scanned processed document"
+                  alt="Improved document preview"
                   style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
                 />
               </div>
@@ -124,12 +124,12 @@ export function FinalStep({
           </div>
         </div>
       ) : (
-        <img className="final-image" src={image} alt="Final processed scan result" />
+        <img className="final-image" src={image} alt="Final document preview" />
       )}
 
       <div className="actions">
         {isEmbedded ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%', maxWidth: '420px', margin: '0 auto' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%', maxWidth: '440px', margin: '0 auto' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', width: '100%' }}>
               <button
                 type="button"
@@ -150,7 +150,7 @@ export function FinalStep({
                   gap: '6px',
                 }}
               >
-                <Check size={18} /> Save Original
+                <Check size={18} /> Keep Original
               </button>
 
               <button
@@ -173,7 +173,7 @@ export function FinalStep({
                   gap: '6px',
                 }}
               >
-                <CheckCircle2 size={18} /> Use Scanned Copy
+                <CheckCircle2 size={18} /> Use Improved Document
               </button>
             </div>
 
@@ -198,7 +198,7 @@ export function FinalStep({
                   border: '1px solid rgba(255, 255, 255, 0.1)',
                 }}
               >
-                <Download size={14} /> Download Image <ChevronDown size={14} />
+                <Download size={14} /> Download File <ChevronDown size={14} />
               </button>
 
               {downloadMenuOpen && (
@@ -267,7 +267,7 @@ export function FinalStep({
                 disabled={busy}
                 type="button"
               >
-                <CheckCircle2 size={20} /> Use Scanned Copy
+                <CheckCircle2 size={20} /> Use Improved Document
               </button>
             )}
             <a className="secondary" href={getDownloadUrl(session, 'png')}>

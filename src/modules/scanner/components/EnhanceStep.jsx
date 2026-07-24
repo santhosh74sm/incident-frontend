@@ -16,11 +16,11 @@ export function EnhanceStep({
     <div className="workspace enhance">
       <aside>
         <button className="back" onClick={onBack} type="button">
-          <ArrowLeft size={16} /> Back to Comparison
+          <ArrowLeft size={16} /> Back
         </button>
         <p className="eyebrow">STEP 4 OF 5</p>
-        <h1>Enhance & Clean</h1>
-        <p>Select an enhancement filter. Use viewer controls to inspect full document details.</p>
+        <h1>Improve Document</h1>
+        <p>Select a document style to make text clear and easy to read.</p>
         <div className="modes">
           {ENHANCEMENT_MODES.map(([id, label]) => (
             <button
@@ -38,7 +38,7 @@ export function EnhanceStep({
           ))}
         </div>
         <button className="primary wide" onClick={onNext} disabled={!image || busy} type="button">
-          Final Review <Check size={16} />
+          Finish <Check size={16} />
         </button>
       </aside>
 
@@ -46,10 +46,10 @@ export function EnhanceStep({
         {busy ? (
           <div className="spinner-box">
             <div className="spinner" />
-            <p>Applying filter...</p>
+            <p>Improving document...</p>
           </div>
         ) : (
-          <InteractiveImageViewer src={image} alt="Enhanced document preview" showRotateControls={true} />
+          <InteractiveImageViewer src={image} alt="Improved document preview" showRotateControls={true} />
         )}
       </div>
     </div>

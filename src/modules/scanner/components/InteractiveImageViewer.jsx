@@ -110,8 +110,8 @@ export function InteractiveImageViewer({
             </button>
           </>
         )}
-        <button onClick={resetView} title="Fit Entire Image" type="button">
-          <Maximize size={16} /> Fit Image
+        <button onClick={resetView} title="Fit Document" type="button">
+          <Maximize size={16} /> Fit Document
         </button>
         <button onClick={() => setZoom(1.0)} title="100% Actual Size" type="button">
           100%

@@ -16,9 +16,9 @@ export async function extractErrorMessage(response) {
     if (body?.detail) return body.detail;
   }
   if (response.status === 404) {
-    return 'Session expired or image resource not found. Please upload again.';
+    return 'Session timed out or document not found. Please upload again.';
   }
-  return `Server request failed with status ${response.status}.`;
+  return `Unable to connect to document server (Status ${response.status}).`;
 }
 
 export function createCombinedSignal(signal1, signal2) {
@@ -71,7 +71,7 @@ export async function apiFetch(url, options = {}) {
         throw new Error('Request cancelled.');
       }
       if (timeoutController.signal.aborted) {
-        throw new Error('Server request timed out. Please try again.');
+        throw new Error('Request timed out. Please try again.');
       }
       if (attempt < retries && err instanceof Error && err.name !== 'AbortError') {
         attempt++;
@@ -82,7 +82,7 @@ export async function apiFetch(url, options = {}) {
       throw err;
     }
   }
-  throw new Error('Network request failed after retries.');
+  throw new Error('Unable to connect. Please check your network connection.');
 }
 
 export function preloadImage(url) {
@@ -207,7 +207,7 @@ export async function fetchScannedFile(sessionId, finalUrl, originalFileName = '
   }
 
   if (!blob) {
-    throw new Error('Could not retrieve processed scan image.');
+    throw new Error('Could not retrieve improved document.');
   }
 
   const cleanBaseName = originalFileName ? originalFileName.replace(/\.[^/.]+$/, '') : 'document';

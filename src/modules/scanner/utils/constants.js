@@ -1,13 +1,13 @@
 export const ENHANCEMENT_MODES = [
-  ['black_white', 'B&W Clean'],
+  ['black_white', 'Black & White Clean'],
 ];
 
 export const SCANNER_STEPS = [
   'Upload',
-  'Crop',
+  'Adjust',
   'Compare',
-  'Enhance',
-  'Done',
+  'Improve',
+  'Finish',
 ];
 
 export const DEFAULT_VIEWER_SETTINGS = {

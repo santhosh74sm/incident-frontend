@@ -2910,7 +2910,7 @@ const CreateIncident = () => {
                             const targetIdx = activeScanningIndex;
                             setActiveScanningIndex(null);
                             handleEvidenceFileChange(targetIdx, scannedFile);
-                            addToast('Scanned document copy applied to Evidence attachment.', 'success');
+                            addToast('Improved document copy applied to Evidence attachment.', 'success');
                         }}
                         onCancel={() => {
                             const targetIdx = activeScanningIndex;
