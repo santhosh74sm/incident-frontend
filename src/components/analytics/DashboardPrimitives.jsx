@@ -1,6 +1,7 @@
-import React, { memo, useLayoutEffect, useRef, useState } from 'react';
+import React, { memo, useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { Eye, EyeOff, Table } from 'lucide-react';
 import { Tooltip } from 'recharts';
+import { getSmartTooltipPosition, intersectRects } from './smartTooltipPosition';
 
 const TONE_STYLES = {
     slate: {
@@ -77,15 +78,111 @@ export const ChartTooltipContent = ({ active, payload, label, labelFormatter, va
     );
 };
 
-export const ChartTooltip = ({ labelFormatter, valueFormatter, cursor = false, content = null }) => (
-    <Tooltip
-        cursor={cursor}
-        allowEscapeViewBox={{ x: true, y: true }}
-        offset={12}
-        wrapperStyle={{ zIndex: 20 }}
-        content={content || <ChartTooltipContent labelFormatter={labelFormatter} valueFormatter={valueFormatter} />}
-    />
-);
+const viewportRect = () => ({
+    left: 0,
+    top: 0,
+    right: window.innerWidth,
+    bottom: window.innerHeight,
+    width: window.innerWidth,
+    height: window.innerHeight,
+});
+
+const SmartTooltipContent = ({ content, onMeasure, active, coordinate, ...tooltipProps }) => {
+    const contentRef = useRef(null);
+    const [maxSize, setMaxSize] = useState(null);
+
+    const measure = useCallback(() => {
+        const node = contentRef.current;
+        if (!node || !active || !coordinate || typeof window === 'undefined') return;
+
+        const chartNode = node.closest('.recharts-wrapper');
+        if (!chartNode) return;
+
+        const chartRect = chartNode.getBoundingClientRect();
+        const cardRect = node.closest('.dashboard-panel')?.getBoundingClientRect();
+        const boundaryRect = intersectRects(chartRect, cardRect, viewportRect());
+        const tooltipRect = node.getBoundingClientRect();
+
+        const nextMaxSize = {
+            width: Math.max(0, boundaryRect.width - 16),
+            height: Math.max(0, boundaryRect.height - 16),
+        };
+        setMaxSize((current) => (
+            current && current.width === nextMaxSize.width && current.height === nextMaxSize.height
+                ? current
+                : nextMaxSize
+        ));
+
+        onMeasure({
+            coordinate,
+            chartRect,
+            boundaryRect,
+            tooltipSize: { width: tooltipRect.width, height: tooltipRect.height },
+        });
+    }, [active, coordinate, onMeasure]);
+
+    useLayoutEffect(() => {
+        measure();
+    }, [measure]);
+
+    useLayoutEffect(() => {
+        if (!active || typeof window === 'undefined') return undefined;
+        const frame = requestAnimationFrame(measure);
+        const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
+        observer?.observe(contentRef.current);
+        window.addEventListener('resize', measure);
+        window.addEventListener('scroll', measure, true);
+
+        return () => {
+            cancelAnimationFrame(frame);
+            observer?.disconnect();
+            window.removeEventListener('resize', measure);
+            window.removeEventListener('scroll', measure, true);
+        };
+    }, [active, measure]);
+
+    const renderedContent = React.isValidElement(content)
+        ? React.cloneElement(content, { active, coordinate, ...tooltipProps })
+        : typeof content === 'function'
+            ? content({ active, coordinate, ...tooltipProps })
+            : null;
+
+    return (
+        <div
+            ref={contentRef}
+            className="smart-chart-tooltip"
+            style={maxSize ? { maxWidth: maxSize.width, maxHeight: maxSize.height } : undefined}
+        >
+            {renderedContent}
+        </div>
+    );
+};
+
+export const ChartTooltip = ({ labelFormatter, valueFormatter, cursor = false, content = null }) => {
+    const [position, setPosition] = useState(null);
+    const tooltipContent = content || <ChartTooltipContent labelFormatter={labelFormatter} valueFormatter={valueFormatter} />;
+
+    const handleMeasure = useCallback((measurement) => {
+        const nextPosition = getSmartTooltipPosition(measurement);
+        if (!nextPosition) return;
+
+        setPosition((current) => (
+            current && Math.abs(current.x - nextPosition.x) < 1 && Math.abs(current.y - nextPosition.y) < 1
+                ? current
+                : nextPosition
+        ));
+    }, []);
+
+    return (
+        <Tooltip
+            cursor={cursor}
+            position={position || undefined}
+            offset={12}
+            wrapperStyle={{ zIndex: 50, pointerEvents: 'none' }}
+            content={<SmartTooltipContent content={tooltipContent} onMeasure={handleMeasure} />}
+        />
+    );
+};
 
 export const truncateChartLabel = (value, maxLength = 14) => {
     const label = value === null || value === undefined ? '' : String(value);
