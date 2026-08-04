@@ -1027,9 +1027,6 @@ const StudentAnalytics = () => {
 
                                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
                                         <DashboardStatCard title={isPassedOutSummary ? 'Passed Out Students' : 'Total Students'} value={studentDirectorySummary.total} icon={Users} tone="blue" helper={isPassedOutSummary ? 'Students matching the selected status.' : 'Students in the directory.'} />
-                                        <DashboardStatCard title="Showing Now" value={studentDirectorySummary.total} icon={Search} tone="cyan" helper="Matching your filters" />
-                                        <DashboardStatCard title="Incidents" value={studentDirectorySummary.incidentCount} icon={FileText} tone="slate" helper="In current result" />
-                                        <DashboardStatCard title="Letters" value={studentDirectorySummary.letterCount} icon={Mail} tone="slate" helper="In current result" />
                                     </div>
 
                                 <DashboardPanel

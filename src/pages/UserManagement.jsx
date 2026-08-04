@@ -1064,16 +1064,6 @@ const UserManagement = () => {
                                     </button>
                                 </div>
                             )}
-                            meta={(
-                                <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600 ">
-                                    <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 ">
-                                        {summary.totalUsers} total staff accounts
-                                    </span>
-                                    <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 ">
-                                        {summary.totalStudents} registered students
-                                    </span>
-                                </div>
-                            )}
                         />
 
                         <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
