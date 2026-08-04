@@ -9,14 +9,11 @@ import { useConfirm } from '../components/ConfirmProvider';
 import { useToast } from '../components/ToastProvider';
 import {
     AlertTriangle,
-    CalendarRange,
     ChevronDown,
     ChevronLeft,
     ChevronRight,
-    Clock3,
     Eye,
     FilePlus,
-    Filter,
     Hand,
     PencilLine,
     RefreshCw,
@@ -392,18 +389,10 @@ const Logs = () => {
         ].filter(Boolean).length;
     }, [currentAcademicYear, debouncedSearch, filters.academicYear, filters.end, filters.entityType, filters.start]);
 
-    const todayCount = useMemo(() => {
-        const today = dayjs().startOf('day');
-        return logs.filter((log) => dayjs(log.createdAt).isAfter(today)).length;
-    }, [logs]);
     const academicYearOptions = useMemo(
         () => buildAcademicYearOptions(academicYears, currentAcademicYear),
         [academicYears, currentAcademicYear]
     );
-
-    const entitySummary = filters.entityType
-        ? entityTypeOptions.find((option) => option.value === filters.entityType)?.label || formatActivityRecordLabel(filters.entityType)
-        : 'All areas';
     const showingFrom = pagination.total === 0 ? 0 : (pagination.page - 1) * pagination.limit + 1;
     const showingTo = Math.min(pagination.page * pagination.limit, pagination.total);
 
@@ -438,33 +427,6 @@ const Logs = () => {
                                 </>
                             )}
                         />
-
-                        <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm ">
-                                <div className="flex items-center justify-between">
-                                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 ">Matching Entries</p>
-                                    <Filter size={16} className="text-cyan-500" />
-                                </div>
-                                <p className="mt-4 text-3xl font-black tracking-tight text-slate-900 ">{pagination.total}</p>
-                                <p className="mt-1 text-sm text-slate-500 ">{entitySummary}</p>
-                            </div>
-                            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm ">
-                                <div className="flex items-center justify-between">
-                                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 ">On This Page</p>
-                                    <CalendarRange size={16} className="text-blue-500" />
-                                </div>
-                                <p className="mt-4 text-3xl font-black tracking-tight text-slate-900 ">{logs.length}</p>
-                                <p className="mt-1 text-sm text-slate-500 ">Page {pagination.page} of {pagination.totalPages}</p>
-                            </div>
-                            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm ">
-                                <div className="flex items-center justify-between">
-                                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 ">Recent Activity</p>
-                                    <Clock3 size={16} className="text-emerald-500" />
-                                </div>
-                                <p className="mt-4 text-3xl font-black tracking-tight text-slate-900 ">{todayCount}</p>
-                                <p className="mt-1 text-sm text-slate-500 ">Entries loaded from today</p>
-                            </div>
-                        </section>
 
                         <UnifiedFilterBar hasActiveFilters={activeFilterCount > 0} onReset={resetFilters} title="Find & Filter" collapsible defaultCollapsed>
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
@@ -677,7 +639,7 @@ const Logs = () => {
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => setExpandedRowId(isExpanded ? null : log._id)}
-                                                                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                                                                        className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                                                                         aria-expanded={isExpanded}
                                                                         aria-label={isExpanded ? `Hide details for ${formatLabel(log.actionName)}` : `View details for ${formatLabel(log.actionName)}`}
                                                                     >
