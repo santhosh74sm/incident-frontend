@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { X, AlertTriangle } from 'lucide-react';
 import { useDocumentScanner } from '../hooks/useDocumentScanner';
 import { ProgressIndicator } from './ProgressIndicator';
@@ -37,14 +37,19 @@ export function ScannerModal({
 
   const [initFailed, setInitFailed] = useState(false);
   const [converting, setConverting] = useState(false);
+  const initializingFileRef = useRef(null);
 
   useEffect(() => {
     if (open && file) {
+      if (initializingFileRef.current === file) return;
+      initializingFileRef.current = file;
       setInitFailed(false);
       initWithFile(file).catch(() => {
+        initializingFileRef.current = null;
         setInitFailed(true);
       });
     } else if (!open) {
+      initializingFileRef.current = null;
       restartScanner();
       setInitFailed(false);
     }
@@ -76,6 +81,14 @@ export function ScannerModal({
     }
     return upload ? formatApiUrl(upload.image_url) : '';
   }, [file, upload]);
+
+  useEffect(() => {
+    return () => {
+      if (originalPreviewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(originalPreviewUrl);
+      }
+    };
+  }, [originalPreviewUrl]);
 
   if (!open) return null;
 
