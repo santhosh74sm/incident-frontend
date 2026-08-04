@@ -14,6 +14,7 @@ import {
     ChevronRight,
     Eye,
     FilePlus,
+    Filter,
     Hand,
     PencilLine,
     RefreshCw,
@@ -393,6 +394,10 @@ const Logs = () => {
         () => buildAcademicYearOptions(academicYears, currentAcademicYear),
         [academicYears, currentAcademicYear]
     );
+
+    const entitySummary = filters.entityType
+        ? entityTypeOptions.find((option) => option.value === filters.entityType)?.label || formatActivityRecordLabel(filters.entityType)
+        : 'All areas';
     const showingFrom = pagination.total === 0 ? 0 : (pagination.page - 1) * pagination.limit + 1;
     const showingTo = Math.min(pagination.page * pagination.limit, pagination.total);
 
@@ -427,6 +432,17 @@ const Logs = () => {
                                 </>
                             )}
                         />
+
+                        <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Total Activity Logs</p>
+                                    <Filter size={16} className="text-cyan-500" />
+                                </div>
+                                <p className="mt-4 text-3xl font-black tracking-tight text-slate-900">{pagination.total}</p>
+                                <p className="mt-1 text-sm text-slate-500">{entitySummary}</p>
+                            </div>
+                        </section>
 
                         <UnifiedFilterBar hasActiveFilters={activeFilterCount > 0} onReset={resetFilters} title="Find & Filter" collapsible defaultCollapsed>
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
