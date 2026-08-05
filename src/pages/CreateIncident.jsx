@@ -54,6 +54,16 @@ const emptyLetterPermission = {
 
 const getOptionId = (option) => option?._id || option?.id || option || '';
 const getOptionLabel = (option) => formatDisplayValue(option?.name || option?.label || option || '');
+const sortOptionsAlphabetically = (options = [], getLabel = getOptionLabel) => {
+    if (!Array.isArray(options)) return [];
+    return [...options].sort((a, b) => {
+        const labelA = String(getLabel(a) || '').trim();
+        const labelB = String(getLabel(b) || '').trim();
+        const cmp = labelA.localeCompare(labelB, undefined, { sensitivity: 'base', numeric: true });
+        if (cmp !== 0) return cmp;
+        return labelA.localeCompare(labelB);
+    });
+};
 const hasAvailableLetterTemplate = (templates) => Boolean(templates?.en || templates?.ta);
 const findOptionByValue = (options, value) =>
     options.find((option) => String(getOptionId(option)) === String(value) || getOptionLabel(option) === value);
@@ -425,6 +435,26 @@ const CreateIncident = () => {
         () => findOptionByValue(categories, selectedCategoryId || formData.category) || null,
         [categories, formData.category, selectedCategoryId]
     );
+    const sortedCategories = useMemo(
+        () => sortOptionsAlphabetically(categories, getOptionLabel),
+        [categories]
+    );
+
+    const sortedLocations = useMemo(
+        () => sortOptionsAlphabetically(locations, getOptionLabel),
+        [locations]
+    );
+
+    const sortedStaffList = useMemo(
+        () => sortOptionsAlphabetically(staffList, resolveUserLabel),
+        [staffList]
+    );
+
+    const sortedEvidenceTypes = useMemo(
+        () => sortOptionsAlphabetically(evidenceTypes, getOptionLabel),
+        [evidenceTypes]
+    );
+
     const evidenceTypeDisplayLabels = useMemo(
         () => buildEvidenceTypeDisplayLabels(evidenceEntries),
         [evidenceEntries]
@@ -2333,7 +2363,7 @@ const CreateIncident = () => {
                                                         }`}
                                                     >
                                                         <option value="">Select category</option>
-                                                        {categories.map((category) => (
+                                                        {sortedCategories.map((category) => (
                                                             <option
                                                                 key={String(getOptionId(category))}
                                                                 value={String(getOptionId(category) || getOptionLabel(category))}
@@ -2452,7 +2482,7 @@ const CreateIncident = () => {
                                                         className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
                                                     >
                                                         <option value="">Select location</option>
-                                                        {locations.map((location) => (
+                                                        {sortedLocations.map((location) => (
                                                             <option key={String(getOptionId(location))} value={getOptionLabel(location)}>
                                                                 {getOptionLabel(location)}
                                                             </option>
@@ -2589,7 +2619,7 @@ const CreateIncident = () => {
                                                     className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
                                                 >
                                                     <option value="">Select staff member</option>
-                                                    {staffList.map((staff) => (
+                                                    {sortedStaffList.map((staff) => (
                                                         <option key={staff._id} value={staff._id}>
                                                             {resolveUserLabel(staff)}
                                                         </option>
@@ -2695,7 +2725,7 @@ const CreateIncident = () => {
                                                         }`}
                                                     >
                                                         <option value="">Select Evidence Type</option>
-                                                        {evidenceTypes.map((type) => {
+                                                        {sortedEvidenceTypes.map((type) => {
                                                             const optionLabel = getOptionLabel(type);
                                                             const displayLabel = optionLabel === entry.evidenceType
                                                                 ? selectedEvidenceTypeLabel
