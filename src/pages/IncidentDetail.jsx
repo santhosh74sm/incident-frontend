@@ -6,6 +6,7 @@ import { useConfirm } from '../components/ConfirmProvider';
 import { useNotifications } from '../context/NotificationContext';
 import apiClient from '../config/apiClient';
 import { API_BASE } from '../config/apiClient';
+import { useMasterDataListener } from '../hooks/useMasterDataListener';
 import {
     Activity,
     AlertTriangle,
@@ -440,6 +441,10 @@ const IncidentDetail = () => {
         fetchStaff();
         fetchGeneratedLetter();
     }, [fetchGeneratedLetter, fetchIncident, fetchStaff]);
+
+    useMasterDataListener(useCallback(() => {
+        fetchIncident();
+    }, [fetchIncident]));
 
     const handleSubmitProgress = async () => {
         if (!note.trim()) return;

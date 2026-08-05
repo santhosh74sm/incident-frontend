@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import apiClient from '../config/apiClient';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/ToastProvider';
+import { useMasterDataListener } from '../hooks/useMasterDataListener';
 import {
     CalendarDays,
     ChevronLeft,
@@ -449,6 +450,11 @@ const IssuedLetters = () => {
     useEffect(() => {
         fetchLetters();
     }, [fetchLetters]);
+
+    useMasterDataListener(useCallback(() => {
+        fetchFilters();
+        fetchLetters(false);
+    }, [fetchFilters, fetchLetters]));
 
     useEffect(() => {
         setPage(1);

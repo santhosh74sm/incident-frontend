@@ -4,6 +4,7 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/ToastProvider';
 import { useConfirm } from '../components/ConfirmProvider';
+import { useMasterDataListener, notifyMasterDataUpdated } from '../hooks/useMasterDataListener';
 import {
     AlertCircle,
     AlertTriangle,
@@ -551,6 +552,10 @@ const CreateIncident = () => {
         }
     }, [addToast, config, user?._id]);
 
+    useMasterDataListener(useCallback(() => {
+        fetchAllData();
+    }, [fetchAllData]));
+
     const persistDraft = useCallback(() => {
         if (submitSuccess || !user?._id) return;
 
@@ -1080,6 +1085,7 @@ const CreateIncident = () => {
                 addToast(isEditMode ? 'Evidence type renamed successfully.' : 'Evidence type added successfully.', 'success');
             }
 
+            notifyMasterDataUpdated({ type: modal.type, action: isEditMode ? 'update' : 'create' });
             closeModal();
         } catch (error) {
             addToast(error.response?.data?.message || 'Could not save this option right now. Please try again.', 'error');
@@ -1134,6 +1140,7 @@ const CreateIncident = () => {
 
                 addToast('Evidence type deleted.', 'success');
             }
+            notifyMasterDataUpdated({ type, action: 'delete' });
         } catch (error) {
             addToast('Could not delete this option right now. Please try again.', 'error');
         }

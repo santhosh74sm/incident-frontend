@@ -74,6 +74,7 @@ import {
 import { downloadWorkbook } from '../utils/downloadFiles';
 import { withFeedback } from '../utils/notifications';
 import { isTeacherRole } from '../utils/roles';
+import { useMasterDataListener } from '../hooks/useMasterDataListener';
 
 const slugifyExportPart = (value, fallback = 'all') => {
     const clean = String(value || fallback).trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 80);
@@ -416,6 +417,12 @@ const ProfessionalAnalytics = () => {
         fetchFilterOptions();
         fetchStaff();
     }, [fetchFilterOptions, fetchStaff]);
+
+    useMasterDataListener(useCallback(() => {
+        filterMetadataRef.current = { userId: '', data: null };
+        fetchFilterOptions();
+        fetchAnalytics(false);
+    }, [fetchAnalytics, fetchFilterOptions]));
 
     useEffect(() => {
         if (isOperationalUser && user?.name) {

@@ -4,6 +4,7 @@ import mammoth from 'mammoth';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/ToastProvider';
 import { isSchoolUserRole } from '../utils/roles';
+import { useMasterDataListener } from '../hooks/useMasterDataListener';
 import { downloadBlob } from '../utils/downloadFiles';
 import { withFeedback } from '../utils/notifications';
 import { focusFirstInvalidField } from '../hooks/useFocusFirstInvalid';
@@ -848,6 +849,11 @@ const LetterTemplates = () => {
         fetchCategories();
     }, [fetchCategories, fetchTemplates]);
 
+    useMasterDataListener(useCallback(() => {
+        fetchTemplates();
+        fetchCategories();
+    }, [fetchCategories, fetchTemplates]));
+
     const filteredTemplates = useMemo(() => {
         const query = searchTerm.trim().toLowerCase();
         if (!query) return templates;
@@ -1191,7 +1197,10 @@ const LetterTemplates = () => {
                                 <div className="flex flex-wrap gap-3">
                                     <WorkspaceActionButton
                                         icon={RefreshCw}
-                                        onClick={() => fetchTemplates(false)}
+                                        onClick={() => {
+                                            fetchTemplates(false);
+                                            fetchCategories();
+                                        }}
                                         disabled={refreshing}
                                     >
                                         {refreshing ? 'Refreshing…' : 'Refresh'}

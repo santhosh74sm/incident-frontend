@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import apiClient from '../config/apiClient';
+import { useMasterDataListener } from '../hooks/useMasterDataListener';
 import * as XLSX from 'xlsx';
 import {
     Bar,
@@ -403,6 +404,12 @@ const StudentAnalytics = () => {
         fetchFilterOptions();
         fetchStudents();
     }, [fetchFilterOptions, fetchStudents]);
+
+    useMasterDataListener(useCallback(() => {
+        filterMetadataRef.current = { userId: '', data: null };
+        fetchFilterOptions();
+        fetchStudents();
+    }, [fetchFilterOptions, fetchStudents]));
 
     useEffect(() => {
         const timer = window.setTimeout(() => {

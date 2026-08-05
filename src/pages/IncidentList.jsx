@@ -17,6 +17,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
 import { useToast } from '../components/ToastProvider';
+import { useMasterDataListener } from '../hooks/useMasterDataListener';
 import BulkDeleteControls from '../components/BulkDeleteControls';
 import { UnifiedDateInput, UnifiedFilterBar, UnifiedMultiSelect, UnifiedSearchInput } from '../components/UnifiedFilters';
 import {
@@ -282,6 +283,12 @@ const IncidentList = () => {
     useEffect(() => {
         fetchIncidents();
     }, [fetchIncidents]);
+
+    useMasterDataListener(useCallback(() => {
+        filterMetadataRef.current = { userId: '', data: null };
+        fetchFilterData();
+        fetchIncidents();
+    }, [fetchFilterData, fetchIncidents]));
 
     useEffect(() => {
         const timer = window.setTimeout(() => {

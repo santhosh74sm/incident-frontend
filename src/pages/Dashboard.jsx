@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../config/apiClient';
+import { useMasterDataListener } from '../hooks/useMasterDataListener';
 import {
     AnalyticsDataTable,
     DashboardHero,
@@ -334,6 +335,25 @@ const DashboardContent = memo(() => {
         fetchData();
         return () => { mounted = false; };
     }, [userId, userRole, user?.currentAcademicYear]);
+
+    useMasterDataListener(useCallback(() => {
+        dashboardDataRequests.clear();
+        if (userId) {
+            fetchDashboardData({
+                _id: userId,
+                role: userRole,
+                currentAcademicYear: user?.currentAcademicYear,
+            }).then(([incidentRes, summaryRes]) => {
+                const incidentList = Array.isArray(incidentRes.data)
+                    ? incidentRes.data
+                    : Array.isArray(incidentRes.data?.data)
+                        ? incidentRes.data.data
+                        : [];
+                setIncidents(incidentList);
+                setSummary(summaryRes.data || { total: 0, open: 0, inProgress: 0, closed: 0, unassigned: 0, active: 0 });
+            }).catch(() => {});
+        }
+    }, [user?.currentAcademicYear, userId, userRole]));
 
     // ── Derived summaries (unchanged calculations) ────────────────────────
     const canReportIncident = isIncidentReporterRole(user?.role);
