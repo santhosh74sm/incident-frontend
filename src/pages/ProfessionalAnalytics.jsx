@@ -1215,9 +1215,9 @@ const ProfessionalAnalytics = () => {
                                         description="Incident types ranked by how often they appear."
                                         icon={FileText}
                                         chart={
-                                            <ChartSurface height={280}>
+                                            <ChartSurface height={Math.max(280, (analytics.categoryData?.length || 0) * 36)}>
                                                  <ResponsiveContainer width="100%" height="100%" minWidth={1}>
-                                                 <BarChart data={analytics.categoryData.slice(0, 8)} layout="vertical" margin={{ top: 10, right: 24, left: 0, bottom: 8 }}>
+                                                 <BarChart data={analytics.categoryData} layout="vertical" margin={{ top: 10, right: 24, left: 0, bottom: 8 }}>
                                                      <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" horizontal={false} />
                                                      <XAxis type="number" tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} domain={[0, (dataMax) => Math.max(1, dataMax)]} />
                                                      <YAxis dataKey="name" type="category" width={compactChart ? 120 : 155} axisLine={false} tickLine={false} {...compactYAxisProps} />
@@ -1227,7 +1227,7 @@ const ProfessionalAnalytics = () => {
                                                      </Bar>
                                                  </BarChart>
                                              </ResponsiveContainer>
- 
+
                                              </ChartSurface>
                                          }
                                          footer={
@@ -1255,17 +1255,17 @@ const ProfessionalAnalytics = () => {
                                                 <ResponsiveContainer width="100%" height="100%" minWidth={1}>
                                                     <PieChart>
                                                         <Pie
-                                                            data={analytics.evidenceData.slice(0, 6)}
+                                                            data={analytics.evidenceData}
                                                             dataKey="count"
                                                             nameKey="name"
                                                             innerRadius={compactChart ? 44 : 54}
                                                             outerRadius={compactChart ? 74 : 88}
                                                             paddingAngle={4}
                                                         >
-                                                            {analytics.evidenceData.slice(0, 6).map((entry, index) => (
+                                                            {analytics.evidenceData.map((entry, index) => (
                                                                 <Cell
                                                                     key={entry.name}
-                                                                    fill={[CHART_COLORS.evidence, STATUS_COLORS['In Progress'], STATUS_COLORS.Closed, STATUS_COLORS.Open, CHART_COLORS.category, CHART_COLORS.neutralPrimary][index % 6]}
+                                                                    fill={[CHART_COLORS.evidence, STATUS_COLORS.Closed, STATUS_COLORS.Pending, CHART_COLORS.category, CHART_COLORS.neutralPrimary, '#8b5cf6', '#ec4899', '#06b6d4', '#f59e0b', '#10b981'][index % 10]}
                                                                 />
                                                             ))}
                                                         </Pie>
@@ -1279,10 +1279,10 @@ const ProfessionalAnalytics = () => {
                                         footer={
                                             analytics.evidenceData.length > 0 ? (
                                                 <LegendList
-                                                    items={analytics.evidenceData.slice(0, 6).map((entry, index) => ({
+                                                    items={analytics.evidenceData.map((entry, index) => ({
                                                         label: entry.name,
                                                         value: entry.count,
-                                                        color: [CHART_COLORS.evidence, STATUS_COLORS.Closed, STATUS_COLORS.Pending, CHART_COLORS.category, CHART_COLORS.neutralPrimary][index % 5],
+                                                        color: [CHART_COLORS.evidence, STATUS_COLORS.Closed, STATUS_COLORS.Pending, CHART_COLORS.category, CHART_COLORS.neutralPrimary, '#8b5cf6', '#ec4899', '#06b6d4', '#f59e0b', '#10b981'][index % 10],
                                                     }))}
                                                 />
                                             ) : null
@@ -1337,7 +1337,7 @@ const ProfessionalAnalytics = () => {
                                         chart={
                                             <ChartSurface height={280}>
                                                 <ResponsiveContainer width="100%" height="100%" minWidth={1}>
-                                                <BarChart data={analytics.locationData.slice(0, 8)} margin={horizontalBarMargin}>
+                                                <BarChart data={analytics.locationData} margin={horizontalBarMargin}>
                                                     <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" vertical={false} />
                                                     <XAxis dataKey="name" axisLine={false} tickLine={false} {...compactXAxisProps} />
                                                     <YAxis tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} domain={[0, (dataMax) => Math.max(1, dataMax)]} />

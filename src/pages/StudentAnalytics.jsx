@@ -1369,55 +1369,55 @@ const StudentAnalytics = () => {
                                                 chart={
                                                     studentAnalytics.evidenceData.length === 0 ? (
                                                         <EmptyStatePanel title="No evidence data." description="No evidence records are available for the current filters." />
-                                                     ) : (
-                                                         <ChartSurface height={240}>
-                                                         <ResponsiveContainer width="100%" height="100%" minWidth={1}>
-                                                             <PieChart>
-                                                                 <Pie
-                                                                     data={studentAnalytics.evidenceData.slice(0, 6)}
-                                                                     dataKey="count"
-                                                                     nameKey="name"
-                                                                     innerRadius={compactChart ? 44 : 54}
-                                                                     outerRadius={compactChart ? 74 : 88}
-                                                                     paddingAngle={4}
-                                                                 >
-                                                                     {studentAnalytics.evidenceData.slice(0, 6).map((entry, index) => (
-                                                                         <Cell
-                                                                             key={entry.name}
-                                                                             fill={[CHART_COLORS.evidence, STATUS_COLORS['In Progress'], STATUS_COLORS.Closed, STATUS_COLORS.Open, CHART_COLORS.category, CHART_COLORS.neutralPrimary][index % 6]}
-                                                                         />
-                                                                     ))}
-                                                                 </Pie>
-                                                                 <ChartTooltip />
-                                                             </PieChart>
-                                                         </ResponsiveContainer>
-                                                         </ChartSurface>
-                                                     )
-                                                 }
-                                                 footer={
-                                                     studentAnalytics.evidenceData.length > 0 ? (
-                                                         <LegendList
-                                                             items={studentAnalytics.evidenceData.slice(0, 6).map((entry, index) => ({
-                                                                 label: entry.name,
-                                                                 value: entry.count,
-                                                                 color: [CHART_COLORS.evidence, STATUS_COLORS.Closed, STATUS_COLORS.Pending, CHART_COLORS.category, CHART_COLORS.neutralPrimary][index % 5],
-                                                             }))}
-                                                         />
-                                                     ) : null
-                                                 }
-                                                 tableColumns={evidenceColumns}
-                                                 tableRows={studentAnalytics.evidenceData}
-                                                 emptyMessage="No evidence data is available for the current filters."
-                                             />
+                                                    ) : (
+                                                        <ChartSurface height={240}>
+                                                            <ResponsiveContainer width="100%" height="100%" minWidth={1}>
+                                                                <PieChart>
+                                                                    <Pie
+                                                                        data={studentAnalytics.evidenceData}
+                                                                        dataKey="count"
+                                                                        nameKey="name"
+                                                                        innerRadius={compactChart ? 44 : 54}
+                                                                        outerRadius={compactChart ? 74 : 88}
+                                                                        paddingAngle={4}
+                                                                    >
+                                                                        {studentAnalytics.evidenceData.map((entry, index) => (
+                                                                            <Cell
+                                                                                key={entry.name}
+                                                                                fill={[CHART_COLORS.evidence, STATUS_COLORS['In Progress'], STATUS_COLORS.Closed, STATUS_COLORS.Open, CHART_COLORS.category, CHART_COLORS.neutralPrimary, '#8b5cf6', '#ec4899', '#06b6d4', '#f59e0b', '#10b981'][index % 10]}
+                                                                            />
+                                                                        ))}
+                                                                    </Pie>
+                                                                    <ChartTooltip />
+                                                                </PieChart>
+                                                            </ResponsiveContainer>
+                                                        </ChartSurface>
+                                                    )
+                                                }
+                                                footer={
+                                                    studentAnalytics.evidenceData.length > 0 ? (
+                                                        <LegendList
+                                                            items={studentAnalytics.evidenceData.map((entry, index) => ({
+                                                                label: entry.name,
+                                                                value: entry.count,
+                                                                color: [CHART_COLORS.evidence, STATUS_COLORS.Closed, STATUS_COLORS.Pending, CHART_COLORS.category, CHART_COLORS.neutralPrimary, '#8b5cf6', '#ec4899', '#06b6d4', '#f59e0b', '#10b981'][index % 10],
+                                                            }))}
+                                                        />
+                                                    ) : null
+                                                }
+                                                tableColumns={evidenceColumns}
+                                                tableRows={studentAnalytics.evidenceData}
+                                                emptyMessage="No evidence data is available for the current filters."
+                                            />
 
                                             <DashboardWidgetPanel
                                                 title="Where Incidents Occurred"
                                                 description="Number of incidents recorded at each school location."
                                                 icon={ShieldCheck}
                                                 chart={
-                                                    <ChartSurface height={280}>
+                                                    <ChartSurface height={Math.max(280, (studentAnalytics.locationData?.length || 0) * 36)}>
                                                 <ResponsiveContainer width="100%" height="100%" minWidth={1}>
-                                                        <BarChart data={studentAnalytics.locationData.slice(0, 6)} layout="vertical" margin={{ top: 10, right: 24, left: 0, bottom: 8 }}>
+                                                        <BarChart data={studentAnalytics.locationData} layout="vertical" margin={{ top: 10, right: 24, left: 0, bottom: 8 }}>
                                                             <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" horizontal={false} />
                                                             <XAxis type="number" tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} domain={[0, (dataMax) => Math.max(1, dataMax)]} />
                                                             <YAxis dataKey="location" type="category" width={compactChart ? 120 : 155} axisLine={false} tickLine={false} {...compactYAxisProps} />
@@ -1427,12 +1427,12 @@ const StudentAnalytics = () => {
                                                             </Bar>
                                                         </BarChart>
                                                     </ResponsiveContainer>
- 
+
                                                     </ChartSurface>
                                                 }
                                                 footer={
                                                     <LegendList
-                                                        items={studentAnalytics.locationData.slice(0, 4).map((entry) => ({
+                                                        items={studentAnalytics.locationData.map((entry) => ({
                                                             label: entry.location,
                                                             value: entry.count,
                                                             color: CHART_COLORS.location,
@@ -1452,7 +1452,7 @@ const StudentAnalytics = () => {
                                                 chart={
                                                     <ChartSurface height={280}>
                                                 <ResponsiveContainer width="100%" height="100%" minWidth={1}>
-                                                        <BarChart data={studentAnalytics.categoryData.slice(0, 6)} margin={horizontalBarMargin}>
+                                                        <BarChart data={studentAnalytics.categoryData} margin={horizontalBarMargin}>
                                                             <CartesianGrid stroke={CHART_THEME.grid} strokeDasharray="3 3" vertical={false} />
                                                             <XAxis dataKey="category" axisLine={false} tickLine={false} {...compactXAxisProps} />
                                                             <YAxis tick={{ fill: CHART_THEME.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} domain={[0, (dataMax) => Math.max(1, dataMax)]} />
@@ -1462,7 +1462,7 @@ const StudentAnalytics = () => {
                                                             </Bar>
                                                         </BarChart>
                                                     </ResponsiveContainer>
- 
+
                                                     </ChartSurface>
                                                 }
                                                 footer={
