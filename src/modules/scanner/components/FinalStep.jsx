@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { CheckCircle2, Download, ChevronDown, Check } from 'lucide-react';
 import { getDownloadUrl } from '../services/scannerApi';
 
@@ -13,6 +13,30 @@ export function FinalStep({
   busy,
 }) {
   const [downloadMenuOpen, setDownloadMenuOpen] = useState(false);
+  const downloadMenuRef = useRef(null);
+
+  useEffect(() => {
+    if (!downloadMenuOpen) return undefined;
+
+    const closeOnOutsideClick = (event) => {
+      if (!downloadMenuRef.current?.contains(event.target)) {
+        setDownloadMenuOpen(false);
+      }
+    };
+
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') {
+        setDownloadMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', closeOnOutsideClick);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsideClick);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [downloadMenuOpen]);
 
   return (
     <div className="center-page final" style={{ maxWidth: isEmbedded ? '800px' : undefined }}>
@@ -178,12 +202,15 @@ export function FinalStep({
             </div>
 
             {/* Optional Download Menu */}
-            <div style={{ position: 'relative', width: '100%' }}>
+            <div ref={downloadMenuRef} style={{ position: 'relative', width: '100%' }}>
               <button
                 className="secondary"
                 onClick={() => setDownloadMenuOpen((prev) => !prev)}
                 disabled={busy}
                 type="button"
+                aria-expanded={downloadMenuOpen}
+                aria-controls="scanner-download-menu"
+                aria-haspopup="menu"
                 style={{
                   width: '100%',
                   minHeight: '42px',
@@ -205,10 +232,9 @@ export function FinalStep({
                 <div
                   style={{
                     position: 'absolute',
-                    top: '100%',
+                    bottom: 'calc(100% + 6px)',
                     left: 0,
                     right: 0,
-                    marginTop: '6px',
                     background: '#1f2937',
                     border: '1px solid rgba(255, 255, 255, 0.15)',
                     borderRadius: '12px',
@@ -219,27 +245,14 @@ export function FinalStep({
                     flexDirection: 'column',
                     gap: '4px',
                   }}
+                  id="scanner-download-menu"
+                  role="menu"
+                  aria-label="Download format"
                 >
-                  <a
-                    href={getDownloadUrl(session, 'png')}
-                    onClick={() => setDownloadMenuOpen(false)}
-                    style={{
-                      padding: '10px 14px',
-                      borderRadius: '8px',
-                      color: '#f3f4f6',
-                      textDecoration: 'none',
-                      fontSize: '0.85rem',
-                      fontWeight: '600',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                    }}
-                  >
-                    • Download PNG
-                  </a>
                   <a
                     href={getDownloadUrl(session, 'jpg')}
                     onClick={() => setDownloadMenuOpen(false)}
+                    role="menuitem"
                     style={{
                       padding: '10px 14px',
                       borderRadius: '8px',
@@ -252,7 +265,25 @@ export function FinalStep({
                       gap: '8px',
                     }}
                   >
-                    • Download JPG
+                    Download as JPG
+                  </a>
+                  <a
+                    href={getDownloadUrl(session, 'png')}
+                    onClick={() => setDownloadMenuOpen(false)}
+                    role="menuitem"
+                    style={{
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      color: '#f3f4f6',
+                      textDecoration: 'none',
+                      fontSize: '0.85rem',
+                      fontWeight: '600',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    Download as PNG
                   </a>
                 </div>
               )}
