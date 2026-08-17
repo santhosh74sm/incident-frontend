@@ -295,6 +295,7 @@ const IncidentDetail = () => {
     const exportInFlightRef = useRef(false);
     const deleteInFlightRef = useRef(false);
     const markedIncidentReadRef = useRef('');
+    const evidenceUploadFormRef = useRef(null);
     const userId = getRecordId(user);
     const [activeDetailSection, setActiveDetailSection] = useState('evidence');
     const activeTab = activeDetailSection;
@@ -499,6 +500,12 @@ const IncidentDetail = () => {
             return [{ evidenceType: defaultType, file: null, preview: null }];
         });
     };
+
+    useEffect(() => {
+        if (showUploadForm) {
+            evidenceUploadFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, [showUploadForm]);
 
     const handleCancelEvidenceForm = () => {
         if (evidenceLoading) return;
@@ -1218,7 +1225,7 @@ const IncidentDetail = () => {
 
                                     {/* Upload Form Dialog Box */}
                                     {showUploadForm && (
-                                        <div className="mt-6 rounded-xl border border-indigo-100 bg-indigo-50/20 p-5 shadow-inner">
+                                        <div ref={evidenceUploadFormRef} className="mt-6 scroll-mt-28 rounded-xl border border-indigo-100 bg-indigo-50/20 p-5 shadow-inner">
                                             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-indigo-100/55 pb-4">
                                                 <div>
                                                     <h4 className="text-sm font-bold text-slate-900">Upload Evidence Files</h4>

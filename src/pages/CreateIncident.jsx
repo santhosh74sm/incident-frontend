@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../config/apiClient';
-import { isAdminRole, isTeacherRole } from '../utils/roles';
+import { isAdminRole, isSuperAdminRole, isTeacherRole } from '../utils/roles';
 import { formatDisplayValue, resolveUserLabel, getFilteredSections, STATUS_OPTIONS } from '../utils/analytics';
 import useFocusFirstInvalid from '../hooks/useFocusFirstInvalid';
 import {
@@ -419,7 +419,7 @@ const CreateIncident = () => {
     const config = useMemo(() => ({ headers: {} }), []);
     const isAdministrationUser = isAdminRole(user?.role);
     const canUseManualTiming = isAdministrationUser || isTeacherRole(user?.role);
-    const isPrivilegedUser = isAdministrationUser || isTeacherRole(user?.role);
+    const canManageMasterData = isSuperAdminRole(user?.role);
     const handleHighPriorityToggle = useCallback((checked) => {
         setFormData((current) => {
             if (current.isHighPriority === checked) {
@@ -896,11 +896,12 @@ const CreateIncident = () => {
     };
 
     const openMetaModal = (type) => {
+        if (!canManageMasterData) return;
         setModal({ open: true, type, value: '', mode: 'add', target: null });
     };
 
     const openEditMetaModal = (type, option) => {
-        if (!isPrivilegedUser || !option) return;
+        if (!canManageMasterData || !option) return;
 
         setModal({
             open: true,
@@ -1006,13 +1007,13 @@ const CreateIncident = () => {
 
         const isEditMode = modal.mode === 'edit';
 
-        if (isEditMode && !isPrivilegedUser) {
-            addToast('Only administrators or teachers can rename category, location, and evidence options.', 'warning');
+        if (isEditMode && !canManageMasterData) {
+            addToast('Only Super Admin can rename category, location, and evidence options.', 'warning');
             return;
         }
 
-        if (!isEditMode && !isPrivilegedUser) {
-            addToast('Only administrators or teachers can update category, location, and evidence options.', 'warning');
+        if (!isEditMode && !canManageMasterData) {
+            addToast('Only Super Admin can update category, location, and evidence options.', 'warning');
             return;
         }
 
@@ -1093,8 +1094,8 @@ const CreateIncident = () => {
     };
 
     const handleDeleteMeta = async (type, id, name) => {
-        if (!isPrivilegedUser) {
-            addToast('Only administrators or teachers can remove category, location, and evidence options.', 'warning');
+        if (!canManageMasterData) {
+            addToast('Only Super Admin can remove category, location, and evidence options.', 'warning');
             return;
         }
 
@@ -2380,7 +2381,7 @@ const CreateIncident = () => {
                                                         ))}
                                                     </select>
 
-                                                    {isPrivilegedUser && (
+                                                    {canManageMasterData && (
                                                         <button
                                                             type="button"
                                                             onClick={() => openMetaModal('category')}
@@ -2391,7 +2392,7 @@ const CreateIncident = () => {
                                                         </button>
                                                     )}
 
-                                                    {isPrivilegedUser && (
+                                                    {canManageMasterData && (
                                                         <button
                                                             type="button"
                                                             disabled={!selectedCategory}
@@ -2403,7 +2404,7 @@ const CreateIncident = () => {
                                                         </button>
                                                     )}
 
-                                                    {isPrivilegedUser && (
+                                                    {canManageMasterData && (
                                                         <button
                                                             type="button"
                                                             disabled={!formData.category}
@@ -2496,7 +2497,7 @@ const CreateIncident = () => {
                                                         ))}
                                                     </select>
 
-                                                    {isPrivilegedUser && (
+                                                    {canManageMasterData && (
                                                         <button
                                                             type="button"
                                                             onClick={() => openMetaModal('location')}
@@ -2507,7 +2508,7 @@ const CreateIncident = () => {
                                                         </button>
                                                     )}
 
-                                                    {isPrivilegedUser && (
+                                                    {canManageMasterData && (
                                                         <button
                                                             type="button"
                                                             disabled={!formData.location}
@@ -2526,7 +2527,7 @@ const CreateIncident = () => {
                                                         </button>
                                                     )}
 
-                                                    {isPrivilegedUser && (
+                                                    {canManageMasterData && (
                                                         <button
                                                             type="button"
                                                             disabled={!formData.location}
@@ -2746,7 +2747,7 @@ const CreateIncident = () => {
                                                         })}
                                                     </select>
 
-                                                    {isPrivilegedUser && (
+                                                    {canManageMasterData && (
                                                         <button
                                                             type="button"
                                                             onClick={() => openMetaModal('evidence')}
@@ -2757,7 +2758,7 @@ const CreateIncident = () => {
                                                         </button>
                                                     )}
 
-                                                    {isPrivilegedUser && (
+                                                    {canManageMasterData && (
                                                         <button
                                                             type="button"
                                                             disabled={!entry.evidenceType}
@@ -2776,7 +2777,7 @@ const CreateIncident = () => {
                                                         </button>
                                                     )}
 
-                                                    {isPrivilegedUser && (
+                                                    {canManageMasterData && (
                                                         <button
                                                             type="button"
                                                             disabled={!entry.evidenceType}
