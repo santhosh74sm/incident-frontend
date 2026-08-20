@@ -115,6 +115,15 @@ const createInitialCategoryTemplateStatus = () => ({
     error: '',
 });
 
+const metadataErrorMessages = {
+    studentFilters: 'Unable to load student classes and sections. Please try again.',
+    categories: 'Unable to load incident categories. Please try again.',
+    locations: 'Unable to load locations. Please try again.',
+    staff: 'Unable to load staff members. Please try again.',
+    students: 'Unable to load students for this class. Please try again.',
+    evidenceTypes: 'Unable to load evidence types. Please try again.',
+};
+
 const createEvidenceEntriesFromDraft = (entries = []) => {
     if (!Array.isArray(entries) || entries.length === 0) {
         return [createEmptyEvidenceEntry()];
@@ -393,6 +402,7 @@ const CreateIncident = () => {
     const [categories, setCategories] = useState([]);
     const [locations, setLocations] = useState([]);
     const [evidenceTypes, setEvidenceTypes] = useState([]);
+    const [metadataErrors, setMetadataErrors] = useState({});
     const [loading, setLoading] = useState(false);
     const [fetchingStudents, setFetchingStudents] = useState(false);
     const [modal, setModal] = useState({ open: false, type: '', value: '', mode: 'add', target: null });
@@ -460,7 +470,6 @@ const CreateIncident = () => {
         () => buildEvidenceTypeDisplayLabels(evidenceEntries),
         [evidenceEntries]
     );
-
 
     const sectionFilteredStudents = useMemo(() => {
         if (!formData.section) return students;
@@ -530,26 +539,27 @@ const CreateIncident = () => {
         if (!user?._id) return;
         const isMounted = options.isMounted || (() => true);
 
-        try {
-            const [filtersResponse, categoryResponse, locationResponse, staffResponse, evidenceResponse] =
-                await Promise.all([
-                    apiClient.get(`/api/students/filters`, config).catch(() => ({ data: { classes: [], sections: [], classSectionMap: {} } })),
-                    apiClient.get(`/api/incidents/categories`, config).catch(() => ({ data: [] })),
-                    apiClient.get(`/api/incidents/locations`, config).catch(() => ({ data: [] })),
-                    apiClient.get(`/api/auth/users/investigators`, config).catch(() => ({ data: [] })),
-                    apiClient.get(`/api/evidence-types`, config).catch(() => ({ data: [] })),
-                ]);
+        const requests = [
+            ['studentFilters', () => apiClient.get('/api/students/filters', config), (data) => setDbOptions(data || { classes: [], sections: [], classSectionMap: {} })],
+            ['categories', () => apiClient.get('/api/incidents/categories', config), (data) => setCategories(data || [])],
+            ['locations', () => apiClient.get('/api/incidents/locations', config), (data) => setLocations(data || [])],
+            ['staff', () => apiClient.get('/api/auth/users/investigators', config), (data) => setStaffList(Array.isArray(data) ? data : [])],
+            ['evidenceTypes', () => apiClient.get('/api/evidence-types', config), (data) => setEvidenceTypes(data || [])],
+        ];
+        const results = await Promise.allSettled(requests.map(([, request]) => request()));
 
-            if (!isMounted()) return;
-            setDbOptions(filtersResponse.data || { classes: [], sections: [], classSectionMap: {} });
-            setCategories(categoryResponse.data || []);
-            setLocations(locationResponse.data || []);
-            setStaffList(Array.isArray(staffResponse.data) ? staffResponse.data : []);
-            setEvidenceTypes(evidenceResponse.data || []);
-        } catch (error) {
-            if (!isMounted()) return;
-            addToast('We could not load all incident form options. Please refresh and try again.', 'error');
-        }
+        if (!isMounted()) return;
+        results.forEach((result, index) => {
+            const [key, , updateData] = requests[index];
+            if (result.status === 'fulfilled') {
+                updateData(result.value.data);
+                setMetadataErrors((current) => ({ ...current, [key]: false }));
+                return;
+            }
+
+            setMetadataErrors((current) => ({ ...current, [key]: true }));
+            addToast(metadataErrorMessages[key], 'error');
+        });
     }, [addToast, config, user?._id]);
 
     useMasterDataListener(useCallback(() => {
@@ -758,6 +768,7 @@ const CreateIncident = () => {
     useEffect(() => {
         if (!formData.class || !user?._id) {
             setStudents([]);
+            setMetadataErrors((current) => ({ ...current, students: false }));
             return;
         }
 
@@ -787,9 +798,13 @@ const CreateIncident = () => {
                 const nextStudents = Array.isArray(response.data) ? response.data : [];
                 studentClassCacheRef.current.set(className, nextStudents);
                 setStudents(nextStudents);
+                setMetadataErrors((current) => ({ ...current, students: false }));
             })
             .catch((error) => {
-                if (active && error?.code !== 'ERR_CANCELED') setStudents([]);
+                if (active && error?.code !== 'ERR_CANCELED') {
+                    setMetadataErrors((current) => ({ ...current, students: true }));
+                    addToast(metadataErrorMessages.students, 'error');
+                }
             })
             .finally(() => {
                 if (active) setFetchingStudents(false);
@@ -799,7 +814,7 @@ const CreateIncident = () => {
             active = false;
             controller.abort();
         };
-    }, [config, formData.class, user?._id]);
+    }, [addToast, config, formData.class, user?._id]);
 
     useEffect(() => {
         if (!selectedStudent?._id) return;
@@ -2161,6 +2176,27 @@ const CreateIncident = () => {
                         <form ref={formRef} onSubmit={handleSubmit} className="space-y-4" noValidate>
                             {errors.submit && <StatusBanner type="error">{errors.submit}</StatusBanner>}
 
+                            {Object.keys(metadataErrors).some((key) => metadataErrors[key]) && (
+                                <StatusBanner type="error">
+                                    <div className="flex flex-wrap items-center justify-between gap-3">
+                                        <div>
+                                            {Object.keys(metadataErrors)
+                                                .filter((key) => metadataErrors[key])
+                                                .map((key) => (
+                                                <p key={key}>{metadataErrorMessages[key]}</p>
+                                            ))}
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => void fetchAllData()}
+                                            className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-50"
+                                        >
+                                            Try again
+                                        </button>
+                                    </div>
+                                </StatusBanner>
+                            )}
+
                             {submitSuccess && (
                                 <StatusBanner type="success">
                                     Incident reported successfully. Redirecting now.
@@ -2289,6 +2325,10 @@ const CreateIncident = () => {
                                                         <div className="flex h-full items-center justify-center gap-2 text-sm font-medium text-slate-500">
                                                             <Loader2 className="h-4 w-4 animate-spin" />
                                                             Loading students…
+                                                        </div>
+                                                    ) : metadataErrors.students ? (
+                                                        <div className="flex h-full items-center justify-center px-4 text-center text-sm text-red-700">
+                                                            Unable to load students for this class. Choose the class again to retry.
                                                         </div>
                                                     ) : filteredStudents.length === 0 ? (
                                                         <div className="flex h-full items-center justify-center text-sm text-slate-500">
