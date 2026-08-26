@@ -25,6 +25,7 @@ import {
     Users,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import masterDataCache from '../utils/masterDataCache';
 import { useToast } from '../components/ToastProvider';
 import { UnifiedDateInput, UnifiedFilterBar, UnifiedMultiSelect, UnifiedSearchInput } from '../components/UnifiedFilters';
 import {
@@ -348,23 +349,13 @@ const ProfessionalAnalytics = () => {
 
         try {
             const studentFilterConfig = academicYear ? { ...config, params: { academicYear } } : config;
-            let metadata = filterMetadataRef.current;
-            if (metadata.userId !== user._id || !metadata.data) {
-                const [categoriesRes, locationsRes, evidenceRes, yearsRes] = await Promise.all([
-                    apiClient.get('/api/incidents/categories', config),
-                    apiClient.get('/api/incidents/locations', { ...config, params: { includeUnknown: true } }),
-                    apiClient.get('/api/evidence-types', { ...config, params: { includeUnknown: true } }),
-                    apiClient.get('/api/auth/academic-years', config),
-                ]);
-                metadata = {
-                    userId: user._id,
-                    data: { categoriesRes, locationsRes, evidenceRes, yearsRes },
-                };
-                filterMetadataRef.current = metadata;
-            }
-
-            const studentsRes = await apiClient.get('/api/students/filters', studentFilterConfig);
-            const { categoriesRes, locationsRes, evidenceRes, yearsRes } = metadata.data;
+            const [categoriesRes, locationsRes, evidenceRes, yearsRes, studentsRes] = await Promise.all([
+                masterDataCache.fetch(`categories:${user._id}`, () => apiClient.get('/api/incidents/categories', config)),
+                masterDataCache.fetch(`locations:${user._id}`, () => apiClient.get('/api/incidents/locations', { ...config, params: { includeUnknown: true } })),
+                masterDataCache.fetch(`evidenceTypes:${user._id}`, () => apiClient.get('/api/evidence-types', { ...config, params: { includeUnknown: true } })),
+                masterDataCache.fetch(`academicYears:${user._id}`, () => apiClient.get('/api/auth/academic-years', config)),
+                masterDataCache.fetch(`studentFilters:${user._id}:${academicYear || ''}`, () => apiClient.get('/api/students/filters', studentFilterConfig)),
+            ]);
 
             const nextYears = yearsRes.data?.academicYears || [];
             setAcademicYears(nextYears);

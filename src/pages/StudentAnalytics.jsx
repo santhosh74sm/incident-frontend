@@ -430,18 +430,17 @@ const StudentAnalytics = () => {
 
     useEffect(() => {
         if (selectedStudent) {
-            fetchStudentIncidents(selectedStudent);
-            fetchStudentLetters(selectedStudent);
-        }
-    }, [academicYear, dateRange.end, dateRange.start, fetchStudentIncidents, fetchStudentLetters, filters.evidence, filters.incidentTypes, filters.locations, selectedStudent, statusFilter, user?._id]);
-
-    useEffect(() => {
-        if (selectedStudent) {
-            fetchStudentLocationDistribution(selectedStudent);
+            Promise.all([
+                fetchStudentIncidents(selectedStudent),
+                fetchStudentLetters(selectedStudent),
+                fetchStudentLocationDistribution(selectedStudent),
+            ]);
         } else {
             setLocationDistribution([]);
+            setStudentIncidents([]);
+            setStudentLetters([]);
         }
-    }, [academicYear, dateRange.end, dateRange.start, fetchStudentLocationDistribution, filters.evidence, filters.incidentTypes, filters.locations, selectedStudent, statusFilter, user?._id]);
+    }, [academicYear, dateRange.end, dateRange.start, fetchStudentIncidents, fetchStudentLetters, fetchStudentLocationDistribution, filters.evidence, filters.incidentTypes, filters.locations, selectedStudent, statusFilter, user?._id]);
 
     useEffect(() => {
         if (studentIncidents.length > 0) {

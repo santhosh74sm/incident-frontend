@@ -38,6 +38,8 @@ import {
 import { getRecordId } from '../utils/ids';
 import { isAdminRole, isSuperAdminRole } from '../utils/roles';
 
+import masterDataCache from '../utils/masterDataCache';
+
 const READ_STATUS_OPTIONS = ['All', 'Unread', 'Read'];
 const formatDate = formatShortDate;
 
@@ -227,22 +229,12 @@ const IncidentList = () => {
         if (!userId) return;
         try {
             const studentFilterConfig = academicYear ? { ...config, params: { academicYear } } : config;
-            let metadata = filterMetadataRef.current;
-            if (metadata.userId !== userId || !metadata.data) {
-                const [staffRes, categoriesRes, yearRes] = await Promise.all([
-                    apiClient.get('/api/auth/users', config).catch(() => ({ data: [] })),
-                    apiClient.get('/api/incidents/categories', config).catch(() => ({ data: [] })),
-                    apiClient.get('/api/auth/academic-years', config).catch(() => ({ data: {} })),
-                ]);
-                metadata = {
-                    userId,
-                    data: { staffRes, categoriesRes, yearRes },
-                };
-                filterMetadataRef.current = metadata;
-            }
-
-            const studentsRes = await apiClient.get('/api/students/filters', studentFilterConfig).catch(() => ({ data: {} }));
-            const { staffRes, categoriesRes, yearRes } = metadata.data;
+            const [staffRes, categoriesRes, yearRes, studentsRes] = await Promise.all([
+                masterDataCache.fetch(`users:${userId}`, () => apiClient.get('/api/auth/users', config).catch(() => ({ data: [] }))),
+                masterDataCache.fetch(`categories:${userId}`, () => apiClient.get('/api/incidents/categories', config).catch(() => ({ data: [] }))),
+                masterDataCache.fetch(`academicYears:${userId}`, () => apiClient.get('/api/auth/academic-years', config).catch(() => ({ data: {} }))),
+                masterDataCache.fetch(`studentFilters:${userId}:${academicYear || ''}`, () => apiClient.get('/api/students/filters', studentFilterConfig).catch(() => ({ data: {} }))),
+            ]);
 
             const categories = Array.isArray(categoriesRes.data)
                 ? categoriesRes.data.map((item) => (typeof item === 'string' ? item : item?.name)).filter(Boolean)
