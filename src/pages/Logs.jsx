@@ -352,10 +352,15 @@ const Logs = () => {
     }, [page, pageSize, debouncedSearch, filters.entityType, filters.academicYear, filters.start, filters.end]);
 
     const handleClearAll = async () => {
+        const selectedAcademicYear = filters.academicYear;
+        if (!/^\d{4}-\d{2}$/.test(selectedAcademicYear)) {
+            addToast('Select one academic year before clearing activity history.', 'error');
+            return;
+        }
         const confirmed = await confirm({
             tone: 'danger',
             title: 'Clear Activity History',
-            description: 'This will permanently delete all activity history for this school workspace. This action cannot be undone.',
+            description: `This will permanently delete activity history for ${selectedAcademicYear} only. Logs from other academic years will remain.`,
             confirmLabel: 'Clear History',
         });
         if (!confirmed) return;
@@ -363,10 +368,11 @@ const Logs = () => {
         try {
             await apiClient.delete('/api/logs', {
                 headers: {},
+                params: { academicYear: selectedAcademicYear },
             });
             setExpandedRowId(null);
             fetchLogs();
-            addToast('Activity history cleared successfully.', 'success');
+            addToast(`Activity history for ${selectedAcademicYear} cleared successfully.`, 'success');
         } catch (error) {
             addToast('Unable to clear activity history right now.', 'error');
         }
@@ -394,6 +400,7 @@ const Logs = () => {
         () => buildAcademicYearOptions(academicYears, currentAcademicYear),
         [academicYears, currentAcademicYear]
     );
+    const canClearSelectedAcademicYear = /^\d{4}-\d{2}$/.test(filters.academicYear);
 
     const entitySummary = filters.entityType
         ? entityTypeOptions.find((option) => option.value === filters.entityType)?.label || formatActivityRecordLabel(filters.entityType)
@@ -424,6 +431,8 @@ const Logs = () => {
                                     <button
                                         type="button"
                                         onClick={handleClearAll}
+                                        disabled={!canClearSelectedAcademicYear}
+                                        title={!canClearSelectedAcademicYear ? 'Select one academic year before clearing history.' : undefined}
                                         className="inline-flex items-center gap-2 rounded-2xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                         <Trash2 size={16} aria-hidden="true" />

@@ -658,7 +658,10 @@ const UserManagement = () => {
             deleting: false,
         });
         if (type === 'student') {
-            apiClient.get(`/api/students/${record._id}/delete-preview`, config)
+            apiClient.get(`/api/students/${record._id}/delete-preview`, {
+                ...config,
+                params: { academicYear: record.academicYear },
+            })
                 .then(({ data }) => {
                     setDeleteDialog((current) =>
                         current.open && current.id === record._id
@@ -686,7 +689,10 @@ const UserManagement = () => {
                     ? `/api/auth/users/${deleteDialog.id}`
                     : `/api/students/${deleteDialog.id}`;
 
-            const { data } = await apiClient.delete(endpoint, config);
+            const requestConfig = deleteDialog.type === 'student'
+                ? { ...config, params: { academicYear: deleteDialog.record?.academicYear } }
+                : config;
+            const { data } = await apiClient.delete(endpoint, requestConfig);
             addToast(
                 deleteDialog.type === 'staff'
                     ? data?.message || 'User deleted successfully.'
@@ -705,7 +711,7 @@ const UserManagement = () => {
             );
             setDeleteDialog((current) => ({ ...current, deleting: false }));
         }
-    }, [addToast, config, deleteDialog.deleting, deleteDialog.id, deleteDialog.type, fetchData]);
+    }, [addToast, config, deleteDialog.deleting, deleteDialog.id, deleteDialog.record?.academicYear, deleteDialog.type, fetchData]);
 
     const openDetailModal = useCallback((record, type) => {
         setDetailModal({ open: true, type, record });
@@ -1268,6 +1274,7 @@ const UserManagement = () => {
                                             allCount={studentPagination.total}
                                             source={{ page: 'UserManagement', tab: activeTab, filteredCount: studentPagination.total }}
                                             status={currentStudentStatus}
+                                            academicYear={academicYearFilter || currentAcademicYear}
                                             addToast={addToast}
                                             onComplete={() => fetchData(false)}
                                         />

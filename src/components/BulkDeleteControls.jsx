@@ -36,7 +36,7 @@ const SummaryGrid = ({ summary }) => (
     </div>
 );
 
-const BulkDeleteModal = ({ moduleName, mode, ids, source, status, onClose, onComplete, addToast }) => {
+const BulkDeleteModal = ({ moduleName, mode, ids, source, status, academicYear, onClose, onComplete, addToast }) => {
     const [preview, setPreview] = useState(null);
     const [result, setResult] = useState(null);
     const [confirmation, setConfirmation] = useState('');
@@ -64,6 +64,7 @@ const BulkDeleteModal = ({ moduleName, mode, ids, source, status, onClose, onCom
             ids: mode === 'filtered' ? ids : undefined,
             source,
             status,
+            academicYear,
         })
             .then(({ data }) => {
                 if (mounted) setPreview(data);
@@ -79,7 +80,7 @@ const BulkDeleteModal = ({ moduleName, mode, ids, source, status, onClose, onCom
         return () => {
             mounted = false;
         };
-    }, [addToast, ids, mode, moduleName, onClose, source, status]);
+    }, [academicYear, addToast, ids, mode, moduleName, onClose, source, status]);
 
     useEffect(() => {
         if (typeof document === 'undefined') return undefined;
@@ -119,6 +120,7 @@ const BulkDeleteModal = ({ moduleName, mode, ids, source, status, onClose, onCom
                 ids: mode === 'filtered' ? ids : undefined,
                 source,
                 status,
+                academicYear,
                 confirmation,
             });
             setResult(data);
@@ -240,10 +242,13 @@ const BulkDeleteModal = ({ moduleName, mode, ids, source, status, onClose, onCom
     );
 };
 
-const BulkDeleteControls = ({ moduleName, filteredIds, allCount, source, status, onComplete, addToast }) => {
+const BulkDeleteControls = ({ moduleName, filteredIds, allCount, source, status, academicYear, onComplete, addToast }) => {
     const [modal, setModal] = useState(null);
     const filteredCount = filteredIds?.length || 0;
     const hasFilteredScope = filteredCount > 0;
+    const requiresAcademicYear = moduleName === 'students';
+    const hasValidAcademicYear = /^\d{4}-\d{2}$/.test(String(academicYear || ''));
+    const canDelete = (!requiresAcademicYear || hasValidAcademicYear);
     const normalizedIds = useMemo(() => filteredIds || [], [filteredIds]);
 
     return (
@@ -252,7 +257,8 @@ const BulkDeleteControls = ({ moduleName, filteredIds, allCount, source, status,
                 <button
                     type="button"
                     onClick={() => setModal({ mode: 'filtered', ids: normalizedIds, source })}
-                    disabled={!hasFilteredScope}
+                    disabled={!hasFilteredScope || !canDelete}
+                    title={!canDelete ? 'Select one academic year before deleting student records.' : undefined}
                     className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                 >
                     <Trash2 className="h-4 w-4" />
@@ -261,7 +267,8 @@ const BulkDeleteControls = ({ moduleName, filteredIds, allCount, source, status,
                 <button
                     type="button"
                     onClick={() => setModal({ mode: 'all', ids: [], source })}
-                    disabled={!allCount}
+                    disabled={!allCount || !canDelete}
+                    title={!canDelete ? 'Select one academic year before deleting student records.' : undefined}
                     className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                 >
                     <Trash2 className="h-4 w-4" />
@@ -275,6 +282,7 @@ const BulkDeleteControls = ({ moduleName, filteredIds, allCount, source, status,
                     ids={modal.ids}
                     source={modal.source}
                     status={status}
+                    academicYear={academicYear}
                     onClose={() => setModal(null)}
                     onComplete={onComplete}
                     addToast={addToast}
